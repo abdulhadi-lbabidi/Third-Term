@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { Layout } from '@/features/layouts/main.layout';
 import { LoginPage } from '@/features/Auth/pages/login.page';
+import { UsersPage } from '@/features/users/users.page';
+import { NewUserPage } from '@/features/users/new-user.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -24,17 +26,6 @@ function PublicOnlyRoute() {
   return <Outlet />;
 }
 
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        هذه الصفحة جاهزة للربط لاحقًا داخل معمارية المشروع.
-      </p>
-    </div>
-  );
-}
-
 export const router = createBrowserRouter([
   {
     element: <PublicOnlyRoute />,
@@ -52,10 +43,21 @@ export const router = createBrowserRouter([
         element: <Layout />,
         children: [
           {
-            path: '/',
-            element: <PlaceholderPage title="Dashboard" />,
+            path: '/users',
+            element: <UsersPage />,
           },
-         
+          {
+            path: '/users/new',
+            element: <NewUserPage />,
+          },
+          {
+            path: '/users/edit/:role/:id',
+            element: <NewUserPage />,
+          },
+          {
+            path: '/',
+            element: <Navigate to="/users" replace />,
+          },
         ],
       },
     ],

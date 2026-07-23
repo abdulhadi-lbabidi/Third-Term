@@ -14,5 +14,59 @@
     "passwordPlaceholder": "أدخل كلمة المرور",
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "subtitle": "استعراض المستخدمين حسب النوع",
+    "addUser": "إضافة مستخدم",
+    "back": "رجوع",
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف"
+    },
+    "table": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "investmentRatio": "نسبة الاستثمار",
+      "jobTitle": "المسمى الوظيفي",
+      "baseSalary": "الراتب الأساسي",
+      "kinshipRelation": "صلة القرابة",
+      "createdAt": "تاريخ الإنشاء",
+      "loading": "جارٍ التحميل...",
+      "empty": "لا توجد بيانات"
+    },
+    "tabs": {
+      "admin": "المدير",
+      "client": "الزبون",
+      "investor": "المستثمر",
+      "craftsman": "الحرفي",
+      "employee": "الموظف",
+      "engineer": "المهندس",
+      "supplier": "المورّد",
+      "trustee": "الوصي"
+    },
+    "form": {
+      "addTitle": "إضافة مستخدم",
+      "editTitle": "تعديل مستخدم",
+      "addDescription": "إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه.",
+      "editDescription": "تحديث بيانات المستخدم وحفظ التغييرات.",
+      "back": "رجوع",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "phoneNumber": "رقم الهاتف",
+      "address": "العنوان",
+      "userType": "نوع المستخدم",
+      "save": "حفظ المستخدم",
+      "saveChanges": "حفظ التغييرات",
+      "cancel": "إلغاء",
+      "keepPassword": "اتركه فارغًا للاحتفاظ بكلمة المرور الحالية",
+      "investmentRatio": "نسبة الاستثمار",
+      "jobTitle": "المسمى الوظيفي",
+      "baseSalary": "الراتب الأساسي",
+      "kinshipRelation": "صلة القرابة"
+    }
   }
 }

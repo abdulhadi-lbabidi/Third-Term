@@ -12,10 +12,10 @@ export function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f6fa] lg:grid lg:grid-cols-[280px_1fr]">
+    <div className="min-h-screen bg-[#f5f6fa] lg:flex">
       <Sidebar onLogout={handleLogout} />
 
-      <main className="p-4 md:p-6">
+      <main className="flex-1 p-2 md:p-3">
         <div className="mx-auto max-w-6xl">
           <Outlet />
         </div>

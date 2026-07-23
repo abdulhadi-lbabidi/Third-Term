@@ -14,5 +14,59 @@
     "passwordPlaceholder": "Enter your password",
     "showPassword": "Show password",
     "hidePassword": "Hide password"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Browse users by type",
+    "addUser": "Add User",
+    "back": "Back",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "investmentRatio": "Investment Ratio",
+      "jobTitle": "Job Title",
+      "baseSalary": "Base Salary",
+      "kinshipRelation": "Kinship Relation",
+      "createdAt": "Created At",
+      "loading": "Loading...",
+      "empty": "No data found"
+    },
+    "tabs": {
+      "admin": "Admin",
+      "client": "Client",
+      "investor": "Investor",
+      "craftsman": "Craftsman",
+      "employee": "Employee",
+      "engineer": "Engineer",
+      "supplier": "Supplier",
+      "trustee": "Trustee"
+    },
+    "form": {
+      "addTitle": "Add User",
+      "editTitle": "Edit User",
+      "addDescription": "Create a new user with role-based fields.",
+      "editDescription": "Update user data and save changes.",
+      "back": "Back",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "phoneNumber": "Phone Number",
+      "address": "Address",
+      "userType": "User Type",
+      "save": "Save User",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel",
+      "keepPassword": "Leave blank to keep current password",
+      "investmentRatio": "Investment Ratio",
+      "jobTitle": "Job Title",
+      "baseSalary": "Base Salary",
+      "kinshipRelation": "Kinship Relation"
+    }
   }
 }
