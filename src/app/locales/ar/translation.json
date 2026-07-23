@@ -1,0 +1,18 @@
+{
+  "appName": "نوح المالية",
+  "login": {
+    "brand": "NOUH FINANCE",
+    "title": "تسجيل الدخول",
+    "description": "أدخل بيانات حسابك للوصول إلى لوحة التحكم المالية",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "rememberMe": "تذكر بيانات تسجيل الدخول",
+    "submit": "تسجيل الدخول",
+    "secure": "دخول آمن ومشفّر",
+    "emailPlaceholder": "name@company.com",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور"
+  }
+}

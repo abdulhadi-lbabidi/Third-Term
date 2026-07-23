@@ -1,0 +1,18 @@
+{
+  "appName": "Nouh Finance",
+  "login": {
+    "brand": "NOUH FINANCE",
+    "title": "Login",
+    "description": "Enter your account details to access the financial dashboard",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "submit": "Login",
+    "secure": "Secure and encrypted access",
+    "emailPlaceholder": "name@company.com",
+    "passwordPlaceholder": "Enter your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  }
+}
