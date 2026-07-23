@@ -6,8 +6,6 @@
 
 # Dashboard:
 
-# Dashboard:
-
 # HR:
 <!-- Overview: cards statistics: [ total users, employees, engineers, daily workers, craftsmen, clients, suppliers, investors, trustees] -->
 
