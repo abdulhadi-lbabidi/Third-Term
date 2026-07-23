@@ -1,0 +1,265 @@
+application:
+
+  Dashboard:
+    statistics:
+      - total projects
+      - total revenues
+      - total expenses
+      - company balance
+      - active employees
+      - notifications
+
+  HR:
+
+    Overview:
+      statistics: 
+        - total users
+        - employees
+        - engineers
+        - daily workers
+        - craftsmen
+        - clients
+        - suppliers
+        - investors
+        - trustees
+
+    Users:
+      Management:
+        - create user
+        - update user
+        - reset password
+        - update permissions
+        - delete user
+
+      Browse:
+        - table details
+        - search
+        - filters @تحديد الفلاتر
+
+    Roles:
+
+      Admins:
+        - table details
+        - details for one
+        - update data
+
+      Employees:
+        - table details
+        - details for one 
+        - update job title
+        - payroll history
+        - update data
+
+      Engineers:
+        - table details
+        - details for one
+        - update job title
+        - update base salary
+        - update data
+
+      Daily Workers:
+        - table details
+        - details for one
+        - update data
+
+      Craftsmen:
+        - table details
+        - details for one
+        - update data
+
+      Clients:
+        - table details
+        - details for one
+        - projects
+        - invoices
+        - update data
+
+      Suppliers:
+        - table details
+        - details
+        - invoices
+        - update data
+
+    Investors:
+      - table details
+      - details
+      - investment ratio
+
+    Trustees:
+      - table details
+      - details
+
+  Accounting:
+    Overview:
+      statistics:
+        - today revenues
+        - today expenses
+        - company balance
+        - project balances
+        - pending invoices
+        - pending approvals
+        - payroll this month
+        - funds
+
+    Revenues:
+      Management:
+        - create
+        - update
+        - post
+
+      Browse:
+        - table details
+        - filters
+        - history
+
+    Expenses:
+
+      Management:
+        - create
+        - update
+        - approve
+        - post
+
+      Browse:
+        - table details
+        - filters
+        - history
+
+    Invoices:
+
+      Management:
+        - create
+        - update
+        - post
+        - print
+        - download pdf
+
+      Browse:
+        - table details
+        - details
+        - filters
+
+    Payroll:
+
+      Management:
+        - create salary payment
+        - bonuses
+        - deductions
+
+      Browse:
+        - payment history
+        - payroll reports
+
+    Funds:
+
+      Management:
+        - create fund @???
+        - update fund
+
+      Browse:
+        - balances
+        - history
+
+    Currency:
+
+      Management:
+        - create
+        - update
+        - delete
+        
+      Browse:
+      - table details
+
+  Projects:
+
+    Overview:
+      statistics:
+        - active projects
+        - completed projects
+        - suspended projects
+        - expected contracts
+        - project balances
+        - project profit
+
+    Management:
+      - create project
+      - update project
+      - archive project
+      - update status
+
+    Browse:
+      - table details
+      - search
+      - filters
+
+    Details:
+      - overview
+      - financial
+      - fund
+      - files
+
+  Archive:
+
+    Overview:
+      statistics:
+        - total folders
+        - total files
+        - storage used
+
+    Folder Management:
+      - create folder
+      - rename
+      - move
+      - delete
+
+    File Management:
+      - upload
+      - download
+      - preview
+      - delete
+
+    Browse:
+      - folder tree
+      - search
+
+  Chat:
+    Conversations:
+      - chat table details
+      - search
+      - open chat for user
+
+  Notifications:
+
+    Overview:
+      statistics:
+        - unread
+        - danger alerts
+
+    Management:
+      - notification table details
+      - filters
+
+  Audit:
+
+    Overview:
+      statistics:
+        - login today
+        - updates
+        - deletes
+        - critical actions
+
+    Logs:
+      - table details
+      - filters
+      - export
+
+  Settings:
+
+    Profile:
+      - view profile
+      - update profile
+      - reset password
+
+    Security:
+      - sessions
+      - password

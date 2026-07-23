@@ -1,0 +1,179 @@
+routes:
+
+  - /Authentication:
+      - login
+      - register
+      - reset password
+
+  - /Dashboard:
+      - dashboard
+      - statistics
+      - recent activities
+      - quick actions
+      - notifications
+
+  - HR:
+      - /users:
+          - create user
+          - update user
+          - reset password
+          - update permissions
+          - search
+          - filters
+
+      - filter & tabs:
+          - ?Admins:
+              - view full details
+
+          - ?Employees:
+              - view full details
+              - update job_title
+
+          - ?Engineers:
+              - view full details
+              - update job_title
+              - update base_salary
+
+          - ?Daily Workers:
+              - view full details
+
+          - ?Craftsmen:
+              - view full details
+
+          - ?Clients:
+              - view full details
+              - view projects
+              - view invoices
+
+          - ?Suppliers:
+              - view full details
+              - view invoices
+
+          - ?Investors:
+              - view full details
+              - update investment_ratio
+
+          - ?Trustees:
+              - view full details
+              - update kinship_relation
+
+  - Accounting:
+      - /Invoices:
+          - create invoice
+              - supplier
+              - target fund
+              - invoice date
+              - invoice number
+              - discount
+              - is_posted
+              - add items(item,description,quantity,unit,unit price,name)
+
+          - @update-invoice
+          - post invoice
+          - print invoice
+          - download PDF
+          - filters
+          - view invoice items
+            - view supplier details
+            - عرض الصندوق الهدف المرتبط بالفاتورة
+
+      - /revenues:
+          - create revenue (statement,amount,fund,received by)
+          - update revenue
+          - post revenue
+          - filters
+          - revenue history
+
+      - /expenses:
+          - create expense (statement,amount,fund,requested by)
+          - update expense
+          - approve expense
+          - post expense
+          - filters
+          - expense history
+
+      - @/payroll:
+          - create salary payment
+          - bonuses
+          - deductions
+          - payment history
+          - payroll reports
+
+      - /funds:
+          - create fund ( fund name, fund type, select currency, select owner, initial balance, description)
+          - company funds management
+          - project funds management
+          - funds management
+
+          - transfer between funds
+          - fund transactions
+          - fund history
+          - balance report
+
+      - /currency:
+          - create currency
+          - update currency
+          - delete currency
+
+  - /Projects:
+      - create project (client,expected contract value,profit type,status,project fund,start date,end date,attachments)
+
+      - management
+          - update project
+          - archive project
+          - update project status
+          - view project
+
+      - project details
+          - overview
+          - fund details
+          - files
+          - team
+          - timeline
+
+  - /Audit:
+      - logs
+      - filters & pagination
+
+  - /Archive:
+    - view folders & files وعرض المجادات متداخلة
+    - create folder
+    - upload file
+    - download file
+    - view file
+    - delete file
+    - rename
+    - move (drag and drop)
+    - search
+
+
+  - /Notifications:
+      - notification list
+      - filters
+      - unread
+      - danger alerts
+      - mark as read
+      - view notification
+
+  - /Chat:
+      - chat list
+      - chat box
+      - search conversations
+      - open chat
+
+  - /Permissions:
+      - permissions
+
+  - /Settings:
+      - /profile:
+          - view profile
+          - update profile
+          - reset password
+-------------------------
+application:
+  modules:
+
+    Authentication:
+      routes:
+        - login
+        - reset-password
