@@ -1,10 +1,4 @@
-import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { CurrencyForm } from './currency.form';
 import type { Currency, CreateCurrencyPayload } from '../types';
 
@@ -23,17 +17,11 @@ export function CurrencyDialog({
   onSubmit,
   loading,
 }: CurrencyDialogProps) {
-  const { t } = useTranslation();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {currency
-              ? t('currencies.dialog.editTitle', 'Edit Currency')
-              : t('currencies.dialog.createTitle', 'Add New Currency')}
-          </DialogTitle>
+          <DialogTitle>{currency ? 'تعديل عملة' : 'إضافة عملة جديدة'}</DialogTitle>
         </DialogHeader>
         <CurrencyForm
           defaultValues={currency || undefined}

@@ -13,7 +13,6 @@ import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { useTranslation } from 'react-i18next';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -25,7 +24,6 @@ type LoginFormValues = {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -49,15 +47,15 @@ export function LoginPage() {
 
           <CardHeader className="px-6 pb-3 pt-7 text-center">
             <p className="mb-2 text-xs font-semibold tracking-[0.22em] text-[#D4A22D]">
-              {t('login.brand')}
+              نوح المالية
             </p>
 
             <CardTitle className="text-2xl font-bold text-[#3D4D88]">
-              {t('login.title')}
+              تسجيل الدخول
             </CardTitle>
 
             <p className="mt-2 text-xs leading-6 text-slate-500">
-              {t('login.description')}
+              أدخل بيانات حسابك للوصول إلى لوحة التحكم المالية
             </p>
           </CardHeader>
 
@@ -70,13 +68,13 @@ export function LoginPage() {
                   render={({ field }) => (
                     <FormItem className="space-y-2">
                         <FormLabel className="text-xs font-semibold text-[#3D4D88]">
-                          {t('login.email')}
+                          البريد الإلكتروني
                         </FormLabel>
                       <FormControl>
                           <Input
                             {...field}
                             type="email"
-                            placeholder={t('login.emailPlaceholder')}
+                            placeholder="name@company.com"
                             dir="ltr"
                           className="h-10 rounded-2xl border-slate-200 bg-white px-4 text-sm shadow-none placeholder:text-slate-400 focus-visible:border-[#3D4D88] focus-visible:ring-2 focus-visible:ring-[#3D4D88]/15"
                         />
@@ -93,14 +91,14 @@ export function LoginPage() {
                     <FormItem className="space-y-2">
                       <div className="flex items-center justify-between">
                         <FormLabel className="text-xs font-semibold text-[#3D4D88]">
-                          {t('login.password')}
+                          كلمة المرور
                         </FormLabel>
 
                         <button
                           type="button"
                           className="text-xs font-medium text-[#D4A22D] transition-colors hover:text-[#b8881f]"
                         >
-                          {t('login.forgotPassword')}
+                          نسيت كلمة المرور؟
                         </button>
                       </div>
 
@@ -109,7 +107,7 @@ export function LoginPage() {
                           <Input
                             {...field}
                             type={showPassword ? 'text' : 'password'}
-                            placeholder={t('login.passwordPlaceholder')}
+                            placeholder="أدخل كلمة المرور"
                             className="h-10 rounded-2xl border-slate-200 bg-white pl-10 pr-10 text-sm shadow-none placeholder:text-slate-400 focus-visible:border-[#3D4D88] focus-visible:ring-2 focus-visible:ring-[#3D4D88]/15"
                           />
 
@@ -117,7 +115,7 @@ export function LoginPage() {
                             type="button"
                             onClick={() => setShowPassword((prev) => !prev)}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-[#3D4D88]/60 transition-colors hover:text-[#3D4D88]"
-                            aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
+                            aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
                           >
                             {showPassword ? (
                               <EyeOff className="size-4" />
@@ -146,7 +144,7 @@ export function LoginPage() {
                         />
                       </FormControl>
                       <FormLabel className="cursor-pointer text-sm font-normal text-slate-600">
-                        {t('login.rememberMe')}
+                        تذكر بيانات تسجيل الدخول
                       </FormLabel>
                     </FormItem>
                   )}
@@ -156,7 +154,7 @@ export function LoginPage() {
                 type="submit"
                 className="h-10 w-full rounded-2xl bg-[#3D4D88] text-sm font-semibold text-white shadow-md transition-all hover:bg-[#334174]"
               >
-                {t('login.submit')}
+                تسجيل الدخول
               </Button>
             </form>
           </Form>
