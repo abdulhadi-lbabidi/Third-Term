@@ -27,3 +27,4 @@ dist-ssr
 !.env.example
 docx
 *.pem
+*.env
