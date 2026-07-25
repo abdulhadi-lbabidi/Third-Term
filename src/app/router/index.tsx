@@ -3,7 +3,7 @@ import { Layout } from '@/features/layouts/main.layout';
 import { LoginPage } from '@/features/Auth/pages/login.page';
 import { UsersPage } from '@/features/users/users.page';
 import { NewUserPage } from '@/features/users/new-user.page';
-// import { FundsPage } from '@/features/accounting/funds/funds.page';
+import { FundsPage } from '@/features/funds/funds.page';
 import { CurrenciesPage } from '@/features/currencies/currencies.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
@@ -57,10 +57,14 @@ export const router = createBrowserRouter([
             element: <NewUserPage />,
           },
           {
+            path: '/users/:userId/funds',
+            element: <FundsPage />,
+          },
+          {
             path: '/',
             element: <Navigate to="/users" replace />,
           },
-          // { path: '/funds', element: <FundsPage /> },
+          { path: '/funds', element: <FundsPage /> },
           { path: '/currencies', element: <CurrenciesPage /> }
         ],
       },

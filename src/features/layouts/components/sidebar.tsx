@@ -1,31 +1,21 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Globe, LogOut, Users, Banknote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Users, Banknote } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
-import { useTranslation } from 'react-i18next';
-import { languageStorageKey } from '@/app/i18n';
 
 type SidebarProps = {
   onLogout: () => void;
 };
 
 const navItems = [
-  { to: '/users', label: 'Users', icon: Users },
-  { to: '/funds', label: 'Funds', icon: Users },
-  { to: '/currencies', label: 'Currencies', icon: Banknote },
+  { to: '/users', label: 'المستخدمون', icon: Users },
+  { to: '/funds', label: 'الصناديق', icon: Banknote },
+  { to: '/currencies', label: 'العملات', icon: Banknote },
 ];
 
 export function Sidebar({ onLogout }: SidebarProps) {
-  const { i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
   const [collapsed, setCollapsed] = useState(false);
-
-  function toggleLanguage() {
-    const nextLanguage = isArabic ? 'en' : 'ar';
-    window.localStorage.setItem(languageStorageKey, nextLanguage);
-    void i18n.changeLanguage(nextLanguage);
-  }
 
   return (
     <aside
@@ -38,10 +28,10 @@ export function Sidebar({ onLogout }: SidebarProps) {
         <div className="flex items-center justify-between gap-3">
           {!collapsed ? (
             <div className="space-y-1">
-              <p className="text-lg font-bold text-[#111827]">Admin</p>
+              <p className="text-lg font-bold text-[#111827]">المدير</p>
               <p className="text-sm text-[#6b7280]">admin@gmail.com</p>
               <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-[#243b67]">
-                ADMIN
+                مدير
               </span>
             </div>
           ) : (
@@ -52,7 +42,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
             className="flex size-8 items-center justify-center rounded-full border border-slate-200 text-[#111827] shadow-sm transition-colors hover:bg-slate-50"
-            aria-label={collapsed ? 'Open sidebar' : 'Close sidebar'}
+            aria-label={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
           >
             {collapsed ? <ChevronRight className="size-5" /> : <ChevronLeft className="size-5" />}
           </button>
@@ -90,18 +80,6 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
       <div className="border-t px-4 py-4">
         <div className={cn('flex gap-3', collapsed ? 'flex-col' : 'justify-between')}>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={toggleLanguage}
-            className={cn(
-              'h-12 rounded-2xl border-slate-200 bg-white font-bold text-[#111827]',
-              collapsed ? 'w-full justify-center px-0 tracking-[0.12em]' : 'tracking-[0.28em]'
-            )}
-          >
-            <Globe className="size-4" />
-            {!collapsed ? (isArabic ? 'AR' : 'EN') : null}
-          </Button>
           <Button
             variant="outline"
             className={cn(

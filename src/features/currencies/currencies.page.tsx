@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui/button';
 import { currenciesApi } from './currencies.api';
@@ -8,10 +7,8 @@ import { CurrencyDialog } from './components/currency.dialog';
 import type { Currency, CreateCurrencyPayload } from './types';
 
 export function CurrenciesPage() {
-  const { t } = useTranslation();
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [loading, setLoading] = useState(false);
-  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +20,7 @@ export function CurrenciesPage() {
       setCurrencies(data);
     } catch (error) {
       console.error('[DEBUG - fetchCurrencies] Error:', error);
-      toast.error(t('currencies.messages.fetchError', 'Failed to fetch currencies'));
+      toast.error('تعذر جلب العملات');
     } finally {
       setLoading(false);
     }
@@ -38,17 +35,17 @@ export function CurrenciesPage() {
     try {
       if (selectedCurrency) {
         const updated = await currenciesApi.updateCurrency(selectedCurrency.id, payload);
-        setCurrencies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-        toast.success(t('currencies.messages.updateSuccess', 'Currency updated successfully'));
+        setCurrencies((prev) => prev.map((currency) => (currency.id === updated.id ? updated : currency)));
+        toast.success('تم تعديل العملة بنجاح');
       } else {
         const created = await currenciesApi.createCurrency(payload);
         setCurrencies((prev) => [...prev, created]);
-        toast.success(t('currencies.messages.createSuccess', 'Currency created successfully'));
+        toast.success('تم إنشاء العملة بنجاح');
       }
       setDialogOpen(false);
     } catch (error: any) {
       console.error('[DEBUG - handleCreateOrUpdate] Error:', error);
-      toast.error(error?.response?.data?.message || t('currencies.messages.saveError', 'Failed to save currency'));
+      toast.error(error?.response?.data?.message || 'تعذر حفظ العملة');
       throw error;
     } finally {
       setSubmitting(false);
@@ -58,11 +55,11 @@ export function CurrenciesPage() {
   const handleDelete = async (currency: Currency) => {
     try {
       await currenciesApi.deleteCurrency(currency.id);
-      setCurrencies((prev) => prev.filter((c) => c.id !== currency.id));
-      toast.success(t('currencies.messages.deleteSuccess', 'Currency deleted successfully'));
+      setCurrencies((prev) => prev.filter((item) => item.id !== currency.id));
+      toast.success('تم حذف العملة بنجاح');
     } catch (error) {
       console.error('[DEBUG - handleDelete] Error:', error);
-      toast.error(t('currencies.messages.deleteError', 'Failed to delete currency'));
+      toast.error('تعذر حذف العملة');
     }
   };
 
@@ -82,17 +79,15 @@ export function CurrenciesPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-              {t('currencies.badge', 'FINANCE')}
+              المالية
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              {t('currencies.title', 'Currencies')}
-            </h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">العملات</h1>
           </div>
           <Button
             onClick={openCreateDialog}
             className="h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
           >
-            {t('currencies.addCurrency', 'Add New Currency')}
+            إضافة عملة جديدة
           </Button>
         </div>
       </div>

@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import { Button } from '@/shared/components/ui/button';
 import { UserTabs } from './components/user-tabs';
 import { UsersTable } from './components/users.table';
-import dayjs from 'dayjs';
-import { useTranslation } from 'react-i18next';
+import { usersApi } from './api/users.api';
 import type {
   AdminRecord,
   ClientRecord,
@@ -17,7 +16,6 @@ import type {
   TrusteeRecord,
   UserRole,
 } from './types';
-import { usersApi } from './api/users.api';
 
 const userRoles: UserRole[] = [
   'admin',
@@ -41,7 +39,6 @@ type UsersTabRecord =
   | TrusteeRecord;
 
 export function UsersPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeRole, setActiveRole] = useState<UserRole>('admin');
   const [users, setUsers] = useState<UsersTabRecord[]>([]);
@@ -80,60 +77,64 @@ export function UsersPage() {
     navigate(`/users/edit/${activeRole}/${row.id}`);
   }
 
+  function handleFunds(row: UsersTabRecord) {
+    navigate(`/users/${row.user.id}/funds`);
+  }
+
   const columns = useMemo(
     () => [
       {
-        header: t('users.table.name'),
+        header: 'الاسم',
         cell: (row: UsersTabRecord) => row.user.name,
       },
       {
-        header: t('users.table.email'),
+        header: 'البريد الإلكتروني',
         cell: (row: UsersTabRecord) => row.user.email,
       },
       {
-        header: t('users.table.phone'),
+        header: 'الهاتف',
         cell: (row: UsersTabRecord) => row.user.phone_number,
       },
       {
-        header: t('users.table.address'),
+        header: 'العنوان',
         cell: (row: UsersTabRecord) => row.user.address,
       },
       activeRole === 'investor'
         ? {
-            header: t('users.table.investmentRatio'),
+            header: 'نسبة الاستثمار',
             cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-'),
           }
         : null,
       activeRole === 'employee'
         ? {
-            header: t('users.table.jobTitle'),
+            header: 'المسمى الوظيفي',
             cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-'),
           }
         : null,
       activeRole === 'engineer'
         ? {
-            header: t('users.table.jobTitle'),
+            header: 'المسمى الوظيفي',
             cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-'),
           }
         : null,
       activeRole === 'engineer'
         ? {
-            header: t('users.table.baseSalary'),
+            header: 'الراتب الأساسي',
             cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-'),
           }
         : null,
       activeRole === 'trustee'
         ? {
-            header: t('users.table.kinshipRelation'),
+            header: 'صلة القرابة',
             cell: (row: UsersTabRecord) => String((row as TrusteeRecord).kinship_relation ?? '-'),
           }
         : null,
       {
-        header: t('users.table.createdAt'),
+        header: 'تاريخ الإنشاء',
         cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD'),
       },
     ],
-    [activeRole, t]
+    [activeRole]
   );
 
   return (
@@ -142,13 +143,12 @@ export function UsersPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-              {t('users.title')}
+              المستخدمون
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{t('users.title')}</h1>
-         
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">المستخدمون</h1>
           </div>
           <Button asChild className="h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
-            <Link to="/users/new">{t('users.addUser')}</Link>
+            <Link to="/users/new">إضافة مستخدم</Link>
           </Button>
         </div>
       </div>
@@ -161,6 +161,7 @@ export function UsersPage() {
         loading={loading}
         onDelete={handleDelete}
         onEdit={handleEdit}
+        onFunds={handleFunds}
       />
     </div>
   );

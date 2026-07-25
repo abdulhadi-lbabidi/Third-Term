@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form';
 import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -27,8 +26,6 @@ type CurrencyFormProps = {
 };
 
 export function CurrencyForm({ defaultValues, onSubmit, loading }: CurrencyFormProps) {
-  const { t } = useTranslation();
-
   const form = useForm<z.input<typeof currencySchema>, any, z.infer<typeof currencySchema>>({
     resolver: zodResolver(currencySchema),
     defaultValues: {
@@ -61,9 +58,9 @@ export function CurrencyForm({ defaultValues, onSubmit, loading }: CurrencyFormP
           name="currency"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('currencies.form.name', 'Currency Name')}</FormLabel>
+              <FormLabel>اسم العملة</FormLabel>
               <FormControl>
-                <Input placeholder={t('currencies.form.namePlaceholder', 'e.g. US Dollar')} {...field} />
+                <Input placeholder="مثل: الدولار الأمريكي" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,9 +71,9 @@ export function CurrencyForm({ defaultValues, onSubmit, loading }: CurrencyFormP
           name="symbol"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('currencies.form.symbol', 'Symbol')}</FormLabel>
+              <FormLabel>الرمز</FormLabel>
               <FormControl>
-                <Input placeholder={t('currencies.form.symbolPlaceholder', 'e.g. USD')} {...field} />
+                <Input placeholder="مثل: USD" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -84,8 +81,8 @@ export function CurrencyForm({ defaultValues, onSubmit, loading }: CurrencyFormP
         />
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-            {loading ? t('currencies.form.saving', 'Saving...') : t('currencies.form.save', 'Save')}
-          </Button>
+          {loading ? 'جاري الحفظ...' : 'حفظ'}
+        </Button>
         </div>
       </form>
     </Form>
