@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/api/axios.instance';
-import type { CreateFundPayload, Fund, UpdateFundPayload } from './types';
+import type { CreateFundPayload, Fund, FundCurrencyAttachPayload, UpdateFundPayload } from './types';
 
 export const fundsApi = {
   getFunds: async (): Promise<Fund[]> => {
@@ -19,5 +19,10 @@ export const fundsApi = {
 
   deleteFund: async (id: number): Promise<void> => {
     await apiClient.delete(`/funds/${id}`);
+  },
+
+  attachCurrency: async (fundId: number, payload: FundCurrencyAttachPayload): Promise<Fund> => {
+    const response = await apiClient.post(`/funds/${fundId}/currencies`, payload);
+    return response.data;
   },
 };

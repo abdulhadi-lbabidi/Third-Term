@@ -37,3 +37,8 @@ export type UpdateFundPayload = {
   user_id: number;
   name: string;
 };
+
+export type FundCurrencyAttachPayload = {
+  currency_id: number;
+  balance: string;
+};

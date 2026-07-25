@@ -5,6 +5,10 @@ import { UsersPage } from '@/features/users/users.page';
 import { NewUserPage } from '@/features/users/new-user.page';
 import { FundsPage } from '@/features/funds/funds.page';
 import { CurrenciesPage } from '@/features/currencies/currencies.page';
+import { CompanyFundsPage } from '@/features/company-funds/company-funds.page';
+import { ProjectsPage } from '@/features/projects/projects.page';
+import { ProjectFundsPage } from '@/features/projects/project-funds.page';
+import { ItemsPage } from '@/features/items/items.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -57,8 +61,24 @@ export const router = createBrowserRouter([
             element: <NewUserPage />,
           },
           {
-            path: '/users/:userId/funds',
+            path: '/users/:userId/:userName/funds',
             element: <FundsPage />,
+          },
+          {
+            path: '/company-funds',
+            element: <CompanyFundsPage />,
+          },
+          {
+            path: '/projects',
+            element: <ProjectsPage />,
+          },
+          {
+            path: '/projects/:projectId/:projectName/funds',
+            element: <ProjectFundsPage />,
+          },
+          {
+            path: '/items',
+            element: <ItemsPage />,
           },
           {
             path: '/',

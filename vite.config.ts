@@ -19,11 +19,13 @@ export default defineConfig({
     },
   },
   server: {
-    host: "finance-nouh.sy",
-    port: 443,
-    https: {
-      key: fs.readFileSync("./certificate/finance-nouh.sy-key.pem"),
-      cert: fs.readFileSync("./certificate/finance-nouh.sy.pem"),
-    },
+    host: '0.0.0.0',
+    port: 5173,
+    https: fs.existsSync('./certificate/finance-nouh.sy-key.pem') && fs.existsSync('./certificate/finance-nouh.sy.pem')
+      ? {
+          key: fs.readFileSync('./certificate/finance-nouh.sy-key.pem'),
+          cert: fs.readFileSync('./certificate/finance-nouh.sy.pem'),
+        }
+      : false,
   },
 });

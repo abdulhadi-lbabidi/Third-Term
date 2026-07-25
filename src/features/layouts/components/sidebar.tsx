@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, LogOut, Users, Banknote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Users, Banknote, Wallet, FolderKanban, ListChecks } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
@@ -10,7 +10,9 @@ type SidebarProps = {
 
 const navItems = [
   { to: '/users', label: 'المستخدمون', icon: Users },
-  { to: '/funds', label: 'الصناديق', icon: Banknote },
+  { to: '/company-funds', label: 'صناديق الشركة', icon: Wallet },
+  { to: '/projects', label: 'المشاريع', icon: FolderKanban },
+  { to: '/items', label: 'البنود', icon: ListChecks },
   { to: '/currencies', label: 'العملات', icon: Banknote },
 ];
 
@@ -89,11 +91,8 @@ export function Sidebar({ onLogout }: SidebarProps) {
             onClick={onLogout}
           >
             <LogOut className="size-4" />
-            {!collapsed ? null : null}
           </Button>
         </div>
-
-
       </div>
     </aside>
   );

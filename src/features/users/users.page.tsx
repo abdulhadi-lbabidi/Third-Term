@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { UserTabs } from './components/user-tabs';
 import { UsersTable } from './components/users.table';
@@ -17,16 +18,7 @@ import type {
   UserRole,
 } from './types';
 
-const userRoles: UserRole[] = [
-  'admin',
-  'client',
-  'investor',
-  'craftsman',
-  'employee',
-  'engineer',
-  'supplier',
-  'trustee',
-];
+const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
 type UsersTabRecord =
   | AdminRecord
@@ -38,101 +30,62 @@ type UsersTabRecord =
   | SupplierRecord
   | TrusteeRecord;
 
+const usersQueryKeys = {
+  all: ['users'] as const,
+  byRole: (role: UserRole) => ['users', role] as const,
+};
+
 export function UsersPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeRole, setActiveRole] = useState<UserRole>('admin');
-  const [users, setUsers] = useState<UsersTabRecord[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
+  const usersQuery = useQuery<UsersTabRecord[]>({
+    queryKey: usersQueryKeys.byRole(activeRole),
+    queryFn: () => usersApi.getUsersByRole(activeRole) as Promise<UsersTabRecord[]>,
+  });
 
-    async function loadUsers() {
-      setLoading(true);
-      try {
-        const response = await usersApi.getUsersByRole(activeRole);
-        if (mounted) {
-          setUsers(response);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
+  const deleteMutation = useMutation({
+    mutationFn: (row: UsersTabRecord) => usersApi.deleteUserByRole(activeRole, row.id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: usersQueryKeys.all });
+    },
+  });
 
-    void loadUsers();
-
-    return () => {
-      mounted = false;
-    };
-  }, [activeRole]);
-
-  async function handleDelete(row: UsersTabRecord) {
-    await usersApi.deleteUserByRole(activeRole, row.id);
-    setUsers((current) => current.filter((item) => item.id !== row.id));
-  }
+  const handleDelete = async (row: UsersTabRecord) => {
+    await deleteMutation.mutateAsync(row);
+  };
 
   function handleEdit(row: UsersTabRecord) {
     navigate(`/users/edit/${activeRole}/${row.id}`);
   }
 
   function handleFunds(row: UsersTabRecord) {
-    navigate(`/users/${row.user.id}/funds`);
+    navigate(`/users/${row.user.id}/${encodeURIComponent(row.user.name)}/funds`);
   }
 
   const columns = useMemo(
     () => [
-      {
-        header: 'الاسم',
-        cell: (row: UsersTabRecord) => row.user.name,
-      },
-      {
-        header: 'البريد الإلكتروني',
-        cell: (row: UsersTabRecord) => row.user.email,
-      },
-      {
-        header: 'الهاتف',
-        cell: (row: UsersTabRecord) => row.user.phone_number,
-      },
-      {
-        header: 'العنوان',
-        cell: (row: UsersTabRecord) => row.user.address,
-      },
+      { header: 'الاسم', cell: (row: UsersTabRecord) => row.user.name },
+      { header: 'البريد الإلكتروني', cell: (row: UsersTabRecord) => row.user.email },
+      { header: 'الهاتف', cell: (row: UsersTabRecord) => row.user.phone_number },
+      { header: 'العنوان', cell: (row: UsersTabRecord) => row.user.address },
       activeRole === 'investor'
-        ? {
-            header: 'نسبة الاستثمار',
-            cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-'),
-          }
+        ? { header: 'نسبة الاستثمار', cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-') }
         : null,
       activeRole === 'employee'
-        ? {
-            header: 'المسمى الوظيفي',
-            cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-'),
-          }
+        ? { header: 'المسمى الوظيفي', cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-') }
         : null,
       activeRole === 'engineer'
-        ? {
-            header: 'المسمى الوظيفي',
-            cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-'),
-          }
+        ? { header: 'المسمى الوظيفي', cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-') }
         : null,
       activeRole === 'engineer'
-        ? {
-            header: 'الراتب الأساسي',
-            cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-'),
-          }
+        ? { header: 'الراتب الأساسي', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
         : null,
       activeRole === 'trustee'
-        ? {
-            header: 'صلة القرابة',
-            cell: (row: UsersTabRecord) => String((row as TrusteeRecord).kinship_relation ?? '-'),
-          }
+        ? { header: 'صلة القرابة', cell: (row: UsersTabRecord) => String((row as TrusteeRecord).kinship_relation ?? '-') }
         : null,
-      {
-        header: 'تاريخ الإنشاء',
-        cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD'),
-      },
+      { header: 'تاريخ الإنشاء', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
     ],
     [activeRole]
   );
@@ -157,8 +110,8 @@ export function UsersPage() {
 
       <UsersTable
         columns={columns.filter(Boolean) as NonNullable<typeof columns[number]>[]}
-        data={users}
-        loading={loading}
+        data={usersQuery.data ?? []}
+        loading={usersQuery.isLoading}
         onDelete={handleDelete}
         onEdit={handleEdit}
         onFunds={handleFunds}
