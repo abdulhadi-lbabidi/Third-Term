@@ -1,4 +1,4 @@
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Currency } from '../types';
 
@@ -28,11 +28,17 @@ export function CurrencyTable({ data, loading, onEdit, onDelete, onView }: Curre
       cancelLabel="إلغاء"
       deleteLabel="حذف"
       actions={{
-        onExtra: onView,
+        extraActions: onView
+          ? [
+              {
+                label: 'عرض التفاصيل',
+                icon: <Eye className="size-4" />,
+                onClick: onView,
+              },
+            ]
+          : undefined,
         onEdit,
         onDelete,
-        extraLabel: 'عرض التفاصيل',
-        extraIcon: <Eye className="size-4" />,
       }}
     />
   );

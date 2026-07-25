@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -136,12 +137,7 @@ export function LoginPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center gap-2 space-y-0">
                       <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          className="size-4 rounded border-slate-300 accent-[#D4A22D]"
-                        />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <FormLabel className="cursor-pointer text-sm font-normal text-slate-600">
                         تذكر بيانات تسجيل الدخول

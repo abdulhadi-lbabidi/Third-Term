@@ -24,12 +24,16 @@ export type DataTableColumn<T> = {
   className?: string;
 };
 
+type ExtraAction<T> = {
+  label: string;
+  icon: ReactNode;
+  onClick: (row: T) => void;
+};
+
 type DataTableActions<T> = {
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
-  onExtra?: (row: T) => void;
-  extraLabel?: string;
-  extraIcon?: ReactNode;
+  extraActions?: ExtraAction<T>[];
 };
 
 type DataTableProps<T> = {
@@ -58,7 +62,7 @@ export function DataTable<T>({
   actions,
 }: DataTableProps<T>) {
   const [pendingDelete, setPendingDelete] = useState<T | null>(null);
-  const actionCount = Number(Boolean(actions?.onExtra)) + Number(Boolean(actions?.onEdit)) + Number(Boolean(actions?.onDelete));
+  const actionCount = (actions?.extraActions?.length ?? 0) + Number(Boolean(actions?.onEdit)) + Number(Boolean(actions?.onDelete));
 
   return (
     <div className="rounded-lg text-center border bg-card shadow-sm">
@@ -86,16 +90,17 @@ export function DataTable<T>({
                 {actionCount > 0 ? (
                   <TableCell className="w-[156px]">
                     <div className="flex items-center gap-2">
-                      {actions?.onExtra ? (
+                      {actions?.extraActions?.map((action) => (
                         <button
+                          key={action.label}
                           type="button"
-                          onClick={() => actions.onExtra?.(row)}
+                          onClick={() => action.onClick(row)}
                           className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-200 text-emerald-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
-                          aria-label={actions.extraLabel ?? 'إجراء'}
+                          aria-label={action.label}
                         >
-                          {actions.extraIcon}
+                          {action.icon}
                         </button>
-                      ) : null}
+                      ))}
                       {actions?.onEdit ? (
                         <button
                           type="button"

@@ -1,4 +1,4 @@
-import { Banknote } from 'lucide-react';
+import { Banknote, WalletMinimal } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 
 type UsersTableProps<T> = {
@@ -25,9 +25,15 @@ export function UsersTable<T>({ columns, data, loading, onDelete, onEdit, onFund
       actions={{
         onDelete,
         onEdit,
-        onExtra: onFunds,
-        extraLabel: 'صناديقي',
-        extraIcon: <Banknote className="size-4" />,
+        extraActions: onFunds
+          ? [
+              {
+                label: 'صناديقي',
+                icon: <WalletMinimal className="size-4" />,
+                onClick: onFunds,
+              },
+            ]
+          : undefined,
       }}
     />
   );

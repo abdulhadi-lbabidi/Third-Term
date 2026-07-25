@@ -1,19 +1,18 @@
 import { Banknote } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
-import type { Fund } from '../types';
+import type { CompanyFund } from '../types';
 
-type FundsTableProps = {
-  data: Fund[];
+type CompanyFundsTableProps = {
+  data: CompanyFund[];
   loading?: boolean;
-  onEdit?: (fund: Fund) => void;
-  onDelete?: (fund: Fund) => void;
-  onAttachCurrency?: (fund: Fund) => void;
+  onEdit?: (fund: CompanyFund) => void;
+  onDelete?: (fund: CompanyFund) => void;
+  onAttachCurrency?: (fund: CompanyFund) => void;
 };
 
-export function FundsTable({ data, loading, onEdit, onDelete, onAttachCurrency }: FundsTableProps) {
-  const columns: DataTableColumn<Fund>[] = [
+export function CompanyFundsTable({ data, loading, onEdit, onDelete, onAttachCurrency }: CompanyFundsTableProps) {
+  const columns: DataTableColumn<CompanyFund>[] = [
     { header: 'اسم الصندوق', cell: (fund) => fund.name },
-    { header: 'المستخدم', cell: (fund) => fund.user?.name ?? '-' },
     {
       header: 'الرصيد',
       cell: (fund) => {
@@ -36,7 +35,7 @@ export function FundsTable({ data, loading, onEdit, onDelete, onAttachCurrency }
       columns={columns}
       data={data}
       loading={loading}
-      emptyLabel="لا توجد صناديق"
+      emptyLabel="لا توجد صناديق شركة"
       loadingLabel="جاري التحميل..."
       confirmTitle="تأكيد الحذف"
       confirmDescription="هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء."

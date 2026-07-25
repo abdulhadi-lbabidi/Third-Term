@@ -15,8 +15,8 @@ export function Layout() {
     <div className="min-h-screen bg-[#f5f6fa] lg:flex">
       <Sidebar onLogout={handleLogout} />
 
-      <main className="flex-1 p-2 md:p-3">
-        <div className="mx-auto max-w-6xl">
+      <main className="flex-1 py-3 px-4">
+        <div className="mx-auto">
           <Outlet />
         </div>
       </main>

@@ -1,0 +1,29 @@
+import { apiClient } from '@/shared/api/axios.instance';
+import type {
+  CreateProjectFundPayload,
+  ProjectFund,
+  ProjectFundCurrencyAttachPayload,
+  UpdateProjectFundPayload,
+} from './project-funds.types';
+
+export const projectFundsApi = {
+  getProjectFunds: async (): Promise<ProjectFund[]> => {
+    const response = await apiClient.get('/project-funds');
+    return response.data;
+  },
+  createProjectFund: async (payload: CreateProjectFundPayload): Promise<ProjectFund> => {
+    const response = await apiClient.post('/project-funds', payload);
+    return response.data;
+  },
+  updateProjectFund: async (id: number, payload: UpdateProjectFundPayload): Promise<ProjectFund> => {
+    const response = await apiClient.patch(`/project-funds/${id}`, payload);
+    return response.data;
+  },
+  deleteProjectFund: async (id: number): Promise<void> => {
+    await apiClient.delete(`/project-funds/${id}`);
+  },
+  attachCurrency: async (fundId: number, payload: ProjectFundCurrencyAttachPayload): Promise<ProjectFund> => {
+    const response = await apiClient.post(`/project-funds/${fundId}/currencies`, payload);
+    return response.data;
+  },
+};
