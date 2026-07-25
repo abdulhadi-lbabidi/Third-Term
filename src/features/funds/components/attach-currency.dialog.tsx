@@ -13,7 +13,6 @@ import {
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import type { Currency } from '@/features/currencies/types';
-import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '../schemas/funds.schema';
 
 type AttachCurrencyDialogProps = {
   open: boolean;
