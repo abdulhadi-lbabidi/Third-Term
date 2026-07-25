@@ -1,22 +1,30 @@
 import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import type { CreateProjectFundPayload, ProjectFund } from '../project-funds.types';
 import type { Project } from '../types';
-
-type ProjectFundsFormValues = CreateProjectFundPayload;
+import type { ProjectFund } from '../project-funds.types';
+import { projectFundFormSchema, type ProjectFundFormValues } from '../schemas/projects.schema';
 
 type ProjectFundsFormProps = {
   project?: Project | null;
   projectFund?: ProjectFund | null;
-  onSubmit: (data: ProjectFundsFormValues) => Promise<void>;
+  onSubmit: (data: ProjectFundFormValues) => Promise<void>;
   loading?: boolean;
 };
 
 export function ProjectFundsForm({ project, projectFund, onSubmit, loading }: ProjectFundsFormProps) {
-  const form = useForm<ProjectFundsFormValues>({
+  const form = useForm<ProjectFundFormValues, undefined, ProjectFundFormValues>({
+    resolver: zodResolver(projectFundFormSchema),
     defaultValues: {
       project_id: project?.id ?? 0,
       name: projectFund?.name ?? '',

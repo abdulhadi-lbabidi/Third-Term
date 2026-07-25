@@ -1,15 +1,19 @@
 import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
-import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form';
+import { Input } from '@/shared/components/ui/input';
 import type { Currency } from '@/features/currencies/types';
-
-type AttachCurrencyValues = {
-  currency_id: string;
-  balance: string;
-};
+import { attachProjectCurrencySchema, type AttachProjectCurrencyValues } from '../schemas/projects.schema';
 
 type AttachCurrencyDialogProps = {
   open: boolean;
@@ -26,13 +30,14 @@ export function AttachCurrencyDialog({
   onSubmit,
   loading,
 }: AttachCurrencyDialogProps) {
-  const form = useForm<AttachCurrencyValues>({
-    defaultValues: { currency_id: '', balance: '' },
+  const form = useForm<AttachProjectCurrencyValues, undefined, AttachProjectCurrencyValues>({
+    resolver: zodResolver(attachProjectCurrencySchema),
+    defaultValues: { currency_id: 0, balance: '' },
   });
 
   useEffect(() => {
     if (!open) {
-      form.reset({ currency_id: '', balance: '' });
+      form.reset({ currency_id: 0, balance: '' });
     }
   }, [form, open]);
 
@@ -48,7 +53,7 @@ export function AttachCurrencyDialog({
             className="space-y-4"
             onSubmit={form.handleSubmit(async (values) => {
               await onSubmit({
-                currency_id: Number(values.currency_id),
+                currency_id: values.currency_id,
                 balance: values.balance,
               });
             })}
@@ -56,17 +61,18 @@ export function AttachCurrencyDialog({
             <FormField
               control={form.control}
               name="currency_id"
-              rules={{ required: 'العملة مطلوبة' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>العملة</FormLabel>
                   <FormControl>
                     <select
-                      value={field.value}
-                      onChange={field.onChange}
+                      value={field.value ? String(field.value) : ''}
+                      onChange={(event) => field.onChange(Number(event.target.value))}
                       className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
                     >
-                      <option value="">اختر العملة</option>
+                      <option value="" disabled>
+                        اختر العملة
+                      </option>
                       {currencies.map((currency) => (
                         <option key={currency.id} value={String(currency.id)}>
                           {currency.currency} {currency.symbol}
@@ -82,7 +88,6 @@ export function AttachCurrencyDialog({
             <FormField
               control={form.control}
               name="balance"
-              rules={{ required: 'الرصيد مطلوب' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>الرصيد</FormLabel>

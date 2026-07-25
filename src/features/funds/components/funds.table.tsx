@@ -48,7 +48,7 @@ export function FundsTable({ data, loading, onEdit, onDelete, onAttachCurrency }
         extraActions: onAttachCurrency
           ? [
               {
-                label: 'حفظ عملة',
+                label: 'إضافة عملة',
                 icon: <Banknote className="size-4" />,
                 onClick: onAttachCurrency,
               },

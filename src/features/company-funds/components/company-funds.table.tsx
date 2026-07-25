@@ -47,7 +47,7 @@ export function CompanyFundsTable({ data, loading, onEdit, onDelete, onAttachCur
         extraActions: onAttachCurrency
           ? [
               {
-                label: 'حفظ عملة',
+                label: 'إضافة عملة',
                 icon: <Banknote className="size-4" />,
                 onClick: onAttachCurrency,
               },

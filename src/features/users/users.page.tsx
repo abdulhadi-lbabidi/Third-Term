@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
@@ -35,10 +35,46 @@ const usersQueryKeys = {
   byRole: (role: UserRole) => ['users', role] as const,
 };
 
+function UsersTableSkeleton() {
+  return (
+    <div className="rounded-lg border bg-card shadow-sm">
+      <div className="overflow-hidden">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="h-4 w-24 animate-pulse rounded-full bg-slate-200" />
+          <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
+        </div>
+        <div className="space-y-3 p-4">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="grid grid-cols-6 gap-3 rounded-lg border border-slate-100 p-3">
+              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function UsersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeRole, setActiveRole] = useState<UserRole>('admin');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialRole = searchParams.get('tab');
+  const [activeRole, setActiveRole] = useState<UserRole>(() => {
+    return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';
+  });
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && userRoles.includes(tab as UserRole) && tab !== activeRole) {
+      setActiveRole(tab as UserRole);
+    }
+  }, [activeRole, searchParams]);
 
   const usersQuery = useQuery<UsersTabRecord[]>({
     queryKey: usersQueryKeys.byRole(activeRole),
@@ -57,7 +93,7 @@ export function UsersPage() {
   };
 
   function handleEdit(row: UsersTabRecord) {
-    navigate(`/users/edit/${activeRole}/${row.id}`);
+    navigate(`/users/edit/${activeRole}/${row.id}?tab=${activeRole}`);
   }
 
   function handleFunds(row: UsersTabRecord) {
@@ -95,6 +131,8 @@ export function UsersPage() {
     [activeRole]
   );
 
+  const showSkeleton = usersQuery.isFetching && !usersQuery.data;
+
   return (
     <div className="space-y-5">
       <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
@@ -105,23 +143,34 @@ export function UsersPage() {
             </div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">المستخدمون</h1>
           </div>
-          <Button asChild className="h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
-            <Link to="/users/new">إضافة مستخدم</Link>
+          <Button asChild className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
+            <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
           </Button>
         </div>
       </div>
 
-      <UserTabs roles={userRoles} activeRole={activeRole} onChange={setActiveRole} />
-
-      <UsersTable
-        columns={columns.filter(Boolean) as NonNullable<typeof columns[number]>[]}
-        data={usersQuery.data ?? []}
-        loading={usersQuery.isLoading}
-        onDelete={handleDelete}
-        onEdit={handleEdit}
-        onFunds={handleFunds}
-        onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
+      <UserTabs
+        roles={userRoles}
+        activeRole={activeRole}
+        onChange={(role) => {
+          setActiveRole(role);
+          setSearchParams({ tab: role });
+        }}
       />
+
+      {showSkeleton ? (
+        <UsersTableSkeleton />
+      ) : (
+        <UsersTable
+          columns={columns.filter(Boolean) as NonNullable<typeof columns[number]>[]}
+          data={usersQuery.data ?? []}
+          loading={usersQuery.isFetching}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onFunds={handleFunds}
+          onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
+        />
+      )}
     </div>
   );
 }

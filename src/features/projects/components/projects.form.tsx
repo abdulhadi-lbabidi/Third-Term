@@ -1,21 +1,31 @@
 import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
+import type { Project } from '../types';
+import { projectFormSchema, type ProjectFormValues } from '../schemas/projects.schema';
 
-type ProjectsFormValues = CreateProjectPayload;
+type ProjectsFormInput = z.input<typeof projectFormSchema>;
 
 type ProjectsFormProps = {
   defaultValues?: Project | null;
   clients: ClientRecord[];
-  onSubmit: (data: ProjectsFormValues) => Promise<void>;
+  onSubmit: (data: ProjectFormValues) => Promise<void>;
   loading?: boolean;
 };
 
-const statusOptions: { value: ProjectStatus; label: string }[] = [
+const statusOptions: { value: ProjectFormValues['status']; label: string }[] = [
   { value: 'pending', label: 'قيد الانتظار' },
   { value: 'in_progress', label: 'قيد التنفيذ' },
   { value: 'completed', label: 'مكتمل' },
@@ -23,7 +33,8 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 ];
 
 export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: ProjectsFormProps) {
-  const form = useForm<ProjectsFormValues>({
+  const form = useForm<ProjectsFormInput, undefined, ProjectFormValues>({
+    resolver: zodResolver(projectFormSchema),
     defaultValues: {
       client_id: defaultValues?.client?.id ?? clients[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
@@ -58,7 +69,7 @@ export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: Proj
               <FormControl>
                 <select
                   className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={field.value ? String(field.value) : ''}
+                  value={typeof field.value === 'number' && field.value > 0 ? String(field.value) : ''}
                   onChange={(event) => field.onChange(Number(event.target.value))}
                 >
                   <option value="" disabled>
@@ -100,7 +111,7 @@ export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: Proj
                 <Input
                   type="number"
                   step="0.01"
-                  value={field.value}
+                  value={typeof field.value === 'number' ? field.value : 0}
                   onChange={(event) => field.onChange(Number(event.target.value))}
                 />
               </FormControl>
@@ -118,8 +129,8 @@ export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: Proj
               <FormControl>
                 <select
                   className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value as ProjectStatus)}
+                  value={typeof field.value === 'string' ? field.value : 'pending'}
+                  onChange={(event) => field.onChange(event.target.value as ProjectFormValues['status'])}
                 >
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>

@@ -1,11 +1,19 @@
 import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
-import { Input } from '@/shared/components/ui/input';
-import type { CreateFundPayload, Fund } from '../types';
+import {
+  Form,
+  FormControl,
 
-type FundsFormValues = CreateFundPayload;
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form';
+import { Input } from '@/shared/components/ui/input';
+import { fundFormSchema, type FundFormValues } from '../schemas/funds.schema';
+import type { Fund } from '../types';
 
 type FundsFormProps = {
   defaultValues?: Fund | null;
@@ -16,6 +24,7 @@ type FundsFormProps = {
 
 export function FundsForm({ defaultValues, userId, onSubmit, loading }: FundsFormProps) {
   const form = useForm<FundsFormValues>({
+    resolver: zodResolver(fundFormSchema),
     defaultValues: {
       user_id: userId ?? defaultValues?.user?.id ?? 0,
       name: defaultValues?.name ?? '',
@@ -40,7 +49,6 @@ export function FundsForm({ defaultValues, userId, onSubmit, loading }: FundsFor
         <FormField
           control={form.control}
           name="name"
-          rules={{ required: true }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>اسم الصندوق</FormLabel>

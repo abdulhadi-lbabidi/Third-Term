@@ -84,19 +84,19 @@ export function EmployeePaymentsPage() {
     <div className="space-y-5">
       <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
               الموظفون
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            <h1 className="truncate text-3xl font-semibold tracking-tight text-slate-950">
               {selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : 'رواتب الموظفين'}
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             {!params.employeeId ? (
-              <>
+              <div className="flex shrink-0 items-center gap-3">
               <select
-                className="h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900"
+                className="h-11 w-[210px] shrink-0 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900"
                 value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
                 onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
               >
@@ -119,14 +119,14 @@ export function EmployeePaymentsPage() {
                   <RotateCcw className="size-4" />
                 </Button>
               ) : null}
-              </>
+              </div>
             ) : null}
             {params.employeeId ? (
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate('/employee-payments')}
-                className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold"
+                className="h-11 shrink-0 rounded-lg border-slate-200 px-5 text-sm font-semibold"
               >
                 عرض كل الموظفين
               </Button>
@@ -136,7 +136,7 @@ export function EmployeePaymentsPage() {
                 setSelectedPayment(null);
                 setDialogOpen(true);
               }}
-              className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
+              className="h-11 shrink-0 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
             >
               إضافة راتب جديد
             </Button>
