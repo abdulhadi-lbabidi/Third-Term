@@ -28,7 +28,7 @@ export function UserTabs({ roles, activeRole, onChange }: UserTabsProps) {
             type="button"
             onClick={() => onChange(role)}
             className={cn(
-              'rounded-full px-5 py-2.5 text-sm font-medium capitalize transition-all',
+              'rounded-lg px-5 py-2.5 text-sm font-medium capitalize transition-all',
               activeRole === role
                 ? 'bg-slate-950 text-white shadow-[0_8px_20px_rgba(15,23,42,0.16)]'
                 : 'bg-slate-100 text-slate-500 hover:bg-slate-200/80 hover:text-slate-900'

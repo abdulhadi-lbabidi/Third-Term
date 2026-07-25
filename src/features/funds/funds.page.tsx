@@ -122,11 +122,11 @@ export function FundsPage() {
           </div>
           <div className="flex gap-3">
             {!hasUserId ? (
-              <Button type="button" variant="outline" onClick={() => navigate('/users')} className="h-11 rounded-2xl border-slate-200 px-5 text-sm font-semibold">
+              <Button type="button" variant="outline" onClick={() => navigate('/users')} className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold">
                 العودة إلى المستخدمين
               </Button>
             ) : null}
-            <Button onClick={openCreateDialog} disabled={!hasUserId} className="h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
+            <Button onClick={openCreateDialog} disabled={!hasUserId} className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
               إضافة صندوق جديد
             </Button>
           </div>

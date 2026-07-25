@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -25,18 +25,65 @@ import type {
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
-const baseSchema = z.object({
-  name: z.string().min(1, 'الاسم مطلوب'),
-  email: z.string().email('البريد الإلكتروني غير صحيح'),
-  password: z.string().optional(),
-  phone_number: z.string().min(6, 'رقم الهاتف مطلوب'),
-  address: z.string().min(1, 'العنوان مطلوب'),
-  role: z.enum(['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee']),
-  investment_ratio: z.string().optional(),
-  job_title: z.string().optional(),
-  base_salary: z.string().optional(),
-  kinship_relation: z.string().optional(),
-});
+const userRoleLabels: Record<UserRole, string> = {
+  admin: 'المدير',
+  client: 'العميل',
+  investor: 'المستثمر',
+  craftsman: 'الحرفي',
+  employee: 'الموظف',
+  engineer: 'المهندس',
+  supplier: 'المورد',
+  trustee: 'الوصي',
+};
+
+const baseSchema = z
+  .object({
+    name: z.string().min(1, 'الاسم مطلوب'),
+    email: z.string().email('البريد الإلكتروني غير صحيح'),
+    password: z.string().optional(),
+    phone_number: z.string().min(6, 'رقم الهاتف مطلوب'),
+    address: z.string().min(1, 'العنوان مطلوب'),
+    role: z.enum(['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee']),
+    investment_ratio: z.string().optional(),
+    job_title: z.string().optional(),
+    base_salary: z.string().optional(),
+    kinship_relation: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.role === 'investor' && !values.investment_ratio?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['investment_ratio'],
+        message: 'نسبة الاستثمار مطلوبة',
+      });
+    }
+
+    if ((values.role === 'employee' || values.role === 'engineer') && !values.job_title?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['job_title'],
+        message: 'المسمى الوظيفي مطلوب',
+      });
+    }
+
+    if (values.role === 'engineer') {
+      if (!values.base_salary?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['base_salary'],
+          message: 'الراتب الأساسي مطلوب',
+        });
+      }
+    }
+
+    if (values.role === 'trustee' && !values.kinship_relation?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['kinship_relation'],
+        message: 'صلة القرابة مطلوبة',
+      });
+    }
+  });
 
 type NewUserFormValues = z.infer<typeof baseSchema>;
 
@@ -101,9 +148,11 @@ export function NewUserPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const editMode = Boolean(params.id && params.role);
   const role = params.role as UserRole | undefined;
   const id = params.id ? Number(params.id) : undefined;
+  const returnRole = searchParams.get('tab');
 
   const form = useForm<NewUserFormValues>({ resolver: zodResolver(baseSchema), defaultValues });
   const watchedRole = form.watch('role');
@@ -135,7 +184,7 @@ export function NewUserPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
-      navigate('/users', { replace: true });
+      navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`, { replace: true });
     },
   });
 
@@ -163,27 +212,33 @@ export function NewUserPage() {
             </CardTitle>
             <p className="text-sm text-slate-500">{editMode ? 'تحديث بيانات المستخدم الحالية' : 'إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه'}</p>
           </div>
-          <Button type="button" variant="outline" className="h-11 rounded-lg border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50" onClick={() => navigate('/users')}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-lg border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+            onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
+          >
             رجوع
           </Button>
         </div>
       </CardHeader>
       <CardContent className="px-6 pb-3 pt-1">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">الاسم</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">كلمة المرور</FormLabel><FormControl><Input {...field} type="password" disabled={editMode} placeholder={editMode ? 'اتركه فارغًا للاحتفاظ بكلمة المرور الحالية' : ''} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="md:col-span-2 space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">العنوان</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">كلمة المرور</FormLabel><FormControl><Input {...field} type="password" disabled={editMode} placeholder={editMode ? 'اتركه فارغًا للاحتفاظ بكلمة المرور الحالية' : ''} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel className="text-sm font-semibold text-slate-900">العنوان</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
+
             <FormField control={form.control} name="role" render={({ field }) => (
-              <FormItem className="md:col-span-2 rounded-[24px] border border-slate-200 bg-slate-50/70 p-3.5">
+              <FormItem className="md:col-span-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-3.5">
                 <FormLabel className="mb-3 block text-sm font-semibold text-slate-900">نوع المستخدم</FormLabel>
                 <FormControl>
-                  <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-8">
                     {userRoles.map((item) => (
                       <RadioGroupItem key={item} value={item} disabled={editMode}>
-                        {item}
+                        {userRoleLabels[item]}
                       </RadioGroupItem>
                     ))}
                   </RadioGroup>
@@ -191,12 +246,19 @@ export function NewUserPage() {
                 <FormMessage />
               </FormItem>
             )} />
-            {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" className="h-11 rounded-lg border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50" onClick={() => navigate('/users')}>إلغاء</Button>
+            {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+            {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+            {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+            {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+            <div className="md:col-span-3 flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 rounded-lg border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
+              >
+                إلغاء
+              </Button>
               <Button type="submit" className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-800" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : editMode ? 'حفظ التعديلات' : 'حفظ المستخدم'}</Button>
             </div>
           </form>
@@ -205,3 +267,4 @@ export function NewUserPage() {
     </Card>
   );
 }
+

@@ -1,22 +1,29 @@
 import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-
-import type { CreateItemPayload, Item } from '../types';
 import { Textarea } from '@/components/ui/textarea';
-
-type ItemsFormValues = CreateItemPayload;
+import type { Item } from '../types';
+import { itemFormSchema, type ItemFormValues } from '../schemas/items.schema';
 
 type ItemsFormProps = {
   defaultValues?: Item | null;
-  onSubmit: (data: ItemsFormValues) => Promise<void>;
+  onSubmit: (data: ItemFormValues) => Promise<void>;
   loading?: boolean;
 };
 
 export function ItemsForm({ defaultValues, onSubmit, loading }: ItemsFormProps) {
-  const form = useForm<ItemsFormValues>({
+  const form = useForm<ItemFormValues>({
+    resolver: zodResolver(itemFormSchema),
     defaultValues: {
       name: defaultValues?.name ?? '',
       description: defaultValues?.description ?? '',
@@ -41,7 +48,6 @@ export function ItemsForm({ defaultValues, onSubmit, loading }: ItemsFormProps) 
         <FormField
           control={form.control}
           name="name"
-          rules={{ required: true }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>اسم البند</FormLabel>
@@ -56,7 +62,6 @@ export function ItemsForm({ defaultValues, onSubmit, loading }: ItemsFormProps) 
         <FormField
           control={form.control}
           name="description"
-          rules={{ required: true }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>الوصف</FormLabel>

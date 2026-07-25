@@ -73,7 +73,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
                   )
                 }
               >
-                <span className={cn('flex size-8 items-center justify-center rounded-2xl', 'bg-black/5')}>
+                <span className={cn('flex size-8 items-center justify-center rounded-lg', 'bg-black/5')}>
                   <Icon className="size-5" />
                 </span>
                 {!collapsed ? <span className="font-medium">{item.label}</span> : null}
@@ -88,7 +88,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
           <Button
             variant="outline"
             className={cn(
-              'h-12 rounded-2xl border-red-200 bg-red-50 font-bold text-red-500 hover:bg-red-100 hover:text-red-600',
+              'h-12 rounded-lg border-red-200 bg-red-50 font-bold text-red-500 hover:bg-red-100 hover:text-red-600',
               collapsed ? 'w-full justify-center px-0 tracking-[0.12em]' : 'w-fit tracking-[0.28em]'
             )}
             onClick={onLogout}
