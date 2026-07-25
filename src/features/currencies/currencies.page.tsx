@@ -22,6 +22,7 @@ export function CurrenciesPage() {
       const data = await currenciesApi.getCurrencies();
       setCurrencies(data);
     } catch (error) {
+      console.error('[DEBUG - fetchCurrencies] Error:', error);
       toast.error(t('currencies.messages.fetchError', 'Failed to fetch currencies'));
     } finally {
       setLoading(false);
@@ -46,6 +47,7 @@ export function CurrenciesPage() {
       }
       setDialogOpen(false);
     } catch (error: any) {
+      console.error('[DEBUG - handleCreateOrUpdate] Error:', error);
       toast.error(error?.response?.data?.message || t('currencies.messages.saveError', 'Failed to save currency'));
       throw error;
     } finally {
@@ -59,6 +61,7 @@ export function CurrenciesPage() {
       setCurrencies((prev) => prev.filter((c) => c.id !== currency.id));
       toast.success(t('currencies.messages.deleteSuccess', 'Currency deleted successfully'));
     } catch (error) {
+      console.error('[DEBUG - handleDelete] Error:', error);
       toast.error(t('currencies.messages.deleteError', 'Failed to delete currency'));
     }
   };
