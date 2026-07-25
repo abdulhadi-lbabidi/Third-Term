@@ -1,4 +1,4 @@
-import { Banknote, WalletMinimal } from 'lucide-react';
+import { BadgeDollarSign, WalletMinimal } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 
 type UsersTableProps<T> = {
@@ -8,9 +8,18 @@ type UsersTableProps<T> = {
   onDelete?: (row: T) => void;
   onEdit?: (row: T) => void;
   onFunds?: (row: T) => void;
+  onEmployeePayments?: (row: T) => void;
 };
 
-export function UsersTable<T>({ columns, data, loading, onDelete, onEdit, onFunds }: UsersTableProps<T>) {
+export function UsersTable<T>({
+  columns,
+  data,
+  loading,
+  onDelete,
+  onEdit,
+  onFunds,
+  onEmployeePayments,
+}: UsersTableProps<T>) {
   return (
     <DataTable
       columns={columns}
@@ -25,15 +34,26 @@ export function UsersTable<T>({ columns, data, loading, onDelete, onEdit, onFund
       actions={{
         onDelete,
         onEdit,
-        extraActions: onFunds
-          ? [
-              {
-                label: 'صناديقي',
-                icon: <WalletMinimal className="size-4" />,
-                onClick: onFunds,
-              },
-            ]
-          : undefined,
+        extraActions: [
+          ...(onFunds
+            ? [
+                {
+                  label: 'صناديقي',
+                  icon: <WalletMinimal className="size-4" />,
+                  onClick: onFunds,
+                },
+              ]
+            : []),
+          ...(onEmployeePayments
+            ? [
+                {
+                  label: 'الرواتب',
+                  icon: <BadgeDollarSign className="size-4" />,
+                  onClick: onEmployeePayments,
+                },
+              ]
+            : []),
+        ],
       }}
     />
   );

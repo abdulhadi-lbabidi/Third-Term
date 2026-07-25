@@ -9,6 +9,7 @@ import { CompanyFundsPage } from '@/features/company-funds/company-funds.page';
 import { ProjectsPage } from '@/features/projects/projects.page';
 import { ProjectFundsPage } from '@/features/projects/project-funds.page';
 import { ItemsPage } from '@/features/items/items.page';
+import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -79,6 +80,14 @@ export const router = createBrowserRouter([
           {
             path: '/items',
             element: <ItemsPage />,
+          },
+          {
+            path: '/employee-payments',
+            element: <EmployeePaymentsPage />,
+          },
+          {
+            path: '/employees/:employeeId/:employeeName/payments',
+            element: <EmployeePaymentsPage />,
           },
           {
             path: '/',

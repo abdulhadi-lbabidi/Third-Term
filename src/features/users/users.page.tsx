@@ -64,6 +64,11 @@ export function UsersPage() {
     navigate(`/users/${row.user.id}/${encodeURIComponent(row.user.name)}/funds`);
   }
 
+  function handleEmployeePayments(row: UsersTabRecord) {
+    if (activeRole !== 'employee') return;
+    navigate(`/employees/${row.id}/${encodeURIComponent(row.user.name)}/payments`);
+  }
+
   const columns = useMemo(
     () => [
       { header: 'الاسم', cell: (row: UsersTabRecord) => row.user.name },
@@ -115,6 +120,7 @@ export function UsersPage() {
         onDelete={handleDelete}
         onEdit={handleEdit}
         onFunds={handleFunds}
+        onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
       />
     </div>
   );

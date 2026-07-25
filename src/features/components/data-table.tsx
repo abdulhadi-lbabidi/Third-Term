@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -65,11 +72,11 @@ export function DataTable<T>({
   const actionCount = (actions?.extraActions?.length ?? 0) + Number(Boolean(actions?.onEdit)) + Number(Boolean(actions?.onDelete));
 
   return (
-    <div className="rounded-lg text-center border bg-card shadow-sm">
+    <div className="rounded-lg border bg-card text-center shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
-            {actionCount > 0 ? <TableHead className="w-[156px]" /> : null}
+            {actionCount > 0 ? <TableHead className="w-[84px]" /> : null}
             {columns.map((column) => (
               <TableHead key={column.header} className={column.className}>
                 {column.header}
@@ -88,40 +95,65 @@ export function DataTable<T>({
             data.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {actionCount > 0 ? (
-                  <TableCell className="w-[156px]">
-                    <div className="flex items-center gap-2">
-                      {actions?.extraActions?.map((action) => (
-                        <button
-                          key={action.label}
-                          type="button"
-                          onClick={() => action.onClick(row)}
-                          className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-200 text-emerald-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
-                          aria-label={action.label}
-                        >
-                          {action.icon}
-                        </button>
-                      ))}
-                      {actions?.onEdit ? (
+                  <TableCell className="w-[84px]">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          onClick={() => actions.onEdit?.(row)}
-                          className="inline-flex size-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                          aria-label="تعديل"
+                          className="inline-flex size-9 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                          aria-label="الخيارات"
                         >
-                          <Pencil className="size-4" />
+                          <MoreVertical className="size-4" />
                         </button>
-                      ) : null}
-                      {actions?.onDelete ? (
-                        <button
-                          type="button"
-                          onClick={() => setPendingDelete(row)}
-                          className="inline-flex size-8 items-center justify-center rounded-full border border-destructive/20 text-destructive transition-colors hover:bg-destructive/10"
-                          aria-label="حذف"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      ) : null}
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        {actions?.onEdit ? (
+                          <DropdownMenuItem
+                            onSelect={(event) => {
+                              event.preventDefault();
+                              actions.onEdit?.(row);
+                            }}
+                          >
+                           
+                            <span>تعديل</span>
+                             <Pencil className="size-4" />
+                          </DropdownMenuItem>
+                        ) : null}
+
+                        {actions?.extraActions?.length ? (
+                          actions.extraActions.map((action) => (
+                            <DropdownMenuItem
+                              key={action.label}
+                              onSelect={(event) => {
+                                event.preventDefault();
+                                action.onClick(row);
+                              }}
+                            >
+                            
+                              <span>{action.label}</span>
+                                {action.icon}
+                            </DropdownMenuItem>
+                          ))
+                        ) : null}
+
+                        {actions?.onDelete ? (
+                          <>
+                            {(actions?.onEdit || actions?.extraActions?.length) ? <DropdownMenuSeparator /> : null}
+                            <DropdownMenuItem
+                              onSelect={(event) => {
+                                event.preventDefault();
+                                setPendingDelete(row);
+                              }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                           
+                              <span>حذف</span>
+                                 <Trash2 className="size-4" />
+                            </DropdownMenuItem>
+                          </>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 ) : null}
                 {columns.map((column) => (

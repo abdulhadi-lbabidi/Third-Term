@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, LogOut, Users, Banknote, Wallet, FolderKanban, ListChecks } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Users, Banknote, Wallet, FolderKanban, ListChecks, BadgeDollarSign } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/company-funds', label: 'صناديق الشركة', icon: Wallet },
   { to: '/projects', label: 'المشاريع', icon: FolderKanban },
   { to: '/items', label: 'البنود', icon: ListChecks },
+  { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
   { to: '/currencies', label: 'العملات', icon: Banknote },
 ];
 
