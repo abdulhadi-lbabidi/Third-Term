@@ -1,5 +1,6 @@
 import { Banknote } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { ProjectFund } from '../project-funds.types';
 
 type ProjectFundsTableProps = {
@@ -49,8 +50,13 @@ export function ProjectFundsTable({
       columns={columns}
       data={data}
       loading={loading}
-      emptyLabel="لا توجد صناديق مشاريع"
-      loadingLabel="جاري التحميل..."
+      emptyLabel="لا توجد صناديق لهذا المشروع"
+      loadingLabel={
+        <div className="flex flex-col gap-2 p-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      }
       confirmTitle="تأكيد الحذف"
       confirmDescription="هل أنت متأكد من حذف هذا الصندوق؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
@@ -60,12 +66,12 @@ export function ProjectFundsTable({
         onDelete,
         extraActions: onAttachCurrency
           ? [
-              {
-                label: 'إرفاق عملة',
-                icon: <Banknote className="size-4" />,
-                onClick: onAttachCurrency,
-              },
-            ]
+            {
+              label: 'إرفاق عملة',
+              icon: <Banknote className="size-4" />,
+              onClick: onAttachCurrency,
+            },
+          ]
           : undefined,
       }}
     />

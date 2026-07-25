@@ -8,18 +8,19 @@ type ProjectsDialogProps = {
   onOpenChange: (open: boolean) => void;
   project?: Project | null;
   clients: ClientRecord[];
+  departments: { id: number; name: string }[];
   onSubmit: (data: CreateProjectPayload) => Promise<void>;
   loading?: boolean;
 };
 
-export function ProjectsDialog({ open, onOpenChange, project, clients, onSubmit, loading }: ProjectsDialogProps) {
+export function ProjectsDialog({ open, onOpenChange, project, clients, departments, onSubmit, loading }: ProjectsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{project ? 'تعديل المشروع' : 'إضافة مشروع جديد'}</DialogTitle>
         </DialogHeader>
-        <ProjectsForm defaultValues={project} clients={clients} onSubmit={onSubmit} loading={loading} />
+        <ProjectsForm defaultValues={project} clients={clients} departments={departments} onSubmit={onSubmit} loading={loading} />
       </DialogContent>
     </Dialog>
   );

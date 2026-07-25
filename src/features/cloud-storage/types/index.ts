@@ -1,13 +1,40 @@
 export interface CloudFile {
-  id: string;
+  id: number;
+  directory_id: number;
   name: string;
-  url: string;
+  original_name?: string;
+  path: string;
   size: number;
-  type: string;
-  createdAt: string;
-  folderId?: string;
+  mime_type: string;
+  created_at: string;
+  updated_at: string;
+  url?: string; // Optional download/view url
 }
 
-export interface RenameFilePayload {
-  name: string;
+export interface Directory {
+  id: number;
+  dir_name: string;
+  dir_path: string;
+  parent_dir_id: number | null;
+  project_id: number | null;
+  created_at: string;
+  updated_at: string;
+  files?: CloudFile[];
+  sub_directories?: Directory[];
+}
+
+export interface CreateDirectoryPayload {
+  dir_name: string;
+  dir_path: string;
+  parent_dir_id?: number | null;
+  project_id?: number | null;
+}
+
+export interface UpdateDirectoryPayload {
+  dir_name?: string;
+  dir_path?: string;
+}
+
+export interface UploadFilesPayload {
+  files: File[];
 }

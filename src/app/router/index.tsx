@@ -7,9 +7,12 @@ import { FundsPage } from '@/features/funds/funds.page';
 import { CurrenciesPage } from '@/features/currencies/currencies.page';
 import { CompanyFundsPage } from '@/features/company-funds/company-funds.page';
 import { ProjectsPage } from '@/features/projects/projects.page';
-import { ProjectFundsPage } from '@/features/projects/project-funds.page';
+import { ProjectDetailsPage } from '@/features/projects/project-details/project-details.page';
+import { ProjectFundsPage } from '@/features/projects/project-funds/project-funds.page';
 import { ItemsPage } from '@/features/items/items.page';
 import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
+import { DepartmentsPage } from '@/features/departments/departments.page';
+import { CloudStoragePage } from '@/features/cloud-storage/cloud-storage.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -74,6 +77,10 @@ export const router = createBrowserRouter([
             element: <ProjectsPage />,
           },
           {
+            path: '/projects/:projectId/:projectName',
+            element: <ProjectDetailsPage />,
+          },
+          {
             path: '/projects/:projectId/:projectName/funds',
             element: <ProjectFundsPage />,
           },
@@ -94,7 +101,9 @@ export const router = createBrowserRouter([
             element: <Navigate to="/users" replace />,
           },
           { path: '/funds', element: <FundsPage /> },
-          { path: '/currencies', element: <CurrenciesPage /> }
+          { path: '/currencies', element: <CurrenciesPage /> },
+          { path: '/departments', element: <DepartmentsPage /> },
+          { path: '/cloud-storage', element: <CloudStoragePage /> }
         ],
       },
     ],

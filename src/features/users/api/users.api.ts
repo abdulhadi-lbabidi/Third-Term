@@ -1,4 +1,4 @@
-import { apiClient } from '@/shared/api/axios.instance';
+import { ApiClient } from '@/shared/api/api-client';
 import type {
   AdminRecord,
   ClientRecord,
@@ -24,17 +24,16 @@ const endpointByRole: Record<UserRole, string> = {
 };
 
 export const usersApi = {
-  getUserByRole: async (
+  getUserByRole: (
     role: UserRole,
     id: number
   ): Promise<
     AdminRecord | ClientRecord | InvestorRecord | CraftsmanRecord | EmployeeRecord | EngineerRecord | SupplierRecord | TrusteeRecord
   > => {
-    const response = await apiClient.get(`${endpointByRole[role]}/${id}`);
-    return response.data;
+    return ApiClient.get<any>(`${endpointByRole[role]}/${id}`).then(res => res.data);
   },
 
-  getUsersByRole: async (
+  getUsersByRole: (
     role: UserRole
   ): Promise<
     | AdminRecord[]
@@ -46,22 +45,19 @@ export const usersApi = {
     | SupplierRecord[]
     | TrusteeRecord[]
   > => {
-    const response = await apiClient.get(endpointByRole[role]);
-    return response.data;
+    return ApiClient.get<any>(endpointByRole[role]).then(res => res.data);
   },
 
-  createUser: async (payload: CreateUserPayload): Promise<unknown> => {
+  createUser: (payload: CreateUserPayload): Promise<unknown> => {
     const endpoint = endpointByRole[payload.role];
-    const response = await apiClient.post(endpoint, payload);
-    return response.data;
+    return ApiClient.post<any>(endpoint, payload).then(res => res.data);
   },
 
-  updateUserByRole: async (role: UserRole, id: number, payload: Partial<CreateUserPayload>): Promise<unknown> => {
-    const response = await apiClient.patch(`${endpointByRole[role]}/${id}`, payload);
-    return response.data;
+  updateUserByRole: (role: UserRole, id: number, payload: Partial<CreateUserPayload>): Promise<unknown> => {
+    return ApiClient.patch<any>(`${endpointByRole[role]}/${id}`, payload).then(res => res.data);
   },
 
-  deleteUserByRole: async (role: UserRole, id: number): Promise<void> => {
-    await apiClient.delete(`${endpointByRole[role]}/${id}`);
+  deleteUserByRole: (role: UserRole, id: number): Promise<void> => {
+    return ApiClient.delete(`${endpointByRole[role]}/${id}`).then(() => {});
   },
 };

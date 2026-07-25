@@ -1,8 +1,18 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
 import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
 
@@ -11,9 +21,18 @@ type ProjectsFormValues = CreateProjectPayload;
 type ProjectsFormProps = {
   defaultValues?: Project | null;
   clients: ClientRecord[];
+  departments: { id: number; name: string }[];
   onSubmit: (data: ProjectsFormValues) => Promise<void>;
   loading?: boolean;
 };
+
+const formSchema = z.object({
+  department_id: z.number().min(1, 'الرجاء اختيار القسم'),
+  client_id: z.number().min(1, 'الرجاء اختيار العميل'),
+  name: z.string().min(1, 'اسم المشروع مطلوب'),
+  expected_cost: z.number().min(0, 'التكلفة يجب أن تكون أكبر من أو تساوي صفر'),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled'] as const),
+});
 
 const statusOptions: { value: ProjectStatus; label: string }[] = [
   { value: 'pending', label: 'قيد الانتظار' },
@@ -22,9 +41,12 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
   { value: 'cancelled', label: 'ملغى' },
 ];
 
-export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: ProjectsFormProps) {
+export function ProjectsForm({ defaultValues, clients, departments, onSubmit, loading }: ProjectsFormProps) {
+
   const form = useForm<ProjectsFormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
+      department_id: departments[0]?.id ?? 0,
       client_id: defaultValues?.client?.id ?? clients[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
       expected_cost: defaultValues?.expected_cost ?? 0,
@@ -34,12 +56,13 @@ export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: Proj
 
   useEffect(() => {
     form.reset({
+      department_id: departments[0]?.id ?? 0,
       client_id: defaultValues?.client?.id ?? clients[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
       expected_cost: defaultValues?.expected_cost ?? 0,
       status: defaultValues?.status ?? 'pending',
     });
-  }, [clients, defaultValues, form]);
+  }, [clients, departments, defaultValues, form]);
 
   return (
     <Form {...form}>
@@ -51,26 +74,55 @@ export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: Proj
       >
         <FormField
           control={form.control}
+          name="department_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>القسم</FormLabel>
+              <Select
+                value={field.value ? field.value.toString() : ""}
+                onValueChange={(val) => field.onChange(Number(val))}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder="اختر القسم" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id.toString()}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="client_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>العميل</FormLabel>
-              <FormControl>
-                <select
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={field.value ? String(field.value) : ''}
-                  onChange={(event) => field.onChange(Number(event.target.value))}
-                >
-                  <option value="" disabled>
-                    اختر العميل
-                  </option>
+              <Select
+                value={field.value ? field.value.toString() : ""}
+                onValueChange={(val) => field.onChange(Number(val))}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder="اختر العميل" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
                   {clients.map((client) => (
-                    <option key={client.id} value={String(client.id)}>
+                    <SelectItem key={client.id} value={client.id.toString()}>
                       {client.user.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </FormControl>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -115,19 +167,23 @@ export function ProjectsForm({ defaultValues, clients, onSubmit, loading }: Proj
           render={({ field }) => (
             <FormItem>
               <FormLabel>الحالة</FormLabel>
-              <FormControl>
-                <select
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value as ProjectStatus)}
-                >
+              <Select
+                value={field.value}
+                onValueChange={(val) => field.onChange(val as ProjectStatus)}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder="اختر الحالة" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
                   {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value}>
                       {option.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </FormControl>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

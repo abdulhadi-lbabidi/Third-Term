@@ -15,7 +15,7 @@ export function Layout() {
     <div className="flex h-screen overflow-hidden bg-[#f5f6fa]">
       <Sidebar onLogout={handleLogout} />
 
-      <main className="flex-1 py-3 px-4">
+      <main className="flex-1 py-3 px-4 overflow-x-auto">
         <div className="mx-auto">
           <Outlet />
         </div>

@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import type { CreateProjectFundPayload, ProjectFund } from '../project-funds.types';
+import type { CreateProjectFundPayload, ProjectFund } from '../project-funds/project-funds.types';
 import type { Project } from '../types';
 
 type ProjectFundsFormValues = CreateProjectFundPayload;
@@ -15,8 +17,14 @@ type ProjectFundsFormProps = {
   loading?: boolean;
 };
 
+const formSchema = z.object({
+  project_id: z.number().min(1, 'معرف المشروع مطلوب'),
+  name: z.string().min(1, 'اسم الصندوق مطلوب'),
+});
+
 export function ProjectFundsForm({ project, projectFund, onSubmit, loading }: ProjectFundsFormProps) {
   const form = useForm<ProjectFundsFormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       project_id: project?.id ?? 0,
       name: projectFund?.name ?? '',

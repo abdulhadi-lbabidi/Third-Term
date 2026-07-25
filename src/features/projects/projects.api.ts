@@ -1,20 +1,11 @@
-import { apiClient } from '@/shared/api/axios.instance';
+import { ApiClient } from '@/shared/api/api-client';
 import type { CreateProjectPayload, Project, UpdateProjectPayload } from './types';
 
 export const projectsApi = {
-  getProjects: async (): Promise<Project[]> => {
-    const response = await apiClient.get('/projects');
-    return response.data;
-  },
-  createProject: async (payload: CreateProjectPayload): Promise<Project> => {
-    const response = await apiClient.post('/projects', payload);
-    return response.data;
-  },
-  updateProject: async (id: number, payload: UpdateProjectPayload): Promise<Project> => {
-    const response = await apiClient.patch(`/projects/${id}`, payload);
-    return response.data;
-  },
-  deleteProject: async (id: number): Promise<void> => {
-    await apiClient.delete(`/projects/${id}`);
-  },
+  getProjects: () => ApiClient.get<Project[]>('/projects').then(res => res.data),
+  getDepartments: () => ApiClient.get<{ id: number; name: string }[]>('/departments').then(res => res.data),
+  getProjectById: (id: number) => ApiClient.get<Project>(`/projects/${id}`).then(res => res.data),
+  createProject: (payload: CreateProjectPayload) => ApiClient.post<Project>('/projects', payload).then(res => res.data),
+  updateProject: (id: number, payload: UpdateProjectPayload) => ApiClient.patch<Project>(`/projects/${id}`, payload).then(res => res.data),
+  deleteProject: (id: number) => ApiClient.delete(`/projects/${id}`).then(() => {}),
 };

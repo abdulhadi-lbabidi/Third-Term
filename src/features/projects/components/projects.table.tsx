@@ -1,5 +1,7 @@
-import { Banknote, WalletMinimal } from 'lucide-react';
+import { Banknote, Eye, WalletMinimal } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { Project } from '../types';
 import dayjs from 'dayjs';
 
@@ -9,9 +11,10 @@ type ProjectsTableProps = {
   onEdit?: (project: Project) => void;
   onDelete?: (project: Project) => void;
   onAddFund?: (project: Project) => void;
+  onView?: (project: Project) => void;
 };
 
-export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund }: ProjectsTableProps) {
+export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView }: ProjectsTableProps) {
   const statusLabels: Record<Project['status'], string> = {
     pending: 'قيد الانتظار',
     in_progress: 'قيد التنفيذ',
@@ -46,7 +49,17 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund }: Pr
   };
 
   const columns: DataTableColumn<Project>[] = [
-    { header: 'اسم المشروع', cell: (row) => row.name },
+    { 
+      header: 'اسم المشروع', 
+      cell: (row) => (
+        <Link 
+          to={`/projects/${row.id}/${encodeURIComponent(row.name)}`}
+          className="font-medium text-blue-700 hover:underline hover:text-blue-900 transition-colors"
+        >
+          {row.name}
+        </Link>
+      ) 
+    },
     { header: 'العميل', cell: (row) => row.client?.user?.name ?? '-' },
     { header: 'التكلفة المتوقعة', cell: (row) => String(row.expected_cost) },
     {
@@ -94,7 +107,13 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund }: Pr
       data={data}
       loading={loading}
       emptyLabel="لا توجد مشاريع"
-      loadingLabel="جاري التحميل..."
+      loadingLabel={
+        <div className="flex flex-col gap-2 p-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      }
       confirmTitle="تأكيد الحذف"
       confirmDescription="هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
@@ -103,13 +122,17 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund }: Pr
         onEdit,
         onDelete,
         extraActions: onAddFund
-          ? [
-                {
-                  label: 'الصناديق',
-                icon: <WalletMinimal className="size-4" />,
-                onClick: onAddFund,
-              },
-            ]
+          ? [{
+            label: 'عرض المشروع',
+            icon: <Eye className="size-4" />,
+            onClick: (project) => onView?.(project)
+          },
+          {
+            label: 'الصناديق',
+            icon: <WalletMinimal className="size-4" />,
+            onClick: onAddFund,
+          },
+          ]
           : undefined,
       }}
     />

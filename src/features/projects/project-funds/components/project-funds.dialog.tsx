@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ProjectFundsForm } from './project-funds.form';
-import type { CreateProjectFundPayload, ProjectFund } from '../project-funds.types';
+import type { CreateProjectFundPayload, ProjectFund } from '../project-funds/project-funds.types';
 import type { Project } from '../types';
 
 type ProjectFundsDialogProps = {

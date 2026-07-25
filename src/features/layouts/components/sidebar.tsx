@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, LogOut, Users, Banknote, Wallet, FolderKanban, ListChecks, BadgeDollarSign } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Users, Banknote, Wallet, FolderKanban, ListChecks, BadgeDollarSign, Building2, Cloud } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
@@ -15,6 +15,8 @@ const navItems = [
   { to: '/items', label: 'البنود', icon: ListChecks },
   { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
   { to: '/currencies', label: 'العملات', icon: Banknote },
+  { to: '/departments', label: 'الأقسام', icon: Building2 },
+  { to: '/cloud-storage', label: 'التخزين السحابي', icon: Cloud },
 ];
 
 export function Sidebar({ onLogout }: SidebarProps) {

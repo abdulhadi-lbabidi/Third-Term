@@ -20,6 +20,7 @@ export type Project = {
 
 export type CreateProjectPayload = {
   client_id: number;
+  department_id: number;
   name: string;
   expected_cost: number;
   status: ProjectStatus;
@@ -27,6 +28,7 @@ export type CreateProjectPayload = {
 
 export type UpdateProjectPayload = {
   client_id: number;
+  department_id: number;
   name: string;
   expected_cost: number;
   status: ProjectStatus;

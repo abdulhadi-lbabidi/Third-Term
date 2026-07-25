@@ -23,6 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export type DataTableColumn<T> = {
   header: string;
@@ -47,8 +53,8 @@ type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   data: T[];
   loading?: boolean;
-  emptyLabel: string;
-  loadingLabel: string;
+  emptyLabel: ReactNode;
+  loadingLabel: ReactNode;
   confirmTitle: string;
   confirmDescription: string;
   cancelLabel: string;
@@ -96,7 +102,7 @@ export function DataTable<T>({
               <TableRow key={rowIndex}>
                 {actionCount > 0 ? (
                   <TableCell className="w-[84px]">
-                    <DropdownMenu>
+                    <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
@@ -110,7 +116,6 @@ export function DataTable<T>({
                         {actions?.onEdit ? (
                           <DropdownMenuItem
                             onSelect={(event) => {
-                              event.preventDefault();
                               actions.onEdit?.(row);
                             }}
                           >
@@ -125,7 +130,6 @@ export function DataTable<T>({
                             <DropdownMenuItem
                               key={action.label}
                               onSelect={(event) => {
-                                event.preventDefault();
                                 action.onClick(row);
                               }}
                             >
@@ -141,7 +145,6 @@ export function DataTable<T>({
                             {(actions?.onEdit || actions?.extraActions?.length) ? <DropdownMenuSeparator /> : null}
                             <DropdownMenuItem
                               onSelect={(event) => {
-                                event.preventDefault();
                                 setPendingDelete(row);
                               }}
                               className="text-destructive focus:text-destructive"

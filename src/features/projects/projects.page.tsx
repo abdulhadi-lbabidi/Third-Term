@@ -30,6 +30,11 @@ export function ProjectsPage() {
     queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]>,
   });
 
+  const departmentsQuery = useQuery<{ id: number; name: string }[]>({
+    queryKey: ['departments'] as const,
+    queryFn: () => projectsApi.getDepartments(),
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (payload: CreateProjectPayload) => {
       if (selectedProject) {
@@ -42,12 +47,18 @@ export function ProjectsPage() {
       setDialogOpen(false);
       setSelectedProject(null);
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حفظ المشروع');
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (project: Project) => projectsApi.deleteProject(project.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: projectsQueryKeys.all });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف المشروع');
     },
   });
 
@@ -86,7 +97,7 @@ export function ProjectsPage() {
       </div>
 
       <ProjectsTable
-        data={projectsQuery.data ?? []}
+        data={Array.isArray(projectsQuery.data) ? projectsQuery.data : []}
         loading={projectsQuery.isLoading}
         onEdit={(project) => {
           setSelectedProject(project);
@@ -95,6 +106,9 @@ export function ProjectsPage() {
         onDelete={handleDelete}
         onAddFund={(project) => {
           navigate(`/projects/${project.id}/${encodeURIComponent(project.name)}/funds`);
+        }}
+        onView={(project) => {
+          navigate(`/projects/${project.id}/${encodeURIComponent(project.name)}`);
         }}
       />
 
@@ -106,6 +120,7 @@ export function ProjectsPage() {
         }}
         project={selectedProject}
         clients={clientsQuery.data ?? []}
+        departments={departmentsQuery.data ?? []}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
