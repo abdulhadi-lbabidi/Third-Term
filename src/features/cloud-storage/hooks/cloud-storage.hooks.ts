@@ -39,7 +39,7 @@ export const useUpdateDirectory = () => {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateDirectoryPayload }) =>
       cloudStorageApi.updateDirectory(id, payload),
-    onSuccess: (_, variables) => {
+    onSuccess: (_,) => {
       toast.success('تم تحديث المجلد بنجاح');
       queryClient.invalidateQueries({ queryKey: ['directories'] });
     },

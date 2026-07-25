@@ -1,4 +1,4 @@
-import { Banknote } from 'lucide-react';
+// removed unused import
 import dayjs from 'dayjs';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { EmployeePayment } from '../types';

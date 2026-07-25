@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react';
+// removed unused import
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Item } from '../types';
 import dayjs from 'dayjs';

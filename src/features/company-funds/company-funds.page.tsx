@@ -28,7 +28,7 @@ export function CompanyFundsPage() {
 
   const currenciesQuery = useQuery<Currency[]>({
     queryKey: ['currencies'] as const,
-    queryFn: () => currenciesApi.getCurrencies(),
+    queryFn: () => currenciesApi.getAll(),
   });
 
   const saveMutation = useMutation({

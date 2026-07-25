@@ -15,7 +15,8 @@ export const cloudStorageApi = {
 
   getDirectory: async (id: number): Promise<Directory> => {
     const response = await apiClient.get(`/directories/${id}`);
-    return response.data.data || response.data;
+    const data = response.data.data || response.data;
+    return Array.isArray(data) ? data[0] : data;
   },
 
   createDirectory: async (payload: CreateDirectoryPayload): Promise<Directory> => {

@@ -36,7 +36,7 @@ export function FundsPage() {
 
   const currenciesQuery = useQuery<Currency[]>({
     queryKey: ['currencies'] as const,
-    queryFn: () => currenciesApi.getCurrencies(),
+    queryFn: () => currenciesApi.getAll(),
   });
 
   const visibleFunds = useMemo(() => {

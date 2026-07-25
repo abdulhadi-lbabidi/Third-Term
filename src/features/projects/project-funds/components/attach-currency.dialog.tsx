@@ -30,8 +30,8 @@ export function AttachCurrencyDialog({
   onSubmit,
   loading,
 }: AttachCurrencyDialogProps) {
-  const form = useForm<AttachProjectCurrencyValues, undefined, AttachProjectCurrencyValues>({
-    resolver: zodResolver(attachProjectCurrencySchema),
+  const form = useForm<AttachProjectCurrencyValues>({
+    resolver: zodResolver(attachProjectCurrencySchema) as any,
     defaultValues: { currency_id: 0, balance: '' },
   });
 
