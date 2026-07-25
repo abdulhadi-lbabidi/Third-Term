@@ -18,12 +18,12 @@ import type { Fund } from '../types';
 type FundsFormProps = {
   defaultValues?: Fund | null;
   userId?: number;
-  onSubmit: (data: FundsFormValues) => Promise<void>;
+  onSubmit: (data: FundFormValues) => Promise<void>;
   loading?: boolean;
 };
 
 export function FundsForm({ defaultValues, userId, onSubmit, loading }: FundsFormProps) {
-  const form = useForm<FundsFormValues>({
+  const form = useForm<FundFormValues>({
     resolver: zodResolver(fundFormSchema),
     defaultValues: {
       user_id: userId ?? defaultValues?.user?.id ?? 0,

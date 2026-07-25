@@ -39,7 +39,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   const isLoading = currentDirId ? isLoadingDir : isLoadingRoot;
 
-  const currentFolders = currentDirId ? (currentDirectory?.sub_directories || []) : rootDirectories;
+  const currentFolders = currentDirId ? (currentDirectory?.children || []) : rootDirectories;
   const currentFiles = currentDirId ? (currentDirectory?.files || []) : [];
 
   const handleNavigate = (id: number | null) => {
@@ -67,11 +67,17 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   };
 
   const filteredFolders = useMemo(() => {
-    return currentFolders.filter(d => d.dir_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return currentFolders.filter(d => {
+      const name = d.dir_name || '';
+      return name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
   }, [currentFolders, searchQuery]);
 
   const filteredFiles = useMemo(() => {
-    return currentFiles.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return currentFiles.filter(f => {
+      const name = f.file_name || '';
+      return name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
   }, [currentFiles, searchQuery]);
 
   return (

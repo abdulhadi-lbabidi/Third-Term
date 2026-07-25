@@ -34,7 +34,7 @@ export function DeleteItemDialog({ item, type, open, onOpenChange }: DeleteItemD
     } else {
       const file = item as CloudFile;
       deleteFile(
-        { directoryId: file.directory_id, fileId: file.id },
+        { directoryId: file.directory_id ?? 0, fileId: file.id },
         {
           onSuccess: () => onOpenChange(false),
         }
@@ -42,7 +42,7 @@ export function DeleteItemDialog({ item, type, open, onOpenChange }: DeleteItemD
     }
   };
 
-  const itemName = item ? (type === 'folder' ? (item as Directory).dir_name : (item as CloudFile).name) : '';
+  const itemName = item ? (type === 'folder' ? (item as Directory).dir_name : (item as CloudFile).file_name) : '';
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

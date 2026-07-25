@@ -46,7 +46,7 @@ export function RenameItemDialog({ item, type, open, onOpenChange }: RenameItemD
   useEffect(() => {
     if (item && open) {
       form.reset({
-        name: type === 'folder' ? (item as Directory).dir_name : (item as CloudFile).name,
+        name: type === 'folder' ? (item as Directory).dir_name : (item as CloudFile).file_name,
       });
     }
   }, [item, open, type, form]);

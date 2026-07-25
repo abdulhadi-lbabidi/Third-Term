@@ -1,4 +1,4 @@
-import { Folder, MoreVertical, Pencil, Trash2, Download } from 'lucide-react';
+import { Folder, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
 import type { Directory } from '../../types';
@@ -11,14 +11,16 @@ interface FolderCardProps {
 }
 
 export function FolderCard({ folder, onClick, onRename, onDelete }: FolderCardProps) {
+  const name = folder.dir_name || (folder as any).name || 'بدون اسم';
+
   return (
     <div 
       className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/60 bg-slate-50/50 p-6 transition-all hover:border-emerald-200 hover:bg-emerald-50/30 hover:shadow-sm cursor-pointer"
       onClick={() => onClick(folder)}
     >
       <Folder className="size-10 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 truncate w-full text-center" title={folder.dir_name}>
-        {folder.dir_name}
+      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 truncate w-full text-center" title={name}>
+        {name}
       </span>
 
       <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>

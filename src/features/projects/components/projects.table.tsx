@@ -1,4 +1,4 @@
-import { Banknote, Eye, WalletMinimal } from 'lucide-react';
+import { Eye, WalletMinimal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
