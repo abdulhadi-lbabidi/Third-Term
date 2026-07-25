@@ -3,14 +3,15 @@
 When building any new feature, department, or module in this project, strictly follow these standards:
 
 ## 1. Workflow Steps
-1. **Read the PRD**: Check `PRD.md` to understand requirements, statistics, and CRUD operations + [APIs](financial_nouh_api.postman_collection.json)
-
-2. **Database Analysis**: Check `DB.sql` to extract Types and Relations.
-3. **Generate Types & APIs**: Build the interfaces and API endpoints.
-4. **Build UI Components**: Cards, Tables, Forms, and Dialogs.
-5. **Page Assembly**: Combine components in the main department page.
-6. **Router**: Add the route in `src/app/router/index.tsx`.
-7. **Sidebar**: Add the section to `src/features/layouts/components/sidebar.tsx`.
+1. **Read the PRD**: Check `PRD.md` to understand requirements, statistics, and CRUD operations. 
+2. **API Validation**: Test each API with Postman to ensure it works correctly before proceeding [APIs](financial_nouh_api.postman_collection.json).
+3. **Database Analysis**: Check `DB.sql` to extract Types and Relations.
+4. **Generate Types & APIs**: Build the interfaces and API endpoints.
+5. **Build UI Components**: Cards, Tables, Forms, and Dialogs.
+6. **Page Assembly**: Combine components in the main department page.
+7. **Router**: Add the route in `src/app/router/index.tsx`.
+8. **Sidebar**: Add the section to `src/features/layouts/components/sidebar.tsx`.
+9. **Testing & Validation**: Run CLI validation (`tsc`/linter), update API test lists, and resolve UI problem scenarios.
 
 ## 2. File Architecture (Clean Architecture)
 Put every feature inside `src/features/` with this exact structure:
@@ -24,7 +25,7 @@ src/features/{department_name}/
 │   └── {department}-tabs.tsx  # Navigation tabs (if applicable)
 ├── {department}.api.ts            # Axios calls (GET, POST, PATCH, DELETE)
 ├── types.ts                   # Interfaces/Types
-└── {department}.page.tsx      # Main wrapper page
+└── {department}.page.tsx      # Main   wrapper page
 ```
 
 ## 3. From DB to APIs
@@ -43,3 +44,10 @@ src/features/{department_name}/
 - **Clarity**: Use clear, actionable verbs (e.g., "Add New Box" instead of "Submit").
 - **Confirmation Dialogs**: For destructive actions like delete, prompt the user with "Are you sure you want to delete [Item Name]? This action cannot be undone."
 - **Toasts**: Use `sonner` to display green success or red error messages upon completing CRUD operations.
+
+## 6. API Testing & Problem Scenarios
+- **API Test List**: Every new API you add MUST be added to a testing list.
+- **Problem Scenarios Report**: Create a report to track all UI problem scenarios and edge cases you resolve, and add it to the project documentation.
+- **UI Updates**: Update the user interface accordingly based on testing and problem resolution.
+- **CLI Validation**: Test each modified or newly created file via the CLI to ensure there are no errors (e.g., using `tsc` or linter).
+- **Workflow Priority**: These steps must be completed before continuing with the rest of the workflow steps.

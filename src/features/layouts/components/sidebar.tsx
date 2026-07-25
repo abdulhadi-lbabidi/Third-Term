@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Globe, LogOut, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Globe, LogOut, Users, Banknote } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,11 @@ type SidebarProps = {
   onLogout: () => void;
 };
 
-const navItems = [{ to: '/users', label: 'Users', icon: Users }];
+const navItems = [
+  { to: '/users', label: 'Users', icon: Users },
+  { to: '/funds', label: 'Funds', icon: Users },
+  { to: '/currencies', label: 'Currencies', icon: Banknote },
+];
 
 export function Sidebar({ onLogout }: SidebarProps) {
   const { i18n } = useTranslation();
@@ -32,7 +36,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
     >
       <div className="border-b px-4 py-5">
         <div className="flex items-center justify-between gap-3">
-          {!collapsed ? ( 
+          {!collapsed ? (
             <div className="space-y-1">
               <p className="text-lg font-bold text-[#111827]">Admin</p>
               <p className="text-sm text-[#6b7280]">admin@gmail.com</p>
@@ -98,20 +102,20 @@ export function Sidebar({ onLogout }: SidebarProps) {
             <Globe className="size-4" />
             {!collapsed ? (isArabic ? 'AR' : 'EN') : null}
           </Button>
-         <Button
-          variant="outline"
-          className={cn(
-            'h-12 rounded-2xl border-red-200 bg-red-50 font-bold text-red-500 hover:bg-red-100 hover:text-red-600',
-            collapsed ? 'w-full justify-center px-0 tracking-[0.12em]' : 'w-fit tracking-[0.28em]'
-          )}
-          onClick={onLogout}
-        >
-          <LogOut className="size-4" />
-          {!collapsed ? null : null}
-        </Button>
+          <Button
+            variant="outline"
+            className={cn(
+              'h-12 rounded-2xl border-red-200 bg-red-50 font-bold text-red-500 hover:bg-red-100 hover:text-red-600',
+              collapsed ? 'w-full justify-center px-0 tracking-[0.12em]' : 'w-fit tracking-[0.28em]'
+            )}
+            onClick={onLogout}
+          >
+            <LogOut className="size-4" />
+            {!collapsed ? null : null}
+          </Button>
         </div>
 
-      
+
       </div>
     </aside>
   );
