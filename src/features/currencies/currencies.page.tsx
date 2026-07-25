@@ -1,66 +1,25 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
-import { currenciesApi } from './currencies.api';
 import { CurrencyTable } from './components/currency.table';
 import { CurrencyDialog } from './components/currency.dialog';
 import type { Currency, CreateCurrencyPayload } from './types';
+import { useCurrencies, useMutateCurrency, useDeleteCurrency } from './currencies.hooks';
 
 export function CurrenciesPage() {
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const fetchCurrencies = async () => {
-    setLoading(true);
-    try {
-      const data = await currenciesApi.getCurrencies();
-      setCurrencies(data);
-    } catch (error) {
-      console.error('[DEBUG - fetchCurrencies] Error:', error);
-      toast.error('تعذر جلب العملات');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchCurrencies();
-  }, []);
+  const { data: currencies = [], isLoading: loading } = useCurrencies();
+  const { mutateAsync: saveCurrency, isPending: isSaving } = useMutateCurrency();
+  const { mutateAsync: deleteCurrency } = useDeleteCurrency();
 
   const handleCreateOrUpdate = async (payload: CreateCurrencyPayload) => {
-    setSubmitting(true);
-    try {
-      if (selectedCurrency) {
-        const updated = await currenciesApi.updateCurrency(selectedCurrency.id, payload);
-        setCurrencies((prev) => prev.map((currency) => (currency.id === updated.id ? updated : currency)));
-        toast.success('تم تعديل العملة بنجاح');
-      } else {
-        const created = await currenciesApi.createCurrency(payload);
-        setCurrencies((prev) => [...prev, created]);
-        toast.success('تم إنشاء العملة بنجاح');
-      }
-      setDialogOpen(false);
-    } catch (error: any) {
-      console.error('[DEBUG - handleCreateOrUpdate] Error:', error);
-      toast.error(error?.response?.data?.message || 'تعذر حفظ العملة');
-      throw error;
-    } finally {
-      setSubmitting(false);
-    }
+    await saveCurrency({ id: selectedCurrency?.id, payload });
+    setDialogOpen(false);
   };
 
   const handleDelete = async (currency: Currency) => {
-    try {
-      await currenciesApi.deleteCurrency(currency.id);
-      setCurrencies((prev) => prev.filter((item) => item.id !== currency.id));
-      toast.success('تم حذف العملة بنجاح');
-    } catch (error) {
-      console.error('[DEBUG - handleDelete] Error:', error);
-      toast.error('تعذر حذف العملة');
-    }
+    await deleteCurrency(currency.id);
   };
 
   const openCreateDialog = () => {
@@ -104,7 +63,7 @@ export function CurrenciesPage() {
         onOpenChange={setDialogOpen}
         currency={selectedCurrency}
         onSubmit={handleCreateOrUpdate}
-        loading={submitting}
+        loading={isSaving}
       />
     </div>
   );

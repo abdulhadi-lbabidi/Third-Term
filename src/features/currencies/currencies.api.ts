@@ -1,28 +1,9 @@
-import { apiClient } from '@/shared/api/axios.instance';
-import type { Currency, CreateCurrencyPayload, UpdateCurrencyPayload } from './types';
+import { ApiClient } from '@/shared/api/api-client';
+import type { Currency, CreateCurrencyPayload } from './types';
 
 export const currenciesApi = {
-  getCurrencies: async (): Promise<Currency[]> => {
-    const response = await apiClient.get('/currencies');
-    return response.data;
-  },
-
-  getCurrencyById: async (id: number): Promise<Currency> => {
-    const response = await apiClient.get(`/currencies/${id}`);
-    return response.data;
-  },
-
-  createCurrency: async (payload: CreateCurrencyPayload): Promise<Currency> => {
-    const response = await apiClient.post('/currencies', payload);
-    return response.data;
-  },
-
-  updateCurrency: async (id: number, payload: UpdateCurrencyPayload): Promise<Currency> => {
-    const response = await apiClient.patch(`/currencies/${id}`, payload);
-    return response.data;
-  },
-
-  deleteCurrency: async (id: number): Promise<void> => {
-    await apiClient.delete(`/currencies/${id}`);
-  },
+  getAll: () => ApiClient.get<Currency[]>('/currencies').then(res => res.data),
+  create: (payload: CreateCurrencyPayload) => ApiClient.post<Currency>('/currencies', payload, { successMessage: "تمت الإضافة بنجاح" }),
+  update: (id: number, payload: CreateCurrencyPayload) => ApiClient.patch<Currency>(`/currencies/${id}`, payload, { successMessage: "تم التعديل بنجاح" }),
+  delete: (id: number) => ApiClient.delete(`/currencies/${id}`, { successMessage: "تم الحذف بنجاح" }),
 };

@@ -1,4 +1,4 @@
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Currency } from '../types';
 
