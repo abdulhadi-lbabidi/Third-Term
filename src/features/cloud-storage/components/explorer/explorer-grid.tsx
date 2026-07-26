@@ -10,6 +10,7 @@ import { CreateFolderDialog } from './create-folder.dialog';
 import { RenameItemDialog } from './rename-item.dialog';
 import { DeleteItemDialog } from './delete-item.dialog';
 import { UploadFilesDialog } from './upload-files.dialog';
+import { FilePreviewDialog } from '../FilePreviewDialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
 interface CloudStorageExplorerProps {
@@ -30,6 +31,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   const [renameItem, setRenameItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
   const [deleteItem, setDeleteItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
+  const [previewFile, setPreviewFile] = useState<CloudFile | null>(null);
 
   // Fetch data
   const { data: rootDirectories = [], isLoading: isLoadingRoot } = useDirectories({
@@ -153,6 +155,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
               onRename={(f) => setRenameItem({ item: f, type: 'file' })}
               onDelete={(f) => setDeleteItem({ item: f, type: 'file' })}
               onDownload={handleDownloadFile}
+              onPreview={setPreviewFile}
             />
           ))}
         </div>
@@ -184,6 +187,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         open={isUploadOpen}
         onOpenChange={setIsUploadOpen}
         directoryId={actionTargetDirId}
+      />
+
+      <FilePreviewDialog
+        file={previewFile}
+        open={!!previewFile}
+        onOpenChange={(open) => !open && setPreviewFile(null)}
       />
     </div>
   );

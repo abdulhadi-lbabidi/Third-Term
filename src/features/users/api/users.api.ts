@@ -1,4 +1,4 @@
-import { ApiClient } from '@/shared/api/api-client';
+import { apiClient } from '@/shared/api/axios.instance';
 import type {
   AdminRecord,
   ClientRecord,
@@ -30,7 +30,7 @@ export const usersApi = {
   ): Promise<
     AdminRecord | ClientRecord | InvestorRecord | CraftsmanRecord | EmployeeRecord | EngineerRecord | SupplierRecord | TrusteeRecord
   > => {
-    return ApiClient.get<any>(`${endpointByRole[role]}/${id}`).then(res => res.data);
+    return apiClient.get<any>(`${endpointByRole[role]}/${id}`).then(res => res.data);
   },
 
   getUsersByRole: (
@@ -45,19 +45,19 @@ export const usersApi = {
     | SupplierRecord[]
     | TrusteeRecord[]
   > => {
-    return ApiClient.get<any>(endpointByRole[role]).then(res => res.data);
+    return apiClient.get<any>(endpointByRole[role]).then(res => res.data);
   },
 
   createUser: (payload: CreateUserPayload): Promise<unknown> => {
     const endpoint = endpointByRole[payload.role];
-    return ApiClient.post<any>(endpoint, payload).then(res => res.data);
+    return apiClient.post<any>(endpoint, payload).then(res => res.data);
   },
 
   updateUserByRole: (role: UserRole, id: number, payload: Partial<CreateUserPayload>): Promise<unknown> => {
-    return ApiClient.patch<any>(`${endpointByRole[role]}/${id}`, payload).then(res => res.data);
+    return apiClient.patch<any>(`${endpointByRole[role]}/${id}`, payload).then(res => res.data);
   },
 
   deleteUserByRole: (role: UserRole, id: number): Promise<void> => {
-    return ApiClient.delete(`${endpointByRole[role]}/${id}`).then(() => {});
+    return apiClient.delete(`${endpointByRole[role]}/${id}`).then(() => { });
   },
 };

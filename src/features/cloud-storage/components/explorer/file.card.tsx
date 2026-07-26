@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import {
-  File as FileIcon, MoreVertical, Trash2, Download, Image as ImageIcon, FileText, Eye, FileSpreadsheet
-} from 'lucide-react';
+import { MoreVertical, Trash2, Download, Eye } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -42,6 +40,7 @@ export function FileCard({ file, selected, onSelect,
         e.preventDefault();
         e.stopPropagation();
         setMenuOpen(true);
+        onPreview?.(file)
       }}
       className={cn(
         "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all cursor-pointer hover:shadow-sm",
