@@ -1,6 +1,6 @@
 // import i18n from "../i18n/config";
 
-import { toast } from "sonner";
+import toast from 'react-hot-toast';
 
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -634,8 +634,9 @@ export const ApiClient = createApi({
   showToast: (message, type) => {
     if (type === "success") toast.success(message);
     else if (type === "error") toast.error(message);
-    else if (type === "warning") toast.warning(message);
-    else if (type === "info") toast.info(message);
+    else if (type === "warning") toast(message);
+    else if (type === "info") toast(message);
     else toast(message);
   }
 });
+

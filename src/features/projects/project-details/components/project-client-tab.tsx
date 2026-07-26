@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User, Phone, Mail, MapPin, Building2, Pencil } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { projectsApi } from '../../projects.api';
 import { ProjectsDialog } from '../../components/projects.dialog';
@@ -152,3 +152,4 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
     </div>
   );
 }
+

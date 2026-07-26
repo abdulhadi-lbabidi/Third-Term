@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { itemsApi } from './items.api';
 import { ItemsDialog } from './components/items.dialog';
@@ -94,3 +94,4 @@ export function ItemsPage() {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { UploadCloud } from 'lucide-react';
 import { useDirectories, useDirectory, useMoveItems } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile } from '../../types';
@@ -140,7 +140,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
                 setIsUploadOpen(true);
               }}
               onDownload={() => {
-                toast.info('تحميل المجلد غير متاح حالياً');
+                toast('تحميل المجلد غير متاح حالياً');
               }}
               onDropItem={handleDropItem}
             />
@@ -188,3 +188,4 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     </div>
   );
 }
+

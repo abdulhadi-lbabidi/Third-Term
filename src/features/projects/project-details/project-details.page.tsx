@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Wallet, User, Cloud, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectsApi } from '../projects.api';
@@ -123,3 +123,4 @@ export function ProjectDetailsPage() {
     </div>
   );
 }
+
