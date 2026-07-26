@@ -4,10 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui/button';
 import { projectsApi } from '../../projects.api';
-import { usersApi } from '@/features/users/api/users.api';
 import { ProjectsDialog } from '../../components/projects.dialog';
 import type { Project, CreateProjectPayload, ProjectStatus } from '../../types';
-import type { ClientRecord } from '@/features/users/types';
 
 const projectStatusMap: Record<ProjectStatus, { label: string; color: string }> = {
   pending: { label: 'قيد الانتظار', color: 'text-amber-600 bg-amber-50 border-amber-100' },
@@ -20,10 +18,6 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const clientsQuery = useQuery<ClientRecord[]>({
-    queryKey: ['clients'] as const,
-    queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]>,
-  });
 
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
     queryKey: ['departments'] as const,
@@ -59,8 +53,8 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
           <h2 className="text-xl font-semibold tracking-tight text-slate-900">العميل والتعاقد</h2>
           <p className="text-sm text-slate-500 mt-1">البيانات الخاصة بالعميل وتفاصيل التعاقد للمشروع</p>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setDialogOpen(true)}
           className="gap-2 rounded-xl text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
         >
@@ -149,7 +143,6 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         project={project}
-        clients={clientsQuery.data || []}
         departments={departmentsQuery.data || []}
         onSubmit={async (data) => {
           await saveMutation.mutateAsync(data);

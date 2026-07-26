@@ -25,7 +25,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   // Dialogs state
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  
+
   const [renameItem, setRenameItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
   const [deleteItem, setDeleteItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
 
@@ -70,7 +70,8 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     return currentFolders.filter(d => {
       const name = d.dir_name || '';
       return name.toLowerCase().includes(searchQuery.toLowerCase());
-    });
+    })
+    // .filter(a => a.parent_dir_id == null)
   }, [currentFolders, searchQuery]);
 
   const filteredFiles = useMemo(() => {
@@ -82,7 +83,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <ExplorerHeader 
+      <ExplorerHeader
         breadcrumbs={breadcrumbs}
         onNavigate={handleNavigate}
         onNewFolder={() => setIsCreateFolderOpen(true)}
@@ -114,7 +115,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
               onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
             />
           ))}
-          
+
           {filteredFiles.map((file) => (
             <FileCard
               key={`file-${file.id}`}

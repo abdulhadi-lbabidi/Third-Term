@@ -15,12 +15,13 @@ import {
 } from '@/shared/components/ui/select';
 import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
+import { useQuery } from '@tanstack/react-query';
+import { usersApi } from '@/features/users/api/users.api';
 
 type ProjectsFormValues = CreateProjectPayload;
 
 type ProjectsFormProps = {
   defaultValues?: Project | null;
-  clients: ClientRecord[];
   departments: { id: number; name: string }[];
   onSubmit: (data: ProjectsFormValues) => Promise<void>;
   loading?: boolean;
@@ -41,13 +42,15 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
   { value: 'cancelled', label: 'ملغى' },
 ];
 
-export function ProjectsForm({ defaultValues, clients, departments, onSubmit, loading }: ProjectsFormProps) {
-
+export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {
+  const { data: clients } = useQuery<ClientRecord[]>(
+    { queryKey: ['clients'] as const, queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]> }
+  );
   const form = useForm<ProjectsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       department_id: departments[0]?.id ?? 0,
-      client_id: defaultValues?.client?.id ?? clients[0]?.id ?? 0,
+      client_id: defaultValues?.client?.id ?? clients?.[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
       expected_cost: defaultValues?.expected_cost ?? 0,
       status: defaultValues?.status ?? 'pending',
@@ -57,7 +60,7 @@ export function ProjectsForm({ defaultValues, clients, departments, onSubmit, lo
   useEffect(() => {
     form.reset({
       department_id: departments[0]?.id ?? 0,
-      client_id: defaultValues?.client?.id ?? clients[0]?.id ?? 0,
+      client_id: defaultValues?.client?.id ?? clients?.[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
       expected_cost: defaultValues?.expected_cost ?? 0,
       status: defaultValues?.status ?? 'pending',
@@ -116,7 +119,7 @@ export function ProjectsForm({ defaultValues, clients, departments, onSubmit, lo
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {clients.map((client) => (
+                  {clients?.map((client) => (
                     <SelectItem key={client.id} value={client.id.toString()}>
                       {client.user.name}
                     </SelectItem>
