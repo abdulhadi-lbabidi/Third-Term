@@ -19,7 +19,7 @@ interface ApiResponse<T = unknown> {
     total: number;
   };
 }
-
+//
 interface ApiOptions {
   query?: boolean;
   msgs?: boolean;
@@ -622,7 +622,7 @@ function linkAbortSignal(
 }
 
 export const ApiClient = createApi({
-  baseUrl: import.meta.env.VITE_API_URL || "https://nouh-finance-api.nouh-agency.com/api",
+  baseUrl: import.meta.env.VITE_API_URL,
   getToken: () => localStorage.getItem("token"),
   getCsrfToken: () => document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
   credentials: "omit",
