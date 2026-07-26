@@ -13,6 +13,8 @@ import { ItemsPage } from '@/features/items/items.page';
 import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
 import { DepartmentsPage } from '@/features/departments/departments.page';
 import { CloudStoragePage } from '@/features/cloud-storage/cloud-storage.page';
+import { ExpensesPage } from '@/features/expenses/expenses.page';
+import { NewExpensePage } from '@/features/expenses/new-expense.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -91,6 +93,14 @@ export const router = createBrowserRouter([
           {
             path: '/employee-payments',
             element: <EmployeePaymentsPage />,
+          },
+          {
+            path: '/expenses',
+            element: <ExpensesPage />,
+          },
+          {
+            path: '/expenses/new',
+            element: <NewExpensePage />,
           },
           {
             path: '/employees/:employeeId/:employeeName/payments',

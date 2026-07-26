@@ -9,7 +9,8 @@ import type {
 export const projectFundsApi = {
   getProjectFunds: async (): Promise<ProjectFund[]> => {
     const response = await apiClient.get('/project-funds');
-    return response.data;
+    const payload = response.data as { data?: ProjectFund[] } | ProjectFund[];
+    return Array.isArray(payload) ? payload : payload.data ?? [];
   },
   createProjectFund: async (payload: CreateProjectFundPayload): Promise<ProjectFund> => {
     const response = await apiClient.post('/project-funds', payload);
