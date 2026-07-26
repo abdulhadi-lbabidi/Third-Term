@@ -7,7 +7,7 @@ export enum FileType {
   Spreadsheet = 'Spreadsheet',
   Presentation = 'Presentation',
   Text = 'Text',
-  Code = 'Code',
+  // Code = 'Code',
   Archive = 'Archive',
   Unknown = 'Unknown',
 }
@@ -21,6 +21,6 @@ export const FileTypeMap: Record<string, string[]> = {
   [FileType.Spreadsheet]: ["xls", "xlsx", "csv", "ods"],
   [FileType.Presentation]: ["ppt", "pptx", "odp"],
   [FileType.Text]: ["txt", "md", "log", "ini"],
-  [FileType.Code]: ["ts", "tsx", "js", "jsx", "json", "css", "html", "xml", "yaml", "yml", "sh", "bat", "sql"],
+  // [FileType.Code]: ["ts", "tsx", "js", "jsx", "json", "css", "html", "xml", "yaml", "yml", "sh", "bat", "sql"],
   [FileType.Archive]: ["zip", "rar", "7z", "tar", "gz", "bz2"],
 };

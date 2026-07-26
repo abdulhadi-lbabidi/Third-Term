@@ -2,8 +2,8 @@ import type { CloudFile } from '../types';
 import { FileType, FileTypeMap } from '../registry/file-types';
 
 export const getFileType = (file: CloudFile | string): FileType => {
-  const extension = typeof file === 'string' 
-    ? file.toLowerCase() 
+  const extension = typeof file === 'string'
+    ? file.toLowerCase()
     : (file.extension?.toLowerCase() || '');
 
   if (!extension) return FileType.Unknown;
@@ -24,7 +24,6 @@ export const PreviewableTypes = [
   FileType.Audio,
   FileType.Pdf,
   FileType.Text,
-  FileType.Code,
 ];
 
 export const canPreview = (file: CloudFile): boolean => {

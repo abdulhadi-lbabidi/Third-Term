@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Wallet, User, Cloud, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -18,10 +18,12 @@ export function ProjectDetailsPage() {
   const navigate = useNavigate();
   const params = useParams();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const projectId = Number(params.projectId || '');
   const projectName = params.projectName ? decodeURIComponent(params.projectName) : '';
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const defaultTab = searchParams.has('dirId') ? 'cloud' : 'financials';
 
   const projectsQuery = useQuery<Project>({
     queryKey: ['projects', projectId] as const,
@@ -80,7 +82,16 @@ export function ProjectDetailsPage() {
       />
 
       <div className="bg-white border border-slate-200/80 p-4 rounded-lg shadow-sm">
-        <Tabs defaultValue="financials" className="w-full">
+        <Tabs 
+          defaultValue={defaultTab} 
+          className="w-full"
+          onValueChange={(val) => {
+            if (val !== 'cloud') {
+              searchParams.delete('dirId');
+              setSearchParams(searchParams);
+            }
+          }}
+        >
           <TabsList className="mb-4">
             <TabsTrigger value="financials" className="gap-2">
               <Wallet className="h-4 w-4" />

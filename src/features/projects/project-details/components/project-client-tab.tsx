@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { User, Phone, Mail, MapPin, Building2, Pencil } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Button } from '@/shared/components/ui/button';
 import { projectsApi } from '../../projects.api';
 import { ProjectsDialog } from '../../components/projects.dialog';
 import type { Project, CreateProjectPayload, ProjectStatus } from '../../types';
@@ -53,14 +52,6 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
           <h2 className="text-xl font-semibold tracking-tight text-slate-900">العميل والتعاقد</h2>
           <p className="text-sm text-slate-500 mt-1">البيانات الخاصة بالعميل وتفاصيل التعاقد للمشروع</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setDialogOpen(true)}
-          className="gap-2 rounded-xl text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
-        >
-          <Pencil className="size-4" />
-          تعديل بيانات المشروع
-        </Button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

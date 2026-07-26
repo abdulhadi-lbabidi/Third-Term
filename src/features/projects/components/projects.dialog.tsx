@@ -13,7 +13,7 @@ type ProjectsDialogProps = {
 
 export function ProjectsDialog({ open, onOpenChange, project, departments, onSubmit, loading }: ProjectsDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{project ? 'تعديل المشروع' : 'إضافة مشروع جديد'}</DialogTitle>

@@ -39,3 +39,4 @@ export interface UpdateDirectoryPayload {
 export interface UploadFilesPayload {
   files: File[];
 }
+
