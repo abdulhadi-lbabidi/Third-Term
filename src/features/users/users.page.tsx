@@ -134,7 +134,7 @@ export function UsersPage() {
   const showSkeleton = usersQuery.isFetching && !usersQuery.data;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
@@ -174,3 +174,4 @@ export function UsersPage() {
     </div>
   );
 }
+
