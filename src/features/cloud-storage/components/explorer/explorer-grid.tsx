@@ -10,6 +10,7 @@ import { CreateFolderDialog } from './create-folder.dialog';
 import { RenameItemDialog } from './rename-item.dialog';
 import { DeleteItemDialog } from './delete-item.dialog';
 import { UploadFilesDialog } from './upload-files.dialog';
+import { FilePreviewDialog } from '../FilePreviewDialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
 interface CloudStorageExplorerProps {
@@ -30,6 +31,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   const [renameItem, setRenameItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
   const [deleteItem, setDeleteItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
+  const [previewFile, setPreviewFile] = useState<CloudFile | null>(null);
 
   // Fetch data
   const { data: rootDirectories = [], isLoading: isLoadingRoot } = useDirectories({
@@ -78,7 +80,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   };
 
   const filteredFolders = useMemo(() => {
-    return currentFolders.filter(d => {
+    return currentFolders.filter((d: any) => {
       const name = d.dir_name || '';
       return name.toLowerCase().includes(searchQuery.toLowerCase());
     })
@@ -86,7 +88,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   }, [currentFolders, searchQuery]);
 
   const filteredFiles = useMemo(() => {
-    return currentFiles.filter(f => {
+    return currentFiles.filter((f: any) => {
       const name = f.file_name || '';
       return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
@@ -124,12 +126,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {filteredFolders.map((folder) => (
+          {filteredFolders.map((folder: any) => (
             <FolderCard
               key={`folder-${folder.id}`}
               folder={folder}
               onClick={handleFolderClick}
-              onRename={(f) => setRenameItem({ item: f, type: 'folder' })}
+              onRename={(f: any) => setRenameItem({ item: f, type: 'folder' })}
               onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
               onNewFolder={(f) => {
                 setActionTargetDirId(f.id);
@@ -146,13 +148,14 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
             />
           ))}
 
-          {filteredFiles.map((file) => (
+          {filteredFiles.map((file: any) => (
             <FileCard
               key={`file-${file.id}`}
               file={file}
               onRename={(f) => setRenameItem({ item: f, type: 'file' })}
               onDelete={(f) => setDeleteItem({ item: f, type: 'file' })}
               onDownload={handleDownloadFile}
+              onPreview={setPreviewFile}
             />
           ))}
         </div>
@@ -184,6 +187,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         open={isUploadOpen}
         onOpenChange={setIsUploadOpen}
         directoryId={actionTargetDirId}
+      />
+
+      <FilePreviewDialog
+        file={previewFile}
+        open={!!previewFile}
+        onOpenChange={(open) => !open && setPreviewFile(null)}
       />
     </div>
   );

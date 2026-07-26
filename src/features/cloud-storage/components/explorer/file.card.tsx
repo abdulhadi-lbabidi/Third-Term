@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import {
-  File as FileIcon, MoreVertical, Trash2, Download, Image as ImageIcon, FileText, Eye, FileSpreadsheet
-} from 'lucide-react';
+import { toast } from 'sonner';
+import { MoreVertical, Trash2, Download, Eye } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -42,6 +41,7 @@ export function FileCard({ file, selected, onSelect,
         e.preventDefault();
         e.stopPropagation();
         setMenuOpen(true);
+        onPreview?.(file)
       }}
       className={cn(
         "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all cursor-pointer hover:shadow-sm",
@@ -50,7 +50,11 @@ export function FileCard({ file, selected, onSelect,
           : "border-slate-200/60 bg-slate-50/50 hover:border-blue-200 hover:bg-blue-50/30"
       )}
       onClick={() => {
-        if (canPreview(file)) onPreview?.(file);
+        if (canPreview(file)) {
+          onPreview?.(file);
+        } else {
+          toast.info('لا تتوفر معاينة لهذا النوع من الملفات');
+        }
       }}
     >
       <div

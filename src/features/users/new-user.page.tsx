@@ -176,7 +176,6 @@ export function NewUserPage() {
     },
     enabled: editMode && Boolean(role) && Boolean(id),
   });
-
   useEffect(() => {
     if (userQuery.data && role) {
       form.reset(mapRecordToFormValues(userQuery.data, role));
