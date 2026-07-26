@@ -157,9 +157,9 @@
 # cloud storage 
 - grid view
   - header: [search "in directory", create folder, upload files, select files to copy or move or delete]
-  - show items inside directory [files, folders]
-- create new folders [dialog,form]:{name}
-- upload files [dialog,form]:{files}
+  <!-- - show items inside directory [files, folders] -->
+<!-- - create new folders [dialog,form]:{name} -->
+<!-- - upload files [dialog,form]:{files} -->
 - delete file/folder [dialog]
 - rename file/folder [dialog,form]:{name}
 - move file/folder [drag and drop] to another directory

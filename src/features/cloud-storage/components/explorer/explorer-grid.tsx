@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import { UploadCloud } from 'lucide-react';
 import { useDirectories, useDirectory } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile } from '../../types';
@@ -25,6 +26,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   // Dialogs state
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [actionTargetDirId, setActionTargetDirId] = useState<number | null>(null);
 
   const [renameItem, setRenameItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
   const [deleteItem, setDeleteItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
@@ -86,8 +88,14 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
       <ExplorerHeader
         breadcrumbs={breadcrumbs}
         onNavigate={handleNavigate}
-        onNewFolder={() => setIsCreateFolderOpen(true)}
-        onUploadFiles={() => setIsUploadOpen(true)}
+        onNewFolder={() => {
+          setActionTargetDirId(currentDirId);
+          setIsCreateFolderOpen(true);
+        }}
+        onUploadFiles={() => {
+          setActionTargetDirId(currentDirId);
+          setIsUploadOpen(true);
+        }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -113,6 +121,17 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
               onClick={handleFolderClick}
               onRename={(f) => setRenameItem({ item: f, type: 'folder' })}
               onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
+              onNewFolder={(f) => {
+                setActionTargetDirId(f.id);
+                setIsCreateFolderOpen(true);
+              }}
+              onUploadFiles={(f) => {
+                setActionTargetDirId(f.id);
+                setIsUploadOpen(true);
+              }}
+              onDownload={() => {
+                toast.info('تحميل المجلد غير متاح حالياً');
+              }}
             />
           ))}
 
@@ -131,7 +150,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
       <CreateFolderDialog
         open={isCreateFolderOpen}
         onOpenChange={setIsCreateFolderOpen}
-        parentDirId={currentDirId}
+        parentDirId={actionTargetDirId}
         projectId={projectId}
       />
 
@@ -152,7 +171,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
       <UploadFilesDialog
         open={isUploadOpen}
         onOpenChange={setIsUploadOpen}
-        directoryId={currentDirId}
+        directoryId={actionTargetDirId}
       />
     </div>
   );
