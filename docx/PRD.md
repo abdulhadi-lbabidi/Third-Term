@@ -5,7 +5,6 @@
 - reset password `/auth/reset-password` components form {email or phone_number}
 
 # Dashboard:
-
 # HR:
 <!-- Overview: cards statistics: [ total users, employees, engineers, daily workers, craftsmen, clients, suppliers, investors, trustees] -->
 
@@ -154,7 +153,7 @@
 - update[form]: [name, symbol, rate]
 - delete[dialog]: [are you sure you want to delete this currency?]
 
-# cloud storage 
+# cloud storage
 - grid view
   - header: [search "in directory", create folder, upload files, select files to copy or move or delete]
   <!-- - show items inside directory [files, folders] -->
@@ -163,9 +162,19 @@
 - delete file/folder [dialog]
 - rename file/folder [dialog,form]:{name}
 - move file/folder [drag and drop] to another directory
-- download file/folder [dialog]
+  - files
+  <!-- - folders -->
 - cards: [file,folder]
-- options[on_click_menu,dialog]: [preview, download, rename, delete, new folder, upload files]
+  - view icon for extenion type: pdf,excel,images,
+- options[on_click_menu,dialog]:
+  - preview
+  - download
+  <!-- - rename -->
+  <!-- - delete -->
+- get for projects
+  <!-- - new folder -->
+  <!-- - upload files -->
+  
       
 ## Projects `/projects`
 

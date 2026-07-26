@@ -1,60 +1,51 @@
-import { apiClient } from '@/shared/api/axios.instance';
-import type { 
-  CloudFile, 
-  Directory, 
-  CreateDirectoryPayload, 
-  UpdateDirectoryPayload 
+import { ApiClient } from '@/shared/api/api-client';
+import type {
+  CloudFile,
+  Directory,
+  CreateDirectoryPayload,
+  UpdateDirectoryPayload
 } from '../types';
 
 export const cloudStorageApi = {
-  getDirectories: async (params?: { parent_dir_id?: number | null; project_id?: number | null }): Promise<Directory[]> => {
-    const response = await apiClient.get('/directories', { params });
-    // Assuming the response might be paginated or just an array
-    return response.data.data || response.data;
-  },
+  getDirectories: (params?: { parent_dir_id?: number | null; project_id?: number | null }) => 
+    ApiClient.get<Directory[]>('/directories', { params }).then(res => res.data as any),
 
-  getDirectory: async (id: number): Promise<Directory> => {
-    const response = await apiClient.get(`/directories/${id}`);
-    const data = response.data.data || response.data;
-    return Array.isArray(data) ? data[0] : data;
-  },
+  getDirectory: (id: number) => 
+    ApiClient.get<Directory>(`/directories/${id}`).then(res => Array.isArray(res.data) ? res.data[0] : res.data),
 
-  createDirectory: async (payload: CreateDirectoryPayload): Promise<Directory> => {
-    const response = await apiClient.post('/directories', payload);
-    return response.data.data || response.data;
-  },
+  createDirectory: (payload: CreateDirectoryPayload) => 
+    ApiClient.post<Directory>('/directories', payload, { successMessage: "تم إنشاء المجلد بنجاح" }),
 
-  updateDirectory: async (id: number, payload: UpdateDirectoryPayload): Promise<Directory> => {
-    const response = await apiClient.patch(`/directories/${id}`, payload);
-    return response.data.data || response.data;
-  },
+  updateDirectory: (id: number, payload: UpdateDirectoryPayload) => 
+    ApiClient.put<Directory>(`/directories/${id}`, payload, { successMessage: "تم تحديث المجلد بنجاح" }),
 
-  deleteDirectory: async (id: number): Promise<void> => {
-    await apiClient.delete(`/directories/${id}`);
-  },
+  deleteDirectory: (id: number) => 
+    ApiClient.delete(`/directories/${id}`, { successMessage: "تم حذف المجلد بنجاح" }),
 
-  uploadFiles: async (directoryId: number, files: File[]): Promise<CloudFile[]> => {
+  uploadFiles: (directoryId: number, files: File[]) => {
     const formData = new FormData();
     files.forEach((file, index) => {
       formData.append(`files[${index}]`, file);
     });
 
-    const response = await apiClient.post(`/directories/${directoryId}/files`, formData, {
+    return ApiClient.post<CloudFile[]>(`/directories/${directoryId}/files`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      successMessage: "تم رفع الملفات بنجاح"
     });
-    return response.data.data || response.data;
   },
 
-  deleteFile: async (directoryId: number, fileId: number): Promise<void> => {
-    await apiClient.delete(`/directories/${directoryId}/files/${fileId}`);
-  },
+  deleteFile: (directoryId: number, fileId: number) => 
+    ApiClient.delete(`/directories/${directoryId}/files/${fileId}`, { successMessage: "تم حذف الملف بنجاح" }),
 
-  // Mocked Move API since it doesn't exist yet
-  moveItems: async (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder' }[] }): Promise<void> => {
-    // In a real scenario, this would be an API call like POST /directories/move
-    console.log('Mock Move Items:', payload);
-    return new Promise((resolve) => setTimeout(resolve, 500));
+  moveItems: (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder'; data?: any }[] }) => {
+    const promises = payload.itemIds.map((item) =>
+      ApiClient.put(`/directories/${item.id}`, {
+        parent_dir_id: payload.targetDirId
+      }, { successMessage: "تم نقل العناصر بنجاح" })
+    );
+
+    return Promise.all(promises);
   },
 };

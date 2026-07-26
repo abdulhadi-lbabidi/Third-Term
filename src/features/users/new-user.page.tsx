@@ -36,6 +36,10 @@ const userRoleLabels: Record<UserRole, string> = {
   trustee: 'الوصي',
 };
 
+function isUserRole(value: string | null): value is UserRole {
+  return Boolean(value && userRoles.includes(value as UserRole));
+}
+
 const baseSchema = z
   .object({
     name: z.string().min(1, 'الاسم مطلوب'),
@@ -153,8 +157,15 @@ export function NewUserPage() {
   const role = params.role as UserRole | undefined;
   const id = params.id ? Number(params.id) : undefined;
   const returnRole = searchParams.get('tab');
+  const initialRole = isUserRole(returnRole) ? returnRole : 'admin';
 
-  const form = useForm<NewUserFormValues>({ resolver: zodResolver(baseSchema), defaultValues });
+  const form = useForm<NewUserFormValues>({
+    resolver: zodResolver(baseSchema),
+    defaultValues: {
+      ...defaultValues,
+      role: initialRole,
+    },
+  });
   const watchedRole = form.watch('role');
 
   const userQuery = useQuery({
@@ -171,6 +182,16 @@ export function NewUserPage() {
       form.reset(mapRecordToFormValues(userQuery.data, role));
     }
   }, [form, role, userQuery.data]);
+
+  useEffect(() => {
+    if (!editMode && isUserRole(returnRole) && form.getValues('role') !== returnRole) {
+      form.setValue('role', returnRole, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: true,
+      });
+    }
+  }, [editMode, form, returnRole]);
 
   const saveMutation = useMutation({
     mutationFn: async (values: NewUserFormValues) => {
@@ -267,4 +288,3 @@ export function NewUserPage() {
     </Card>
   );
 }
-

@@ -627,6 +627,7 @@ export const ApiClient = createApi({
   getCsrfToken: () => document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
   credentials: "omit",
   exposeErrorDetails: true,
+  getLang: () => localStorage.getItem("lang") || "ar",
   // retry: 3,
   // retryDelay: 10000
 

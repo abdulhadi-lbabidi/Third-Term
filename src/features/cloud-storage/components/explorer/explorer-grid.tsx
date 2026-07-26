@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { UploadCloud } from 'lucide-react';
-import { useDirectories, useDirectory } from '../../hooks/cloud-storage.hooks';
+import { useDirectories, useDirectory, useMoveItems } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile } from '../../types';
 import { ExplorerHeader } from './explorer-header';
 import { FolderCard } from './folder.card';
@@ -38,8 +38,17 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   });
 
   const { data: currentDirectory, isLoading: isLoadingDir } = useDirectory(currentDirId as number);
+  const { mutate: moveItems } = useMoveItems();
 
   const isLoading = currentDirId ? isLoadingDir : isLoadingRoot;
+
+  const handleDropItem = (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: any }) => {
+    if (item.type === 'folder' && item.id === targetFolderId) return;
+    moveItems({
+      targetDirId: targetFolderId,
+      itemIds: [item],
+    });
+  };
 
   const currentFolders = currentDirId ? (currentDirectory?.children || []) : rootDirectories;
   const currentFiles = currentDirId ? (currentDirectory?.files || []) : [];
@@ -98,6 +107,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onDropItem={handleDropItem}
       />
 
       {isLoading ? (
@@ -132,6 +142,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
               onDownload={() => {
                 toast.info('تحميل المجلد غير متاح حالياً');
               }}
+              onDropItem={handleDropItem}
             />
           ))}
 
@@ -166,6 +177,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         onOpenChange={(open) => !open && setDeleteItem(null)}
         item={deleteItem?.item ?? null}
         type={deleteItem?.type ?? 'folder'}
+        currentDirId={currentDirId}
       />
 
       <UploadFilesDialog

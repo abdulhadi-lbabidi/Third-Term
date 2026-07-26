@@ -65,7 +65,7 @@ export function DataTable<T>({
   const actionCount = (actions?.extraActions?.length ?? 0) + Number(Boolean(actions?.onEdit)) + Number(Boolean(actions?.onDelete));
 
   return (
-    <div className="flex min-h-0 max-h-[calc(100dvh-14rem)] flex-1 flex-col overflow-hidden rounded-lg border bg-card text-center shadow-sm">
+    <div className="flex min-h-0 max-h-[calc(100dvh-13rem)] flex-1 flex-col overflow-hidden rounded-lg border bg-card text-center shadow-sm">
       <div className="min-h-0 flex-1 overflow-auto">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">

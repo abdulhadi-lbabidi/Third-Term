@@ -16,9 +16,10 @@ interface DeleteItemDialogProps {
   type: 'folder' | 'file';
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  currentDirId?: number | null;
 }
 
-export function DeleteItemDialog({ item, type, open, onOpenChange }: DeleteItemDialogProps) {
+export function DeleteItemDialog({ item, type, open, onOpenChange, currentDirId }: DeleteItemDialogProps) {
   const { mutate: deleteDirectory, isPending: isDeletingDir } = useDeleteDirectory();
   const { mutate: deleteFile, isPending: isDeletingFile } = useDeleteFile();
 
@@ -33,8 +34,9 @@ export function DeleteItemDialog({ item, type, open, onOpenChange }: DeleteItemD
       });
     } else {
       const file = item as CloudFile;
+      const dirId = file.directory_id || currentDirId || 0;
       deleteFile(
-        { directoryId: file.directory_id ?? 0, fileId: file.id },
+        { directoryId: dirId, fileId: file.id },
         {
           onSuccess: () => onOpenChange(false),
         }

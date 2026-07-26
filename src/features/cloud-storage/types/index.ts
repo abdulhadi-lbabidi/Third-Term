@@ -33,6 +33,7 @@ export interface CreateDirectoryPayload {
 export interface UpdateDirectoryPayload {
   dir_name?: string;
   dir_path?: string;
+  parent_dir_id?: number | null;
 }
 
 export interface UploadFilesPayload {

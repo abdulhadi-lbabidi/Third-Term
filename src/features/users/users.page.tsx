@@ -135,7 +135,7 @@ export function UsersPage() {
   const showSkeleton = usersQuery.isFetching && !usersQuery.data;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <PageHeader
         badge="المستخدمون"
         title="المستخدمون"
@@ -171,3 +171,4 @@ export function UsersPage() {
     </div>
   );
 }
+

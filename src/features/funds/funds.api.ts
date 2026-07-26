@@ -4,7 +4,7 @@ import type { CreateFundPayload, Fund, FundCurrencyAttachPayload, UpdateFundPayl
 export const fundsApi = {
   getFunds: async (): Promise<Fund[]> => {
     const response = await apiClient.get('/funds');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
   },
 
   createFund: async (payload: CreateFundPayload): Promise<Fund> => {

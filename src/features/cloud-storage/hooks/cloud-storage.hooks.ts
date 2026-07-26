@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { cloudStorageApi } from '../api/cloud-storage.api';
 import type { CreateDirectoryPayload, UpdateDirectoryPayload } from '../types';
 
@@ -24,11 +23,7 @@ export const useCreateDirectory = () => {
   return useMutation({
     mutationFn: (payload: CreateDirectoryPayload) => cloudStorageApi.createDirectory(payload),
     onSuccess: () => {
-      toast.success('تم إنشاء المجلد بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
-    },
-    onError: () => {
-      toast.error('حدث خطأ أثناء إنشاء المجلد');
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
     },
   });
 };
@@ -39,12 +34,8 @@ export const useUpdateDirectory = () => {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateDirectoryPayload }) =>
       cloudStorageApi.updateDirectory(id, payload),
-    onSuccess: (_,) => {
-      toast.success('تم تحديث المجلد بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
-    },
-    onError: () => {
-      toast.error('حدث خطأ أثناء تحديث المجلد');
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
     },
   });
 };
@@ -55,11 +46,7 @@ export const useDeleteDirectory = () => {
   return useMutation({
     mutationFn: (id: number) => cloudStorageApi.deleteDirectory(id),
     onSuccess: () => {
-      toast.success('تم حذف المجلد بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
-    },
-    onError: () => {
-      toast.error('حدث خطأ أثناء حذف المجلد');
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
     },
   });
 };
@@ -71,12 +58,8 @@ export const useUploadFiles = () => {
     mutationFn: ({ directoryId, files }: { directoryId: number; files: File[] }) =>
       cloudStorageApi.uploadFiles(directoryId, files),
     onSuccess: (_, variables) => {
-      toast.success('تم رفع الملفات بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
-      queryClient.invalidateQueries({ queryKey: ['directories', variables.directoryId] });
-    },
-    onError: () => {
-      toast.error('حدث خطأ أثناء رفع الملفات');
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
+      void queryClient.invalidateQueries({ queryKey: ['directories', variables.directoryId] });
     },
   });
 };
@@ -88,12 +71,8 @@ export const useDeleteFile = () => {
     mutationFn: ({ directoryId, fileId }: { directoryId: number; fileId: number }) =>
       cloudStorageApi.deleteFile(directoryId, fileId),
     onSuccess: (_, variables) => {
-      toast.success('تم حذف الملف بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
-      queryClient.invalidateQueries({ queryKey: ['directories', variables.directoryId] });
-    },
-    onError: () => {
-      toast.error('حدث خطأ أثناء حذف الملف');
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
+      void queryClient.invalidateQueries({ queryKey: ['directories', variables.directoryId] });
     },
   });
 };
@@ -102,14 +81,11 @@ export const useMoveItems = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder' }[] }) =>
-      cloudStorageApi.moveItems(payload),
-    onSuccess: () => {
-      toast.success('تم نقل العناصر بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
+    mutationFn: (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder'; data?: any }[] }) => {
+      return cloudStorageApi.moveItems(payload);
     },
-    onError: () => {
-      toast.error('حدث خطأ أثناء نقل العناصر');
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
     },
   });
 };

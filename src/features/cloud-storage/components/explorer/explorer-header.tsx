@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Folder, UploadCloud, ChevronLeft, Search } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { cn } from '@/shared/lib/utils';
 
 interface ExplorerHeaderProps {
   breadcrumbs: { id: number | null; name: string }[];
@@ -9,6 +11,7 @@ interface ExplorerHeaderProps {
   onUploadFiles: () => void;
   searchQuery: string;
   onSearchChange: (val: string) => void;
+  onDropItem?: (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: any }) => void;
 }
 
 export function ExplorerHeader({
@@ -18,7 +21,38 @@ export function ExplorerHeader({
   onUploadFiles,
   searchQuery,
   onSearchChange,
+  onDropItem,
 }: ExplorerHeaderProps) {
+  const [dragOverId, setDragOverId] = useState<number | null | 'root'>(null);
+
+  const handleDragOver = (e: React.DragEvent<HTMLElement>, id: number | null | 'root') => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes('application/json')) {
+      e.dataTransfer.dropEffect = 'move';
+      setDragOverId(id);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>, targetId: number | null) => {
+    e.preventDefault();
+    setDragOverId(null);
+    
+    try {
+      const data = e.dataTransfer.getData('application/json');
+      if (data) {
+        const item = JSON.parse(data);
+        if (item.type === 'folder' && item.id === targetId) return;
+        onDropItem?.(targetId, item);
+      }
+    } catch (err) {
+      console.error('Failed to parse dropped item', err);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
       <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
@@ -26,9 +60,14 @@ export function ExplorerHeader({
           <div key={crumb.id ?? 'root'} className="flex items-center">
             <button
               onClick={() => onNavigate(crumb.id)}
-              className={`text-sm font-medium hover:text-slate-900 transition-colors whitespace-nowrap ${
-                index === breadcrumbs.length - 1 ? 'text-slate-900' : 'text-slate-500'
-              }`}
+              onDragOver={(e) => handleDragOver(e, crumb.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, crumb.id)}
+              className={cn(
+                "text-sm font-medium hover:text-slate-900 transition-colors whitespace-nowrap rounded-md px-2 py-1",
+                index === breadcrumbs.length - 1 ? 'text-slate-900' : 'text-slate-500',
+                dragOverId === crumb.id ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500' : ''
+              )}
             >
               {crumb.name}
             </button>
