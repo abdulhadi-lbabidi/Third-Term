@@ -6,9 +6,8 @@ import { Button } from '@/shared/components/ui/button';
 import { projectsApi } from './projects.api';
 import { ProjectsDialog } from './components/projects.dialog';
 import { ProjectsTable } from './components/projects.table';
-import { usersApi } from '@/features/users/api/users.api';
-import type { ClientRecord } from '@/features/users/types';
 import type { CreateProjectPayload, Project } from './types';
+import { PageHeader } from '../components/page-header';
 
 const projectsQueryKeys = {
   all: ['projects'] as const,
@@ -23,11 +22,6 @@ export function ProjectsPage() {
   const projectsQuery = useQuery<Project[]>({
     queryKey: projectsQueryKeys.all,
     queryFn: () => projectsApi.getProjects(),
-  });
-
-  const clientsQuery = useQuery<ClientRecord[]>({
-    queryKey: ['clients'] as const,
-    queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]>,
   });
 
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
@@ -79,22 +73,18 @@ export function ProjectsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-              المشاريع
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">المشاريع</h1>
-          </div>
+      <PageHeader
+        badge="المشاريع"
+        title="المشاريع"
+        action={
           <Button
             onClick={handleCreate}
             className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
           >
             إضافة مشروع جديد
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <ProjectsTable
         data={Array.isArray(projectsQuery.data) ? projectsQuery.data : []}
@@ -119,7 +109,6 @@ export function ProjectsPage() {
           if (!open) setSelectedProject(null);
         }}
         project={selectedProject}
-        clients={clientsQuery.data ?? []}
         departments={departmentsQuery.data ?? []}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}

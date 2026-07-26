@@ -1,24 +1,91 @@
+import { useState } from 'react';
 import { Folder, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/lib/utils';
 import type { Directory } from '../../types';
 
 interface FolderCardProps {
   folder: Directory;
+  selected?: boolean;
+  onSelect?: (folder: Directory, selected: boolean) => void;
   onClick: (folder: Directory) => void;
   onRename: (folder: Directory) => void;
   onDelete: (folder: Directory) => void;
+  onDropItem?: (targetFolderId: number, item: { type: 'file' | 'folder'; id: number }) => void;
 }
 
-export function FolderCard({ folder, onClick, onRename, onDelete }: FolderCardProps) {
+export function FolderCard({ folder, selected, onSelect, onClick, onRename, onDelete, onDropItem }: FolderCardProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const name = folder.dir_name || (folder as any).name || 'بدون اسم';
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'folder', id: folder.id }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes('application/json')) {
+      e.dataTransfer.dropEffect = 'move';
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    try {
+      const data = e.dataTransfer.getData('application/json');
+      if (data) {
+        const item = JSON.parse(data);
+        // Don't drop folder into itself
+        if (item.type === 'folder' && item.id === folder.id) return;
+        onDropItem?.(folder.id, item);
+      }
+    } catch (err) {
+      console.error('Failed to parse dropped item', err);
+    }
+  };
 
   return (
     <div 
-      className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/60 bg-slate-50/50 p-6 transition-all hover:border-emerald-200 hover:bg-emerald-50/30 hover:shadow-sm cursor-pointer"
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={cn(
+        "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all cursor-pointer hover:shadow-sm",
+        isDragOver
+          ? "border-emerald-500 bg-emerald-100/50 shadow-md scale-105"
+          : selected 
+            ? "border-emerald-400 bg-emerald-50/50 shadow-sm"
+            : "border-slate-200/60 bg-slate-50/50 hover:border-emerald-200 hover:bg-emerald-50/30"
+      )}
       onClick={() => onClick(folder)}
     >
-      <Folder className="size-10 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+      <div 
+        className={cn(
+          "absolute top-3 right-3 transition-opacity z-10",
+          selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input 
+          type="checkbox" 
+          className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+          checked={selected}
+          onChange={(e) => onSelect?.(folder, e.target.checked)}
+        />
+      </div>
+
+      <Folder className={cn("size-10 transition-colors", isDragOver ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
       <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 truncate w-full text-center" title={name}>
         {name}
       </span>

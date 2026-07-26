@@ -50,4 +50,11 @@ export const cloudStorageApi = {
   deleteFile: async (directoryId: number, fileId: number): Promise<void> => {
     await apiClient.delete(`/directories/${directoryId}/files/${fileId}`);
   },
+
+  // Mocked Move API since it doesn't exist yet
+  moveItems: async (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder' }[] }): Promise<void> => {
+    // In a real scenario, this would be an API call like POST /directories/move
+    console.log('Mock Move Items:', payload);
+    return new Promise((resolve) => setTimeout(resolve, 500));
+  },
 };

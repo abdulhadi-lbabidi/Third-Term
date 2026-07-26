@@ -10,6 +10,7 @@ import { fundsApi } from './funds.api';
 import type { CreateFundPayload, Fund } from './types';
 import { currenciesApi } from '@/features/currencies/currencies.api';
 import type { Currency } from '@/features/currencies/types';
+import { PageHeader } from '../components/page-header';
 
 const fundsQueryKeys = {
   all: ['funds'] as const,
@@ -111,15 +112,10 @@ export function FundsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">المالية</div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              {hasUserId ? `صناديق ${userName || 'المستخدم'}` : 'الصناديق'}
-            </h1>
-          
-          </div>
+      <PageHeader
+        badge="المالية"
+        title={hasUserId ? `صناديق ${userName || 'المستخدم'}` : 'الصناديق'}
+        action={
           <div className="flex gap-3">
             {!hasUserId ? (
               <Button type="button" variant="outline" onClick={() => navigate('/users')} className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold">
@@ -130,8 +126,8 @@ export function FundsPage() {
               إضافة صندوق جديد
             </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <FundsTable
         data={visibleFunds}

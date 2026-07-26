@@ -97,3 +97,19 @@ export const useDeleteFile = () => {
     },
   });
 };
+
+export const useMoveItems = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder' }[] }) =>
+      cloudStorageApi.moveItems(payload),
+    onSuccess: () => {
+      toast.success('تم نقل العناصر بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['directories'] });
+    },
+    onError: () => {
+      toast.error('حدث خطأ أثناء نقل العناصر');
+    },
+  });
+};

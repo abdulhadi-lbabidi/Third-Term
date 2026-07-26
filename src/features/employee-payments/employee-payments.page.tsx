@@ -10,6 +10,7 @@ import { employeePaymentsApi } from './employee-payments.api';
 import { EmployeePaymentsDialog } from './components/employee-payments.dialog';
 import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
+import { PageHeader } from '../components/page-header';
 
 const employeePaymentsQueryKeys = {
   all: ['employee-payments'] as const,
@@ -82,16 +83,10 @@ export function EmployeePaymentsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0 space-y-1">
-            <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-              الموظفون
-            </div>
-            <h1 className="truncate text-3xl font-semibold tracking-tight text-slate-950">
-              {selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : 'رواتب الموظفين'}
-            </h1>
-          </div>
+      <PageHeader
+        badge="الموظفون"
+        title={selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : 'رواتب الموظفين'}
+        action={
           <div className="flex shrink-0 items-center gap-3">
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
@@ -141,8 +136,8 @@ export function EmployeePaymentsPage() {
               إضافة راتب جديد
             </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <EmployeePaymentsTable
         data={visiblePayments}
