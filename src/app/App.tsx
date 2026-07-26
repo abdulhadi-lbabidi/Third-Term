@@ -11,7 +11,7 @@ export function App() {
     <DirectionProvider dir="rtl">
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster position="top-center" richColors dir="rtl" />
+        {/* <Toaster position="top-center" richColors dir="rtl" /> */}
       </QueryClientProvider>
     </DirectionProvider>
   );

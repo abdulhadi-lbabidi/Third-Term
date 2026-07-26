@@ -103,8 +103,7 @@ export function DataTable<T>({
                         <DropdownMenuContent align="end" className="w-52">
                           {actions?.onEdit ? (
                             <DropdownMenuItem
-                              onSelect={(event) => {
-                                event.preventDefault();
+                              onSelect={() => {
                                 actions.onEdit?.(row);
                               }}
                             >
@@ -117,8 +116,7 @@ export function DataTable<T>({
                             ? actions.extraActions.map((action) => (
                               <DropdownMenuItem
                                 key={action.label}
-                                onSelect={(event) => {
-                                  event.preventDefault();
+                                onSelect={() => {
                                   action.onClick(row);
                                 }}
                               >
@@ -132,8 +130,7 @@ export function DataTable<T>({
                             <>
                               {(actions?.onEdit || actions?.extraActions?.length) ? <DropdownMenuSeparator /> : null}
                               <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
+                                onSelect={() => {
                                   setPendingDelete(row);
                                 }}
                                 className="text-destructive focus:text-destructive"
