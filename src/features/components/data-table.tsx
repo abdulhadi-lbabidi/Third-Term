@@ -100,15 +100,17 @@ export function DataTable<T>({
                             <MoreVertical className="size-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuContent align="start" className="w-52">
                           {actions?.onEdit ? (
                             <DropdownMenuItem
                               onSelect={() => {
-                                actions.onEdit?.(row);
+                                setTimeout(() => {
+                                  actions.onEdit?.(row);
+                                }, 0);
                               }}
                             >
-                              <span>تعديل</span>
                               <Pencil className="size-4" />
+                              <span>تعديل</span>
                             </DropdownMenuItem>
                           ) : null}
 
@@ -117,11 +119,13 @@ export function DataTable<T>({
                               <DropdownMenuItem
                                 key={action.label}
                                 onSelect={() => {
-                                  action.onClick(row);
+                                  setTimeout(() => {
+                                    action.onClick(row);
+                                  }, 0);
                                 }}
                               >
-                                <span>{action.label}</span>
                                 {action.icon}
+                                <span>{action.label}</span>
                               </DropdownMenuItem>
                             ))
                             : null}
@@ -131,12 +135,14 @@ export function DataTable<T>({
                               {(actions?.onEdit || actions?.extraActions?.length) ? <DropdownMenuSeparator /> : null}
                               <DropdownMenuItem
                                 onSelect={() => {
-                                  setPendingDelete(row);
+                                  setTimeout(() => {
+                                    setPendingDelete(row);
+                                  }, 0);
                                 }}
                                 className="text-destructive focus:text-destructive"
                               >
-                                <span>حذف</span>
                                 <Trash2 className="size-4" />
+                                <span>حذف</span>
                               </DropdownMenuItem>
                             </>
                           ) : null}

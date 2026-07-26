@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { MoreVertical, Trash2, Download, Eye } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
@@ -49,7 +50,11 @@ export function FileCard({ file, selected, onSelect,
           : "border-slate-200/60 bg-slate-50/50 hover:border-blue-200 hover:bg-blue-50/30"
       )}
       onClick={() => {
-        if (canPreview(file)) onPreview?.(file);
+        if (canPreview(file)) {
+          onPreview?.(file);
+        } else {
+          toast.info('لا تتوفر معاينة لهذا النوع من الملفات');
+        }
       }}
     >
       <div
