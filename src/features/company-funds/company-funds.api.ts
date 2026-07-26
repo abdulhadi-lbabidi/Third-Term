@@ -9,7 +9,7 @@ import type {
 export const companyFundsApi = {
   getCompanyFunds: async (): Promise<CompanyFund[]> => {
     const response = await apiClient.get('/company-funds');
-    return response.data;
+    return response.data.data
   },
 
   createCompanyFund: async (payload: CreateCompanyFundPayload): Promise<CompanyFund> => {

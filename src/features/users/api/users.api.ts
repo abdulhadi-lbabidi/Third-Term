@@ -30,7 +30,7 @@ export const usersApi = {
   ): Promise<
     AdminRecord | ClientRecord | InvestorRecord | CraftsmanRecord | EmployeeRecord | EngineerRecord | SupplierRecord | TrusteeRecord
   > => {
-    return apiClient.get<any>(`${endpointByRole[role]}/${id}`).then(res => res.data);
+    return apiClient.get<any>(`${endpointByRole[role]}/${id}`).then(({ data }: any) => data?.data);
   },
 
   getUsersByRole: (
@@ -45,7 +45,7 @@ export const usersApi = {
     | SupplierRecord[]
     | TrusteeRecord[]
   > => {
-    return apiClient.get<any>(endpointByRole[role]).then(res => res.data);
+    return apiClient.get<any>(endpointByRole[role]).then(({ data }: any) => data?.data);
   },
 
   createUser: (payload: CreateUserPayload): Promise<unknown> => {

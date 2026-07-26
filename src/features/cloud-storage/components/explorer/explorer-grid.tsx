@@ -80,7 +80,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   };
 
   const filteredFolders = useMemo(() => {
-    return currentFolders.filter(d => {
+    return currentFolders.filter((d: any) => {
       const name = d.dir_name || '';
       return name.toLowerCase().includes(searchQuery.toLowerCase());
     })
@@ -88,7 +88,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   }, [currentFolders, searchQuery]);
 
   const filteredFiles = useMemo(() => {
-    return currentFiles.filter(f => {
+    return currentFiles.filter((f: any) => {
       const name = f.file_name || '';
       return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
@@ -126,12 +126,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {filteredFolders.map((folder) => (
+          {filteredFolders.map((folder: any) => (
             <FolderCard
               key={`folder-${folder.id}`}
               folder={folder}
               onClick={handleFolderClick}
-              onRename={(f) => setRenameItem({ item: f, type: 'folder' })}
+              onRename={(f: any) => setRenameItem({ item: f, type: 'folder' })}
               onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
               onNewFolder={(f) => {
                 setActionTargetDirId(f.id);
@@ -148,7 +148,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
             />
           ))}
 
-          {filteredFiles.map((file) => (
+          {filteredFiles.map((file: any) => (
             <FileCard
               key={`file-${file.id}`}
               file={file}

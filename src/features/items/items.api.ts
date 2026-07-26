@@ -4,11 +4,11 @@ import type { CreateItemPayload, Item, UpdateItemPayload } from './types';
 export const itemsApi = {
   getItems: async (): Promise<Item[]> => {
     const response = await apiClient.get('/items');
-    return response.data;
+    return response.data.data
   },
   createItem: async (payload: CreateItemPayload): Promise<Item> => {
     const response = await apiClient.post('/items', payload);
-    return response.data;
+    return response.data.data;
   },
   updateItem: async (id: number, payload: UpdateItemPayload): Promise<Item> => {
     const response = await apiClient.patch(`/items/${id}`, payload);
