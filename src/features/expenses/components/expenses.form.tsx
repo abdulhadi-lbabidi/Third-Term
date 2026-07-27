@@ -92,6 +92,7 @@ const sourceToExpenseableType: Record<ExpenseSource, ExpenseableType> = {
 };
 
 function getSourceFromType(type?: string): ExpenseSource {
+  if (type === 'App\\Models\\CompanyFundCurrency') return 'company_fund';
   if (type === 'App\\Models\\ProjectFundCurrency') return 'project_fund';
   if (type === 'App\\Models\\CurrencyFund') return 'user_fund';
   return 'company_fund';
@@ -113,28 +114,56 @@ function getRoleLabel(role: UserRole | '') {
   return role ? roleLabels[role] : '';
 }
 
+function getInitialSource(expense?: Expense | null): ExpenseSource {
+  return getSourceFromType(expense?.expenseable_type);
+}
+
 export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormProps) {
   const navigate = useNavigate();
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      source: getSourceFromType(defaultValues?.expenseable_type),
+      source: getInitialSource(defaultValues),
       expenseable_type: defaultValues?.expenseable_type ?? sourceToExpenseableType.company_fund,
-      expenseable_id: defaultValues?.expenseable_id,
-      company_fund_id: undefined,
+      expenseable_id: defaultValues?.expenseable_id ?? defaultValues?.expenseable_info?.id,
+      company_fund_id: defaultValues?.expenseable_info?.company_fund_id ?? undefined,
       user_role: defaultValues?.user_role ?? '',
       user_id: defaultValues?.user_id ?? undefined,
       fund_user_role: '',
       fund_user_id: undefined,
       user_fund_id: undefined,
       project_fund_id: undefined,
-      project_id: undefined,
+      project_id: defaultValues?.expenseable_info?.project_id ?? undefined,
       description: defaultValues?.description ?? '',
       amount: Number(defaultValues?.amount ?? 0),
       is_posted: Boolean(defaultValues?.is_posted ?? true),
-      created_by: defaultValues?.created_by ?? 1,
+      created_by:  1,
     },
   });
+
+  useEffect(() => {
+    if (!defaultValues) {
+      return;
+    }
+
+    form.reset({
+      source: getInitialSource(defaultValues),
+      expenseable_type: defaultValues.expenseable_type ?? sourceToExpenseableType.company_fund,
+      expenseable_id: defaultValues.expenseable_id ?? defaultValues.expenseable_info?.id,
+      company_fund_id: defaultValues.expenseable_info?.company_fund_id ?? undefined,
+      user_role: defaultValues.user_role ?? '',
+      user_id: defaultValues.user_id ?? undefined,
+      fund_user_role: '',
+      fund_user_id: undefined,
+      user_fund_id: undefined,
+      project_fund_id: defaultValues.expenseable_info?.id ?? undefined,
+      project_id: defaultValues.expenseable_info?.project_id ?? undefined,
+      description: defaultValues.description ?? '',
+      amount: Number(defaultValues.amount ?? 0),
+      is_posted: Boolean(defaultValues.is_posted ?? true),
+      created_by: defaultValues.created_by ?? 1,
+    });
+  }, [defaultValues, form]);
 
   const source = form.watch('source');
   const companyFundId = form.watch('company_fund_id');
@@ -363,7 +392,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
             amount: values.amount,
             is_posted: values.is_posted,
             user_id: values.user_id ?? 1,
-            created_by: values.created_by ?? 1,
+            created_by: 1,
           });
         })}
       >
@@ -409,6 +438,175 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
             </FormItem>
           )}
         />
+
+        {source === 'company_fund' ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="company_fund_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>صناديق الشركة</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.setValue('expenseable_id', undefined);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        {field.value
+                          ? (selectedCompanyFundName || 'اختر صندوق الشركة')
+                          : <SelectValue placeholder="اختر صندوق الشركة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {companyFunds.map((fund) => (
+                        <SelectItem key={fund.id} value={String(fund.id)}>
+                          {getCompanyFundLabel(fund)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expenseable_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عملة الصندوق</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    disabled={!derivedCompanyFundId}
+                  >
+                    <FormControl>
+                      <SelectTrigger disabled={!derivedCompanyFundId}>
+                        {field.value
+                          ? (selectedCompanyCurrencyName || 'اختر العملة')
+                          : <SelectValue placeholder="اختر العملة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(selectedCompanyFund?.currencies ?? []).map((currency) => (
+                        <SelectItem key={currency.id} value={String(currency.id)}>
+                          {getCurrencyLabel(currency)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : null}
+
+        {source === 'project_fund' ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="project_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>المشروع</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.setValue('project_fund_id', undefined);
+                      form.setValue('expenseable_id', undefined);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        {field.value ? selectedProjectName : <SelectValue placeholder="اختر المشروع" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={String(project.id)}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="project_fund_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>صندوق المشروع</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.setValue('expenseable_id', undefined);
+                    }}
+                    disabled={!selectedProjectId}
+                  >
+                    <FormControl>
+                      <SelectTrigger disabled={!selectedProjectId}>
+                        {field.value
+                          ? (selectedProjectFundName || 'اختر صندوق المشروع')
+                          : <SelectValue placeholder="اختر صندوق المشروع" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {projectFunds.map((fund) => (
+                        <SelectItem key={fund.id} value={String(fund.id)}>
+                          {fund.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expenseable_id"
+              render={({ field }) => (
+                <FormItem className="">
+                  <FormLabel>عملة الصندوق</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    disabled={!derivedProjectFundId}
+                  >
+                    <FormControl>
+                      <SelectTrigger disabled={!derivedProjectFundId}>
+                        {field.value
+                          ? (selectedProjectCurrencyName || 'اختر العملة')
+                          : <SelectValue placeholder="اختر العملة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(selectedProjectFund?.currencies ?? []).map((currency) => (
+                        <SelectItem key={currency.id} value={String(currency.id)}>
+                          {getCurrencyLabel(currency)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : null}
 
         {source === 'user_fund' ? (
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
@@ -599,13 +797,13 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                   <FormControl>
                     <SelectTrigger disabled={!userRole}>
                       {field.value
-                        ? (roleUsers.find((user) => user.id === field.value)?.user.name ?? 'اختر المستخدم')
+                        ? (roleUsers.find((user) => user?.user.id === field.value)?.user.name ?? 'اختر المستخدم')
                         : <SelectValue placeholder="اختر المستخدم" />}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {roleUsers.map((user) => (
-                      <SelectItem key={user.id} value={String(user.id)}>
+                      <SelectItem key={user?.user.id} value={String(user.user.id)}>
                         {user.user.name}
                       </SelectItem>
                     ))}
@@ -616,175 +814,6 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
             )}
           />
         </div>
-
-        {source === 'company_fund' ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="company_fund_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>صناديق الشركة</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.setValue('expenseable_id', undefined);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        {field.value
-                          ? (selectedCompanyFundName || 'اختر صندوق الشركة')
-                          : <SelectValue placeholder="اختر صندوق الشركة" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {companyFunds.map((fund) => (
-                        <SelectItem key={fund.id} value={String(fund.id)}>
-                          {getCompanyFundLabel(fund)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="expenseable_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>عملة الصندوق</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    disabled={!derivedCompanyFundId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!derivedCompanyFundId}>
-                        {field.value
-                          ? (selectedCompanyCurrencyName || 'اختر العملة')
-                          : <SelectValue placeholder="اختر العملة" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(selectedCompanyFund?.currencies ?? []).map((currency) => (
-                        <SelectItem key={currency.id} value={String(currency.id)}>
-                          {getCurrencyLabel(currency)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        ) : null}
-
-        {source === 'project_fund' ? (
-          <div className="grid gap-4 md:grid-cols-3">
-            <FormField
-              control={form.control}
-              name="project_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المشروع</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.setValue('project_fund_id', undefined);
-                      form.setValue('expenseable_id', undefined);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        {field.value ? selectedProjectName : <SelectValue placeholder="اختر المشروع" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={String(project.id)}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="project_fund_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>صندوق المشروع</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.setValue('expenseable_id', undefined);
-                    }}
-                    disabled={!selectedProjectId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!selectedProjectId}>
-                        {field.value
-                          ? (selectedProjectFundName || 'اختر صندوق المشروع')
-                          : <SelectValue placeholder="اختر صندوق المشروع" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {projectFunds.map((fund) => (
-                        <SelectItem key={fund.id} value={String(fund.id)}>
-                          {fund.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="expenseable_id"
-              render={({ field }) => (
-                <FormItem className="">
-                  <FormLabel>عملة الصندوق</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    disabled={!derivedProjectFundId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!derivedProjectFundId}>
-                        {field.value
-                          ? (selectedProjectCurrencyName || 'اختر العملة')
-                          : <SelectValue placeholder="اختر العملة" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(selectedProjectFund?.currencies ?? []).map((currency) => (
-                        <SelectItem key={currency.id} value={String(currency.id)}>
-                          {getCurrencyLabel(currency)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        ) : null}
 
         <FormField
           control={form.control}

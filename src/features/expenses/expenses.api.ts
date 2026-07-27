@@ -8,6 +8,11 @@ export const expensesApi = {
     return Array.isArray(payload) ? payload : payload.data ?? [];
   },
 
+  getExpenseById: async (id: number): Promise<Expense> => {
+    const response = await apiClient.get(`/expenses/${id}`);
+    return response.data;
+  },
+
   createExpense: async (payload: CreateExpensePayload): Promise<Expense> => {
     const response = await apiClient.post('/expenses', payload);
     return response.data;
@@ -22,4 +27,3 @@ export const expensesApi = {
     await apiClient.delete(`/expenses/${id}`);
   },
 };
-

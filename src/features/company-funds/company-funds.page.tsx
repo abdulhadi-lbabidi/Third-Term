@@ -8,7 +8,9 @@ import { companyFundsApi } from './company-funds.api';
 import { CompanyFundsDialog } from './components/company-funds.dialog';
 import { CompanyFundsTable } from './components/company-funds.table';
 import { AttachCurrencyDialog } from './components/attach-currency.dialog';
-import type { CompanyFund, CreateCompanyFundPayload } from './types';
+import { CompanyFundCurrenciesDialog } from './components/company-fund-currencies.dialog';
+import { CompanyFundCurrencyDialog } from './components/company-fund-currency.dialog';
+import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
 import { PageHeader } from '../components/page-header';
 
 const companyFundsQueryKeys = {
@@ -19,8 +21,12 @@ export function CompanyFundsPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
+  const [currenciesDialogOpen, setCurrenciesDialogOpen] = useState(false);
+  const [currencyEditDialogOpen, setCurrencyEditDialogOpen] = useState(false);
   const [selectedCompanyFund, setSelectedCompanyFund] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundForCurrency, setSelectedCompanyFundForCurrency] = useState<CompanyFund | null>(null);
+  const [selectedCompanyFundForView, setSelectedCompanyFundForView] = useState<CompanyFund | null>(null);
+  const [selectedCompanyFundCurrency, setSelectedCompanyFundCurrency] = useState<CompanyFundCurrency | null>(null);
 
   const companyFundsQuery = useQuery<CompanyFund[]>({
     queryKey: companyFundsQueryKeys.all,
@@ -67,6 +73,23 @@ export function CompanyFundsPage() {
     },
   });
 
+  const updateCurrencyMutation = useMutation({
+    mutationFn: async (payload: { currency_id: number; balance: string }) => {
+      if (!selectedCompanyFund) {
+        throw new Error('صندوق الشركة غير محدد');
+      }
+      return companyFundsApi.attachCurrency(selectedCompanyFund.id, payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      setCurrencyEditDialogOpen(false);
+      setSelectedCompanyFundCurrency(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تعديل العملة');
+    },
+  });
+
   const handleSubmit = async (payload: CreateCompanyFundPayload) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedCompanyFund ? 'تم تعديل صندوق الشركة بنجاح' : 'تم إنشاء صندوق الشركة بنجاح');
@@ -75,6 +98,13 @@ export function CompanyFundsPage() {
   const handleDelete = async (fund: CompanyFund) => {
     await deleteMutation.mutateAsync(fund);
     toast.success('تم حذف صندوق الشركة بنجاح');
+  };
+
+  const openCurrencyEditDialog = (fund: CompanyFund, currencyId: number) => {
+    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
+    setSelectedCompanyFund(fund);
+    setSelectedCompanyFundCurrency(currency);
+    setCurrencyEditDialogOpen(true);
   };
 
   const handleAttachCurrency = async (payload: { currency_id: number; balance: string }) => {
@@ -112,6 +142,11 @@ export function CompanyFundsPage() {
           setSelectedCompanyFundForCurrency(fund);
           setAttachDialogOpen(true);
         }}
+        onCurrencyClick={openCurrencyEditDialog}
+        onMoreCurrenciesClick={(fund) => {
+          setSelectedCompanyFundForView(fund);
+          setCurrenciesDialogOpen(true);
+        }}
       />
 
       <CompanyFundsDialog
@@ -133,6 +168,30 @@ export function CompanyFundsPage() {
         currencies={currenciesQuery.data ?? []}
         onSubmit={handleAttachCurrency}
         loading={attachMutation.isPending}
+      />
+
+      <CompanyFundCurrenciesDialog
+        open={currenciesDialogOpen}
+        onOpenChange={(open) => {
+          setCurrenciesDialogOpen(open);
+          if (!open) setSelectedCompanyFundForView(null);
+        }}
+        fund={selectedCompanyFundForView}
+        onCurrencyClick={openCurrencyEditDialog}
+      />
+
+      <CompanyFundCurrencyDialog
+        open={currencyEditDialogOpen}
+        onOpenChange={(open) => {
+          setCurrencyEditDialogOpen(open);
+          if (!open) setSelectedCompanyFundCurrency(null);
+        }}
+        currency={selectedCompanyFundCurrency}
+        onSubmit={async (payload) => {
+          await updateCurrencyMutation.mutateAsync(payload);
+          toast.success('تم تعديل العملة بنجاح');
+        }}
+        loading={updateCurrencyMutation.isPending}
       />
     </div>
   );

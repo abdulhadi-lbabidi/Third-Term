@@ -9,11 +9,19 @@ export type Expense = {
   id: number;
   expenseable_type?: ExpenseableType;
   expenseable_id?: number;
+  expenseable_info?: {
+    type?: ExpenseSource;
+    company_fund_id?: number;
+    project_id?: number;
+    id?: number;
+  };
   user_role?: string;
+  user?: string;
   description: string;
   amount: string;
   is_posted?: boolean;
   user_id?: number;
+  created_by_name?: string;
   created_by?: number;
   created_at?: string;
 };

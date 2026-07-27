@@ -12,7 +12,9 @@ const navItems = [
   { to: '/users', label: 'المستخدمون', icon: Users },
   { to: '/company-funds', label: 'صناديق الشركة', icon: Wallet },
   { to: '/projects', label: 'المشاريع', icon: FolderKanban },
+  { to: '/materials', label: 'المواد', icon: ListChecks },
   { to: '/items', label: 'البنود', icon: ListChecks },
+
   { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
   { to: '/expenses', label: 'المصروفات', icon: ReceiptText },
   { to: '/currencies', label: 'العملات', icon: Banknote },
