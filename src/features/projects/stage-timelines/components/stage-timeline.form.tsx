@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Button } from '@/shared/components/ui/button';
+import { Button, buttonVariants } from '@/shared/components/ui/button';
 import {
   Form,
   FormControl,
@@ -19,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
+import { Slider } from '@/shared/components/ui/slider';
+import { Calendar } from '@/shared/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { cn, formatArabicDate } from '@/shared/lib/utils';
 import type { StageTimeline, CreateStageTimelinePayload } from '../stage-timelines.types';
 
 const formSchema = z.object({
@@ -100,11 +106,35 @@ export function StageTimelineForm({
             control={form.control}
             name="start_date"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col mt-2.5">
                 <FormLabel>تاريخ البدء</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
+                <Popover>
+                  <FormControl>
+                    <PopoverTrigger
+                      className={buttonVariants({
+                        variant: 'outline',
+                        className: cn(
+                          'w-full pl-3 text-right font-normal h-10 px-4 py-2 flex justify-between items-center',
+                          !field.value && 'text-muted-foreground'
+                        )
+                      })}
+                    >
+                      {field.value ? (
+                        formatArabicDate(new Date(field.value))
+                      ) : (
+                        <span>اختر تاريخ</span>
+                      )}
+                      <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                    </PopoverTrigger>
+                  </FormControl>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -113,11 +143,35 @@ export function StageTimelineForm({
             control={form.control}
             name="expected_end_date"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col mt-2.5">
                 <FormLabel>الانتهاء المتوقع</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
+                <Popover>
+                  <FormControl>
+                    <PopoverTrigger
+                      className={buttonVariants({
+                        variant: 'outline',
+                        className: cn(
+                          'w-full pl-3 text-right font-normal h-10 px-4 py-2 flex justify-between items-center',
+                          !field.value && 'text-muted-foreground'
+                        )
+                      })}
+                    >
+                      {field.value ? (
+                        formatArabicDate(new Date(field.value))
+                      ) : (
+                        <span>اختر تاريخ</span>
+                      )}
+                      <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                    </PopoverTrigger>
+                  </FormControl>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -128,13 +182,22 @@ export function StageTimelineForm({
           <FormField
             control={form.control}
             name="status"
-            render={({ field }) => (
+            render={({ field }) => {
+              const statusLabels: Record<string, string> = {
+                pending: 'قيد الانتظار',
+                in_progress: 'قيد التنفيذ',
+                completed: 'مكتمل',
+                cancelled: 'ملغى',
+              };
+              return (
               <FormItem>
                 <FormLabel>الحالة</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="h-10">
-                      <SelectValue placeholder="اختر الحالة" />
+                      <SelectValue placeholder="اختر الحالة">
+                        {field.value ? statusLabels[field.value] : null}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -146,7 +209,7 @@ export function StageTimelineForm({
                 </Select>
                 <FormMessage />
               </FormItem>
-            )}
+            )}}
           />
 
           <FormField
@@ -154,15 +217,17 @@ export function StageTimelineForm({
             name="stage_progress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>نسبة الإنجاز (%)</FormLabel>
+                <FormLabel>نسبة الإنجاز ({field.value}%)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+                  <div className="pt-3">
+                    <Slider
+                      defaultValue={[field.value]}
+                      value={[field.value]}
+                      max={100}
+                      step={1}
+                      onValueChange={(val) => field.onChange(Array.isArray(val) ? val[0] : val)}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -174,31 +239,54 @@ export function StageTimelineForm({
           control={form.control}
           name="actual_end_date"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col mt-2.5">
               <FormLabel>تاريخ الانتهاء الفعلي (اختياري)</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
+              <Popover>
+                <FormControl>
+                  <PopoverTrigger
+                    className={buttonVariants({
+                      variant: 'outline',
+                      className: cn(
+                        'w-full pl-3 text-right font-normal h-10 px-4 py-2 flex justify-between items-center',
+                        !field.value && 'text-muted-foreground'
+                      )
+                    })}
+                  >
+                    {field.value ? (
+                      formatArabicDate(new Date(field.value))
+                    ) : (
+                      <span>اختر تاريخ</span>
+                    )}
+                    <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                  </PopoverTrigger>
+                </FormControl>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
         />
 
         <div className="flex gap-3 pt-2">
-          <Button type="submit" className="flex-1" disabled={loading}>
+          <button type="submit" className={buttonVariants({ className: "flex-1" })} disabled={loading}>
             {loading ? 'جاري الحفظ...' : timeline ? 'حفظ التعديلات' : 'إضافة التفصيل الزمني'}
+          </button>
+          {/* {timeline && onDelete && ( */}
+          <Button
+            type="button"
+            className={buttonVariants({ variant: 'destructive', className: 'shrink-0' })}
+            onClick={onDelete}
+            disabled={loading}
+          >
+            حذف
           </Button>
-          {timeline && onDelete && (
-            <Button
-              type="button"
-              variant="destructive"
-              className="shrink-0"
-              onClick={onDelete}
-              disabled={loading}
-            >
-              حذف
-            </Button>
-          )}
+          {/* )} */}
         </div>
       </form>
     </Form>

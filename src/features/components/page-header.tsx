@@ -17,6 +17,7 @@ interface PageHeaderProps {
   tabs?: PageTab[];
   defaultTab?: string;
   tabParam?: string;
+  boxed?: boolean;
 }
 
 export function PageHeader({
@@ -28,6 +29,7 @@ export function PageHeader({
   tabs,
   defaultTab,
   tabParam = "tab",
+  boxed = true,
 }: PageHeaderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -47,7 +49,7 @@ export function PageHeader({
   const hasTabs = tabs && tabs.length > 0;
 
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+    <div className={cn("bg-white ", boxed ? "rounded-xl border border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]" : "")}    >
       {/* Title row */}
       <div className={cn("flex items-center justify-between gap-4 px-5 py-4", hasTabs && "pb-0")}>
         <div className="flex items-center gap-4">

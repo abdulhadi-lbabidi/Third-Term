@@ -1,10 +1,8 @@
-import { useNavigate } from 'react-router-dom';
-import { WalletMinimal, ArrowDownRight, ArrowUpRight, Receipt, Plus } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Receipt, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import type { Project } from '@/features/projects/types';
 
 export function ProjectFinancialsTab({ project }: { project: Project | null }) {
-  const navigate = useNavigate();
   if (!project) return null;
 
   return (
@@ -14,13 +12,6 @@ export function ProjectFinancialsTab({ project }: { project: Project | null }) {
           <h2 className="text-xl font-semibold tracking-tight text-slate-900">المالية والصناديق</h2>
           <p className="text-sm text-slate-500 mt-1">إدارة الصناديق، الإيرادات، المصروفات، والفواتير</p>
         </div>
-        <Button
-          className="gap-2 rounded-xl bg-slate-900 hover:bg-slate-800"
-          onClick={() => navigate(`/projects/${project.id}/${encodeURIComponent(project.name)}/funds`)}
-        >
-          <WalletMinimal className="size-4" />
-          إدارة صناديق المشروع
-        </Button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">

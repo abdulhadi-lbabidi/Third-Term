@@ -75,12 +75,12 @@
 
 # According
 ## Currencies `/currencies`
-- table details: [name, symbol, rate, actions]
+<!-- - table details: [name, symbol, rate, actions]
   - actions: [details for one, update, delete]
 - details for one[dialog]: [all data fields]
 - create[form]: [name, symbol, rate]
 - update[form]: [name, symbol, rate]
-- delete[dialog]: [are you sure you want to delete this currency?]
+- delete[dialog]: [are you sure you want to delete this currency?] -->
 
 ## Funds `/funds`
 - statistics: [total_funds, personal_funds, company_funds, project_funds, total_balance, currencies]

@@ -184,7 +184,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px]">
+      <div className="bg-white min-h-[400px]">
         <ProjectStagesTimeline
           stages={stagesWithTimelines}
           onAddTimeline={handleAddTimeline}
