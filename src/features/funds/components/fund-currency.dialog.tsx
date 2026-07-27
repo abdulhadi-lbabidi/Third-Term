@@ -52,7 +52,7 @@ export function FundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loa
             <FormField
               control={form.control}
               name="currency_id"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>العملة</FormLabel>
                   <FormControl>

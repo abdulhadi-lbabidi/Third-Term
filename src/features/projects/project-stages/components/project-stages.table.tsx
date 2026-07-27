@@ -1,10 +1,9 @@
 import { DataTable } from '@/features/components/data-table';
 import { Plus, ListTree } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import type { ProjectStage } from '../project-stages.types';
 import type { StageTimeline } from '../../stage-timelines/stage-timelines.types';
+import { formatArabicDate } from '@/shared/lib/utils';
 
 type ProjectStagesTableProps = {
   data: ProjectStage[];
@@ -111,7 +110,7 @@ export function ProjectStagesTable({
                   <div>
                     <div className="font-medium text-sm text-slate-900">{tl.stage_name}</div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      {format(new Date(tl.start_date), 'dd MMM yyyy', { locale: ar })} - {format(new Date(tl.expected_end_date), 'dd MMM yyyy', { locale: ar })}
+                      {formatArabicDate(new Date(tl.start_date))} - {formatArabicDate(new Date(tl.expected_end_date))}
                     </div>
                   </div>
                   <div className="flex items-center gap-6">

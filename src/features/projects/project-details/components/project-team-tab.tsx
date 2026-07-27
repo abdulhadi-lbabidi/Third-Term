@@ -35,11 +35,16 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   // Filter by current project
   const members = (teamQuery.data ?? []).filter((m) => m.project?.id === projectId);
 
-  // Map employees to simple options for the form
-  const userOptions = (employeesQuery.data ?? []).map((e) => ({
-    id: e.user.id,
-    name: e.user?.name ?? `موظف #${e.id}`,
-  }));
+  // Get IDs of users already in the team
+  const existingUserIds = new Set(members.map(m => m.user?.id));
+
+  // Map employees to simple options for the form (excluding existing team members)
+  const userOptions = (employeesQuery.data ?? [])
+    .filter(e => !existingUserIds.has(e.user.id) || e.user.id === selectedMember?.user?.id)
+    .map((e) => ({
+      id: e.user.id,
+      name: e.user?.name ?? `موظف #${e.id}`,
+    }));
 
   // ── Mutations ──────────────────────────────────────────────────
   const saveMutation = useMutation({

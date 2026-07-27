@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import { format, isSameDay, isSameMonth, isSameYear } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { CheckCircle2, Clock, PlayCircle, XCircle, Plus, Calendar, Edit, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
+import { CheckCircle2, Clock, PlayCircle, XCircle, Plus, Calendar, Edit, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
 import type { ProjectStage } from '../../project-stages/project-stages.types';
 import type { StageTimeline } from '../stage-timelines.types';
 import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/lib/utils';
+import { cn, formatArabicDate } from '@/shared/lib/utils';
 
 type ProjectStagesTimelineProps = {
   stages: ProjectStage[];
@@ -28,23 +27,35 @@ function formatDateRange(start: string, end: string) {
   const endDate = new Date(end);
 
   if (isSameDay(startDate, endDate)) {
-    return format(startDate, 'dd MMMM yyyy', { locale: ar }) + ' (نفس اليوم)';
+    return formatArabicDate(startDate) + ' (نفس اليوم)';
   }
 
   if (isSameMonth(startDate, endDate) && isSameYear(startDate, endDate)) {
-    return `${format(startDate, 'dd')} - ${format(endDate, 'dd MMMM yyyy', { locale: ar })}`;
+    const startDay = startDate.getDate().toString().padStart(2, '0');
+    return `${startDay} - ${formatArabicDate(endDate)}`;
   }
 
   if (isSameYear(startDate, endDate)) {
-    return `${format(startDate, 'dd MMMM', { locale: ar })} - ${format(endDate, 'dd MMMM yyyy', { locale: ar })}`;
+    return `${formatArabicDate(startDate, 'ar-SY', true, false)} - ${formatArabicDate(endDate)}`;
   }
 
-  return `${format(startDate, 'dd MMM yyyy', { locale: ar })} - ${format(endDate, 'dd MMM yyyy', { locale: ar })}`;
+  return `${formatArabicDate(startDate)} - ${formatArabicDate(endDate)}`;
 }
 
 export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, onEditStage, onDeleteStage }: ProjectStagesTimelineProps) {
   const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'right' | 'left') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     if (stages.length > 0 && !selectedStageId) {
@@ -66,48 +77,75 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
   return (
     <div className="flex flex-col space-y-6 p-6">
       {/* Horizontal Timeline */}
-      <div className="relative w-full overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-        <div className="flex items-start min-w-max px-4 pt-4 relative">
-          {stages.map((stage, index) => {
-            const config = statusConfig[stage.status as string] || statusConfig.pending;
-            const Icon = config.icon;
-            const isSelected = selectedStageId === stage.id;
-            const isLast = index === stages.length - 1;
+      <div className="relative group px-4">
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-8 z-20 size-8 bg-white border border-slate-200 shadow-md rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all opacity-0 group-hover:opacity-100 translate-x-1/2"
+        >
+          <ChevronRight className="size-5" />
+        </button>
 
-            return (
-              <div key={stage.id} className="relative flex-shrink-0" style={{ width: '220px' }}>
-                {/* Connecting Line to next item (RTL direction -> right to left) */}
-                {!isLast && (
-                  <div className={cn("absolute top-[20px] right-[50%] w-full h-1 z-0 transition-colors duration-500", config.line)} />
-                )}
+        <div
+          ref={scrollContainerRef}
+          className="relative w-full overflow-x-auto mx-auto scrollbar-none"
+        >
+          <div className="flex items-center justify-center min-w-max p-4  relative">
+            {stages.map((stage, index) => {
+              const config = statusConfig[stage.status as string] || statusConfig.pending;
+              const Icon = config.icon;
+              const isSelected = selectedStageId === stage.id;
+              const isLast = index === stages.length - 1;
 
-                {/* Node */}
-                <div
-                  className="relative z-10 flex flex-col items-center cursor-pointer group"
-                  onClick={() => setSelectedStageId(stage.id)}
-                >
-                  <div className={cn(
-                    'size-10 rounded-full border-4 flex items-center justify-center transition-all duration-300 ring-4 ring-white',
-                    isSelected ? 'border-blue-600 scale-110 shadow-lg' : 'border-white hover:scale-105',
-                    config.bg, config.color,
-                    isSelected ? 'bg-blue-50' : ''
-                  )}>
-                    <Icon className="size-5" />
-                  </div>
-                  <div className="mt-4 text-center px-3 w-full">
-                    <p className={cn("text-sm font-bold truncate transition-colors", isSelected ? "text-blue-700" : "text-slate-700 group-hover:text-slate-900")}>{stage.name}</p>
-                    <p className="text-xs text-slate-500 mt-1.5">{format(new Date(stage.start_date), 'dd MMM yyyy', { locale: ar })}</p>
-                    <div className="mt-2 flex justify-center">
-                      <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide', config.bg, config.color)}>
-                        {stage.status === 'pending' ? 'قيد الانتظار' : stage.status === 'in_progress' ? 'قيد التنفيذ' : stage.status === 'completed' ? 'مكتمل' : 'ملغى'}
-                      </span>
+              return (
+                <div key={stage.id} className="relative flex-shrink-0" style={{ width: '130px' }}>
+                  {/* Connecting Line to next item (RTL direction -> right to left) */}
+                  {!isLast && (
+                    <div className={cn("absolute top-[22px] right-[50%] w-full h-1 z-0 transition-colors duration-500", config.line)} />
+                  )}
+
+                  {/* Node */}
+                  <div
+                    className={cn(
+                      "relative z-10 flex flex-col items-center cursor-pointer group/node p-2 mx-1 rounded-xl transition-all duration-300",
+                      isSelected
+                        ? "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-blue-200"
+                        : "hover:bg-white/50"
+                    )}
+                    onClick={() => setSelectedStageId(stage.id)}
+                  >
+                    <div className={cn(
+                      'size-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 ring-2',
+                      isSelected ? 'border-blue-500 ring-blue-100 scale-110' : 'border-white ring-slate-100 group-hover/node:scale-105',
+                      config.bg, config.color
+                    )}>
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="mt-3 text-center px-1 w-full">
+                      <p className={cn("text-xs font-bold truncate transition-colors", isSelected ? "text-blue-700" : "text-slate-700 group-hover/node:text-slate-900")}>
+                        {stage.name}
+                      </p>
+                      <p className={cn("text-[10px] mt-1 transition-colors", isSelected ? "text-blue-600/80 font-semibold" : "text-slate-500")}>
+                        {formatArabicDate(stage.start_date)}
+                      </p>
+                      <div className="mt-1.5 flex justify-center">
+                        <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[9px] font-semibold tracking-wide', config.bg, config.color)}>
+                          {stage.status === 'pending' ? 'قيد الانتظار' : stage.status === 'in_progress' ? 'قيد التنفيذ' : stage.status === 'completed' ? 'مكتمل' : 'ملغى'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
+
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-8 z-20 size-8 bg-white border border-slate-200 shadow-md rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all opacity-0 group-hover:opacity-100 -translate-x-1/2"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
       </div>
 
       {/* Selected Stage Details */}
@@ -142,11 +180,11 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 mt-5">
                   <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 shadow-sm">
                     <Calendar className="size-4 text-slate-400" />
-                    <span>البدء: <strong className="text-slate-800">{format(new Date(selectedStage.start_date), 'dd MMMM yyyy', { locale: ar })}</strong></span>
+                    <span>البدء: <strong className="text-slate-800">{formatArabicDate(selectedStage.start_date)}</strong></span>
                   </div>
                   <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 shadow-sm">
                     <Clock className="size-4 text-slate-400" />
-                    <span>المتوقع: <strong className="text-slate-800">{format(new Date(selectedStage.expected_end_date), 'dd MMMM yyyy', { locale: ar })}</strong></span>
+                    <span>المتوقع: <strong className="text-slate-800">{formatArabicDate(selectedStage.expected_end_date)}</strong></span>
                   </div>
                 </div>
               </div>
@@ -265,7 +303,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                           {/* Status */}
                           <div className="shrink-0 pl-1">
                             <span className={cn('px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap', tlConfig.bg, tlConfig.color)}>
-                              {tl.status === 'completed' ? 'مكتمل' : 'مستمر'}
+                              {tl.status === 'pending' ? 'بالانتظار' : tl.status === 'in_progress' ? 'قيد التنفيذ' : tl.status === 'completed' ? 'مكتمل' : 'ملغى'}
                             </span>
                           </div>
                         </div>

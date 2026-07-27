@@ -22,13 +22,18 @@ type ProjectFundsFormProps = {
   loading?: boolean;
 };
 
+// ───────────────────────────────────────────────
+// Zod schema
+// ───────────────────────────────────────────────
 const formSchema = z.object({
   project_id: z.number().min(1, 'معرف المشروع مطلوب'),
   name: z.string().min(1, 'اسم الصندوق مطلوب'),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export function ProjectFundsForm({ project, projectFund, onSubmit, loading }: ProjectFundsFormProps) {
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       project_id: project?.id ?? 0,
@@ -43,14 +48,14 @@ export function ProjectFundsForm({ project, projectFund, onSubmit, loading }: Pr
     });
   }, [form, project, projectFund]);
 
+  const handleSubmit = async (values: FormValues) => {
+    await onSubmit(values);
+  };
+
   return (
     <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(values);
-        })}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        {/* Fund Name */}
         <FormField
           control={form.control}
           name="name"
@@ -58,7 +63,7 @@ export function ProjectFundsForm({ project, projectFund, onSubmit, loading }: Pr
             <FormItem>
               <FormLabel>اسم الصندوق</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder="مثال: صندوق المصروفات النثرية" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -66,7 +71,7 @@ export function ProjectFundsForm({ project, projectFund, onSubmit, loading }: Pr
         />
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'جاري الحفظ...' : 'حفظ'}
+          {loading ? 'جاري الحفظ...' : projectFund ? 'حفظ التعديلات' : 'إضافة صندوق'}
         </Button>
       </form>
     </Form>

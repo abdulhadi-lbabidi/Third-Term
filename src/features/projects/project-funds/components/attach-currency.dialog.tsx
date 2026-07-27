@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import type { Currency } from '@/features/currencies/types';
 import { attachProjectCurrencySchema, type AttachProjectCurrencyValues } from '../../schemas/projects.schema';
 
@@ -41,6 +42,18 @@ export function AttachCurrencyDialog({
     }
   }, [form, open]);
 
+  const handleSubmit = async (values: AttachProjectCurrencyValues) => {
+    await onSubmit({
+      currency_id: values.currency_id,
+      balance: values.balance,
+    });
+  };
+
+  const currencyOptions = currencies.map((currency) => ({
+    value: currency.id,
+    label: `${currency.currency} ${currency.symbol}`,
+  }));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
@@ -49,50 +62,39 @@ export function AttachCurrencyDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            className="space-y-4"
-            onSubmit={form.handleSubmit(async (values) => {
-              await onSubmit({
-                currency_id: values.currency_id,
-                balance: values.balance,
-              });
-            })}
-          >
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+            {/* Currency */}
             <FormField
               control={form.control}
               name="currency_id"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col space-y-2">
                   <FormLabel>العملة</FormLabel>
                   <FormControl>
-                    <select
-                      value={field.value ? String(field.value) : ''}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-                    >
-                      <option value="" disabled>
-                        اختر العملة
-                      </option>
-                      {currencies.map((currency) => (
-                        <option key={currency.id} value={String(currency.id)}>
-                          {currency.currency} {currency.symbol}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect
+                      multiple={false}
+                      value={field.value || null}
+                      onValueChange={(val) => field.onChange(val)}
+                      options={currencyOptions}
+                      placeholder="اختر العملة..."
+                      searchPlaceholder="ابحث عن العملة..."
+                      emptyMessage="لم يتم العثور على عملات."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Initial Balance */}
             <FormField
               control={form.control}
               name="balance"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>الرصيد</FormLabel>
+                  <FormLabel>الرصيد الافتتاحي</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="0.00" />
+                    <Input {...field} placeholder="مثال: 0.00" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,7 +102,7 @@ export function AttachCurrencyDialog({
             />
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'جاري الحفظ...' : 'حفظ'}
+              {loading ? 'جاري الإرفاق...' : 'إرفاق العملة'}
             </Button>
           </form>
         </Form>

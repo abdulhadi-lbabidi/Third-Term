@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
@@ -16,16 +16,12 @@ import { AttachCurrencyDialog } from '../project-funds/components/attach-currenc
 import { ProjectFundCurrenciesDialog } from '../project-funds/components/project-fund-currencies.dialog';
 import { ProjectFundCurrencyDialog } from '../project-funds/components/project-fund-currency.dialog';
 
-const projectFundsQueryKeys = {
-  all: ['project-funds'] as const,
-};
+const projectFundsQueryKeys = { all: ['project-funds'] as const };
 
 export function ProjectFundsPage() {
-  const navigate = useNavigate();
   const params = useParams();
   const queryClient = useQueryClient();
   const projectId = Number(params.projectId || '');
-  const projectName = params.projectName ? decodeURIComponent(params.projectName) : '';
   const hasProjectId = Number.isFinite(projectId) && projectId > 0;
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -138,18 +134,11 @@ export function ProjectFundsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        badge="المشاريع"
-        title={projectName || currentProject?.name || 'صناديق المشروع'}
+        // badge="المشاريع"
+        title={'صناديق المشروع'}
+        boxed={false}
         action={
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/projects')}
-              className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold"
-            >
-              العودة إلى المشاريع
-            </Button>
             <Button
               type="button"
               onClick={() => {

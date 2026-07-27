@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Wallet, User, Cloud, Pencil, Users, Layers } from 'lucide-react';
+import { Wallet, User, Cloud, Pencil, Users, Layers, Receipt } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
@@ -14,9 +14,11 @@ import { PageHeader } from '../../components/page-header';
 import { ProjectCloudStorageTab } from './components/project-cloud-storage-tab';
 import { ProjectTeamTab } from './components/project-team-tab';
 import { ProjectStagesTab } from './components/project-stages-tab';
+import { ProjectFundsPage } from '../project-funds/project-funds.page';
 
 const PROJECT_TABS = [
-  { value: 'financials', label: 'المالية والصناديق', icon: <Wallet className="h-4 w-4" /> },
+  { value: 'financials', label: 'المالية', icon: <Receipt className="h-4 w-4" /> },
+  { value: 'funds', label: 'الصناديق', icon: <Wallet className="h-4 w-4" /> },
   { value: 'client', label: 'العميل', icon: <User className="h-4 w-4" /> },
   { value: 'team', label: 'فريق العمل', icon: <Users className="h-4 w-4" /> },
   { value: 'stages', label: 'المراحل', icon: <Layers className="h-4 w-4" /> },
@@ -88,6 +90,7 @@ export function ProjectDetailsPage() {
       {/* Tab content — driven by ?tab= URL param */}
       <div className="bg-white border border-slate-200/80 p-4 rounded-lg shadow-sm">
         {activeTab === 'financials' && <ProjectFinancialsTab project={currentProject} />}
+        {activeTab === 'funds' && <ProjectFundsPage />}
         {activeTab === 'client' && <ProjectClientTab project={currentProject} />}
         {activeTab === 'team' && <ProjectTeamTab projectId={projectId} />}
         {activeTab === 'stages' && <ProjectStagesTab projectId={projectId} />}
