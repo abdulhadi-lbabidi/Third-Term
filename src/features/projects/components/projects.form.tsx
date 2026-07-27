@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-
 import {
   Select,
   SelectContent,
@@ -13,6 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/shared/lib/utils';
+
 import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
 import { useQuery } from '@tanstack/react-query';
@@ -43,9 +46,13 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 ];
 
 export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+
   const { data: clients } = useQuery<ClientRecord[]>(
     { queryKey: ['clients'] as const, queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]> }
   );
+
   const form = useForm<ProjectsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -67,6 +74,10 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
     });
   }, [clients, departments, defaultValues, form]);
 
+  const filteredClients = clients?.filter((c) =>
+    c.user.name.toLowerCase().includes(clientSearch.toLowerCase())
+  );
+
   return (
     <Form {...form}>
       <form
@@ -75,6 +86,7 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
           await onSubmit(values);
         })}
       >
+        {/* Department */}
         <FormField
           control={form.control}
           name="department_id"
@@ -82,17 +94,21 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
             <FormItem>
               <FormLabel>القسم</FormLabel>
               <Select
-                value={field.value ? field.value.toString() : ""}
+                value={field.value ? String(field.value) : ''}
                 onValueChange={(val) => field.onChange(Number(val))}
               >
                 <FormControl>
-                  <SelectTrigger className="h-10 w-full">
-                    <SelectValue placeholder="اختر القسم" />
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="اختر القسم">
+                      {field.value
+                        ? departments.find((d) => d.id === field.value)?.name
+                        : null}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
+                    <SelectItem key={dept.id} value={String(dept.id)}>
                       {dept.name}
                     </SelectItem>
                   ))}
@@ -103,34 +119,82 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
           )}
         />
 
+        {/* Client */}
         <FormField
           control={form.control}
           name="client_id"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col space-y-2">
               <FormLabel>العميل</FormLabel>
-              <Select
-                value={field.value ? field.value.toString() : ""}
-                onValueChange={(val) => field.onChange(Number(val))}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-10 w-full">
-                    <SelectValue placeholder="اختر العميل" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {clients?.map((client) => (
-                    <SelectItem key={client.id} value={client.id.toString()}>
-                      {client.user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                <PopoverTrigger>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      className={cn(
+                        'w-full justify-between h-10 font-normal',
+                        !field.value && 'text-muted-foreground'
+                      )}
+                    >
+                      {field.value
+                        ? clients?.find((c) => c.id === field.value)?.user?.name
+                        : 'اختر العميل'}
+                      <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="p-0"
+                  align="start"
+                  style={{ width: 'var(--radix-popover-trigger-width)' }}
+                >
+                  <div className="p-2 border-b">
+                    <input
+                      className="w-full text-sm outline-none bg-transparent placeholder:text-muted-foreground"
+                      placeholder="ابحث عن العميل..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto p-1">
+                    {filteredClients?.length === 0 && (
+                      <p className="text-center text-sm text-muted-foreground py-4">
+                        لم يتم العثور على عملاء.
+                      </p>
+                    )}
+                    {filteredClients?.map((client) => (
+                      <button
+                        key={client.id}
+                        type="button"
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-left cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors',
+                          client.id === field.value && 'bg-accent text-accent-foreground'
+                        )}
+                        onClick={() => {
+                          field.onChange(client.id);
+                          setClientPopoverOpen(false);
+                          setClientSearch('');
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            client.id === field.value ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        {client.user.name}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Project Name */}
         <FormField
           control={form.control}
           name="name"
@@ -145,6 +209,7 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
           )}
         />
 
+        {/* Expected Cost */}
         <FormField
           control={form.control}
           name="expected_cost"
@@ -164,25 +229,27 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
           )}
         />
 
+        {/* Status */}
         <FormField
           control={form.control}
           name="status"
           render={({ field }) => (
             <FormItem>
               <FormLabel>الحالة</FormLabel>
-              <Select
-                value={field.value}
-                onValueChange={(val) => field.onChange(val as ProjectStatus)}
-              >
+              <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="h-10 w-full">
-                    <SelectValue placeholder="اختر الحالة" />
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="اختر الحالة">
+                      {field.value
+                        ? statusOptions.find((o) => o.value === field.value)?.label
+                        : null}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {statusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

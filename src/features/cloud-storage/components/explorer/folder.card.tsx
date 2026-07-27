@@ -116,23 +116,23 @@ export function FolderCard({ folder, selected, onSelect, onClick, onRename, onDe
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-40 rounded-xl">
-            {/* <DropdownMenuItem onClick={() => onDownload?.(folder)} className="gap-2 cursor-pointer">
+            {/* <DropdownMenuItem onSelect={() => setTimeout(() => onDownload?.(folder), 0)} className="gap-2 cursor-pointer">
               <Download className="size-4 text-slate-500" />
               تحميل
             </DropdownMenuItem> */}
-            <DropdownMenuItem onClick={() => onNewFolder?.(folder)} className="gap-2 cursor-pointer">
+            <DropdownMenuItem onSelect={() => setTimeout(() => onNewFolder?.(folder), 0)} className="gap-2 cursor-pointer">
               <FolderPlus className="size-4 text-slate-500" />
               مجلد جديد
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onUploadFiles?.(folder)} className="gap-2 cursor-pointer">
+            <DropdownMenuItem onSelect={() => setTimeout(() => onUploadFiles?.(folder), 0)} className="gap-2 cursor-pointer">
               <UploadCloud className="size-4 text-slate-500" />
               رفع ملفات
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onRename(folder)} className="gap-2 cursor-pointer">
+            <DropdownMenuItem onSelect={() => setTimeout(() => onRename(folder), 0)} className="gap-2 cursor-pointer">
               <Pencil className="size-4 text-slate-500" />
               تعديل الاسم
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(folder)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+            <DropdownMenuItem onSelect={() => setTimeout(() => onDelete(folder), 0)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
               <Trash2 className="size-4" />
               حذف المجلد
             </DropdownMenuItem>

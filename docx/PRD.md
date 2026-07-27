@@ -155,23 +155,29 @@
 
 # cloud storage
 - grid view
-  - header: [search "in directory", create folder, upload files, select files to copy or move or delete]
+  - header: 
+    <!-- - search "in directory" -->
+    <!-- - create folder -->
+    <!-- - upload files -->
+    - select files
+      - copy
+      - move
+      - delete
   <!-- - show items inside directory [files, folders] -->
 <!-- - create new folders [dialog,form]:{name} -->
 <!-- - upload files [dialog,form]:{files} -->
-- delete file/folder [dialog]
-- rename file/folder [dialog,form]:{name}
-- move file/folder [drag and drop] to another directory
-  - files
-  <!-- - folders -->
-- cards: [file,folder]
-  - view icon for extenion type: pdf,excel,images,
-- options[on_click_menu,dialog]:
-  - preview
+<!-- - delete file/folder [dialog] -->
+<!-- - rename folder [dialog,form]:{name} -->
+<!-- - move folder [drag and drop] to another directory -->
+- move file [drag and drop] to another directory
+<!-- - cards: [file,folder] -->
+  <!-- - view icon for extenion type: pdf,excel,images, -->
+<!-- - options[on_click_menu,dialog]: -->
+  <!-- - preview -->
   - download
   <!-- - rename -->
   <!-- - delete -->
-- get for projects
+<!-- - get for projects -->
   <!-- - new folder -->
   <!-- - upload files -->
   

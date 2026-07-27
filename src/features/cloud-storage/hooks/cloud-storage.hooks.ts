@@ -2,18 +2,27 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cloudStorageApi } from '../api/cloud-storage.api';
 import type { CreateDirectoryPayload, UpdateDirectoryPayload } from '../types';
 
-export const useDirectories = (params?: { parent_dir_id?: number | null; project_id?: number | null }) => {
+// ──────────────────────────────────────────────────────────
+// GET /api/directories?paginate=1&per_page=10&page=1
+// Used for the root listing when no directory is open.
+// ──────────────────────────────────────────────────────────
+export const useDirectories = (params?: Record<string, any>) => {
   return useQuery({
-    queryKey: ['directories', params],
+    queryKey: ['directories', 'list', params],
     queryFn: () => cloudStorageApi.getDirectories(params),
   });
 };
 
-export const useDirectory = (id: number) => {
+// ──────────────────────────────────────────────────────────
+// GET /api/directories/{id}
+// Returns the directory with its `files[]` and `children[]`.
+// Used when the user navigates into a specific folder.
+// ──────────────────────────────────────────────────────────
+export const useDirectory = (id: number | null) => {
   return useQuery({
     queryKey: ['directories', id],
-    queryFn: () => cloudStorageApi.getDirectory(id),
-    enabled: !!id,
+    queryFn: () => cloudStorageApi.getDirectory(id!),
+    enabled: id !== null && id > 0,
   });
 };
 
@@ -81,9 +90,10 @@ export const useMoveItems = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { targetDirId: number | null; itemIds: { id: number; type: 'file' | 'folder'; data?: any }[] }) => {
-      return cloudStorageApi.moveItems(payload);
-    },
+    mutationFn: (payload: {
+      targetDirId: number | null;
+      itemIds: { id: number; type: 'file' | 'folder'; data?: any }[];
+    }) => cloudStorageApi.moveItems(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['directories'] });
     },

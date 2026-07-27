@@ -9,7 +9,7 @@ import {
   PresentationViewer,
   TextViewer,
   ArchiveViewer,
-  CodeViewer,
+  // CodeViewer,
   UnknownViewer
 } from '../components/preview';
 
@@ -23,6 +23,6 @@ export const PreviewRegistry: Record<FileType, React.FC<{ file: any }>> = {
   [FileType.Presentation]: PresentationViewer,
   [FileType.Text]: TextViewer,
   [FileType.Archive]: ArchiveViewer,
-  [FileType.Code]: CodeViewer,
+  // [FileType.Code]: CodeViewer,
   [FileType.Unknown]: UnknownViewer,
 };

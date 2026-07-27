@@ -41,7 +41,6 @@ export function FileCard({ file, selected, onSelect,
         e.preventDefault();
         e.stopPropagation();
         setMenuOpen(true);
-        onPreview?.(file)
       }}
       className={cn(
         "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all cursor-pointer hover:shadow-sm",
@@ -98,20 +97,20 @@ export function FileCard({ file, selected, onSelect,
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-40 rounded-xl">
             {onPreview && canPreview(file) && (
-              <DropdownMenuItem onClick={() => onPreview(file)} className="gap-2 cursor-pointer">
+              <DropdownMenuItem onSelect={() => setTimeout(() => onPreview(file), 0)} className="gap-2 cursor-pointer">
                 <Eye className="size-4 text-slate-500" />
                 معاينة
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={() => onDownload(file)} className="gap-2 cursor-pointer">
+            <DropdownMenuItem onSelect={() => setTimeout(() => onDownload(file), 0)} className="gap-2 cursor-pointer">
               <Download className="size-4 text-slate-500" />
               تحميل
             </DropdownMenuItem>
-            {/* <DropdownMenuItem onClick={() => onRename(file)} className="gap-2 cursor-pointer">
+            {/* <DropdownMenuItem onSelect={() => setTimeout(() => onRename(file), 0)} className="gap-2 cursor-pointer">
                 <Pencil className="size-4 text-slate-500" />
                 تعديل الاسم
               </DropdownMenuItem> */}
-            <DropdownMenuItem onClick={() => onDelete(file)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+            <DropdownMenuItem onSelect={() => setTimeout(() => onDelete(file), 0)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
               <Trash2 className="size-4" />
               حذف الملف
             </DropdownMenuItem>
