@@ -111,7 +111,7 @@ export function DataTable<T>({
                             >
                               <Pencil className="size-4" />
                               <span>تعديل</span>
-                            </DropdownMenuItem>
+                              </DropdownMenuItem>
                           ) : null}
 
                           {actions?.extraActions?.length

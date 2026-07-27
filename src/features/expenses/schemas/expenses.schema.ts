@@ -6,10 +6,13 @@ export const expenseFormSchema = z
     source: z.enum(['company_fund', 'user_fund', 'project_fund']),
     expenseable_type: z.string().optional(),
     expenseable_id: z.number().optional(),
+    company_fund_id: z.number().optional(),
     user_role: z.string().optional(),
     user_id: z.number().optional(),
     fund_user_role: z.string().optional(),
     fund_user_id: z.number().optional(),
+    user_fund_id: z.number().optional(),
+    project_fund_id: z.number().optional(),
     project_id: z.number().optional(),
     description: z.string().min(1, 'الرجاء إدخال الوصف'),
     amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
@@ -33,6 +36,22 @@ export const expenseFormSchema = z
       });
     }
 
+    if (values.source === 'company_fund' && !values.company_fund_id) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['company_fund_id'],
+        message: 'الرجاء اختيار صندوق الشركة',
+      });
+    }
+
+    if (values.source === 'company_fund' && !values.expenseable_id) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['expenseable_id'],
+        message: 'الرجاء اختيار عملة صندوق الشركة',
+      });
+    }
+
     if (values.source === 'user_fund' && !values.fund_user_role) {
       ctx.addIssue({
         code: 'custom',
@@ -49,11 +68,11 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'company_fund' && !values.expenseable_id) {
+    if (values.source === 'user_fund' && !values.user_fund_id) {
       ctx.addIssue({
         code: 'custom',
-        path: ['expenseable_id'],
-        message: 'الرجاء اختيار صندوق الشركة',
+        path: ['user_fund_id'],
+        message: 'الرجاء اختيار صندوق المستخدم',
       });
     }
 
@@ -61,7 +80,7 @@ export const expenseFormSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['expenseable_id'],
-        message: 'الرجاء اختيار صندوق المستخدم',
+        message: 'الرجاء اختيار عملة صندوق المستخدم',
       });
     }
 
@@ -73,11 +92,19 @@ export const expenseFormSchema = z
       });
     }
 
+    if (values.source === 'project_fund' && !values.project_fund_id) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['project_fund_id'],
+        message: 'الرجاء اختيار صندوق المشروع',
+      });
+    }
+
     if (values.source === 'project_fund' && !values.expenseable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['expenseable_id'],
-        message: 'الرجاء اختيار صندوق المشروع',
+        message: 'الرجاء اختيار عملة صندوق المشروع',
       });
     }
   });

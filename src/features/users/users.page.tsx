@@ -98,7 +98,7 @@ export function UsersPage() {
   }
 
   function handleFunds(row: UsersTabRecord) {
-    navigate(`/users/${row.user.id}/${encodeURIComponent(row.user.name)}/funds`);
+    navigate(`/users/${row.id}/${encodeURIComponent(row.user.name)}/funds?tab=${activeRole}`);
   }
 
   function handleEmployeePayments(row: UsersTabRecord) {

@@ -9,10 +9,12 @@ import { PageHeader } from '../../components/page-header';
 import { projectsApi } from '../projects.api';
 import type { Project } from '../types';
 import { projectFundsApi } from './project-funds.api';
-import type { CreateProjectFundPayload, ProjectFund } from './project-funds.types';
+import type { CreateProjectFundPayload, ProjectFund, ProjectFundCurrency } from './project-funds.types';
 import { ProjectFundsTable } from '../project-funds/components/project-funds.table';
 import { ProjectFundsDialog } from '../project-funds/components/project-funds.dialog';
 import { AttachCurrencyDialog } from '../project-funds/components/attach-currency.dialog';
+import { ProjectFundCurrenciesDialog } from '../project-funds/components/project-fund-currencies.dialog';
+import { ProjectFundCurrencyDialog } from '../project-funds/components/project-fund-currency.dialog';
 
 const projectFundsQueryKeys = {
   all: ['project-funds'] as const,
@@ -28,7 +30,11 @@ export function ProjectFundsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
+  const [currenciesDialogOpen, setCurrenciesDialogOpen] = useState(false);
+  const [currencyEditDialogOpen, setCurrencyEditDialogOpen] = useState(false);
   const [selectedProjectFund, setSelectedProjectFund] = useState<ProjectFund | null>(null);
+  const [selectedProjectFundForView, setSelectedProjectFundForView] = useState<ProjectFund | null>(null);
+  const [selectedProjectFundCurrency, setSelectedProjectFundCurrency] = useState<ProjectFundCurrency | null>(null);
 
   const projectQuery = useQuery<Project[]>({
     queryKey: ['projects'] as const,
@@ -89,6 +95,21 @@ export function ProjectFundsPage() {
     },
   });
 
+  const updateCurrencyMutation = useMutation({
+    mutationFn: async (payload: { currency_id: number; balance: string }) => {
+      if (!selectedProjectFund) throw new Error('صندوق المشروع غير محدد');
+      return projectFundsApi.attachCurrency(selectedProjectFund.id, payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
+      setCurrencyEditDialogOpen(false);
+      setSelectedProjectFundCurrency(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تعديل العملة');
+    },
+  });
+
   const projectsList = Array.isArray(projectQuery.data) ? projectQuery.data : [];
   const currentProject = projectsList.find((item) => item.id === projectId) ?? null;
 
@@ -105,6 +126,13 @@ export function ProjectFundsPage() {
   const handleDelete = async (fund: ProjectFund) => {
     await deleteMutation.mutateAsync(fund);
     toast.success('تم حذف الصندوق بنجاح');
+  };
+
+  const openCurrencyEditDialog = (fund: ProjectFund, currencyId: number) => {
+    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
+    setSelectedProjectFund(fund);
+    setSelectedProjectFundCurrency(currency);
+    setCurrencyEditDialogOpen(true);
   };
 
   return (
@@ -148,6 +176,11 @@ export function ProjectFundsPage() {
           setSelectedProjectFund(fund);
           setAttachDialogOpen(true);
         }}
+        onCurrencyClick={openCurrencyEditDialog}
+        onMoreCurrenciesClick={(fund) => {
+          setSelectedProjectFundForView(fund);
+          setCurrenciesDialogOpen(true);
+        }}
       />
 
       <ProjectFundsDialog
@@ -174,6 +207,30 @@ export function ProjectFundsPage() {
           toast.success('تم ربط العملة بالصندوق بنجاح');
         }}
         loading={attachMutation.isPending}
+      />
+
+      <ProjectFundCurrenciesDialog
+        open={currenciesDialogOpen}
+        onOpenChange={(open) => {
+          setCurrenciesDialogOpen(open);
+          if (!open) setSelectedProjectFundForView(null);
+        }}
+        fund={selectedProjectFundForView}
+        onCurrencyClick={openCurrencyEditDialog}
+      />
+
+      <ProjectFundCurrencyDialog
+        open={currencyEditDialogOpen}
+        onOpenChange={(open) => {
+          setCurrencyEditDialogOpen(open);
+          if (!open) setSelectedProjectFundCurrency(null);
+        }}
+        currency={selectedProjectFundCurrency}
+        onSubmit={async (payload) => {
+          await updateCurrencyMutation.mutateAsync(payload);
+          toast.success('تم تعديل العملة بنجاح');
+        }}
+        loading={updateCurrencyMutation.isPending}
       />
     </div>
   );

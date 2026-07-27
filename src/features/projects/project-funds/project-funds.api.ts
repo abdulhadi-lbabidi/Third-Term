@@ -12,6 +12,10 @@ export const projectFundsApi = {
     const payload = response.data as { data?: ProjectFund[] } | ProjectFund[];
     return Array.isArray(payload) ? payload : payload.data ?? [];
   },
+  getProjectFundById: async (id: number): Promise<ProjectFund> => {
+    const response = await apiClient.get(`/project-funds/${id}`);
+    return response.data;
+  },
   createProjectFund: async (payload: CreateProjectFundPayload): Promise<ProjectFund> => {
     const response = await apiClient.post('/project-funds', payload);
     return response.data;

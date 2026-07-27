@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -23,10 +24,11 @@ import {
 import { Textarea } from '@/shared/components/ui/textarea';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { CompanyFund } from '@/features/company-funds/types';
-import { fundsApi } from '@/features/funds/funds.api';
 import type { Fund } from '@/features/funds/types';
 import { projectsApi } from '@/features/projects/projects.api';
 import type { Project } from '@/features/projects/types';
+import { projectFundsApi } from '@/features/projects/project-funds/project-funds.api';
+import type { ProjectFund } from '@/features/projects/project-funds/project-funds.types';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
 import { expenseFormSchema, expenseSourceLabels, type ExpenseFormValues } from '../schemas/expenses.schema';
@@ -41,6 +43,7 @@ type ExpensesFormProps = {
 type RoleUser = {
   id: number;
   user: {
+    id: number;
     name: string;
   };
 };
@@ -50,6 +53,14 @@ type FundLabelSource = {
   user?: {
     name?: string;
   } | null;
+};
+
+type FundUserRecord = {
+  user: {
+    id: number;
+    name: string;
+    funds?: Fund[];
+  };
 };
 
 const userRoles: UserRole[] = [
@@ -86,25 +97,38 @@ function getSourceFromType(type?: string): ExpenseSource {
   return 'company_fund';
 }
 
-function getExpenseableId<T extends { id: number; currencies?: Array<{ id: number }> }>(item: T) {
-  return item.currencies?.[0]?.id ?? item.id;
-}
-
 function getFundLabel(item: FundLabelSource) {
   return item.user?.name ?? item.name;
 }
 
+function getCompanyFundLabel(item: CompanyFund) {
+  return item.name;
+}
+
+function getCurrencyLabel(currency: { currency: string; balance: string }) {
+  return `${currency.currency} - ${currency.balance}`;
+}
+
+function getRoleLabel(role: UserRole | '') {
+  return role ? roleLabels[role] : '';
+}
+
 export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormProps) {
+  const navigate = useNavigate();
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
       source: getSourceFromType(defaultValues?.expenseable_type),
       expenseable_type: defaultValues?.expenseable_type ?? sourceToExpenseableType.company_fund,
       expenseable_id: defaultValues?.expenseable_id,
+      company_fund_id: undefined,
       user_role: defaultValues?.user_role ?? '',
       user_id: defaultValues?.user_id ?? undefined,
       fund_user_role: '',
       fund_user_id: undefined,
+      user_fund_id: undefined,
+      project_fund_id: undefined,
+      project_id: undefined,
       description: defaultValues?.description ?? '',
       amount: Number(defaultValues?.amount ?? 0),
       is_posted: Boolean(defaultValues?.is_posted ?? true),
@@ -113,9 +137,13 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
   });
 
   const source = form.watch('source');
+  const companyFundId = form.watch('company_fund_id');
+  const selectedExpenseableId = form.watch('expenseable_id');
   const userRole = form.watch('user_role') as UserRole | '';
   const fundUserRole = form.watch('fund_user_role') as UserRole | '';
   const fundUserId = form.watch('fund_user_id');
+  const userFundId = form.watch('user_fund_id');
+  const projectFundId = form.watch('project_fund_id');
   const selectedProjectId = form.watch('project_id');
 
   const { data: companyFunds = [] } = useQuery<CompanyFund[]>({
@@ -124,15 +152,51 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     enabled: source === 'company_fund',
   });
 
-  const { data: userFunds = [] } = useQuery<Fund[]>({
-    queryKey: ['expenses', 'user-funds'] as const,
-    queryFn: () => fundsApi.getFunds(),
-    enabled: source === 'user_fund',
+  const derivedCompanyFundId = useMemo(() => {
+    if (companyFundId) {
+      return companyFundId;
+    }
+
+    if (!selectedExpenseableId) {
+      return undefined;
+    }
+
+    return companyFunds.find((fund) => fund.currencies?.some((currency) => currency.id === selectedExpenseableId))?.id;
+  }, [companyFundId, companyFunds, selectedExpenseableId]);
+
+  useEffect(() => {
+    if (source !== 'company_fund') {
+      return;
+    }
+
+    if (companyFundId || !derivedCompanyFundId) {
+      return;
+    }
+
+    form.setValue('company_fund_id', derivedCompanyFundId);
+  }, [companyFundId, derivedCompanyFundId, form, source]);
+
+  const { data: selectedCompanyFund } = useQuery<CompanyFund | null>({
+    queryKey: ['expenses', 'company-fund', derivedCompanyFundId] as const,
+    queryFn: async () => {
+      if (!derivedCompanyFundId) {
+        return null;
+      }
+
+      return companyFundsApi.getCompanyFundById(derivedCompanyFundId);
+    },
+    enabled: source === 'company_fund' && Boolean(derivedCompanyFundId),
   });
 
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ['expenses', 'projects'] as const,
     queryFn: () => projectsApi.getProjects(),
+    enabled: source === 'project_fund',
+  });
+
+  const { data: allProjectFunds = [] } = useQuery<ProjectFund[]>({
+    queryKey: ['expenses', 'project-funds'] as const,
+    queryFn: () => projectFundsApi.getProjectFunds(),
     enabled: source === 'project_fund',
   });
 
@@ -162,15 +226,130 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     enabled: source === 'user_fund' && Boolean(fundUserRole),
   });
 
+  const { data: selectedFundUserRecord } = useQuery<FundUserRecord | null>({
+    queryKey: ['expenses', 'fund-user-record', fundUserRole, fundUserId] as const,
+    queryFn: async () => {
+      if (!fundUserRole || !fundUserId) {
+        return null;
+      }
+
+      const user = await usersApi.getUserByRole(fundUserRole, fundUserId);
+      return user as FundUserRecord;
+    },
+    enabled: source === 'user_fund' && Boolean(fundUserRole) && Boolean(fundUserId),
+  });
+
   const projectFunds = useMemo(() => {
     if (source !== 'project_fund' || !selectedProjectId) return [];
-    return projects.find((project) => project.id === selectedProjectId)?.funds ?? [];
-  }, [projects, selectedProjectId, source]);
+    return allProjectFunds.filter((fund) => fund.project.id === selectedProjectId);
+  }, [allProjectFunds, selectedProjectId, source]);
 
-  const filteredUserFunds = useMemo(() => {
-    if (source !== 'user_fund' || !fundUserId) return [];
-    return userFunds.filter((fund) => fund.user?.id === fundUserId);
-  }, [fundUserId, source, userFunds]);
+  const derivedProjectFundId = useMemo(() => {
+    if (projectFundId) {
+      return projectFundId;
+    }
+
+    if (!selectedExpenseableId) {
+      return undefined;
+    }
+
+    return projectFunds.find((fund) =>
+      fund.currencies?.some((currency) => currency.id === selectedExpenseableId),
+    )?.id;
+  }, [projectFundId, projectFunds, selectedExpenseableId]);
+
+  useEffect(() => {
+    if (source !== 'project_fund') {
+      return;
+    }
+
+    if (projectFundId || !derivedProjectFundId) {
+      return;
+    }
+
+    form.setValue('project_fund_id', derivedProjectFundId);
+  }, [derivedProjectFundId, form, projectFundId, source]);
+
+  const derivedUserFundId = useMemo(() => {
+    if (userFundId) {
+      return userFundId;
+    }
+
+    if (!selectedExpenseableId) {
+      return undefined;
+    }
+
+    return selectedFundUserRecord?.user.funds?.find((fund) =>
+      fund.currencies?.some((currency) => currency.id === selectedExpenseableId),
+    )?.id;
+  }, [selectedExpenseableId, selectedFundUserRecord, userFundId]);
+
+  useEffect(() => {
+    if (source !== 'user_fund') {
+      return;
+    }
+
+    if (userFundId || !derivedUserFundId) {
+      return;
+    }
+
+    form.setValue('user_fund_id', derivedUserFundId);
+  }, [derivedUserFundId, form, source, userFundId]);
+
+  const selectedProjectName = useMemo(() => {
+    if (!selectedProjectId) return '';
+    return projects.find((project) => project.id === selectedProjectId)?.name ?? '';
+  }, [projects, selectedProjectId]);
+
+  const { data: selectedProjectFund } = useQuery<ProjectFund | null>({
+    queryKey: ['expenses', 'project-fund', derivedProjectFundId] as const,
+    queryFn: async () => {
+      if (!derivedProjectFundId) {
+        return null;
+      }
+
+      return projectFundsApi.getProjectFundById(derivedProjectFundId);
+    },
+    enabled: source === 'project_fund' && Boolean(derivedProjectFundId),
+  });
+
+  const selectedProjectFundName = useMemo(() => {
+    if (!derivedProjectFundId) return '';
+    return projectFunds.find((fund) => fund.id === derivedProjectFundId)?.name ?? '';
+  }, [derivedProjectFundId, projectFunds]);
+
+  const selectedProjectCurrencyName = useMemo(() => {
+    if (!selectedExpenseableId || !selectedProjectFund) return '';
+    const currency = selectedProjectFund.currencies?.find((item) => item.id === selectedExpenseableId);
+    return currency ? getCurrencyLabel(currency) : '';
+  }, [selectedExpenseableId, selectedProjectFund]);
+
+  const selectedCompanyFundName = useMemo(() => {
+    if (!derivedCompanyFundId) return '';
+    return companyFunds.find((fund) => fund.id === derivedCompanyFundId)?.name ?? '';
+  }, [companyFunds, derivedCompanyFundId]);
+
+  const selectedCompanyCurrencyName = useMemo(() => {
+    if (!selectedExpenseableId || !selectedCompanyFund) return '';
+    const currency = selectedCompanyFund.currencies?.find((item) => item.id === selectedExpenseableId);
+    return currency ? getCurrencyLabel(currency) : '';
+  }, [selectedCompanyFund, selectedExpenseableId]);
+
+  const selectedUserFund = useMemo(() => {
+    if (!derivedUserFundId) return undefined;
+    return selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId);
+  }, [derivedUserFundId, selectedFundUserRecord]);
+
+  const selectedUserFundName = useMemo(() => {
+    if (!derivedUserFundId) return '';
+    return selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId)?.name ?? '';
+  }, [derivedUserFundId, selectedFundUserRecord]);
+
+  const selectedUserCurrencyName = useMemo(() => {
+    if (!selectedExpenseableId || !selectedUserFund) return '';
+    const currency = selectedUserFund.currencies?.find((item) => item.id === selectedExpenseableId);
+    return currency ? getCurrencyLabel(currency) : '';
+  }, [selectedExpenseableId, selectedUserFund]);
 
   return (
     <Form {...form}>
@@ -203,8 +382,11 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                     field.onChange(nextSource);
                     form.setValue('expenseable_type', nextExpenseableType);
                     form.setValue('expenseable_id', undefined);
+                    form.setValue('company_fund_id', undefined);
                     form.setValue('fund_user_role', '');
                     form.setValue('fund_user_id', undefined);
+                    form.setValue('user_fund_id', undefined);
+                    form.setValue('project_fund_id', undefined);
 
                     if (nextSource !== 'project_fund') {
                       form.setValue('project_id', undefined);
@@ -232,12 +414,10 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
             <div className="space-y-1">
               <p className="text-sm font-semibold text-slate-900">صندوق المستخدم</p>
-              <p className="text-xs text-slate-500">
-                اختر نوع المستخدم ثم المستخدم نفسه، وبعدها يفتح لك الصندوق المرتبط فقط بهذا المستخدم.
-              </p>
+           
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-4">
               <FormField
                 control={form.control}
                 name="fund_user_role"
@@ -249,12 +429,13 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                       onValueChange={(value) => {
                         field.onChange(value);
                         form.setValue('fund_user_id', undefined);
+                        form.setValue('user_fund_id', undefined);
                         form.setValue('expenseable_id', undefined);
                       }}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع المستخدم" />
+                          {field.value ? getRoleLabel(field.value as UserRole) : <SelectValue placeholder="اختر نوع المستخدم" />}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -280,13 +461,16 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                       value={field.value ? String(field.value) : ''}
                       onValueChange={(value) => {
                         field.onChange(Number(value));
+                        form.setValue('user_fund_id', undefined);
                         form.setValue('expenseable_id', undefined);
                       }}
                       disabled={!fundUserRole}
                     >
                       <FormControl>
                         <SelectTrigger disabled={!fundUserRole}>
-                          <SelectValue placeholder="اختر المستخدم" />
+                          {field.value
+                            ? (fundRoleUsers.find((user) => user.id === field.value)?.user.name ?? 'اختر المستخدم')
+                            : <SelectValue placeholder="اختر المستخدم" />}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -301,36 +485,71 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                   </FormItem>
                 )}
               />
-            </div>
+                <FormField
+                control={form.control}
+                name="user_fund_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>صندوق المستخدم</FormLabel>
+                    <Select
+                      value={field.value ? String(field.value) : ''}
+                      onValueChange={(value) => {
+                        field.onChange(Number(value));
+                        form.setValue('expenseable_id', undefined);
+                      }}
+                      disabled={!fundUserId}
+                    >
+                      <FormControl>
+                        <SelectTrigger disabled={!fundUserId}>
+                          {field.value
+                            ? (selectedUserFundName || 'اختر صندوق المستخدم')
+                            : <SelectValue placeholder="اختر صندوق المستخدم" />}
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(selectedFundUserRecord?.user.funds ?? []).map((fund) => (
+                          <SelectItem key={fund.id} value={String(fund.id)}>
+                            {getFundLabel(fund)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="expenseable_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>صناديق المستخدم</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    disabled={!fundUserId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!fundUserId}>
-                        <SelectValue placeholder="اختر صندوق المستخدم" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {filteredUserFunds.map((fund) => (
-                        <SelectItem key={fund.id} value={String(getExpenseableId(fund))}>
-                          {getFundLabel(fund)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="expenseable_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>عملة الصندوق</FormLabel>
+                    <Select
+                      value={field.value ? String(field.value) : ''}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      disabled={!userFundId}
+                    >
+                      <FormControl>
+                        <SelectTrigger disabled={!userFundId}>
+                          {field.value
+                            ? (selectedUserCurrencyName || 'اختر العملة')
+                            : <SelectValue placeholder="اختر العملة" />}
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {selectedUserFund?.currencies?.map((currency) => (
+                          <SelectItem key={currency.id} value={String(currency.id)}>
+                            {getCurrencyLabel(currency)}
+                          </SelectItem>
+                        )) ?? null}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         ) : null}
 
@@ -350,7 +569,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر نوع المستخدم" />
+                      {field.value ? getRoleLabel(field.value as UserRole) : <SelectValue placeholder="اختر نوع المستخدم" />}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -379,7 +598,9 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                 >
                   <FormControl>
                     <SelectTrigger disabled={!userRole}>
-                      <SelectValue placeholder="اختر المستخدم" />
+                      {field.value
+                        ? (roleUsers.find((user) => user.id === field.value)?.user.name ?? 'اختر المستخدم')
+                        : <SelectValue placeholder="اختر المستخدم" />}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -397,37 +618,75 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
         </div>
 
         {source === 'company_fund' ? (
-          <FormField
-            control={form.control}
-            name="expenseable_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>صناديق الشركة</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(value) => field.onChange(Number(value))}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر صندوق الشركة" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {companyFunds.map((fund) => (
-                      <SelectItem key={fund.id} value={String(getExpenseableId(fund))}>
-                        {getFundLabel(fund)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="company_fund_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>صناديق الشركة</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.setValue('expenseable_id', undefined);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        {field.value
+                          ? (selectedCompanyFundName || 'اختر صندوق الشركة')
+                          : <SelectValue placeholder="اختر صندوق الشركة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {companyFunds.map((fund) => (
+                        <SelectItem key={fund.id} value={String(fund.id)}>
+                          {getCompanyFundLabel(fund)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expenseable_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عملة الصندوق</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    disabled={!derivedCompanyFundId}
+                  >
+                    <FormControl>
+                      <SelectTrigger disabled={!derivedCompanyFundId}>
+                        {field.value
+                          ? (selectedCompanyCurrencyName || 'اختر العملة')
+                          : <SelectValue placeholder="اختر العملة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(selectedCompanyFund?.currencies ?? []).map((currency) => (
+                        <SelectItem key={currency.id} value={String(currency.id)}>
+                          {getCurrencyLabel(currency)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         ) : null}
 
         {source === 'project_fund' ? (
-          <>
+          <div className="grid gap-4 md:grid-cols-3">
             <FormField
               control={form.control}
               name="project_id"
@@ -438,12 +697,13 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                     value={field.value ? String(field.value) : ''}
                     onValueChange={(value) => {
                       field.onChange(Number(value));
+                      form.setValue('project_fund_id', undefined);
                       form.setValue('expenseable_id', undefined);
                     }}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر المشروع" />
+                        {field.value ? selectedProjectName : <SelectValue placeholder="اختر المشروع" />}
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -461,24 +721,29 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
 
             <FormField
               control={form.control}
-              name="expenseable_id"
+              name="project_fund_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>صناديق المشروع</FormLabel>
+                  <FormLabel>صندوق المشروع</FormLabel>
                   <Select
                     value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.setValue('expenseable_id', undefined);
+                    }}
                     disabled={!selectedProjectId}
                   >
                     <FormControl>
                       <SelectTrigger disabled={!selectedProjectId}>
-                        <SelectValue placeholder="اختر صندوق المشروع" />
+                        {field.value
+                          ? (selectedProjectFundName || 'اختر صندوق المشروع')
+                          : <SelectValue placeholder="اختر صندوق المشروع" />}
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {projectFunds.map((fund) => (
-                        <SelectItem key={fund.id} value={String(getExpenseableId(fund))}>
-                          {getFundLabel(fund)}
+                        <SelectItem key={fund.id} value={String(fund.id)}>
+                          {fund.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -487,7 +752,38 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                 </FormItem>
               )}
             />
-          </>
+
+            <FormField
+              control={form.control}
+              name="expenseable_id"
+              render={({ field }) => (
+                <FormItem className="">
+                  <FormLabel>عملة الصندوق</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    disabled={!derivedProjectFundId}
+                  >
+                    <FormControl>
+                      <SelectTrigger disabled={!derivedProjectFundId}>
+                        {field.value
+                          ? (selectedProjectCurrencyName || 'اختر العملة')
+                          : <SelectValue placeholder="اختر العملة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(selectedProjectFund?.currencies ?? []).map((currency) => (
+                        <SelectItem key={currency.id} value={String(currency.id)}>
+                          {getCurrencyLabel(currency)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         ) : null}
 
         <FormField
@@ -523,9 +819,24 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'جاري الحفظ...' : 'حفظ'}
-        </Button>
+        <div className="flex items-center justify-start gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="h-11 rounded-xl border-slate-200 px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+          >
+            إلغاء
+          </Button>
+
+          <Button
+            type="submit"
+            className="h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold hover:bg-slate-800"
+            disabled={loading}
+          >
+            {loading ? 'جاري الحفظ...' : 'حفظ'}
+          </Button>
+        </div>
       </form>
     </Form>
   );

@@ -12,6 +12,11 @@ export const companyFundsApi = {
     return response.data.data
   },
 
+  getCompanyFundById: async (id: number): Promise<CompanyFund> => {
+    const response = await apiClient.get(`/company-funds/${id}`);
+    return response.data;
+  },
+
   createCompanyFund: async (payload: CreateCompanyFundPayload): Promise<CompanyFund> => {
     const response = await apiClient.post('/company-funds', payload);
     return response.data;

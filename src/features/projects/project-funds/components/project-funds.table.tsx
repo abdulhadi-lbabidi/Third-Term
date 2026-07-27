@@ -9,6 +9,8 @@ type ProjectFundsTableProps = {
   onEdit?: (fund: ProjectFund) => void;
   onDelete?: (fund: ProjectFund) => void;
   onAttachCurrency?: (fund: ProjectFund) => void;
+  onCurrencyClick?: (fund: ProjectFund, currencyId: number) => void;
+  onMoreCurrenciesClick?: (fund: ProjectFund) => void;
 };
 
 export function ProjectFundsTable({
@@ -17,6 +19,8 @@ export function ProjectFundsTable({
   onEdit,
   onDelete,
   onAttachCurrency,
+  onCurrencyClick,
+  onMoreCurrenciesClick,
 }: ProjectFundsTableProps) {
   const columns: DataTableColumn<ProjectFund>[] = [
     { header: 'اسم الصندوق', cell: (fund) => fund.name },
@@ -30,14 +34,26 @@ export function ProjectFundsTable({
 
         return (
           <div className="flex flex-wrap gap-2">
-            {currencies.map((currency) => (
-              <span
+            {currencies.slice(0, 3).map((currency) => (
+              <button
                 key={currency.id}
-                className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800"
+                type="button"
+                onClick={() => onCurrencyClick?.(fund, currency.id)}
+                className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800 transition-opacity hover:opacity-80"
               >
-                {currency.currency} {currency.symbol}
-              </span>
+                <span>{currency.currency} {currency.symbol}</span>
+                <span className="text-[11px] text-sky-700">({currency.balance})</span>
+              </button>
             ))}
+            {(currencies.length > 3) ? (
+              <button
+                type="button"
+                onClick={() => onMoreCurrenciesClick?.(fund)}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-opacity hover:opacity-80"
+              >
+                عرض المزيد
+              </button>
+            ) : null}
           </div>
         );
       },

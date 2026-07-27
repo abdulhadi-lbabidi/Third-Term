@@ -1,10 +1,23 @@
 import { apiClient } from '@/shared/api/axios.instance';
+import { usersApi } from '@/features/users/api/users.api';
+import type { UserRole } from '@/features/users/types';
 import type { CreateFundPayload, Fund, FundCurrencyAttachPayload, UpdateFundPayload } from './types';
+
+type UserFundsResponse = {
+  user?: {
+    funds?: Fund[];
+  };
+};
 
 export const fundsApi = {
   getFunds: async (): Promise<Fund[]> => {
     const response = await apiClient.get('/funds');
     return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+  },
+
+  getFundsByUserRole: async (role: UserRole, userId: number): Promise<Fund[]> => {
+    const response = (await usersApi.getUserByRole(role, userId)) as UserFundsResponse;
+    return response.user?.funds ?? [];
   },
 
   createFund: async (payload: CreateFundPayload): Promise<Fund> => {
