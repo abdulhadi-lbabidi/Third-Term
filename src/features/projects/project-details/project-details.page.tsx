@@ -1,5 +1,5 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Wallet, User, Cloud, Pencil, Users } from 'lucide-react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { Wallet, User, Cloud, Pencil, Users, Layers } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
@@ -13,21 +13,22 @@ import { ProjectClientTab } from './components/project-client-tab';
 import { PageHeader } from '../../components/page-header';
 import { ProjectCloudStorageTab } from './components/project-cloud-storage-tab';
 import { ProjectTeamTab } from './components/project-team-tab';
+import { ProjectStagesTab } from './components/project-stages-tab';
 
 const PROJECT_TABS = [
   { value: 'financials', label: 'المالية والصناديق', icon: <Wallet className="h-4 w-4" /> },
-  { value: 'client',     label: 'العميل',            icon: <User  className="h-4 w-4" /> },
-  { value: 'team',       label: 'فريق العمل',        icon: <Users className="h-4 w-4" /> },
-  { value: 'cloud',      label: 'التخزين السحابي',   icon: <Cloud className="h-4 w-4" /> },
+  { value: 'client', label: 'العميل', icon: <User className="h-4 w-4" /> },
+  { value: 'team', label: 'فريق العمل', icon: <Users className="h-4 w-4" /> },
+  { value: 'stages', label: 'المراحل', icon: <Layers className="h-4 w-4" /> },
+  { value: 'cloud', label: 'التخزين السحابي', icon: <Cloud className="h-4 w-4" /> },
 ];
 
 export function ProjectDetailsPage() {
-  const navigate    = useNavigate();
-  const params      = useParams();
+  const params = useParams();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
 
-  const projectId   = Number(params.projectId || '');
+  const projectId = Number(params.projectId || '');
   const projectName = params.projectName ? decodeURIComponent(params.projectName) : '';
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -37,12 +38,12 @@ export function ProjectDetailsPage() {
 
   const projectsQuery = useQuery<Project>({
     queryKey: ['projects', projectId] as const,
-    queryFn:  () => projectsApi.getProjectById(projectId),
+    queryFn: () => projectsApi.getProjectById(projectId),
   });
 
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
     queryKey: ['departments'] as const,
-    queryFn:  () => projectsApi.getDepartments(),
+    queryFn: () => projectsApi.getDepartments(),
   });
 
   const saveMutation = useMutation({
@@ -80,14 +81,6 @@ export function ProjectDetailsPage() {
               <Pencil className="size-4" />
               تعديل بيانات المشروع
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/projects')}
-              className="h-11 rounded-2xl border-slate-200 px-5 text-sm font-semibold"
-            >
-              العودة إلى المشاريع
-            </Button>
           </div>
         }
       />
@@ -95,9 +88,10 @@ export function ProjectDetailsPage() {
       {/* Tab content — driven by ?tab= URL param */}
       <div className="bg-white border border-slate-200/80 p-4 rounded-lg shadow-sm">
         {activeTab === 'financials' && <ProjectFinancialsTab project={currentProject} />}
-        {activeTab === 'client'     && <ProjectClientTab     project={currentProject} />}
-        {activeTab === 'team'       && <ProjectTeamTab       projectId={projectId} />}
-        {activeTab === 'cloud'      && <ProjectCloudStorageTab project={currentProject} />}
+        {activeTab === 'client' && <ProjectClientTab project={currentProject} />}
+        {activeTab === 'team' && <ProjectTeamTab projectId={projectId} />}
+        {activeTab === 'stages' && <ProjectStagesTab projectId={projectId} />}
+        {activeTab === 'cloud' && <ProjectCloudStorageTab project={currentProject} />}
       </div>
 
       <ProjectsDialog

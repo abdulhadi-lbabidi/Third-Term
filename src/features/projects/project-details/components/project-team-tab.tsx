@@ -8,7 +8,7 @@ import type { EmployeeRecord } from '@/features/users/types';
 import { projectTeamApi } from '../../project-team/project-team.api';
 import { ProjectTeamTable } from '../../project-team/components/project-team.table';
 import { ProjectTeamDialog } from '../../project-team/components/project-team.dialog';
-import type { ProjectTeamMember, CreateProjectTeamPayload } from '../../project-team/project-team.types';
+import type { ProjectTeamMember } from '../../project-team/project-team.types';
 
 const QUERY_KEY = ['project-team'] as const;
 
@@ -43,17 +43,30 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
 
   // ── Mutations ──────────────────────────────────────────────────
   const saveMutation = useMutation({
-    mutationFn: async (payload: CreateProjectTeamPayload) => {
+    mutationFn: async (payload: { name: string; user_ids: number[]; project_id: number; }) => {
       if (selectedMember) {
-        return projectTeamApi.update(selectedMember.id, payload);
+        return projectTeamApi.update(selectedMember.id, {
+          name: payload.name,
+          project_id: payload.project_id,
+          user_id: payload.user_ids[0],
+        });
       }
-      return projectTeamApi.create(payload);
+
+      const promises = payload.user_ids.map(userId =>
+        projectTeamApi.create({
+          name: payload.name,
+          project_id: payload.project_id,
+          user_id: userId,
+        })
+      );
+
+      return Promise.all(promises);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDialogOpen(false);
       setSelectedMember(null);
-      toast.success(selectedMember ? 'تم تعديل بيانات العضو بنجاح' : 'تمت إضافة العضو بنجاح');
+      toast.success(selectedMember ? 'تم تعديل بيانات العضو بنجاح' : 'تم إضافة الأعضاء بنجاح');
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حفظ بيانات العضو');

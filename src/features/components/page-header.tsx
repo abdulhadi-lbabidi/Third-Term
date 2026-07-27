@@ -11,6 +11,8 @@ export interface PageTab {
 interface PageHeaderProps {
   title: string | any;
   badge?: string;
+  icon?: any;
+  description?: ReactNode;
   action?: ReactNode;
   tabs?: PageTab[];
   defaultTab?: string;
@@ -20,6 +22,8 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   badge,
+  icon: Icon,
+  description,
   action,
   tabs,
   defaultTab,
@@ -46,15 +50,25 @@ export function PageHeader({
     <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
       {/* Title row */}
       <div className={cn("flex items-center justify-between gap-4 px-5 py-4", hasTabs && "pb-0")}>
-        <div className="space-y-1">
-          {badge && (
-            <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-              {badge}
+        <div className="flex items-center gap-4">
+          {Icon && (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600">
+              <Icon className="h-6 w-6" />
             </div>
           )}
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-            {title}
-          </h1>
+          <div className="space-y-1">
+            {badge && (
+              <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                {badge}
+              </div>
+            )}
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
+              {title}
+            </h1>
+            {description && (
+              <p className="text-sm text-slate-500 mt-1">{description}</p>
+            )}
+          </div>
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>

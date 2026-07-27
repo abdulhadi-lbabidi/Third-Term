@@ -12,15 +12,8 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@/components/ui/command';
-import type { ProjectTeamMember, CreateProjectTeamPayload } from '../project-team.types';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import type { ProjectTeamMember } from '../project-team.types';
 
 // ───────────────────────────────────────────────
 // Exported user option shape (used by parent/dialog)
@@ -35,9 +28,9 @@ export type UserOption = {
 // ───────────────────────────────────────────────
 const formSchema = z.object({
   name: z.string().min(1, 'اسم الدور مطلوب'),
-  user_id: z
-    .number({ error: 'يجب اختيار مستخدم' })
-    .min(1, 'يجب اختيار مستخدم'),
+  user_ids: z
+    .array(z.number())
+    .min(1, 'يجب اختيار مستخدم واحد على الأقل'),
   project_id: z.number().min(1, 'معرف المشروع مطلوب'),
 });
 
@@ -47,7 +40,7 @@ type ProjectTeamFormProps = {
   projectId: number;
   member?: ProjectTeamMember | null;
   users: UserOption[];
-  onSubmit: (data: CreateProjectTeamPayload) => Promise<void>;
+  onSubmit: (data: { name: string; user_ids: number[]; project_id: number; }) => Promise<void>;
   loading?: boolean;
 };
 
@@ -56,7 +49,7 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: member?.name ?? '',
-      user_id: member?.user?.id ?? 0,
+      user_ids: member?.user?.id ? [member.user.id] : [],
       project_id: projectId,
     },
   });
@@ -64,7 +57,7 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
   useEffect(() => {
     form.reset({
       name: member?.name ?? '',
-      user_id: member?.user?.id ?? 0,
+      user_ids: member?.user?.id ? [member.user.id] : [],
       project_id: projectId,
     });
   }, [form, member, projectId]);
@@ -72,10 +65,13 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
   const handleSubmit = async (values: FormValues) => {
     await onSubmit({
       name: values.name,
-      user_id: values.user_id,
+      user_ids: values.user_ids,
       project_id: values.project_id,
     });
   };
+
+  // Map users to SearchableSelect option shape
+  const userOptions = users.map((u) => ({ value: u.id, label: u.name }));
 
   return (
     <Form {...form}>
@@ -96,43 +92,33 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
           )}
         />
 
-        {/* User — Combobox (base-ui) */}
+        {/* User — SearchableSelect */}
         <FormField
           control={form.control}
-          name="user_id"
-          render={({ field }) => {
-            const selectedName = users.find((u) => u.id === field.value)?.name ?? '';
-            return (
-              <FormItem className="flex flex-col space-y-2">
-                <FormLabel>عضو الفريق</FormLabel>
-                <Combobox
-                  value={selectedName}
+          name="user_ids"
+          render={({ field }) => (
+            <FormItem className="flex flex-col space-y-2">
+              <FormLabel>{member ? 'عضو الفريق' : 'أعضاء الفريق'}</FormLabel>
+              <FormControl>
+                <SearchableSelect
+                  multiple={!member}
+                  value={!member ? field.value : (field.value[0] || null)}
                   onValueChange={(val) => {
-                    const matched = users.find((u) => u.name === val);
-                    if (matched) field.onChange(matched.id);
+                    if (!member) {
+                      field.onChange(val);
+                    } else {
+                      field.onChange([val]);
+                    }
                   }}
-                >
-                  <FormControl>
-                    <ComboboxInput
-                      placeholder="ابحث عن عضو الفريق..."
-                      className="w-full h-10"
-                    />
-                  </FormControl>
-                  <ComboboxContent>
-                    <ComboboxList>
-                      <ComboboxEmpty>لم يتم العثور على مستخدمين.</ComboboxEmpty>
-                      {users.map((user) => (
-                        <ComboboxItem key={user.id} value={user.name}>
-                          {user.name}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-                <FormMessage />
-              </FormItem>
-            );
-          }}
+                  options={userOptions}
+                  placeholder="اختر عضو الفريق..."
+                  searchPlaceholder="ابحث عن عضو الفريق..."
+                  emptyMessage="لم يتم العثور على مستخدمين."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         <Button type="submit" className="w-full" disabled={loading}>

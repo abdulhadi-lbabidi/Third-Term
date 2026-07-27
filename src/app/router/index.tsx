@@ -14,6 +14,7 @@ import { ItemsPage } from '@/features/items/items.page';
 import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
 import { DepartmentsPage } from '@/features/departments/departments.page';
 import { CloudStoragePage } from '@/features/cloud-storage/cloud-storage.page';
+import { ProjectStagesPage } from '@/features/projects/project-stages/project-stages.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -88,6 +89,10 @@ export const router = createBrowserRouter([
           {
             path: '/projects/:projectId/:projectName/team',
             element: <ProjectTeamPage />,
+          },
+          {
+            path: '/projects/:projectId/:projectName/stages',
+            element: <ProjectStagesPage />,
           },
           {
             path: '/items',

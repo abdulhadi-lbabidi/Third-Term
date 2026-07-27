@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ProjectTeamForm, type UserOption } from './project-team.form';
-import type { ProjectTeamMember, CreateProjectTeamPayload } from '../project-team.types';
+import type { ProjectTeamMember } from '../project-team.types';
 
 type ProjectTeamDialogProps = {
   open: boolean;
@@ -8,7 +8,7 @@ type ProjectTeamDialogProps = {
   projectId: number;
   member?: ProjectTeamMember | null;
   users: UserOption[];
-  onSubmit: (data: CreateProjectTeamPayload) => Promise<void>;
+  onSubmit: (data: { name: string; user_ids: number[]; project_id: number; }) => Promise<void>;
   loading?: boolean;
 };
 

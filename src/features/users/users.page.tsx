@@ -140,7 +140,7 @@ export function UsersPage() {
         badge="المستخدمون"
         title="المستخدمون"
         action={
-          <Button asChild className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
+          <Button className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
             <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
           </Button>
         }
