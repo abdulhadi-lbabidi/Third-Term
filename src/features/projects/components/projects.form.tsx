@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,9 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 
 import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
@@ -46,8 +44,6 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 ];
 
 export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {
-  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
-  const [clientSearch, setClientSearch] = useState('');
 
   const { data: clients } = useQuery<ClientRecord[]>(
     { queryKey: ['clients'] as const, queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]> }
@@ -74,9 +70,7 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
     });
   }, [clients, departments, defaultValues, form]);
 
-  const filteredClients = clients?.filter((c) =>
-    c.user.name.toLowerCase().includes(clientSearch.toLowerCase())
-  );
+
 
   return (
     <Form {...form}>
@@ -126,69 +120,16 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
           render={({ field }) => (
             <FormItem className="flex flex-col space-y-2">
               <FormLabel>العميل</FormLabel>
-              <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
-                <PopoverTrigger>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      className={cn(
-                        'w-full justify-between h-10 font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value
-                        ? clients?.find((c) => c.id === field.value)?.user?.name
-                        : 'اختر العميل'}
-                      <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="p-0"
-                  align="start"
-                  style={{ width: 'var(--radix-popover-trigger-width)' }}
-                >
-                  <div className="p-2 border-b">
-                    <input
-                      className="w-full text-sm outline-none bg-transparent placeholder:text-muted-foreground"
-                      placeholder="ابحث عن العميل..."
-                      value={clientSearch}
-                      onChange={(e) => setClientSearch(e.target.value)}
-                    />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto p-1">
-                    {filteredClients?.length === 0 && (
-                      <p className="text-center text-sm text-muted-foreground py-4">
-                        لم يتم العثور على عملاء.
-                      </p>
-                    )}
-                    {filteredClients?.map((client) => (
-                      <button
-                        key={client.id}
-                        type="button"
-                        className={cn(
-                          'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-left cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors',
-                          client.id === field.value && 'bg-accent text-accent-foreground'
-                        )}
-                        onClick={() => {
-                          field.onChange(client.id);
-                          setClientPopoverOpen(false);
-                          setClientSearch('');
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            'h-4 w-4 shrink-0',
-                            client.id === field.value ? 'opacity-100' : 'opacity-0'
-                          )}
-                        />
-                        {client.user.name}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <SearchableSelect
+                  value={field.value || null}
+                  onValueChange={(val) => field.onChange(Number(val))}
+                  options={(clients ?? []).map((c) => ({ value: c.id, label: c.user.name }))}
+                  placeholder="اختر العميل"
+                  searchPlaceholder="ابحث عن العميل..."
+                  emptyMessage="لم يتم العثور على عملاء."
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

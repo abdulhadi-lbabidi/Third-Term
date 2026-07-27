@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle
-} from '@/components/ui/alert-dialog';
+} from '@/shared/components/ui/alert-dialog';
 import { useDeleteDirectory, useDeleteFile } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile } from '../../types';
 

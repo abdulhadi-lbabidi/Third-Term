@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { MoreVertical, Trash2, Download, Eye } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/lib/utils';
 import type { CloudFile } from '../../types';
 import { IconRegistry } from '../../registry/icon-registry';

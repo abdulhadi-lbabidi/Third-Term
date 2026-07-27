@@ -9,12 +9,14 @@ import { CompanyFundsPage } from '@/features/company-funds/company-funds.page';
 import { ProjectsPage } from '@/features/projects/projects.page';
 import { ProjectDetailsPage } from '@/features/projects/project-details/project-details.page';
 import { ProjectFundsPage } from '@/features/projects/project-funds/project-funds.page';
+import { ProjectTeamPage } from '@/features/projects/project-team/project-team.page';
 import { ItemsPage } from '@/features/items/items.page';
 import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
 import { DepartmentsPage } from '@/features/departments/departments.page';
 import { CloudStoragePage } from '@/features/cloud-storage/cloud-storage.page';
 import { ExpensesPage } from '@/features/expenses/expenses.page';
 import { NewExpensePage } from '@/features/expenses/new-expense.page';
+import { ProjectStagesPage } from '@/features/projects/project-stages/project-stages.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -85,6 +87,14 @@ export const router = createBrowserRouter([
           {
             path: '/projects/:projectId/:projectName/funds',
             element: <ProjectFundsPage />,
+          },
+          {
+            path: '/projects/:projectId/:projectName/team',
+            element: <ProjectTeamPage />,
+          },
+          {
+            path: '/projects/:projectId/:projectName/stages',
+            element: <ProjectStagesPage />,
           },
           {
             path: '/items',

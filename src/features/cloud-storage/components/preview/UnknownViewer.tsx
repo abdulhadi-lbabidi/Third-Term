@@ -13,7 +13,7 @@ export const UnknownViewer = ({ file }: { file: CloudFile }) => {
         لا يتوفر عارض لهذا النوع من الملفات ({file.extension}).
       </p>
       {file.url && (
-        <Button asChild>
+        <Button>
           <a href={file.url} download={file.file_name} target="_blank" rel="noreferrer">
             تنزيل الملف
           </a>

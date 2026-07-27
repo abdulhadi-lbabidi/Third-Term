@@ -40,3 +40,8 @@ export interface UploadFilesPayload {
   files: File[];
 }
 
+export interface MoveFilePayload {
+  media_id: number;
+  target_directory_id: number;
+}
+

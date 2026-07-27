@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Folder, MoreVertical, Pencil, Trash2, FolderPlus, UploadCloud } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/lib/utils';
 import type { Directory } from '../../types';
 
@@ -96,7 +96,7 @@ export function FolderCard({ folder, selected, onSelect, onClick, onRename, onDe
       </div>
 
       <Folder className={cn("size-10 transition-colors", isDragOver ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
-      
+
       <TooltipProvider delay={300}>
         <Tooltip>
           <TooltipTrigger className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 truncate w-full text-center focus:outline-none cursor-default bg-transparent border-none p-0 block mt-3">

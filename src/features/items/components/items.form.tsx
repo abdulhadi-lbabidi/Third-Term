@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/shared/components/ui/textarea';
 import type { Item } from '../types';
 import { itemFormSchema, type ItemFormValues } from '../schemas/items.schema';
 
