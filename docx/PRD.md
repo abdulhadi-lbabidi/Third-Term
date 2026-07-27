@@ -174,7 +174,7 @@
   <!-- - view icon for extenion type: pdf,excel,images, -->
 <!-- - options[on_click_menu,dialog]: -->
   <!-- - preview -->
-  - download
+  <!-- - download -->
   <!-- - rename -->
   <!-- - delete -->
 <!-- - get for projects -->
