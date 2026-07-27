@@ -4,6 +4,7 @@ import type {
   Directory,
   CreateDirectoryPayload,
   UpdateDirectoryPayload,
+  MoveFilePayload,
 } from '../types';
 
 export interface PaginatedDirectories {
@@ -65,15 +66,29 @@ export const cloudStorageApi = {
       .delete(`/directories/${directoryId}/files/${fileId}`)
       .then(({ data }: any) => data?.data ?? data),
 
+  moveFile: (payload: MoveFilePayload): Promise<void> =>
+    apiClient
+      .post('/directories/move-file', payload)
+      .then(({ data }: any) => data?.data ?? data),
+
   moveItems: (payload: {
     targetDirId: number | null;
     itemIds: { id: number; type: 'file' | 'folder'; data?: any }[];
-  }): Promise<Directory[]> => {
-    const promises = payload.itemIds.map((item) =>
-      apiClient
-        .put(`/directories/${item.id}`, { parent_dir_id: payload.targetDirId })
-        .then(({ data }: any) => data?.data ?? data)
-    );
+  }): Promise<any[]> => {
+    const promises = payload.itemIds.map((item) => {
+      if (item.type === 'folder') {
+        return apiClient
+          .put(`/directories/${item.id}`, { parent_dir_id: payload.targetDirId })
+          .then(({ data }: any) => data?.data ?? data);
+      } else {
+        return apiClient
+          .post('/directories/move-file', {
+            media_id: item.id,
+            target_directory_id: payload.targetDirId,
+          })
+          .then(({ data }: any) => data?.data ?? data);
+      }
+    });
     return Promise.all(promises);
   },
 };

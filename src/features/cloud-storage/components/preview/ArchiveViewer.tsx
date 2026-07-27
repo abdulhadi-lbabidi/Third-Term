@@ -13,7 +13,7 @@ export const ArchiveViewer = ({ file }: { file: CloudFile }) => {
         لا يمكن معاينة الملفات المضغوطة مباشرة. يرجى تنزيل الملف لفحص محتوياته.
       </p>
       {file.url && (
-        <Button asChild>
+        <Button>
           <a href={file.url} download={file.file_name} target="_blank" rel="noreferrer">
             تنزيل الملف
           </a>
