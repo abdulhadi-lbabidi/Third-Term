@@ -17,12 +17,12 @@ import { ProjectStagesTab } from './components/project-stages-tab';
 import { ProjectFundsPage } from '../project-funds/project-funds.page';
 
 const PROJECT_TABS = [
-  { value: 'financials', label: 'المالية', icon: <Receipt className="h-4 w-4" /> },
   { value: 'funds', label: 'الصناديق', icon: <Wallet className="h-4 w-4" /> },
+  { value: 'cloud', label: 'التخزين السحابي', icon: <Cloud className="h-4 w-4" /> },
+  { value: 'financials', label: 'المالية', icon: <Receipt className="h-4 w-4" /> },
+  { value: 'stages', label: 'المراحل', icon: <Layers className="h-4 w-4" /> },
   { value: 'client', label: 'العميل', icon: <User className="h-4 w-4" /> },
   { value: 'team', label: 'فريق العمل', icon: <Users className="h-4 w-4" /> },
-  { value: 'stages', label: 'المراحل', icon: <Layers className="h-4 w-4" /> },
-  { value: 'cloud', label: 'التخزين السحابي', icon: <Cloud className="h-4 w-4" /> },
 ];
 
 export function ProjectDetailsPage() {
@@ -83,12 +83,12 @@ export function ProjectDetailsPage() {
       />
 
       <div className="surface-panel p-4 sm:p-5">
-        {activeTab === 'financials' && <ProjectFinancialsTab project={currentProject} />}
         {activeTab === 'funds' && <ProjectFundsPage />}
+        {activeTab === 'cloud' && <ProjectCloudStorageTab project={currentProject} />}
+        {activeTab === 'financials' && <ProjectFinancialsTab project={currentProject} />}
+        {activeTab === 'stages' && <ProjectStagesTab projectId={projectId} />}
         {activeTab === 'client' && <ProjectClientTab project={currentProject} />}
         {activeTab === 'team' && <ProjectTeamTab projectId={projectId} />}
-        {activeTab === 'stages' && <ProjectStagesTab projectId={projectId} />}
-        {activeTab === 'cloud' && <ProjectCloudStorageTab project={currentProject} />}
       </div>
 
       <ProjectsDialog

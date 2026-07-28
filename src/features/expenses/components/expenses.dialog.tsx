@@ -5,20 +5,34 @@ import type { CreateExpensePayload, Expense } from '../types';
 type ExpensesDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  expense?: Expense | null;
+  defaultValues?: Expense | null;
+  fixedValues?: {
+    source?: 'company_fund' | 'user_fund' | 'project_fund';
+    project_id?: number;
+    project_fund_id?: number;
+  };
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
   loading?: boolean;
 };
 
-export function ExpensesDialog({ open, onOpenChange, expense, onSubmit, loading }: ExpensesDialogProps) {
+export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: ExpensesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl overflow-visible rounded-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{expense ? 'تعديل مصروف' : 'إضافة مصروف'}</DialogTitle>
+          <DialogTitle>{defaultValues ? 'تعديل المصروف' : 'إضافة مصروف جديد'}</DialogTitle>
         </DialogHeader>
-
-        <ExpensesForm defaultValues={expense} onSubmit={onSubmit} loading={loading} />
+        <div className="py-4">
+          <ExpensesForm
+            defaultValues={defaultValues}
+            fixedValues={fixedValues}
+            onSubmit={async (data) => {
+              await onSubmit(data);
+              onOpenChange(false);
+            }}
+            loading={loading}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

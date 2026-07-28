@@ -6,11 +6,16 @@ type RevenuesDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultValues?: Revenue | null;
+  fixedValues?: {
+    source?: 'company_fund' | 'user_fund' | 'project_fund';
+    project_id?: number;
+    project_fund_id?: number;
+  };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
 };
 
-export function RevenuesDialog({ open, onOpenChange, defaultValues, onSubmit, loading }: RevenuesDialogProps) {
+export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: RevenuesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -20,6 +25,7 @@ export function RevenuesDialog({ open, onOpenChange, defaultValues, onSubmit, lo
         <div className="py-4">
           <RevenuesForm
             defaultValues={defaultValues}
+            fixedValues={fixedValues}
             onSubmit={async (data) => {
               await onSubmit(data);
               onOpenChange(false);

@@ -14,6 +14,8 @@ import {
   Cloud,
   ReceiptText,
   Boxes,
+  FileSpreadsheet,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -38,6 +40,8 @@ const navGroups: NavGroup[] = [
     label: 'الإدارة المالية',
     items: [
       { to: '/expenses', label: 'المصروفات', icon: ReceiptText },
+      { to: '/revenues', label: 'الإيرادات', icon: TrendingUp },
+      { to: '/invoice-items', label: 'أصناف الفاتورة', icon: FileSpreadsheet },
       { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
     ],
   },
@@ -98,7 +102,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
             </div>
           ) : (
             <div className="flex flex-1 justify-center">
-          
+
             </div>
           )}
 
