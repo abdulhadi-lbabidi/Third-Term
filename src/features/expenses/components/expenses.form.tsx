@@ -26,13 +26,12 @@ import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { CompanyFund } from '@/features/company-funds/types';
 import type { Fund } from '@/features/funds/types';
 import { projectsApi } from '@/features/projects/projects.api';
-import type { Project } from '@/features/projects/types';
-import { projectFundsApi } from '@/features/projects/project-funds/project-funds.api';
-import type { ProjectFund } from '@/features/projects/project-funds/project-funds.types';
+import type { Project, ProjectFund } from '@/features/projects/types';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
 import { expenseFormSchema, expenseSourceLabels, type ExpenseFormValues } from '../schemas/expenses.schema';
-import type { CreateExpensePayload, Expense, ExpenseSource, ExpenseableType } from '../types';
+import { toExpenseApiPayload } from '../expenses.payload';
+import type { CreateExpensePayload, Expense, ExpenseProjectFundCurrencyDetails, ExpenseSource, ExpenseUserFundCurrencyDetails, ExpenseableType } from '../types';
 
 type ExpensesFormProps = {
   defaultValues?: Expense | null;
@@ -110,15 +109,147 @@ function getCurrencyLabel(currency: { currency: string; balance: string }) {
   return `${currency.currency} - ${currency.balance}`;
 }
 
+/** القيمة المرسلة في expenseable_id — من حقل expenseable_id وليس id العملة */
+function getCurrencyExpenseableId(currency: { id: number; expenseable_id?: number }) {
+  return currency.expenseable_id ?? currency.id;
+}
+
+function currencyMatchesExpenseableId(
+  currency: { id: number; expenseable_id?: number },
+  expenseableId: number,
+) {
+  return getCurrencyExpenseableId(currency) === expenseableId;
+}
+
 function getRoleLabel(role: UserRole | '') {
   return role ? roleLabels[role] : '';
 }
 
+function normalizeExpenseSource(type?: string): ExpenseSource | undefined {
+  if (type === 'currency_fund' || type === 'user_fund') {
+    return 'user_fund';
+  }
+
+  if (type === 'company_fund' || type === 'project_fund') {
+    return type;
+  }
+
+  return undefined;
+}
+
 function getInitialSource(expense?: Expense | null): ExpenseSource {
+  const fromInfo = normalizeExpenseSource(expense?.expenseable_info?.type);
+  if (fromInfo) {
+    return fromInfo;
+  }
+
   return getSourceFromType(expense?.expenseable_type);
 }
 
+function getExpenseProjectFundDetails(expense?: Expense | null): ExpenseProjectFundCurrencyDetails | null {
+  const details = expense?.expenseable_info?.details;
+  if (!details || typeof details !== 'object' || !('id' in details)) {
+    return null;
+  }
+
+  if ('project_fund' in details || 'project_fund_id' in details) {
+    return details as ExpenseProjectFundCurrencyDetails;
+  }
+
+  return null;
+}
+
+function getExpenseUserFundDetails(expense?: Expense | null): ExpenseUserFundCurrencyDetails | null {
+  const details = expense?.expenseable_info?.details;
+  if (!details || typeof details !== 'object' || !('id' in details)) {
+    return null;
+  }
+
+  if ('fund' in details || 'fund_id' in details) {
+    return details as ExpenseUserFundCurrencyDetails;
+  }
+
+  return null;
+}
+
+function getExpenseUserFundUserInfo(expense?: Expense | null) {
+  const userInfo = expense?.expenseable_info?.user_info;
+  if (!userInfo || typeof userInfo !== 'object') {
+    return null;
+  }
+
+  return userInfo;
+}
+
+function getExpenseProjectId(expense?: Expense | null): number | undefined {
+  const info = expense?.expenseable_info;
+  if (info?.project_id) {
+    return info.project_id;
+  }
+
+  const details = getExpenseProjectFundDetails(expense);
+  return details?.project_fund?.project_id ?? details?.project_fund?.project?.id;
+}
+
+function getExpenseProjectFundId(expense?: Expense | null): number | undefined {
+  const details = getExpenseProjectFundDetails(expense);
+  return details?.project_fund_id ?? details?.project_fund?.id;
+}
+
+function getExpenseableCurrencyId(expense?: Expense | null): number | undefined {
+  if (expense?.expenseable_id) {
+    return expense.expenseable_id;
+  }
+
+  const projectDetails = getExpenseProjectFundDetails(expense);
+  if (projectDetails?.id) {
+    return projectDetails.id;
+  }
+
+  const userFundDetails = getExpenseUserFundDetails(expense);
+  if (userFundDetails?.id) {
+    return userFundDetails.id;
+  }
+
+  return expense?.expenseable_info?.id;
+}
+
+function getFundUserRole(expense?: Expense | null): string {
+  // مستخدم الصندوق فقط من expenseable_info.user_info
+  return getExpenseUserFundUserInfo(expense)?.role_type ?? '';
+}
+
+function getFundUserId(expense?: Expense | null): number | undefined {
+  // معرّف سجل الدور لمستخدم الصندوق من expenseable_info.user_info فقط
+  const userInfo = getExpenseUserFundUserInfo(expense);
+  if (!userInfo) {
+    return undefined;
+  }
+
+  if (userInfo.id) {
+    return userInfo.id;
+  }
+
+  const roleDetails = userInfo.user?.role_details as { id?: number } | undefined;
+  if (roleDetails?.id) {
+    return roleDetails.id;
+  }
+
+  return undefined;
+}
+
+function getFundUserBaseUserId(expense?: Expense | null): number | undefined {
+  const userInfo = getExpenseUserFundUserInfo(expense);
+  return userInfo?.user_id ?? userInfo?.user?.id;
+}
+
+function getUserFundId(expense?: Expense | null): number | undefined {
+  const details = getExpenseUserFundDetails(expense);
+  return details?.fund_id ?? details?.fund?.id;
+}
+
 function getExpenseUserRole(expense?: Expense | null): string {
+  // المستخدم السفلي فقط من كائن user الأعلى
   if (expense?.user_role) {
     return expense.user_role;
   }
@@ -131,6 +262,7 @@ function getExpenseUserRole(expense?: Expense | null): string {
 }
 
 function getExpenseUserId(expense?: Expense | null): number | undefined {
+  // المستخدم السفلي فقط من كائن user الأعلى (user.id)
   if (expense?.user_id) {
     return expense.user_id;
   }
@@ -161,15 +293,15 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     defaultValues: {
       source: getInitialSource(defaultValues),
       expenseable_type: defaultValues?.expenseable_type ?? sourceToExpenseableType.company_fund,
-      expenseable_id: defaultValues?.expenseable_id ?? defaultValues?.expenseable_info?.id,
+      expenseable_id: getExpenseableCurrencyId(defaultValues),
       company_fund_id: defaultValues?.expenseable_info?.company_fund_id ?? undefined,
       user_role: getExpenseUserRole(defaultValues),
       user_id: getExpenseUserId(defaultValues),
-      fund_user_role: '',
-      fund_user_id: undefined,
-      user_fund_id: undefined,
-      project_fund_id: undefined,
-      project_id: defaultValues?.expenseable_info?.project_id ?? undefined,
+      fund_user_role: getFundUserRole(defaultValues),
+      fund_user_id: getFundUserId(defaultValues),
+      user_fund_id: getUserFundId(defaultValues),
+      project_fund_id: getExpenseProjectFundId(defaultValues),
+      project_id: getExpenseProjectId(defaultValues),
       description: defaultValues?.description ?? '',
       amount: Number(defaultValues?.amount ?? 0),
       is_posted: Boolean(defaultValues?.is_posted ?? true),
@@ -185,15 +317,15 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     form.reset({
       source: getInitialSource(defaultValues),
       expenseable_type: defaultValues.expenseable_type ?? sourceToExpenseableType.company_fund,
-      expenseable_id: defaultValues.expenseable_id ?? defaultValues.expenseable_info?.id,
+      expenseable_id: getExpenseableCurrencyId(defaultValues),
       company_fund_id: defaultValues.expenseable_info?.company_fund_id ?? undefined,
       user_role: getExpenseUserRole(defaultValues),
       user_id: getExpenseUserId(defaultValues),
-      fund_user_role: '',
-      fund_user_id: undefined,
-      user_fund_id: undefined,
-      project_fund_id: defaultValues.expenseable_info?.id ?? undefined,
-      project_id: defaultValues.expenseable_info?.project_id ?? undefined,
+      fund_user_role: getFundUserRole(defaultValues),
+      fund_user_id: getFundUserId(defaultValues),
+      user_fund_id: getUserFundId(defaultValues),
+      project_fund_id: getExpenseProjectFundId(defaultValues),
+      project_id: getExpenseProjectId(defaultValues),
       description: defaultValues.description ?? '',
       amount: Number(defaultValues.amount ?? 0),
       is_posted: Boolean(defaultValues.is_posted ?? true),
@@ -227,7 +359,9 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       return undefined;
     }
 
-    return companyFunds.find((fund) => fund.currencies?.some((currency) => currency.id === selectedExpenseableId))?.id;
+    return companyFunds.find((fund) =>
+      fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedExpenseableId)),
+    )?.id;
   }, [companyFundId, companyFunds, selectedExpenseableId]);
 
   useEffect(() => {
@@ -260,10 +394,17 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     enabled: source === 'project_fund',
   });
 
-  const { data: allProjectFunds = [] } = useQuery<ProjectFund[]>({
-    queryKey: ['expenses', 'project-funds'] as const,
-    queryFn: () => projectFundsApi.getProjectFunds(),
-    enabled: source === 'project_fund',
+  // عند اختيار مشروع: نجلب تفاصيله مع الصناديق والعملات من /projects/:id
+  const { data: selectedProjectDetails } = useQuery<Project | null>({
+    queryKey: ['expenses', 'project-details', selectedProjectId] as const,
+    queryFn: async () => {
+      if (!selectedProjectId) {
+        return null;
+      }
+
+      return projectsApi.getProjectById(selectedProjectId);
+    },
+    enabled: source === 'project_fund' && Boolean(selectedProjectId),
   });
 
   const { data: roleUsers = [] } = useQuery<RoleUser[]>({
@@ -305,10 +446,10 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     enabled: source === 'user_fund' && Boolean(fundUserRole) && Boolean(fundUserId),
   });
 
-  const projectFunds = useMemo(() => {
+  const projectFunds: ProjectFund[] = useMemo(() => {
     if (source !== 'project_fund' || !selectedProjectId) return [];
-    return allProjectFunds.filter((fund) => fund.project.id === selectedProjectId);
-  }, [allProjectFunds, selectedProjectId, source]);
+    return selectedProjectDetails?.funds ?? [];
+  }, [selectedProjectDetails?.funds, selectedProjectId, source]);
 
   const derivedProjectFundId = useMemo(() => {
     if (projectFundId) {
@@ -320,9 +461,19 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     }
 
     return projectFunds.find((fund) =>
-      fund.currencies?.some((currency) => currency.id === selectedExpenseableId),
+      fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedExpenseableId)),
     )?.id;
   }, [projectFundId, projectFunds, selectedExpenseableId]);
+
+  const selectedProjectFund = useMemo(() => {
+    const fundId = projectFundId ?? derivedProjectFundId;
+    if (!fundId) return undefined;
+    return projectFunds.find((fund) => fund.id === fundId);
+  }, [derivedProjectFundId, projectFundId, projectFunds]);
+
+  const selectedProjectFundCurrencies = useMemo(() => {
+    return selectedProjectFund?.currencies ?? [];
+  }, [selectedProjectFund]);
 
   useEffect(() => {
     if (source !== 'project_fund') {
@@ -346,7 +497,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     }
 
     return selectedFundUserRecord?.user.funds?.find((fund) =>
-      fund.currencies?.some((currency) => currency.id === selectedExpenseableId),
+      fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedExpenseableId)),
     )?.id;
   }, [selectedExpenseableId, selectedFundUserRecord, userFundId]);
 
@@ -362,33 +513,74 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     form.setValue('user_fund_id', derivedUserFundId);
   }, [derivedUserFundId, form, source, userFundId]);
 
+  // إذا جاء user_info.user_id بدون معرّف سجل الدور، نطابقه من قائمة الدور
+  useEffect(() => {
+    if (source !== 'user_fund' || fundUserId || !fundUserRole || !fundRoleUsers.length) {
+      return;
+    }
+
+    const baseUserId = getFundUserBaseUserId(defaultValues);
+    if (!baseUserId) {
+      return;
+    }
+
+    const matched = fundRoleUsers.find((user) => user.user.id === baseUserId);
+    if (matched) {
+      form.setValue('fund_user_id', matched.id);
+    }
+  }, [defaultValues, fundRoleUsers, fundUserId, fundUserRole, form, source]);
+
   const selectedProjectName = useMemo(() => {
     if (!selectedProjectId) return '';
-    return projects.find((project) => project.id === selectedProjectId)?.name ?? '';
-  }, [projects, selectedProjectId]);
 
-  const { data: selectedProjectFund } = useQuery<ProjectFund | null>({
-    queryKey: ['expenses', 'project-fund', derivedProjectFundId] as const,
-    queryFn: async () => {
-      if (!derivedProjectFundId) {
-        return null;
-      }
+    const fromProjects = projects.find((project) => project.id === selectedProjectId)?.name;
+    if (fromProjects) return fromProjects;
 
-      return projectFundsApi.getProjectFundById(derivedProjectFundId);
-    },
-    enabled: source === 'project_fund' && Boolean(derivedProjectFundId),
-  });
+    if (selectedProjectDetails?.id === selectedProjectId) {
+      return selectedProjectDetails.name;
+    }
+
+    const details = getExpenseProjectFundDetails(defaultValues);
+    const project = details?.project_fund?.project;
+    if (project?.id === selectedProjectId) {
+      return project.name ?? '';
+    }
+
+    return '';
+  }, [defaultValues, projects, selectedProjectDetails, selectedProjectId]);
 
   const selectedProjectFundName = useMemo(() => {
     if (!derivedProjectFundId) return '';
-    return projectFunds.find((fund) => fund.id === derivedProjectFundId)?.name ?? '';
-  }, [derivedProjectFundId, projectFunds]);
+
+    const fromFunds = projectFunds.find((fund) => fund.id === derivedProjectFundId)?.name;
+    if (fromFunds) return fromFunds;
+
+    const details = getExpenseProjectFundDetails(defaultValues);
+    if (details?.project_fund?.id === derivedProjectFundId) {
+      return details.project_fund.name ?? '';
+    }
+
+    return '';
+  }, [defaultValues, derivedProjectFundId, projectFunds]);
 
   const selectedProjectCurrencyName = useMemo(() => {
-    if (!selectedExpenseableId || !selectedProjectFund) return '';
-    const currency = selectedProjectFund.currencies?.find((item) => item.id === selectedExpenseableId);
-    return currency ? getCurrencyLabel(currency) : '';
-  }, [selectedExpenseableId, selectedProjectFund]);
+    if (!selectedExpenseableId) return '';
+
+    const currency = selectedProjectFundCurrencies.find((item) =>
+      currencyMatchesExpenseableId(item, selectedExpenseableId),
+    );
+    if (currency) return getCurrencyLabel(currency);
+
+    const details = getExpenseProjectFundDetails(defaultValues);
+    if (details?.id === selectedExpenseableId && details.currency) {
+      return getCurrencyLabel({
+        currency: details.currency.currency,
+        balance: details.balance ?? '0',
+      });
+    }
+
+    return '';
+  }, [defaultValues, selectedExpenseableId, selectedProjectFundCurrencies]);
 
   const selectedCompanyFundName = useMemo(() => {
     if (!derivedCompanyFundId) return '';
@@ -397,7 +589,9 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
 
   const selectedCompanyCurrencyName = useMemo(() => {
     if (!selectedExpenseableId || !selectedCompanyFund) return '';
-    const currency = selectedCompanyFund.currencies?.find((item) => item.id === selectedExpenseableId);
+    const currency = selectedCompanyFund.currencies?.find((item) =>
+      currencyMatchesExpenseableId(item, selectedExpenseableId),
+    );
     return currency ? getCurrencyLabel(currency) : '';
   }, [selectedCompanyFund, selectedExpenseableId]);
 
@@ -408,14 +602,58 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
 
   const selectedUserFundName = useMemo(() => {
     if (!derivedUserFundId) return '';
-    return selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId)?.name ?? '';
-  }, [derivedUserFundId, selectedFundUserRecord]);
+
+    const fromFunds = selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId)?.name;
+    if (fromFunds) return fromFunds;
+
+    const details = getExpenseUserFundDetails(defaultValues);
+    if (details?.fund?.id === derivedUserFundId) {
+      return details.fund.name ?? '';
+    }
+
+    return '';
+  }, [defaultValues, derivedUserFundId, selectedFundUserRecord]);
 
   const selectedUserCurrencyName = useMemo(() => {
-    if (!selectedExpenseableId || !selectedUserFund) return '';
-    const currency = selectedUserFund.currencies?.find((item) => item.id === selectedExpenseableId);
-    return currency ? getCurrencyLabel(currency) : '';
-  }, [selectedExpenseableId, selectedUserFund]);
+    if (!selectedExpenseableId) return '';
+
+    if (selectedUserFund) {
+      const currency = selectedUserFund.currencies?.find((item) =>
+        currencyMatchesExpenseableId(item, selectedExpenseableId),
+      );
+      if (currency) return getCurrencyLabel(currency);
+    }
+
+    const details = getExpenseUserFundDetails(defaultValues);
+    if (details?.id === selectedExpenseableId && details.currency) {
+      return getCurrencyLabel({
+        currency: details.currency.currency,
+        balance: details.balance ?? '0',
+      });
+    }
+
+    return '';
+  }, [defaultValues, selectedExpenseableId, selectedUserFund]);
+
+  const selectedFundUserName = useMemo(() => {
+    if (!fundUserId) return '';
+
+    const fromRoleUsers = fundRoleUsers.find((user) => user.id === fundUserId)?.user.name;
+    if (fromRoleUsers) return fromRoleUsers;
+
+    // اسم مستخدم الصندوق فقط من expenseable_info.user_info
+    const userInfo = getExpenseUserFundUserInfo(defaultValues);
+    if (userInfo?.user?.name) {
+      return userInfo.user.name;
+    }
+
+    const details = getExpenseUserFundDetails(defaultValues);
+    if (details?.fund?.user?.name) {
+      return details.fund.user.name;
+    }
+
+    return '';
+  }, [defaultValues, fundRoleUsers, fundUserId]);
 
   const selectedUserName = useMemo(() => {
     if (!userId) return '';
@@ -423,6 +661,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     const fromRoleUsers = roleUsers.find((user) => user?.user.id === userId)?.user.name;
     if (fromRoleUsers) return fromRoleUsers;
 
+    // اسم المستخدم السفلي فقط من كائن user الأعلى
     if (defaultValues?.user && typeof defaultValues.user === 'object') {
       return defaultValues.user.name ?? '';
     }
@@ -435,15 +674,17 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit({
-            expenseable_type: (values.expenseable_type ?? sourceToExpenseableType[values.source]) as ExpenseableType,
-            expenseable_id: values.expenseable_id ?? 0,
-            description: values.description,
-            amount: values.amount,
-            is_posted: values.is_posted,
-            user_id: values.user_id ?? 1,
-            created_by: 1,
-          });
+          await onSubmit(
+            toExpenseApiPayload({
+              expenseable_type: sourceToExpenseableType[values.source],
+              expenseable_id: values.expenseable_id ?? 0,
+              description: values.description,
+              amount: values.amount,
+              is_posted: values.is_posted,
+              user_id: values.user_id ?? 0,
+              created_by: values.created_by ?? 1,
+            }),
+          );
         })}
       >
         <FormField
@@ -476,7 +717,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                   {(Object.keys(expenseSourceLabels) as ExpenseSource[]).map((item) => (
                     <label
                       key={item}
-                      className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50"
+                      className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
                     >
                       <span>{expenseSourceLabels[item]}</span>
                       <RadioGroupItem value={item} />
@@ -543,11 +784,14 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(selectedCompanyFund?.currencies ?? []).map((currency) => (
-                        <SelectItem key={currency.id} value={String(currency.id)}>
-                          {getCurrencyLabel(currency)}
-                        </SelectItem>
-                      ))}
+                      {(selectedCompanyFund?.currencies ?? []).map((currency) => {
+                        const value = getCurrencyExpenseableId(currency);
+                        return (
+                          <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                            {getCurrencyLabel(currency)}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -644,11 +888,14 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(selectedProjectFund?.currencies ?? []).map((currency) => (
-                        <SelectItem key={currency.id} value={String(currency.id)}>
-                          {getCurrencyLabel(currency)}
-                        </SelectItem>
-                      ))}
+                      {selectedProjectFundCurrencies.map((currency) => {
+                        const value = getCurrencyExpenseableId(currency);
+                        return (
+                          <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                            {getCurrencyLabel(currency)}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -659,9 +906,9 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
         ) : null}
 
         {source === 'user_fund' ? (
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+          <div className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-slate-900">صندوق المستخدم</p>
+              <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
            
             </div>
 
@@ -717,7 +964,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                       <FormControl>
                         <SelectTrigger disabled={!fundUserRole}>
                           {field.value
-                            ? (fundRoleUsers.find((user) => user.id === field.value)?.user.name ?? 'اختر المستخدم')
+                            ? (selectedFundUserName || 'اختر المستخدم')
                             : <SelectValue placeholder="اختر المستخدم" />}
                         </SelectTrigger>
                       </FormControl>
@@ -786,11 +1033,14 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {selectedUserFund?.currencies?.map((currency) => (
-                          <SelectItem key={currency.id} value={String(currency.id)}>
-                            {getCurrencyLabel(currency)}
-                          </SelectItem>
-                        )) ?? null}
+                        {selectedUserFund?.currencies?.map((currency) => {
+                          const value = getCurrencyExpenseableId(currency);
+                          return (
+                            <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                              {getCurrencyLabel(currency)}
+                            </SelectItem>
+                          );
+                        }) ?? null}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -899,20 +1149,11 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
         />
 
         <div className="flex items-center justify-start gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="h-11 rounded-xl border-slate-200 px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-          >
+          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             إلغاء
           </Button>
 
-          <Button
-            type="submit"
-            className="h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold hover:bg-slate-800"
-            disabled={loading}
-          >
+          <Button type="submit" disabled={loading}>
             {loading ? 'جاري الحفظ...' : 'حفظ'}
           </Button>
         </div>

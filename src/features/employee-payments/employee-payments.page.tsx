@@ -91,7 +91,7 @@ export function EmployeePaymentsPage() {
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
               <select
-                className="h-11 w-[210px] shrink-0 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900"
+                className="field-control h-10 w-[210px] shrink-0"
                 value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
                 onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
               >
@@ -106,8 +106,8 @@ export function EmployeePaymentsPage() {
                 <Button
                   type="button"
                   variant="outline"
+                  size="icon"
                   onClick={() => setSelectedEmployeeId(null)}
-                  className="h-11 w-11 rounded-lg border-slate-200 px-0 text-sm font-semibold"
                   aria-label="عرض الكل"
                   title="عرض الكل"
                 >
@@ -121,7 +121,6 @@ export function EmployeePaymentsPage() {
                 type="button"
                 variant="outline"
                 onClick={() => navigate('/employee-payments')}
-                className="h-11 shrink-0 rounded-lg border-slate-200 px-5 text-sm font-semibold"
               >
                 عرض كل الموظفين
               </Button>
@@ -131,7 +130,6 @@ export function EmployeePaymentsPage() {
                 setSelectedPayment(null);
                 setDialogOpen(true);
               }}
-              className="h-11 shrink-0 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
             >
               إضافة راتب جديد
             </Button>

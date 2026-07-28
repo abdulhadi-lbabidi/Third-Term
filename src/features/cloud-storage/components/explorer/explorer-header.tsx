@@ -11,7 +11,7 @@ interface ExplorerHeaderProps {
   onUploadFiles: () => void;
   searchQuery: string;
   onSearchChange: (val: string) => void;
-  onDropItem?: (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: any }) => void;
+  onDropItem?: (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: unknown }) => void;
 }
 
 export function ExplorerHeader({
@@ -40,11 +40,11 @@ export function ExplorerHeader({
   const handleDrop = (e: React.DragEvent<HTMLElement>, targetId: number | null) => {
     e.preventDefault();
     setDragOverId(null);
-    
+
     try {
       const data = e.dataTransfer.getData('application/json');
       if (data) {
-        const item = JSON.parse(data);
+        const item = JSON.parse(data) as { type: 'file' | 'folder'; id: number; data?: unknown };
         if (item.type === 'folder' && item.id === targetId) return;
         onDropItem?.(targetId, item);
       }
@@ -54,46 +54,47 @@ export function ExplorerHeader({
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-      <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
+    <div className="mb-5 flex flex-col items-stretch justify-between gap-4 md:flex-row md:items-center">
+      <div className="flex w-full items-center gap-1 overflow-x-auto pb-1 md:w-auto md:pb-0">
         {breadcrumbs.map((crumb, index) => (
           <div key={crumb.id ?? 'root'} className="flex items-center">
             <button
+              type="button"
               onClick={() => onNavigate(crumb.id)}
               onDragOver={(e) => handleDragOver(e, crumb.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, crumb.id)}
               className={cn(
-                "text-sm font-medium hover:text-slate-900 transition-colors whitespace-nowrap rounded-md px-2 py-1",
-                index === breadcrumbs.length - 1 ? 'text-slate-900' : 'text-slate-500',
-                dragOverId === crumb.id ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500' : ''
+                'whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium transition-colors hover:text-foreground',
+                index === breadcrumbs.length - 1 ? 'text-foreground' : 'text-muted-foreground',
+                dragOverId === crumb.id ? 'bg-accent text-primary ring-1 ring-primary/40' : ''
               )}
             >
               {crumb.name}
             </button>
-            {index < breadcrumbs.length - 1 && (
-              <ChevronLeft className="size-4 text-slate-400 mx-1 shrink-0" />
-            )}
+            {index < breadcrumbs.length - 1 ? (
+              <ChevronLeft className="mx-0.5 size-4 shrink-0 text-muted-foreground" />
+            ) : null}
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-3 w-full md:w-auto">
+      <div className="flex w-full items-center gap-2 md:w-auto">
         <div className="relative w-full md:w-64">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <Search className="absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="بحث في المجلد..."
-            className="pr-9 h-10 bg-slate-50 border-slate-200"
+            className="pe-9"
           />
         </div>
-        
-        <Button variant="outline" onClick={onNewFolder} className="gap-2 rounded-xl text-slate-600 border-slate-200 h-10 shrink-0">
+
+        <Button variant="outline" onClick={onNewFolder} className="shrink-0">
           <Folder className="size-4" />
           مجلد جديد
         </Button>
-        <Button onClick={onUploadFiles} className="gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 h-10 shrink-0">
+        <Button onClick={onUploadFiles} className="shrink-0">
           <UploadCloud className="size-4" />
           رفع ملفات
         </Button>

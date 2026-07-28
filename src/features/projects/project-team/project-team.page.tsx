@@ -113,7 +113,7 @@ export function ProjectTeamPage() {
               type="button"
               variant="outline"
               onClick={() => navigate(-1)}
-              className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold"
+              
             >
               العودة
             </Button>
@@ -123,7 +123,7 @@ export function ProjectTeamPage() {
                 setSelectedMember(null);
                 setDialogOpen(true);
               }}
-              className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800 gap-2"
+              
             >
               <Users className="size-4" />
               إضافة عضو جديد

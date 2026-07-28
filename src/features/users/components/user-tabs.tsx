@@ -20,18 +20,19 @@ const roleLabels: Record<UserRole, string> = {
 
 export function UserTabs({ roles, activeRole, onChange }: UserTabsProps) {
   return (
-    <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-      <div className="flex flex-wrap gap-2">
+    <div className="surface-panel p-3">
+      <div className="flex flex-wrap gap-1.5">
         {roles.map((role) => (
           <button
             key={role}
             type="button"
             onClick={() => onChange(role)}
             className={cn(
-              'rounded-xl px-5 py-2.5 text-sm font-medium capitalize transition-all duration-200',
+              'rounded-md px-3.5 py-2 text-sm font-medium transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30',
               activeRole === role
-                ? 'bg-slate-950 text-white shadow-[0_10px_20px_rgba(15,23,42,0.18)]'
-                : 'bg-slate-100 text-slate-500 hover:-translate-y-0.5 hover:bg-slate-200/80 hover:text-slate-900'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground'
             )}
           >
             {roleLabels[role]}

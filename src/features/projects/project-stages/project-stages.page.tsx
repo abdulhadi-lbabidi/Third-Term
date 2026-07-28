@@ -42,7 +42,7 @@ export function ProjectStagesPage() {
             type="button"
             variant="outline"
             onClick={() => navigate(-1)}
-            className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold"
+            
           >
             العودة
           </Button>

@@ -79,7 +79,6 @@ export function ProjectsPage() {
         action={
           <Button
             onClick={handleCreate}
-            className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
           >
             إضافة مشروع جديد
           </Button>

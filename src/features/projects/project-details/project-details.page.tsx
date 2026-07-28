@@ -74,12 +74,7 @@ export function ProjectDetailsPage() {
         defaultTab={searchParams.has('dirId') ? 'cloud' : 'financials'}
         action={
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => setDialogOpen(true)}
-              className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800 gap-2"
-            >
+            <Button type="button" variant="default" onClick={() => setDialogOpen(true)}>
               <Pencil className="size-4" />
               تعديل بيانات المشروع
             </Button>
@@ -87,8 +82,7 @@ export function ProjectDetailsPage() {
         }
       />
 
-      {/* Tab content — driven by ?tab= URL param */}
-      <div className="bg-white border border-slate-200/80 p-4 rounded-lg shadow-sm">
+      <div className="surface-panel p-4 sm:p-5">
         {activeTab === 'financials' && <ProjectFinancialsTab project={currentProject} />}
         {activeTab === 'funds' && <ProjectFundsPage />}
         {activeTab === 'client' && <ProjectClientTab project={currentProject} />}

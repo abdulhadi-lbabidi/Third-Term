@@ -19,11 +19,14 @@ interface FileCardProps {
   onPreview?: (file: CloudFile) => void;
 }
 
-// Externalized to utils and registries
-
-export function FileCard({ file, selected, onSelect,
-  // onRename,
-  onDelete, onDownload, onPreview }: FileCardProps) {
+export function FileCard({
+  file,
+  selected,
+  onSelect,
+  onDelete,
+  onDownload,
+  onPreview,
+}: FileCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const fileType = getFileType(file);
   const { icon: Icon, color, bg } = IconRegistry[fileType];
@@ -43,10 +46,10 @@ export function FileCard({ file, selected, onSelect,
         setMenuOpen(true);
       }}
       className={cn(
-        "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all cursor-pointer hover:shadow-sm",
+        'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border p-5 transition-colors',
         selected
-          ? "border-blue-400 bg-blue-50/50 shadow-sm"
-          : "border-slate-200/60 bg-slate-50/50 hover:border-blue-200 hover:bg-blue-50/30"
+          ? 'border-primary/40 bg-accent shadow-[var(--shadow-finance)]'
+          : 'border-border bg-card hover:border-primary/25 hover:bg-muted/40'
       )}
       onClick={() => {
         if (canPreview(file)) {
@@ -58,59 +61,57 @@ export function FileCard({ file, selected, onSelect,
     >
       <div
         className={cn(
-          "absolute top-3 right-3 transition-opacity z-10",
-          selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          'absolute top-3 end-3 z-10 transition-opacity',
+          selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <input
           type="checkbox"
-          className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          className="size-4 cursor-pointer rounded border-border text-primary focus:ring-ring"
           checked={selected}
           onChange={(e) => onSelect?.(file, e.target.checked)}
+          aria-label={`تحديد ${file.file_name}`}
         />
       </div>
 
-      <div className={cn("p-3 rounded-xl transition-colors", bg)}>
-        <Icon className={cn("size-8", color)} />
+      <div className={cn('rounded-md p-3 transition-colors', bg)}>
+        <Icon className={cn('size-7', color)} />
       </div>
-      <div className="flex flex-col items-center w-full">
+      <div className="flex w-full flex-col items-center">
         <TooltipProvider delay={300}>
           <Tooltip>
-            <TooltipTrigger className="text-sm font-medium text-slate-700 group-hover:text-blue-700 truncate w-full text-center focus:outline-none cursor-default bg-transparent border-none p-0 block">
+            <TooltipTrigger className="block w-full truncate border-none bg-transparent p-0 text-center text-sm font-medium text-foreground focus:outline-none">
               {file.file_name}
             </TooltipTrigger>
-            <TooltipContent>
-              {file.file_name}
-            </TooltipContent>
+            <TooltipContent>{file.file_name}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className="text-xs text-slate-400 mt-1">{formatSize(file.size)}</span>
+        <span className="mt-1 text-xs text-muted-foreground finance-num">{formatSize(file.size)}</span>
       </div>
 
-      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu dir='rtl' open={menuOpen} onOpenChange={setMenuOpen}>
+      <div className="absolute top-2 start-2 opacity-0 transition-opacity group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu dir="rtl" open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 rounded-full">
+            <Button variant="ghost" size="icon-sm" aria-label="خيارات الملف">
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-40 rounded-xl">
-            {onPreview && canPreview(file) && (
+          <DropdownMenuContent align="start" className="w-40">
+            {onPreview && canPreview(file) ? (
               <DropdownMenuItem onSelect={() => setTimeout(() => onPreview(file), 0)} className="gap-2 cursor-pointer">
-                <Eye className="size-4 text-slate-500" />
+                <Eye className="size-4 text-muted-foreground" />
                 معاينة
               </DropdownMenuItem>
-            )}
+            ) : null}
             <DropdownMenuItem onSelect={() => setTimeout(() => onDownload(file), 0)} className="gap-2 cursor-pointer">
-              <Download className="size-4 text-slate-500" />
+              <Download className="size-4 text-muted-foreground" />
               تحميل
             </DropdownMenuItem>
-            {/* <DropdownMenuItem onSelect={() => setTimeout(() => onRename(file), 0)} className="gap-2 cursor-pointer">
-                <Pencil className="size-4 text-slate-500" />
-                تعديل الاسم
-              </DropdownMenuItem> */}
-            <DropdownMenuItem onSelect={() => setTimeout(() => onDelete(file), 0)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+            <DropdownMenuItem
+              onSelect={() => setTimeout(() => onDelete(file), 0)}
+              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+            >
               <Trash2 className="size-4" />
               حذف الملف
             </DropdownMenuItem>

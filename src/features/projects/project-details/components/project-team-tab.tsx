@@ -105,15 +105,15 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
       {/* Sub-header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">فريق العمل</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-lg font-semibold text-foreground">فريق العمل</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             إدارة أعضاء الفريق المرتبطين بهذا المشروع ({members.length} عضو)
           </p>
         </div>
         <Button
           type="button"
           onClick={handleAdd}
-          className="h-10 rounded-lg bg-slate-950 px-4 text-sm font-semibold shadow-sm hover:bg-slate-800 gap-2"
+          
         >
           <Users className="size-4" />
           إضافة عضو جديد

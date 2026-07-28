@@ -41,7 +41,6 @@ export function CurrenciesPage() {
         action={
           <Button
             onClick={openCreateDialog}
-            className="h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
           >
             إضافة عملة جديدة
           </Button>

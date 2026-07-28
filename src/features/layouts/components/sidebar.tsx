@@ -1,6 +1,20 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, LogOut, Users, Banknote, Wallet, FolderKanban, ListChecks, BadgeDollarSign, Building2, Cloud, ReceiptText } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Users,
+  Banknote,
+  Wallet,
+  FolderKanban,
+  ListChecks,
+  BadgeDollarSign,
+  Building2,
+  Cloud,
+  ReceiptText,
+  Boxes,
+} from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
@@ -8,18 +22,54 @@ type SidebarProps = {
   onLogout: () => void;
 };
 
-const navItems = [
-  { to: '/users', label: 'المستخدمون', icon: Users },
-  { to: '/company-funds', label: 'صناديق الشركة', icon: Wallet },
-  { to: '/projects', label: 'المشاريع', icon: FolderKanban },
-  { to: '/materials', label: 'المواد', icon: ListChecks },
-  { to: '/items', label: 'البنود', icon: ListChecks },
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Users;
+};
 
-  { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
-  { to: '/expenses', label: 'المصروفات', icon: ReceiptText },
-  { to: '/currencies', label: 'العملات', icon: Banknote },
-  { to: '/departments', label: 'الأقسام', icon: Building2 },
-  { to: '/cloud-storage', label: 'التخزين السحابي', icon: Cloud },
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'الإدارة المالية',
+    items: [
+      { to: '/expenses', label: 'المصروفات', icon: ReceiptText },
+      { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
+    ],
+  },
+  {
+    label: 'الصناديق والعملات',
+    items: [
+      { to: '/company-funds', label: 'صناديق الشركة', icon: Wallet },
+      { to: '/currencies', label: 'العملات', icon: Banknote },
+    ],
+  },
+  {
+    label: 'المشاريع',
+    items: [{ to: '/projects', label: 'المشاريع', icon: FolderKanban }],
+  },
+  {
+    label: 'المواد والبنود',
+    items: [
+      { to: '/materials', label: 'المواد', icon: Boxes },
+      { to: '/items', label: 'البنود', icon: ListChecks },
+    ],
+  },
+  {
+    label: 'المستخدمون والأقسام',
+    items: [
+      { to: '/users', label: 'المستخدمون', icon: Users },
+      { to: '/departments', label: 'الأقسام', icon: Building2 },
+    ],
+  },
+  {
+    label: 'التخزين',
+    items: [{ to: '/cloud-storage', label: 'التخزين السحابي', icon: Cloud }],
+  },
 ];
 
 export function Sidebar({ onLogout }: SidebarProps) {
@@ -28,77 +78,96 @@ export function Sidebar({ onLogout }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex h-screen flex-col border-r bg-white transition-all duration-300',
-        collapsed ? 'w-[92px]' : 'w-[250px]'
+        'flex h-screen flex-col border-e border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300',
+        collapsed ? 'w-[76px]' : 'w-[248px]'
       )}
     >
-      <div className="border-b px-4 py-5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="border-b border-sidebar-border px-3 py-4">
+        <div className="flex items-center justify-between gap-2">
           {!collapsed ? (
-            <div className="space-y-1">
-              <p className="text-lg font-bold text-[#111827]">المدير</p>
-              <p className="text-sm text-[#6b7280]">admin@gmail.com</p>
-              <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-[#243b67]">
-                مدير
-              </span>
+            <div className="min-w-0 space-y-1 px-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/15 text-xs font-bold text-sidebar-primary">
+                  ن
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">نوح المالية</p>
+                  <p className="truncate text-[11px] text-sidebar-foreground/55">نظام محاسبة وإدارة</p>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="flex-1" />
+            <div className="flex flex-1 justify-center">
+          
+            </div>
           )}
 
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="flex size-8 items-center justify-center rounded-full border border-slate-200 text-[#111827] shadow-sm transition-colors hover:bg-slate-50"
+            className="flex size-8 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             aria-label={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
           >
-            {collapsed ? <ChevronRight className="size-5" /> : <ChevronLeft className="size-5" />}
+            {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
           </button>
         </div>
       </div>
 
-      <div className={cn('flex-1 overflow-y-auto py-5', collapsed ? 'px-2' : 'px-3')}>
-        <nav className="space-y-3">
-          {navItems.map((item) => {
-            const Icon = item.icon;
+      <div className={cn('flex-1 overflow-y-auto py-2', collapsed ? 'px-2' : 'px-2.5')}>
+        <nav className="space-y-1">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              {!collapsed ? <p className="nav-group-label">{group.label}</p> : <div className="my-2 border-t border-sidebar-border/70" />}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
 
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center rounded-lg py-2 text-sm transition-all',
-                    collapsed ? 'justify-center px-0' : 'gap-3 px-2',
-                    isActive
-                      ? 'bg-black text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]'
-                      : 'text-[#243b67] hover:bg-black/5'
-                  )
-                }
-              >
-                <span className={cn('flex size-8 items-center justify-center rounded-lg', 'bg-black/5')}>
-                  <Icon className="size-5" />
-                </span>
-                {!collapsed ? <span className="font-medium">{item.label}</span> : null}
-              </NavLink>
-            );
-          })}
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      title={item.label}
+                      className={({ isActive }) =>
+                        cn(
+                          'group relative flex items-center rounded-md text-[13px] font-medium transition-colors',
+                          collapsed ? 'justify-center px-0 py-2.5' : 'gap-2.5 px-2.5 py-2',
+                          isActive
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                            : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          {isActive ? (
+                            <span className="absolute inset-y-1 start-0 w-0.5 rounded-full bg-sidebar-primary" />
+                          ) : null}
+                          <Icon className="size-4 shrink-0 opacity-90" />
+                          {!collapsed ? <span className="truncate">{item.label}</span> : null}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
       </div>
 
-      <div className="border-t px-4 py-4">
-        <div className={cn('flex gap-3', collapsed ? 'flex-col' : 'justify-between')}>
-          <Button
-            variant="outline"
-            className={cn(
-              'h-12 rounded-lg border-red-200 bg-red-50 font-bold text-red-500 hover:bg-red-100 hover:text-red-600',
-              collapsed ? 'w-full justify-center px-0 tracking-[0.12em]' : 'w-fit tracking-[0.28em]'
-            )}
-            onClick={onLogout}
-          >
-            <LogOut className="size-4" />
-          </Button>
-        </div>
+      <div className="border-t border-sidebar-border p-3">
+        <Button
+          variant="ghost"
+          className={cn(
+            'h-10 border border-white/20 bg-white/80 text-red-700 hover:bg-white/90 hover:text-sidebar-foreground',
+            collapsed ? 'w-full justify-center px-0' : 'w-full justify-start'
+          )}
+          onClick={onLogout}
+          aria-label="تسجيل الخروج"
+        >
+          <LogOut className="size-4" />
+          {!collapsed ? <span>تسجيل الخروج</span> : null}
+        </Button>
       </div>
     </aside>
   );

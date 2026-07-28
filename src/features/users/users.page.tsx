@@ -38,21 +38,21 @@ const usersQueryKeys = {
 
 function UsersTableSkeleton() {
   return (
-    <div className="rounded-lg border bg-card shadow-sm">
+    <div className="surface-panel">
       <div className="overflow-hidden">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="h-4 w-24 animate-pulse rounded-full bg-slate-200" />
-          <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-16 animate-pulse rounded bg-muted" />
         </div>
         <div className="space-y-3 p-4">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="grid grid-cols-6 gap-3 rounded-lg border border-slate-100 p-3">
-              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-4 animate-pulse rounded-full bg-slate-100" />
+            <div key={index} className="grid grid-cols-6 gap-3 rounded-md border border-border p-3">
+              <div className="h-4 animate-pulse rounded bg-muted" />
+              <div className="h-4 animate-pulse rounded bg-muted" />
+              <div className="h-4 animate-pulse rounded bg-muted" />
+              <div className="h-4 animate-pulse rounded bg-muted" />
+              <div className="h-4 animate-pulse rounded bg-muted" />
+              <div className="h-4 animate-pulse rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -140,7 +140,7 @@ export function UsersPage() {
         badge="المستخدمون"
         title="المستخدمون"
         action={
-          <Button className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
+          <Button>
             <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
           </Button>
         }

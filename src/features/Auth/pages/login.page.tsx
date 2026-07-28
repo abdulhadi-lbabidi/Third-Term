@@ -41,26 +41,26 @@ export function LoginPage() {
   };
 
   return (
-    <main dir="rtl" className="min-h-screen bg-white px-4 py-10 sm:px-6 sm:py-14">
+    <main dir="rtl" className="login-pattern min-h-screen px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] items-center justify-center">
-        <Card className="w-full max-w-[360px] rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(61,77,136,0.14)]">
-          <div className="h-1.5 w-full rounded-t-[28px] bg-[#D4A22D]" />
+        <Card className="w-full max-w-[400px] gap-0 overflow-hidden py-0 shadow-[var(--shadow-finance-md)]">
+          <div className="h-1 w-full bg-primary" />
+          <div className="h-0.5 w-full bg-[var(--accent-gold)]/70" />
 
-          <CardHeader className="px-6 pb-3 pt-7 text-center">
-            <p className="mb-2 text-xs font-semibold tracking-[0.22em] text-[#D4A22D]">
+          <CardHeader className="px-6 pb-2 pt-7 text-center">
+            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-md border border-border bg-muted text-lg font-bold text-primary">
+              ن
+            </div>
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               نوح المالية
             </p>
-
-            <CardTitle className="text-2xl font-bold text-[#3D4D88]">
-              تسجيل الدخول
-            </CardTitle>
-
-            <p className="mt-2 text-xs leading-6 text-slate-500">
-              أدخل بيانات حسابك للوصول إلى لوحة التحكم المالية
+            <CardTitle className="text-2xl font-semibold text-foreground">تسجيل الدخول</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              أدخل بيانات حسابك للوصول إلى نظام المحاسبة والإدارة المالية
             </p>
           </CardHeader>
 
-          <CardContent className="px-6 pb-6 pt-2">
+          <CardContent className="px-6 pb-7 pt-3">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -68,16 +68,13 @@ export function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem className="space-y-2">
-                        <FormLabel className="text-xs font-semibold text-[#3D4D88]">
-                          البريد الإلكتروني
-                        </FormLabel>
+                      <FormLabel>البريد الإلكتروني</FormLabel>
                       <FormControl>
-                          <Input
-                            {...field}
-                            type="email"
-                            placeholder="name@company.com"
-                            dir="ltr"
-                          className="h-10 rounded-2xl border-slate-200 bg-white px-4 text-sm shadow-none placeholder:text-slate-400 focus-visible:border-[#3D4D88] focus-visible:ring-2 focus-visible:ring-[#3D4D88]/15"
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="name@company.com"
+                          dir="ltr"
                         />
                       </FormControl>
                       <FormMessage />
@@ -90,14 +87,11 @@ export function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <FormLabel className="text-xs font-semibold text-[#3D4D88]">
-                          كلمة المرور
-                        </FormLabel>
-
+                      <div className="flex items-center justify-between gap-2">
+                        <FormLabel>كلمة المرور</FormLabel>
                         <button
                           type="button"
-                          className="text-xs font-medium text-[#D4A22D] transition-colors hover:text-[#b8881f]"
+                          className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
                         >
                           نسيت كلمة المرور؟
                         </button>
@@ -109,20 +103,15 @@ export function LoginPage() {
                             {...field}
                             type={showPassword ? 'text' : 'password'}
                             placeholder="أدخل كلمة المرور"
-                            className="h-10 rounded-2xl border-slate-200 bg-white pl-10 pr-10 text-sm shadow-none placeholder:text-slate-400 focus-visible:border-[#3D4D88] focus-visible:ring-2 focus-visible:ring-[#3D4D88]/15"
+                            className="pe-10"
                           />
-
                           <button
                             type="button"
                             onClick={() => setShowPassword((prev) => !prev)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#3D4D88]/60 transition-colors hover:text-[#3D4D88]"
+                            className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                             aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
                           >
-                            {showPassword ? (
-                              <EyeOff className="size-4" />
-                            ) : (
-                              <Eye className="size-4" />
-                            )}
+                            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                           </button>
                         </div>
                       </FormControl>
@@ -139,21 +128,18 @@ export function LoginPage() {
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <FormLabel className="cursor-pointer text-sm font-normal text-slate-600">
+                      <FormLabel className="cursor-pointer text-sm font-normal text-muted-foreground">
                         تذكر بيانات تسجيل الدخول
                       </FormLabel>
                     </FormItem>
                   )}
                 />
 
-              <Button
-                type="submit"
-                className="h-10 w-full rounded-2xl bg-[#3D4D88] text-sm font-semibold text-white shadow-md transition-all hover:bg-[#334174]"
-              >
-                تسجيل الدخول
-              </Button>
-            </form>
-          </Form>
+                <Button type="submit" className="h-10 w-full">
+                  تسجيل الدخول
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

@@ -167,11 +167,11 @@ export function FundsPage() {
         action={
           <div className="flex gap-3">
             {!hasUserContext ? (
-              <Button type="button" variant="outline" onClick={() => navigate('/users')} className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold">
+              <Button type="button" variant="outline" onClick={() => navigate('/users')}>
                 العودة إلى المستخدمين
               </Button>
             ) : null}
-            <Button onClick={openCreateDialog} disabled={!hasUserId} className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800">
+            <Button onClick={openCreateDialog} disabled={!hasUserId}>
               إضافة صندوق جديد
             </Button>
           </div>

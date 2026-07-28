@@ -67,7 +67,7 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
                 <select
                   value={field.value ? String(field.value) : ''}
                   onChange={(event) => field.onChange(Number(event.target.value))}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+                  className="field-control"
                 >
                   <option value="" disabled>
                     اختر البند

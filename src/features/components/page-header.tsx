@@ -9,9 +9,9 @@ export interface PageTab {
 }
 
 interface PageHeaderProps {
-  title: string | any;
+  title: string | ReactNode;
   badge?: string;
-  icon?: any;
+  icon?: React.ComponentType<{ className?: string }>;
   description?: ReactNode;
   action?: ReactNode;
   tabs?: PageTab[];
@@ -49,35 +49,45 @@ export function PageHeader({
   const hasTabs = tabs && tabs.length > 0;
 
   return (
-    <div className={cn("bg-white ", boxed ? "rounded-xl border border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]" : "")}    >
-      {/* Title row */}
-      <div className={cn("flex items-center justify-between gap-4 px-5 py-4", hasTabs && "pb-0")}>
-        <div className="flex items-center gap-4">
-          {Icon && (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600">
-              <Icon className="h-6 w-6" />
+    <div
+      className={cn(
+        "bg-card",
+        boxed && "rounded-lg border border-border shadow-[var(--shadow-finance)]"
+      )}
+    >
+      <div
+        className={cn(
+          "flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5",
+          hasTabs && "pb-3"
+        )}
+      >
+        <div className="flex min-w-0 items-start gap-3">
+          {Icon ? (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-primary">
+              <Icon className="size-5" />
             </div>
-          )}
-          <div className="space-y-1">
-            {badge && (
-              <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+          ) : null}
+          <div className="min-w-0 space-y-1">
+            {badge ? (
+              <div className="status-badge-primary tracking-[0.12em] uppercase">
                 {badge}
               </div>
-            )}
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
+            ) : null}
+            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               {title}
             </h1>
-            {description && (
-              <p className="text-sm text-slate-500 mt-1">{description}</p>
-            )}
+            {description ? (
+              <div className="text-sm text-muted-foreground">{description}</div>
+            ) : null}
           </div>
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {action ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>
+        ) : null}
       </div>
 
-      {/* Tabs bar */}
-      {hasTabs && activeTab && (
-        <div className="mt-3 flex items-end gap-1 border-t border-slate-100 px-5">
+      {hasTabs && activeTab ? (
+        <div className="flex items-end gap-1 overflow-x-auto border-t border-border px-3 sm:px-5">
           {tabs!.map((tab) => {
             const isActive = activeTab === tab.value;
             return (
@@ -86,27 +96,26 @@ export function PageHeader({
                 type="button"
                 onClick={() => handleTabChange(tab.value)}
                 className={cn(
-                  "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950/20 rounded-t-lg",
+                  "relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
                   isActive
-                    ? "text-slate-950"
-                    : "text-slate-400 hover:text-slate-700"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {tab.icon}
                 {tab.label}
-                {/* Active underline */}
                 <span
                   className={cn(
-                    "absolute bottom-0 left-0 right-0 h-[2px] rounded-full transition-all duration-200",
-                    isActive ? "bg-slate-950" : "bg-transparent"
+                    "absolute inset-x-2 bottom-0 h-0.5 rounded-full transition-colors",
+                    isActive ? "bg-primary" : "bg-transparent"
                   )}
                 />
               </button>
             );
           })}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

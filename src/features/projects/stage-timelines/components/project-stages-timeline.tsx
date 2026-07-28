@@ -16,10 +16,10 @@ type ProjectStagesTimelineProps = {
 };
 
 const statusConfig: Record<string, { icon: React.ElementType; color: string; bg: string; line: string }> = {
-  pending: { icon: Clock, color: 'text-slate-500', bg: 'bg-slate-100', line: 'bg-slate-200' },
-  in_progress: { icon: PlayCircle, color: 'text-blue-500', bg: 'bg-blue-100', line: 'bg-blue-200' },
-  completed: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-100', line: 'bg-green-400' },
-  cancelled: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-100', line: 'bg-red-200' },
+  pending: { icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted', line: 'bg-border' },
+  in_progress: { icon: PlayCircle, color: 'text-info', bg: 'bg-info/10', line: 'bg-info/30' },
+  completed: { icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10', line: 'bg-success/40' },
+  cancelled: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/10', line: 'bg-destructive/30' },
 };
 
 function formatDateRange(start: string, end: string) {
@@ -65,7 +65,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
 
   if (!stages.length) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <Clock className="size-12 mx-auto mb-4 opacity-20" />
         <p>لا يوجد مراحل لعرضها في الخط الزمني</p>
       </div>
@@ -80,7 +80,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
       <div className="relative group px-4">
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-8 z-20 size-8 bg-white border border-slate-200 shadow-md rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all opacity-0 group-hover:opacity-100 translate-x-1/2"
+          className="absolute right-0 top-8 z-20 size-8 bg-card border border-border shadow-md rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all opacity-0 group-hover:opacity-100 translate-x-1/2"
         >
           <ChevronRight className="size-5" />
         </button>
@@ -108,8 +108,8 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                     className={cn(
                       "relative z-10 flex flex-col items-center cursor-pointer group/node p-2 mx-1 rounded-xl transition-all duration-300",
                       isSelected
-                        ? "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-blue-200"
-                        : "hover:bg-white/50"
+                        ? "bg-card shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-blue-200"
+                        : "hover:bg-card/50"
                     )}
                     onClick={() => setSelectedStageId(stage.id)}
                   >
@@ -121,10 +121,10 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                       <Icon className="size-4" />
                     </div>
                     <div className="mt-3 text-center px-1 w-full">
-                      <p className={cn("text-xs font-bold truncate transition-colors", isSelected ? "text-blue-700" : "text-slate-700 group-hover/node:text-slate-900")}>
+                      <p className={cn("text-xs font-bold truncate transition-colors", isSelected ? "text-primary" : "text-foreground group-hover/node:text-foreground")}>
                         {stage.name}
                       </p>
-                      <p className={cn("text-[10px] mt-1 transition-colors", isSelected ? "text-blue-600/80 font-semibold" : "text-slate-500")}>
+                      <p className={cn("text-[10px] mt-1 transition-colors", isSelected ? "text-primary/80 font-semibold" : "text-muted-foreground")}>
                         {formatArabicDate(stage.start_date)}
                       </p>
                       <div className="mt-1.5 flex justify-center">
@@ -142,7 +142,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
 
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-8 z-20 size-8 bg-white border border-slate-200 shadow-md rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all opacity-0 group-hover:opacity-100 -translate-x-1/2"
+          className="absolute left-0 top-8 z-20 size-8 bg-card border border-border shadow-md rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all opacity-0 group-hover:opacity-100 -translate-x-1/2"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -154,7 +154,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
         const timelines = selectedStage.timelines ?? [];
 
         return (
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -163,67 +163,67 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <h3 className="text-2xl font-bold text-slate-900">{selectedStage.name}</h3>
+                  <h3 className="text-2xl font-bold text-foreground">{selectedStage.name}</h3>
                   <div className="flex items-center gap-1">
                     {onEditStage && (
-                      <Button variant="ghost" size="icon" onClick={() => onEditStage(selectedStage)} className="size-8 text-slate-400 hover:text-blue-600" title="تعديل المرحلة">
+                      <Button variant="ghost" size="icon" onClick={() => onEditStage(selectedStage)} className="size-8 text-muted-foreground hover:text-primary" title="تعديل المرحلة">
                         <Edit className="size-4" />
                       </Button>
                     )}
                     {onDeleteStage && (
-                      <Button variant="ghost" size="icon" onClick={() => onDeleteStage(selectedStage)} className="size-8 text-slate-400 hover:text-red-600" title="حذف المرحلة">
+                      <Button variant="ghost" size="icon" onClick={() => onDeleteStage(selectedStage)} className="size-8 text-muted-foreground hover:text-destructive" title="حذف المرحلة">
                         <Trash2 className="size-4" />
                       </Button>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 mt-5">
-                  <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 shadow-sm">
-                    <Calendar className="size-4 text-slate-400" />
-                    <span>البدء: <strong className="text-slate-800">{formatArabicDate(selectedStage.start_date)}</strong></span>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-5">
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg border border-border shadow-sm">
+                    <Calendar className="size-4 text-muted-foreground" />
+                    <span>البدء: <strong className="text-foreground">{formatArabicDate(selectedStage.start_date)}</strong></span>
                   </div>
-                  <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 shadow-sm">
-                    <Clock className="size-4 text-slate-400" />
-                    <span>المتوقع: <strong className="text-slate-800">{formatArabicDate(selectedStage.expected_end_date)}</strong></span>
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg border border-border shadow-sm">
+                    <Clock className="size-4 text-muted-foreground" />
+                    <span>المتوقع: <strong className="text-foreground">{formatArabicDate(selectedStage.expected_end_date)}</strong></span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-5 min-w-[220px] bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm">
+              <div className="flex items-center gap-5 min-w-[220px] bg-muted/50 p-4 rounded-xl border border-border shadow-sm">
                 <div>
-                  <span className="block text-sm font-semibold text-slate-600 mb-1">نسبة الإنجاز</span>
-                  <span className="block text-xs text-slate-500">للمرحلة الحالية</span>
+                  <span className="block text-sm font-semibold text-muted-foreground mb-1">نسبة الإنجاز</span>
+                  <span className="block text-xs text-muted-foreground">للمرحلة الحالية</span>
                 </div>
                 <div className="relative flex items-center justify-center size-[72px]">
                   <svg className="transform -rotate-90 size-[72px]" viewBox="0 0 80 80">
-                    <circle cx="40" cy="40" r="32" className="text-slate-200" strokeWidth="6" stroke="currentColor" fill="transparent" />
+                    <circle cx="40" cy="40" r="32" className="text-border" strokeWidth="6" stroke="currentColor" fill="transparent" />
                     <circle
                       cx="40" cy="40" r="32"
-                      className="text-blue-600 transition-all duration-1000 ease-out"
+                      className="text-primary transition-all duration-1000 ease-out"
                       strokeWidth="6"
                       strokeDasharray={2 * Math.PI * 32}
                       strokeDashoffset={2 * Math.PI * 32 - (selectedStage.stage_progress / 100) * (2 * Math.PI * 32)}
                       strokeLinecap="round" stroke="currentColor" fill="transparent"
                     />
                   </svg>
-                  <span className="absolute text-base font-bold text-slate-900">{selectedStage.stage_progress}%</span>
+                  <span className="absolute text-base font-bold text-foreground">{selectedStage.stage_progress}%</span>
                 </div>
               </div>
             </div>
 
             {/* Sub Timelines */}
-            <div className="pt-8 border-t border-slate-100">
+            <div className="pt-8 border-t border-border">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h4 className="text-lg font-bold text-slate-900">التحديثات الزمنية</h4>
-                  <p className="text-sm text-slate-500 mt-1">سجل التحديثات والمهام الفرعية لهذه المرحلة</p>
+                  <h4 className="text-lg font-bold text-foreground">التحديثات الزمنية</h4>
+                  <p className="text-sm text-muted-foreground mt-1">سجل التحديثات والمهام الفرعية لهذه المرحلة</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center bg-slate-50 border border-slate-100 p-1 rounded-lg">
+                  <div className="flex items-center bg-muted/50 border border-border p-1 rounded-lg">
                     <button
                       onClick={() => setFilterStatus('all')}
-                      className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors", filterStatus === 'all' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                      className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors", filterStatus === 'all' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                     >
                       الكل
                     </button>
@@ -231,14 +231,14 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                       <button
                         key={key}
                         onClick={() => setFilterStatus(key)}
-                        className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5", filterStatus === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                        className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5", filterStatus === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                       >
                         <conf.icon className="size-3" />
                         {key === 'pending' ? 'بالانتظار' : key === 'in_progress' ? 'قيد التنفيذ' : key === 'completed' ? 'مكتمل' : 'ملغى'}
                       </button>
                     ))}
                   </div>
-                  <Button onClick={() => onAddTimeline(selectedStage)} className="gap-2 bg-slate-950 text-white hover:bg-slate-800 rounded-lg shadow-sm">
+                  <Button onClick={() => onAddTimeline(selectedStage)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm">
                     <Plus className="size-4" />
                     إضافة تحديث
                   </Button>
@@ -250,12 +250,12 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
 
                 if (filteredTimelines.length === 0) {
                   return (
-                    <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
-                      <div className="size-12 bg-white shadow-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Clock className="size-6 text-slate-300" />
+                    <div className="text-center py-12 bg-muted/50 rounded-xl border-2 border-dashed border-border">
+                      <div className="size-12 bg-card shadow-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Clock className="size-6 text-muted-foreground" />
                       </div>
-                      <p className="text-base font-semibold text-slate-700">لا يوجد تحديثات {filterStatus !== 'all' ? 'بهذه الحالة' : 'مسجلة حتى الآن'}</p>
-                      <p className="text-sm text-slate-500 mt-1">{filterStatus !== 'all' ? 'جرب اختيار حالة أخرى' : 'انقر على إضافة تحديث لتسجيل مهمة فرعية جديدة'}</p>
+                      <p className="text-base font-semibold text-foreground">لا يوجد تحديثات {filterStatus !== 'all' ? 'بهذه الحالة' : 'مسجلة حتى الآن'}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{filterStatus !== 'all' ? 'جرب اختيار حالة أخرى' : 'انقر على إضافة تحديث لتسجيل مهمة فرعية جديدة'}</p>
                     </div>
                   );
                 }
@@ -268,7 +268,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                         <div
                           key={tl.id}
                           onClick={() => onEditTimeline(tl, selectedStage)}
-                          className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all relative overflow-hidden cursor-pointer flex items-center justify-between gap-4"
+                          className="p-4 rounded-xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition-all relative overflow-hidden cursor-pointer flex items-center justify-between gap-4"
                         >
                           {/* Status color indicator bar */}
                           <div className={cn("absolute top-0 right-0 w-1 h-full opacity-70", tlConfig.bg.replace('100', '400').replace('50', '400'))} />
@@ -277,7 +277,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                             {/* Progress Circle */}
                             <div className="relative flex items-center justify-center size-12 shrink-0">
                               <svg className="transform -rotate-90 size-12" viewBox="0 0 48 48">
-                                <circle cx="24" cy="24" r="20" className="text-slate-100" strokeWidth="4" stroke="currentColor" fill="transparent" />
+                                <circle cx="24" cy="24" r="20" className="text-border" strokeWidth="4" stroke="currentColor" fill="transparent" />
                                 <circle
                                   cx="24" cy="24" r="20"
                                   className={cn("transition-all duration-1000 ease-out", tlConfig.color.replace('text-', 'text-').replace('500', '600'))}
@@ -287,15 +287,15 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                                   strokeLinecap="round" stroke="currentColor" fill="transparent"
                                 />
                               </svg>
-                              <span className="absolute text-xs font-bold text-slate-700">{tl.stage_progress}%</span>
+                              <span className="absolute text-xs font-bold text-foreground">{tl.stage_progress}%</span>
                             </div>
 
                             {/* Details */}
                             <div className="flex flex-col gap-1.5">
-                              <span className="font-semibold text-slate-800 line-clamp-1">{tl.stage_name}</span>
-                              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <span className="font-semibold text-foreground line-clamp-1">{tl.stage_name}</span>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <Calendar className="size-3.5 opacity-70" />
-                                <span className="font-medium text-slate-600">{formatDateRange(tl.start_date, tl.expected_end_date)}</span>
+                                <span className="font-medium text-muted-foreground">{formatDateRange(tl.start_date, tl.expected_end_date)}</span>
                               </div>
                             </div>
                           </div>

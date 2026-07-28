@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
+import { Button } from '@/shared/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 
 export type DataTableColumn<T> = {
@@ -65,7 +66,10 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [pendingDelete, setPendingDelete] = useState<T | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const actionCount = (actions?.extraActions?.length ?? 0) + Number(Boolean(actions?.onEdit)) + Number(Boolean(actions?.onDelete));
+  const actionCount =
+    (actions?.extraActions?.length ?? 0) +
+    Number(Boolean(actions?.onEdit)) +
+    Number(Boolean(actions?.onDelete));
 
   const toggleRow = (index: number) => {
     const next = new Set(expandedRows);
@@ -75,13 +79,13 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="flex min-h-0 max-h-[calc(100dvh-13rem)] flex-1 flex-col overflow-hidden rounded-lg border bg-card text-center shadow-sm">
+    <div className="flex min-h-0 max-h-[calc(100dvh-13rem)] flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-finance)]">
       <div className="min-h-0 flex-1 overflow-auto">
         <Table>
-          <TableHeader className="sticky top-0 z-10 bg-card">
-            <TableRow>
-              {renderExpandedRow ? <TableHead className="w-[40px]" /> : null}
-              {actionCount > 0 ? <TableHead className="w-[84px]" /> : null}
+          <TableHeader className="sticky top-0 z-10">
+            <TableRow className="hover:bg-transparent">
+              {renderExpandedRow ? <TableHead className="w-10" /> : null}
+              {actionCount > 0 ? <TableHead className="w-14" /> : null}
               {columns.map((column) => (
                 <TableHead key={column.header} className={column.className}>
                   {column.header}
@@ -92,7 +96,10 @@ export function DataTable<T>({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length + (actionCount > 0 ? 1 : 0) + (renderExpandedRow ? 1 : 0)} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length + (actionCount > 0 ? 1 : 0) + (renderExpandedRow ? 1 : 0)}
+                  className="h-28 text-center text-muted-foreground"
+                >
                   {loadingLabel}
                 </TableCell>
               </TableRow>
@@ -101,29 +108,50 @@ export function DataTable<T>({
                 <React.Fragment key={rowIndex}>
                   <TableRow className="group">
                     {renderExpandedRow ? (
-                      <TableCell className="w-[40px] px-2">
+                      <TableCell className="w-10 px-2">
                         <button
                           type="button"
                           onClick={() => toggleRow(rowIndex)}
-                          className="inline-flex size-7 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                          className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          aria-label={expandedRows.has(rowIndex) ? 'طي الصف' : 'توسيع الصف'}
                         >
-                          {expandedRows.has(rowIndex) ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                          {expandedRows.has(rowIndex) ? (
+                            <ChevronDown className="size-4" />
+                          ) : (
+                            <ChevronRight className="size-4" />
+                          )}
                         </button>
                       </TableCell>
                     ) : null}
                     {actionCount > 0 ? (
-                      <TableCell className="w-[84px]">
+                      <TableCell className="w-14">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="inline-flex size-9 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                              className="inline-flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               aria-label="الخيارات"
                             >
                               <MoreVertical className="size-4" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-52">
+                          <DropdownMenuContent align="start" className="w-48">
+                            {actions?.extraActions?.length
+                              ? actions.extraActions.map((action) => (
+                                  <DropdownMenuItem
+                                    key={action.label}
+                                    onSelect={() => {
+                                      setTimeout(() => {
+                                        action.onClick(row);
+                                      }, 0);
+                                    }}
+                                  >
+                                    {action.icon}
+                                    <span>{action.label}</span>
+                                  </DropdownMenuItem>
+                                ))
+                              : null}
+
                             {actions?.onEdit ? (
                               <DropdownMenuItem
                                 onSelect={() => {
@@ -137,25 +165,11 @@ export function DataTable<T>({
                               </DropdownMenuItem>
                             ) : null}
 
-                            {actions?.extraActions?.length
-                              ? actions.extraActions.map((action) => (
-                                <DropdownMenuItem
-                                  key={action.label}
-                                  onSelect={() => {
-                                    setTimeout(() => {
-                                      action.onClick(row);
-                                    }, 0);
-                                  }}
-                                >
-                                  {action.icon}
-                                  <span>{action.label}</span>
-                                </DropdownMenuItem>
-                              ))
-                              : null}
-
                             {actions?.onDelete ? (
                               <>
-                                {(actions?.onEdit || actions?.extraActions?.length) ? <DropdownMenuSeparator /> : null}
+                                {actions?.onEdit || actions?.extraActions?.length ? (
+                                  <DropdownMenuSeparator />
+                                ) : null}
                                 <DropdownMenuItem
                                   onSelect={() => {
                                     setTimeout(() => {
@@ -175,14 +189,21 @@ export function DataTable<T>({
                     ) : null}
                     {columns.map((column) => (
                       <TableCell key={column.header} className={column.className}>
-                        {column.cell ? column.cell(row) : column.accessorKey ? String(row[column.accessorKey] ?? '') : null}
+                        {column.cell
+                          ? column.cell(row)
+                          : column.accessorKey
+                            ? String(row[column.accessorKey] ?? '')
+                            : null}
                       </TableCell>
                     ))}
                   </TableRow>
                   {renderExpandedRow && expandedRows.has(rowIndex) ? (
-                    <TableRow className="bg-slate-50/50">
-                      <TableCell colSpan={columns.length + (actionCount > 0 ? 1 : 0) + 1} className="p-0">
-                        <div className="overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableCell
+                        colSpan={columns.length + (actionCount > 0 ? 1 : 0) + 1}
+                        className="p-0"
+                      >
+                        <div className="overflow-hidden border-t border-border/70">
                           {renderExpandedRow(row)}
                         </div>
                       </TableCell>
@@ -192,7 +213,10 @@ export function DataTable<T>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length + (actionCount > 0 ? 1 : 0) + (renderExpandedRow ? 1 : 0)} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length + (actionCount > 0 ? 1 : 0) + (renderExpandedRow ? 1 : 0)}
+                  className="h-28 text-center text-muted-foreground"
+                >
                   {emptyLabel}
                 </TableCell>
               </TableRow>
@@ -203,30 +227,26 @@ export function DataTable<T>({
 
       {actions?.onDelete ? (
         <Dialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader className="text-center sm:text-center">
-              <DialogTitle className="text-2xl">{confirmTitle}</DialogTitle>
-              <DialogDescription className="text-base text-muted-foreground">{confirmDescription}</DialogDescription>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{confirmTitle}</DialogTitle>
+              <DialogDescription>{confirmDescription}</DialogDescription>
             </DialogHeader>
 
-            <DialogFooter className="gap-3 sm:justify-center">
-              <button
-                type="button"
-                onClick={() => setPendingDelete(null)}
-                className="h-11 rounded-xl border border-slate-200 bg-white px-6 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50"
-              >
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setPendingDelete(null)}>
                 {cancelLabel}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="destructive"
                 onClick={() => {
                   if (pendingDelete) actions.onDelete?.(pendingDelete);
                   setPendingDelete(null);
                 }}
-                className="h-11 rounded-xl bg-rose-600 px-6 text-sm font-medium text-white transition-colors hover:bg-rose-700"
               >
                 {deleteLabel}
-              </button>
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -1,3 +1,4 @@
+import { Eye } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Expense } from '../types';
 
@@ -45,20 +46,24 @@ type ExpenseRow = Expense & {
 type ExpensesTableProps = {
   data: Expense[];
   loading?: boolean;
+  onView?: (expense: Expense) => void;
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
 };
 
-export function ExpensesTable({ data, loading, onEdit, onDelete }: ExpensesTableProps) {
+export function ExpensesTable({ data, loading, onView, onEdit, onDelete }: ExpensesTableProps) {
   const columns: DataTableColumn<Expense>[] = [
     { header: 'الوصف', cell: (row) => row.description },
-    { header: 'المبلغ', cell: (row) => row.amount },
+    {
+      header: 'المبلغ',
+      cell: (row) => <span className="finance-num font-medium">{row.amount}</span>,
+    },
     { header: 'المستخدم', cell: (row) => getTextLabel((row as ExpenseRow).user) },
     { header: 'نوع الصرف', cell: (row) => getExpenseableTypeLabel(row.expenseable_type) },
     {
       header: 'تم الترحيل',
       cell: (row) => (
-        <span className={row.is_posted ? 'font-medium bg-emerald-100 border border-emerald-200 rounded p-2 text-emerald-800' : 'font-medium text-rose-600'}>
+        <span className={row.is_posted ? 'status-badge-success' : 'status-badge-danger'}>
           {getBooleanLabel(row.is_posted)}
         </span>
       ),
@@ -82,7 +87,15 @@ export function ExpensesTable({ data, loading, onEdit, onDelete }: ExpensesTable
       actions={{
         onEdit,
         onDelete,
-        extraActions: undefined,
+        extraActions: onView
+          ? [
+              {
+                label: 'تفاصيل المصروف',
+                icon: <Eye className="size-4" />,
+                onClick: onView,
+              },
+            ]
+          : undefined,
       }}
     />
   );

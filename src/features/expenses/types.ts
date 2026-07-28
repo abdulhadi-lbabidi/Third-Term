@@ -15,16 +15,94 @@ export type ExpenseUser = {
   role_details?: Record<string, unknown>;
 };
 
+export type ExpenseProjectInfo = {
+  id: number;
+  name: string;
+  client_id?: number;
+  department_id?: number;
+  expected_cost?: string;
+  status?: string;
+};
+
+export type ExpenseProjectFundInfo = {
+  id: number;
+  project_id: number;
+  name: string;
+  project?: ExpenseProjectInfo;
+};
+
+export type ExpenseProjectFundCurrencyDetails = {
+  id: number;
+  project_fund_id: number;
+  currency_id?: number;
+  balance?: string;
+  currency?: {
+    id: number;
+    currency: string;
+    symbol?: string;
+  };
+  project_fund?: ExpenseProjectFundInfo;
+};
+
+export type ExpenseUserFundCurrencyDetails = {
+  id: number;
+  fund_id?: number;
+  currency_id?: number;
+  balance?: string;
+  currency?: {
+    id: number;
+    currency: string;
+    symbol?: string;
+  };
+  fund?: {
+    id: number;
+    name: string;
+    user_id?: number;
+    user?: ExpenseUser;
+  };
+};
+
+export type ExpenseUserFundUserInfo = {
+  id?: number;
+  user_id?: number;
+  role_type?: string;
+  user?: ExpenseUser;
+};
+
+export type ExpenseCompanyFundCurrencyDetails = {
+  id: number;
+  company_fund_id?: number;
+  currency_id?: number;
+  balance?: string;
+  currency?: {
+    id: number;
+    currency: string;
+    symbol?: string;
+  };
+  company_fund?: {
+    id: number;
+    name: string;
+  };
+};
+
+export type ExpenseableInfo = {
+  type?: ExpenseSource | 'currency_fund' | string;
+  company_fund_id?: number;
+  project_id?: number;
+  id?: number;
+  details?:
+    | ExpenseProjectFundCurrencyDetails
+    | ExpenseUserFundCurrencyDetails
+    | ExpenseCompanyFundCurrencyDetails
+    | Record<string, unknown>;
+  user_info?: ExpenseUserFundUserInfo;
+};
+
 export type Expense = {
   id: number;
   expenseable_type?: ExpenseableType;
   expenseable_id?: number;
-  expenseable_info?: {
-    type?: ExpenseSource;
-    company_fund_id?: number;
-    project_id?: number;
-    id?: number;
-  };
+  expenseable_info?: ExpenseableInfo;
   user_role?: string;
   user?: ExpenseUser | string;
   description: string;

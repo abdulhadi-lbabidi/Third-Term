@@ -223,19 +223,18 @@ export function NewUserPage() {
   );
 
   return (
-    <Card className="overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+    <Card className="overflow-hidden">
       <CardHeader className="px-6">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
-            <CardTitle className="text-3xl font-semibold tracking-tight text-slate-950">
+            <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
               {editMode ? 'تعديل مستخدم' : 'إضافة مستخدم'}
             </CardTitle>
-            <p className="text-sm text-slate-500">{editMode ? 'تحديث بيانات المستخدم الحالية' : 'إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه'}</p>
+            <p className="text-sm text-muted-foreground">{editMode ? 'تحديث بيانات المستخدم الحالية' : 'إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه'}</p>
           </div>
           <Button
             type="button"
             variant="outline"
-            className="h-11 rounded-lg border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
             onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
           >
             رجوع
@@ -245,15 +244,15 @@ export function NewUserPage() {
       <CardContent className="px-6 pb-3 pt-1">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">الاسم</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel className="text-sm font-semibold text-slate-900">كلمة المرور</FormLabel><FormControl><Input {...field} type="password" disabled={editMode} placeholder={editMode ? 'اتركه فارغًا للاحتفاظ بكلمة المرور الحالية' : ''} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel className="text-sm font-semibold text-slate-900">العنوان</FormLabel><FormControl><Input {...field} className="h-11 rounded-lg border-slate-200 bg-white shadow-none focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-200" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الاسم</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>كلمة المرور</FormLabel><FormControl><Input {...field} type="password" disabled={editMode} placeholder={editMode ? 'اتركه فارغًا للاحتفاظ بكلمة المرور الحالية' : ''} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
 
             <FormField control={form.control} name="role" render={({ field }) => (
-              <FormItem className="md:col-span-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-3.5">
-                <FormLabel className="mb-3 block text-sm font-semibold text-slate-900">نوع المستخدم</FormLabel>
+              <FormItem className="md:col-span-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                <FormLabel className="mb-3 block">نوع المستخدم</FormLabel>
                 <FormControl>
                   <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-8">
                     {userRoles.map((item) => (
@@ -274,12 +273,11 @@ export function NewUserPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 rounded-lg border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
                 onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
               >
                 إلغاء
               </Button>
-              <Button type="submit" className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-800" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : editMode ? 'حفظ التعديلات' : 'حفظ المستخدم'}</Button>
+              <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : editMode ? 'حفظ التعديلات' : 'حفظ المستخدم'}</Button>
             </div>
           </form>
         </Form>

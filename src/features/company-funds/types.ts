@@ -1,5 +1,7 @@
 export type CompanyFundCurrency = {
   id: number;
+  expenseable_type?: string;
+  expenseable_id?: number;
   currency: string;
   symbol: string;
   balance: string;

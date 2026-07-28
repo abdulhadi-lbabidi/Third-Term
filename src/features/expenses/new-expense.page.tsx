@@ -6,11 +6,35 @@ import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { ExpensesForm } from './components/expenses.form';
 import { expensesApi } from './expenses.api';
-import type { CreateExpensePayload, Expense } from './types';
+import type { CreateExpensePayload, Expense, ExpenseSource } from './types';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
 };
+
+function getExpenseSource(expense: Expense): ExpenseSource | undefined {
+  const fromInfo =
+    expense.expenseable_info?.type === 'currency_fund' || expense.expenseable_info?.type === 'user_fund'
+      ? 'user_fund'
+      : expense.expenseable_info?.type === 'company_fund' || expense.expenseable_info?.type === 'project_fund'
+        ? expense.expenseable_info.type
+        : undefined;
+
+  if (fromInfo) {
+    return fromInfo;
+  }
+
+  switch (expense.expenseable_type) {
+    case 'App\\Models\\CompanyFundCurrency':
+      return 'company_fund';
+    case 'App\\Models\\ProjectFundCurrency':
+      return 'project_fund';
+    case 'App\\Models\\CurrencyFund':
+      return 'user_fund';
+    default:
+      return undefined;
+  }
+}
 
 export function NewExpensePage() {
   const navigate = useNavigate();
@@ -30,18 +54,43 @@ export function NewExpensePage() {
     const expense = expenseQuery.data;
     if (!expense) return null;
 
-    const source = expense.expenseable_info?.type ?? expense.expenseable_type;
-
+    const source = getExpenseSource(expense);
     const expenseUser = expense.user && typeof expense.user === 'object' ? expense.user : undefined;
+    const details = expense.expenseable_info?.details;
+    const detailsRecord =
+      details && typeof details === 'object' ? (details as Record<string, unknown>) : null;
+
+    const projectFundDetails =
+      detailsRecord && ('project_fund' in detailsRecord || 'project_fund_id' in detailsRecord)
+        ? (detailsRecord as {
+            project_fund_id?: number;
+            project_fund?: { id?: number; project_id?: number; project?: { id?: number } };
+            id?: number;
+          })
+        : null;
+
+    const userFundDetails =
+      detailsRecord && ('fund' in detailsRecord || 'fund_id' in detailsRecord)
+        ? (detailsRecord as { id?: number; fund_id?: number })
+        : null;
+
+    // expenseable_id = معرّف عملة الصندوق المختارة فقط
+    const expenseableId =
+      expense.expenseable_id ??
+      (source === 'user_fund' ? userFundDetails?.id : undefined) ??
+      projectFundDetails?.id ??
+      expense.expenseable_info?.id;
 
     return {
       ...expense,
       expenseable_type: expense.expenseable_type,
-      expenseable_id: expense.expenseable_id ?? expense.expenseable_info?.id,
+      expenseable_id: expenseableId,
+      // المستخدم السفلي من كائن user الأعلى فقط
       user: expense.user,
       user_role: expense.user_role ?? expenseUser?.role_type,
       user_id: expense.user_id ?? expenseUser?.id,
       created_by_name: expense.created_by_name,
+      // مستخدم الصندوق والصندوق من expenseable_info كما هو
       expenseable_info: expense.expenseable_info,
       ...(source === 'company_fund'
         ? {
@@ -49,14 +98,17 @@ export function NewExpensePage() {
           }
         : source === 'project_fund'
           ? {
-              project_id: expense.expenseable_info?.project_id,
+              project_id:
+                expense.expenseable_info?.project_id ??
+                projectFundDetails?.project_fund?.project_id ??
+                projectFundDetails?.project_fund?.project?.id,
             }
           : {}),
     };
   }, [expenseQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: (payload: CreateExpensePayload) => {
+    mutationFn: async (payload: CreateExpensePayload) => {
       if (isEditMode) {
         return expensesApi.updateExpense(expenseId, payload);
       }
@@ -64,6 +116,9 @@ export function NewExpensePage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: expensesQueryKeys.all });
+      if (hasExpenseId) {
+        await queryClient.invalidateQueries({ queryKey: ['expenses', expenseId] });
+      }
       navigate('/expenses', { replace: true });
     },
   });
@@ -79,18 +134,13 @@ export function NewExpensePage() {
         badge="المصروفات"
         title={isEditMode ? 'تعديل مصروف' : 'إضافة مصروف'}
         action={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/expenses')}
-            className="h-11 rounded-lg border-slate-200 px-5 text-sm font-semibold"
-          >
+          <Button type="button" variant="outline" onClick={() => navigate('/expenses')}>
             رجوع
           </Button>
         }
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="surface-panel p-5 sm:p-6">
         <ExpensesForm defaultValues={defaultValues} onSubmit={handleSubmit} loading={saveMutation.isPending} />
       </div>
     </div>

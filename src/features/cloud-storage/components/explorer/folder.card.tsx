@@ -16,13 +16,23 @@ interface FolderCardProps {
   onDownload?: (folder: Directory) => void;
   onNewFolder?: (folder: Directory) => void;
   onUploadFiles?: (folder: Directory) => void;
-  onDropItem?: (targetFolderId: number, item: { type: 'file' | 'folder'; id: number; data?: any }) => void;
+  onDropItem?: (targetFolderId: number, item: { type: 'file' | 'folder'; id: number; data?: unknown }) => void;
 }
 
-export function FolderCard({ folder, selected, onSelect, onClick, onRename, onDelete, onNewFolder, onUploadFiles, onDropItem }: FolderCardProps) {
+export function FolderCard({
+  folder,
+  selected,
+  onSelect,
+  onClick,
+  onRename,
+  onDelete,
+  onNewFolder,
+  onUploadFiles,
+  onDropItem,
+}: FolderCardProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const name = folder.dir_name || (folder as any).name || 'بدون اسم';
+  const name = folder.dir_name || (folder as { name?: string }).name || 'بدون اسم';
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'folder', id: folder.id, data: folder }));
@@ -48,8 +58,7 @@ export function FolderCard({ folder, selected, onSelect, onClick, onRename, onDe
     try {
       const data = e.dataTransfer.getData('application/json');
       if (data) {
-        const item = JSON.parse(data);
-        // Don't drop folder into itself
+        const item = JSON.parse(data) as { type: 'file' | 'folder'; id: number; data?: unknown };
         if (item.type === 'folder' && item.id === folder.id) return;
         onDropItem?.(folder.id, item);
       }
@@ -71,68 +80,71 @@ export function FolderCard({ folder, selected, onSelect, onClick, onRename, onDe
         setMenuOpen(true);
       }}
       className={cn(
-        "group relative flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition-all cursor-pointer hover:shadow-sm",
+        'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border p-5 transition-colors',
         isDragOver
-          ? "border-emerald-500 bg-emerald-100/50 shadow-md scale-105"
+          ? 'border-primary bg-accent shadow-[var(--shadow-finance)]'
           : selected
-            ? "border-emerald-400 bg-emerald-50/50 shadow-sm"
-            : "border-slate-200/60 bg-slate-50/50 hover:border-emerald-200 hover:bg-emerald-50/30"
+            ? 'border-primary/40 bg-accent shadow-[var(--shadow-finance)]'
+            : 'border-border bg-card hover:border-primary/25 hover:bg-muted/40'
       )}
       onClick={() => onClick(folder)}
     >
       <div
         className={cn(
-          "absolute top-3 right-3 transition-opacity z-10",
-          selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          'absolute top-3 end-3 z-10 transition-opacity',
+          selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <input
           type="checkbox"
-          className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+          className="size-4 cursor-pointer rounded border-border text-primary focus:ring-ring"
           checked={selected}
           onChange={(e) => onSelect?.(folder, e.target.checked)}
+          aria-label={`تحديد ${name}`}
         />
       </div>
 
-      <Folder className={cn("size-10 transition-colors", isDragOver ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+      <Folder
+        className={cn(
+          'size-9 transition-colors',
+          isDragOver || selected ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
+        )}
+      />
 
       <TooltipProvider delay={300}>
         <Tooltip>
-          <TooltipTrigger className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 truncate w-full text-center focus:outline-none cursor-default bg-transparent border-none p-0 block mt-3">
+          <TooltipTrigger className="mt-1 block w-full truncate border-none bg-transparent p-0 text-center text-sm font-medium text-foreground focus:outline-none">
             {name}
           </TooltipTrigger>
-          <TooltipContent>
-            {name}
-          </TooltipContent>
+          <TooltipContent>{name}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
-      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu dir='rtl' open={menuOpen} onOpenChange={setMenuOpen}>
+      <div className="absolute top-2 start-2 opacity-0 transition-opacity group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu dir="rtl" open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 rounded-full">
+            <Button variant="ghost" size="icon-sm" aria-label="خيارات المجلد">
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-40 rounded-xl">
-            {/* <DropdownMenuItem onSelect={() => setTimeout(() => onDownload?.(folder), 0)} className="gap-2 cursor-pointer">
-              <Download className="size-4 text-slate-500" />
-              تحميل
-            </DropdownMenuItem> */}
+          <DropdownMenuContent align="start" className="w-40">
             <DropdownMenuItem onSelect={() => setTimeout(() => onNewFolder?.(folder), 0)} className="gap-2 cursor-pointer">
-              <FolderPlus className="size-4 text-slate-500" />
+              <FolderPlus className="size-4 text-muted-foreground" />
               مجلد جديد
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setTimeout(() => onUploadFiles?.(folder), 0)} className="gap-2 cursor-pointer">
-              <UploadCloud className="size-4 text-slate-500" />
+              <UploadCloud className="size-4 text-muted-foreground" />
               رفع ملفات
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setTimeout(() => onRename(folder), 0)} className="gap-2 cursor-pointer">
-              <Pencil className="size-4 text-slate-500" />
+              <Pencil className="size-4 text-muted-foreground" />
               تعديل الاسم
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeout(() => onDelete(folder), 0)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+            <DropdownMenuItem
+              onSelect={() => setTimeout(() => onDelete(folder), 0)}
+              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+            >
               <Trash2 className="size-4" />
               حذف المجلد
             </DropdownMenuItem>

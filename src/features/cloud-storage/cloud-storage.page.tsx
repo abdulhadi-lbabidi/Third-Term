@@ -4,24 +4,20 @@ import { PageHeader } from '../components/page-header';
 
 export function CloudStoragePage() {
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <PageHeader
-        badge="إدارة الملفات"
-        title="التخزين السحابي"
-      />
+    <div className="space-y-5">
+      <PageHeader badge="إدارة الملفات" title="التخزين السحابي" />
 
-      <div className="rounded-xl border bg-white p-5 shadow-sm transition-all">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-            <Cloud className="size-6" />
+      <div className="surface-panel p-5">
+        <div className="mb-5 flex items-center gap-3 border-b border-border pb-4">
+          <div className="flex size-10 items-center justify-center rounded-md border border-border bg-muted text-primary">
+            <Cloud className="size-5" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">التخزين العام للمستندات</p>
-            <h3 className="text-xl font-bold tracking-tight text-slate-900">الملفات العامة</h3>
+            <p className="text-xs font-medium text-muted-foreground">التخزين العام للمستندات</p>
+            <h3 className="text-base font-semibold text-foreground">الملفات العامة</h3>
           </div>
         </div>
-        
-        {/* Render Cloud Storage Explorer for root (no project_id means root/general) */}
+
         <CloudStorageExplorer />
       </div>
     </div>
