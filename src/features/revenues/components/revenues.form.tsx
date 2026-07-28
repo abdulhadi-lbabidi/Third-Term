@@ -508,11 +508,11 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                       <FormControl>
                         <SelectTrigger className="h-11 bg-white">
                           <SelectValue placeholder="اختر صندوق المستخدم">
-                            {field.value && (
+                            {field.value ? (
                               <span>
                                 {selectedFundUserRecord?.user.funds?.find((f) => f.id === field.value)?.name ?? allUserFunds.find(f => f.id === field.value)?.name ?? ''}
                               </span>
-                            )}
+                            ) : null}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
@@ -626,12 +626,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                       <FormControl>
                         <SelectTrigger className="h-11">
                           <SelectValue placeholder="اختر صندوق الشركة">
-                            {field.value && (
+                            {field.value ? (
                               <div className="flex items-center gap-2">
                                 <Wallet className="size-4 text-slate-500" />
                                 <span>{companyFunds.find(f => f.id === field.value)?.name ?? ''}</span>
                               </div>
-                            )}
+                            ) : null}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
@@ -672,9 +672,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                           <FormControl>
                             <SelectTrigger className="h-11">
                               <SelectValue placeholder="اختر المشروع">
-                                {field.value && (
+                                {field.value ? (
                                   <span>{projects.find(p => p.id === field.value)?.name ?? ''}</span>
-                                )}
+                                ) : null}
                               </SelectValue>
                             </SelectTrigger>
                           </FormControl>
@@ -710,9 +710,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                           <FormControl>
                             <SelectTrigger className="h-11">
                               <SelectValue placeholder="اختر صندوق المشروع">
-                                {field.value && (
+                                {field.value ? (
                                   <span>{projectFunds.find(f => f.id === field.value)?.name ?? ''}</span>
-                                )}
+                                ) : null}
                               </SelectValue>
                             </SelectTrigger>
                           </FormControl>

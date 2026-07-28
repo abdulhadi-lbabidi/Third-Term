@@ -2,8 +2,8 @@ import type { CreateExpensePayload, ExpenseableType } from './types';
 
 /** نفس شكل الإضافة والتعديل — الحقول السبعة فقط */
 export function toExpenseApiPayload(input: {
-  expenseable_type: ExpenseableType | string;
-  expenseable_id: number;
+  expenseable_type?: ExpenseableType | string;
+  expenseable_id?: number;
   description: string;
   amount: number;
   is_posted: boolean;

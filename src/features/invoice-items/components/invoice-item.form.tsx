@@ -38,7 +38,7 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
   });
 
   const form = useForm<InvoiceItemFormValues>({
-    resolver: zodResolver(invoiceItemFormSchema),
+    resolver: zodResolver(invoiceItemFormSchema) as any,
     defaultValues: {
       invoice_id: getInvoiceId(defaultValues),
       material_id: getMaterialId(defaultValues),

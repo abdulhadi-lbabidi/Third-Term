@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { expensesApi } from './expenses.api';
-import type { CreateExpensePayload, Expense, UpdateExpensePayload } from './types';
+import type { Expense, UpdateExpensePayload } from './types';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
