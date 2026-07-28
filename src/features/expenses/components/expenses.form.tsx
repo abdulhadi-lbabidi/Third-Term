@@ -118,6 +118,42 @@ function getInitialSource(expense?: Expense | null): ExpenseSource {
   return getSourceFromType(expense?.expenseable_type);
 }
 
+function getExpenseUserRole(expense?: Expense | null): string {
+  if (expense?.user_role) {
+    return expense.user_role;
+  }
+
+  if (expense?.user && typeof expense.user === 'object') {
+    return expense.user.role_type ?? '';
+  }
+
+  return '';
+}
+
+function getExpenseUserId(expense?: Expense | null): number | undefined {
+  if (expense?.user_id) {
+    return expense.user_id;
+  }
+
+  if (expense?.user && typeof expense.user === 'object') {
+    return expense.user.id;
+  }
+
+  return undefined;
+}
+
+function getExpenseCreatedById(expense?: Expense | null): number {
+  if (typeof expense?.created_by === 'number') {
+    return expense.created_by;
+  }
+
+  if (expense?.created_by && typeof expense.created_by === 'object') {
+    return expense.created_by.id;
+  }
+
+  return 1;
+}
+
 export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormProps) {
   const navigate = useNavigate();
   const form = useForm<ExpenseFormValues>({
@@ -127,8 +163,8 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       expenseable_type: defaultValues?.expenseable_type ?? sourceToExpenseableType.company_fund,
       expenseable_id: defaultValues?.expenseable_id ?? defaultValues?.expenseable_info?.id,
       company_fund_id: defaultValues?.expenseable_info?.company_fund_id ?? undefined,
-      user_role: defaultValues?.user_role ?? '',
-      user_id: defaultValues?.user_id ?? undefined,
+      user_role: getExpenseUserRole(defaultValues),
+      user_id: getExpenseUserId(defaultValues),
       fund_user_role: '',
       fund_user_id: undefined,
       user_fund_id: undefined,
@@ -137,7 +173,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       description: defaultValues?.description ?? '',
       amount: Number(defaultValues?.amount ?? 0),
       is_posted: Boolean(defaultValues?.is_posted ?? true),
-      created_by:  1,
+      created_by: getExpenseCreatedById(defaultValues),
     },
   });
 
@@ -151,8 +187,8 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       expenseable_type: defaultValues.expenseable_type ?? sourceToExpenseableType.company_fund,
       expenseable_id: defaultValues.expenseable_id ?? defaultValues.expenseable_info?.id,
       company_fund_id: defaultValues.expenseable_info?.company_fund_id ?? undefined,
-      user_role: defaultValues.user_role ?? '',
-      user_id: defaultValues.user_id ?? undefined,
+      user_role: getExpenseUserRole(defaultValues),
+      user_id: getExpenseUserId(defaultValues),
       fund_user_role: '',
       fund_user_id: undefined,
       user_fund_id: undefined,
@@ -161,7 +197,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       description: defaultValues.description ?? '',
       amount: Number(defaultValues.amount ?? 0),
       is_posted: Boolean(defaultValues.is_posted ?? true),
-      created_by: defaultValues.created_by ?? 1,
+      created_by: getExpenseCreatedById(defaultValues),
     });
   }, [defaultValues, form]);
 
@@ -169,6 +205,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
   const companyFundId = form.watch('company_fund_id');
   const selectedExpenseableId = form.watch('expenseable_id');
   const userRole = form.watch('user_role') as UserRole | '';
+  const userId = form.watch('user_id');
   const fundUserRole = form.watch('fund_user_role') as UserRole | '';
   const fundUserId = form.watch('fund_user_id');
   const userFundId = form.watch('user_fund_id');
@@ -379,6 +416,19 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     const currency = selectedUserFund.currencies?.find((item) => item.id === selectedExpenseableId);
     return currency ? getCurrencyLabel(currency) : '';
   }, [selectedExpenseableId, selectedUserFund]);
+
+  const selectedUserName = useMemo(() => {
+    if (!userId) return '';
+
+    const fromRoleUsers = roleUsers.find((user) => user?.user.id === userId)?.user.name;
+    if (fromRoleUsers) return fromRoleUsers;
+
+    if (defaultValues?.user && typeof defaultValues.user === 'object') {
+      return defaultValues.user.name ?? '';
+    }
+
+    return '';
+  }, [defaultValues?.user, roleUsers, userId]);
 
   return (
     <Form {...form}>
@@ -797,7 +847,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                   <FormControl>
                     <SelectTrigger disabled={!userRole}>
                       {field.value
-                        ? (roleUsers.find((user) => user?.user.id === field.value)?.user.name ?? 'اختر المستخدم')
+                        ? (selectedUserName || 'اختر المستخدم')
                         : <SelectValue placeholder="اختر المستخدم" />}
                     </SelectTrigger>
                   </FormControl>

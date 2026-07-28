@@ -17,6 +17,10 @@ type MaterialFormProps = {
   loading?: boolean;
 };
 
+function getMaterialItemId(material?: Material | null) {
+  return material?.item_id ?? material?.item?.id ?? 0;
+}
+
 export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormProps) {
   const { data: items = [] } = useQuery<Item[]>({
     queryKey: ['materials', 'items'] as const,
@@ -26,7 +30,7 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialFormSchema),
     defaultValues: {
-      item_id: defaultValues?.item_id ?? 0,
+      item_id: getMaterialItemId(defaultValues),
       name: defaultValues?.name ?? '',
       description: defaultValues?.description ?? '',
     },
@@ -34,11 +38,16 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
 
   useEffect(() => {
     form.reset({
-      item_id: defaultValues?.item_id ?? 0,
+      item_id: getMaterialItemId(defaultValues),
       name: defaultValues?.name ?? '',
       description: defaultValues?.description ?? '',
     });
   }, [defaultValues, form]);
+
+  const itemOptions =
+    defaultValues?.item && !items.some((item) => item.id === defaultValues.item?.id)
+      ? [defaultValues.item, ...items]
+      : items;
 
   return (
     <Form {...form}>
@@ -63,7 +72,7 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
                   <option value="" disabled>
                     اختر البند
                   </option>
-                  {items.map((item) => (
+                  {itemOptions.map((item) => (
                     <option key={item.id} value={String(item.id)}>
                       {item.name}
                     </option>

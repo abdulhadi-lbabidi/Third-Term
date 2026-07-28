@@ -75,7 +75,11 @@ export function MaterialsPage() {
         data={materialsQuery.data ?? []}
         loading={materialsQuery.isLoading}
         onEdit={(material) => {
-          setSelectedMaterial(material);
+          setSelectedMaterial({
+            ...material,
+            item_id: material.item_id ?? material.item?.id,
+            item: material.item,
+          });
           setDialogOpen(true);
         }}
         onDelete={handleDelete}

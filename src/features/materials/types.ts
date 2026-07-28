@@ -1,6 +1,6 @@
 export type Material = {
   id: number;
-  item_id: number;
+  item_id?: number;
   name: string;
   description?: string;
   created_at?: string;

@@ -5,6 +5,16 @@ export type ExpenseableType =
   | 'App\\Models\\CurrencyFund'
   | 'App\\Models\\ProjectFundCurrency';
 
+export type ExpenseUser = {
+  id: number;
+  name: string;
+  email?: string;
+  phone_number?: string;
+  address?: string;
+  role_type?: string;
+  role_details?: Record<string, unknown>;
+};
+
 export type Expense = {
   id: number;
   expenseable_type?: ExpenseableType;
@@ -16,13 +26,13 @@ export type Expense = {
     id?: number;
   };
   user_role?: string;
-  user?: string;
+  user?: ExpenseUser | string;
   description: string;
   amount: string;
   is_posted?: boolean;
   user_id?: number;
   created_by_name?: string;
-  created_by?: number;
+  created_by?: number | ExpenseUser;
   created_at?: string;
 };
 

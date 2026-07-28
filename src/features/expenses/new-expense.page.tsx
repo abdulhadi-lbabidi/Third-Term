@@ -32,11 +32,15 @@ export function NewExpensePage() {
 
     const source = expense.expenseable_info?.type ?? expense.expenseable_type;
 
+    const expenseUser = expense.user && typeof expense.user === 'object' ? expense.user : undefined;
+
     return {
       ...expense,
       expenseable_type: expense.expenseable_type,
       expenseable_id: expense.expenseable_id ?? expense.expenseable_info?.id,
       user: expense.user,
+      user_role: expense.user_role ?? expenseUser?.role_type,
+      user_id: expense.user_id ?? expenseUser?.id,
       created_by_name: expense.created_by_name,
       expenseable_info: expense.expenseable_info,
       ...(source === 'company_fund'
