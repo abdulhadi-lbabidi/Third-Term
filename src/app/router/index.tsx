@@ -18,6 +18,7 @@ import { ExpensesPage } from '@/features/expenses/expenses.page';
 import { NewExpensePage } from '@/features/expenses/new-expense.page';
 import { ProjectStagesPage } from '@/features/projects/project-stages/project-stages.page';
 import { MaterialsPage } from '@/features/materials/materials.page';
+import { RevenuesPage } from '@/features/revenues/revenues.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -116,6 +117,11 @@ export const router = createBrowserRouter([
           {
             path: '/expenses/new',
             element: <NewExpensePage />,
+          },
+
+          {
+            path: '/revenues',
+            element: <RevenuesPage />,
           },
           {
             path: '/employees/:employeeId/:employeeName/payments',

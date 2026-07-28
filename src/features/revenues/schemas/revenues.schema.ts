@@ -1,26 +1,26 @@
 import { z } from 'zod';
-import type { ExpenseSource } from '../types';
+import type { RevenueSource } from '../types';
 
-export const expenseFormSchema = z
+export const revenueFormSchema = z
   .object({
     source: z.enum(['company_fund', 'user_fund', 'project_fund']),
-    expenseable_type: z.string().optional(),
-    expenseable_id: z.number().optional(),
-    company_fund_id: z.number().optional(),
+    revenueable_type: z.string().optional(),
+    revenueable_id: z.coerce.number().optional(),
+    company_fund_id: z.coerce.number().optional(),
     user_role: z.string().optional(),
-    user_id: z.number().optional(),
+    user_id: z.coerce.number().optional(),
     fund_user_role: z.string().optional(),
-    fund_user_id: z.number().optional(),
-    user_fund_id: z.number().optional(),
-    project_fund_id: z.number().optional(),
-    project_id: z.number().optional(),
-    description: z.string().min(1, 'الرجاء إدخال الوصف'),
-    amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
+    fund_user_id: z.coerce.number().optional(),
+    user_fund_id: z.coerce.number().optional(),
+    project_fund_id: z.coerce.number().optional(),
+    project_id: z.coerce.number().optional(),
+    statement: z.string().min(1, 'الرجاء إدخال البيان'),
+    amount: z.coerce.number().min(0.01, 'الرجاء إدخال مبلغ صحيح أكبر من الصفر'),
     is_posted: z.boolean(),
-    created_by: z.number().optional(),
+    received_by: z.coerce.number().optional(),
   })
   .superRefine((values, ctx) => {
-    if (!values.user_role) {
+    if (!values.user_role && !values.user_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['user_role'],
@@ -36,7 +36,7 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'company_fund' && !values.company_fund_id && !values.expenseable_id) {
+    if (values.source === 'company_fund' && !values.company_fund_id && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['company_fund_id'],
@@ -44,15 +44,15 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'company_fund' && !values.expenseable_id) {
+    if (values.source === 'company_fund' && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
-        path: ['expenseable_id'],
+        path: ['revenueable_id'],
         message: 'الرجاء اختيار عملة صندوق الشركة',
       });
     }
 
-    if (values.source === 'user_fund' && !values.fund_user_role && !values.expenseable_id) {
+    if (values.source === 'user_fund' && !values.fund_user_role && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['fund_user_role'],
@@ -60,7 +60,7 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'user_fund' && !values.fund_user_id && !values.expenseable_id) {
+    if (values.source === 'user_fund' && !values.fund_user_id && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['fund_user_id'],
@@ -68,7 +68,7 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'user_fund' && !values.user_fund_id && !values.expenseable_id) {
+    if (values.source === 'user_fund' && !values.user_fund_id && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['user_fund_id'],
@@ -76,15 +76,15 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'user_fund' && !values.expenseable_id) {
+    if (values.source === 'user_fund' && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
-        path: ['expenseable_id'],
+        path: ['revenueable_id'],
         message: 'الرجاء اختيار عملة صندوق المستخدم',
       });
     }
 
-    if (values.source === 'project_fund' && !values.project_id && !values.expenseable_id) {
+    if (values.source === 'project_fund' && !values.project_id && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['project_id'],
@@ -92,7 +92,7 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'project_fund' && !values.project_fund_id && !values.expenseable_id) {
+    if (values.source === 'project_fund' && !values.project_fund_id && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['project_fund_id'],
@@ -100,19 +100,19 @@ export const expenseFormSchema = z
       });
     }
 
-    if (values.source === 'project_fund' && !values.expenseable_id) {
+    if (values.source === 'project_fund' && !values.revenueable_id) {
       ctx.addIssue({
         code: 'custom',
-        path: ['expenseable_id'],
+        path: ['revenueable_id'],
         message: 'الرجاء اختيار عملة صندوق المشروع',
       });
     }
   });
 
-export type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
-export type ExpenseFormInput = z.input<typeof expenseFormSchema>;
+export type RevenueFormValues = z.infer<typeof revenueFormSchema>;
+export type RevenueFormInput = z.input<typeof revenueFormSchema>;
 
-export const expenseSourceLabels: Record<ExpenseSource, string> = {
+export const revenueSourceLabels: Record<RevenueSource, string> = {
   company_fund: 'صندوق الشركة',
   user_fund: 'صندوق مستخدم',
   project_fund: 'صندوق المشروع',
