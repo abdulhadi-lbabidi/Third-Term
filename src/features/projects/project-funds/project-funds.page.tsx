@@ -214,8 +214,9 @@ export function ProjectFundsPage() {
           <PageHeader
             title={'صناديق المشروع'}
             boxed={false}
+            icon={Wallet}
             action={
-              <div className="flex gap-3">
+              <div className="flex gap-3" >
                 <Button
                   type="button"
                   onClick={() => {

@@ -186,8 +186,9 @@ export function FundsPage() {
           <PageHeader
             badge="المالية"
             title={hasUserContext ? `صناديق ${resolvedUserName || 'المستخدم'}` : 'الصناديق'}
+            icon={Wallet}
             action={
-              <div className="flex gap-3">
+              <div className="flex gap-3" >
                 {!hasUserContext ? (
                   <Button type="button" variant="outline" onClick={() => navigate('/users')}>
                     العودة إلى المستخدمين

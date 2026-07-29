@@ -2,6 +2,15 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/shared/components/ui/dropdown-menu';
+import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -92,8 +101,120 @@ const navGroups: NavGroup[] = [
 
 
 
+function NavGroupComponent({ group, collapsed }: { group: NavGroup; collapsed: boolean }) {
+  const storageKey = `sidebar-group-${group.label}`;
+  const [expanded, setExpanded] = useState(() => {
+    const saved = localStorage.getItem(storageKey);
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleExpanded = () => {
+    setExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem(storageKey, String(next));
+      return next;
+    });
+  };
+
+  if (collapsed) {
+    return (
+      <div>
+        <div className="my-2 border-t border-sidebar-border/70" />
+        <div className="space-y-0.5">
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                title={item.label}
+                className={({ isActive }) =>
+                  cn(
+                    'group mr-4 relative flex items-center justify-center rounded-md px-0 py-2.5 text-[13px] font-medium transition-colors',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <span className="absolute inset-y-1 start-0 w-0.5 rounded-full bg-sidebar-primary" />
+                    )}
+                    <Icon className="size-4 shrink-0 opacity-90" />
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        className={cn(
+          "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          expanded ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
+        )}
+        onClick={toggleExpanded}
+      >
+        <span>{group.label}</span>
+        {expanded ? <ChevronDown className="size-4 opacity-70" /> : <ChevronLeft className="size-4 opacity-70 rtl:rotate-180" />}
+      </button>
+      {expanded && (
+        <div className="space-y-0.5">
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                title={item.label}
+                className={({ isActive }) =>
+                  cn(
+                    'group mr-4 relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <span className="absolute inset-y-1 start-0 w-0.5 rounded-full bg-sidebar-primary" />
+                    )}
+                    <Icon className="size-4 shrink-0 opacity-90" />
+                    <span className="truncate">{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Sidebar({ onLogout }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved !== null ? saved === 'true' : false;
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebar-collapsed', String(next));
+      return next;
+    });
+  };
 
   const { data: currentUser } = useQuery<UserProfile | null>({
     queryKey: ['me'],
@@ -137,94 +258,72 @@ export function Sidebar({ onLogout }: SidebarProps) {
           <NotificationsDropdown />
         </div>
 
-        {!collapsed ? (
-          <div className="flex items-center gap-3 rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 p-2.5">
-            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-              <User className="size-5" />
-              <span className="absolute bottom-0 end-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">{userDisplayName}</p>
-              <p className="truncate text-[11px] text-sidebar-foreground/60">{userEmail}</p>
-              <p className="truncate text-[11px] text-sidebar-foreground/50">{userRoleName}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center py-1" title={`${userDisplayName} (${userEmail} - ${userRoleName})`}>
-            <div className="relative flex size-9 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-              <User className="size-4" />
-              <span className="absolute bottom-0 end-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className={cn('flex-1 overflow-y-auto py-2', collapsed ? 'px-2' : 'px-2.5')}>
+      <div className={cn(
+        'flex-1 overflow-y-auto py-2',
+        '[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border/80 hover:[&::-webkit-scrollbar-thumb]:bg-sidebar-foreground/20 transition-colors',
+        collapsed ? 'px-2' : 'px-2.5'
+      )}>
         <nav className="space-y-1">
           {navGroups.map((group) => (
-            <div key={group.label}>
-              {!collapsed ? <p className="nav-group-label">{group.label}</p> : <div className="my-2 border-t border-sidebar-border/70" />}
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      title={item.label}
-                      className={({ isActive }) =>
-                        cn(
-                          'group relative flex items-center rounded-md text-[13px] font-medium transition-colors',
-                          collapsed ? 'justify-center px-0 py-2.5' : 'gap-2.5 px-2.5 py-2',
-                          isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                            : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
-                        )
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          {isActive ? (
-                            <span className="absolute inset-y-1 start-0 w-0.5 rounded-full bg-sidebar-primary" />
-                          ) : null}
-                          <Icon className="size-4 shrink-0 opacity-90" />
-                          {!collapsed ? <span className="truncate">{item.label}</span> : null}
-                        </>
-                      )}
-                    </NavLink>
-                  );
-                })}
-              </div>
-            </div>
+            <NavGroupComponent key={group.label} group={group} collapsed={collapsed} />
           ))}
         </nav>
       </div>
 
       <div className="border-t border-sidebar-border p-3">
         <div className={cn('flex items-center gap-2', collapsed && 'flex-col')}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'flex h-auto w-full items-center rounded-md p-2 text-start transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground outline-none',
+                  collapsed ? 'justify-center' : 'gap-3'
+                )}
+              >
+                <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
+                  <User className="size-4" />
+                  <span className="absolute bottom-0 end-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
+                </div>
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">{userDisplayName}</p>
+                    <p className="truncate text-[11px] text-sidebar-foreground/60">{userRoleName}</p>
+                  </div>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align={collapsed ? 'center' : 'end'}
+              side="top"
+              className="mb-2 w-56 border-sidebar-border bg-sidebar text-sidebar-foreground shadow-md"
+            >
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{userDisplayName}</p>
+                  <p className="text-xs leading-none text-sidebar-foreground/70">{userEmail}</p>
+                  <p className="text-xs leading-none text-sidebar-foreground/70">{userRoleName}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-sidebar-border" />
+              <DropdownMenuItem onClick={onLogout} className="cursor-pointer text-red-600 focus:bg-red-500/10 focus:text-red-600">
+                <LogOut className="mr-2 size-4" />
+                <span>تسجيل الخروج</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
-            variant="ghost"
-            className={cn(
-              'h-9 border border-red-200/60 bg-red-50/50 text-red-700 hover:bg-red-100/70 hover:text-red-800',
-              collapsed ? 'w-full justify-center px-0' : 'flex-1 justify-start gap-2'
-            )}
-            onClick={onLogout}
-            aria-label="تسجيل الخروج"
-            title="تسجيل الخروج"
-          >
-            <LogOut className="size-4 shrink-0" />
-            {!collapsed ? <span>تسجيل الخروج</span> : null}
-          </Button>
-          <button
             type="button"
-            onClick={() => setCollapsed((prev) => !prev)}
-            className="flex size-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={toggleSidebar}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             aria-label={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
             title={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
           >
-            {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-          </button>
+            {!collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          </Button>
         </div>
       </div>
     </aside>

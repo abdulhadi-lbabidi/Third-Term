@@ -8,6 +8,7 @@ import { InvoiceItemsTable } from './components/invoice-items.table';
 import { invoiceItemsApi } from './invoice-items.api';
 import type { InvoiceItemFormValues } from './schemas/invoice-items.schema';
 import type { CreateInvoiceItemPayload, InvoiceItem } from './types';
+import { FileSpreadsheet } from 'lucide-react';
 
 const invoiceItemsQueryKeys = {
   all: ['invoice-items'] as const,
@@ -68,6 +69,7 @@ export function InvoiceItemsPage() {
       <PageHeader
         badge="الفواتير"
         title="أصناف الفاتورة"
+        icon={FileSpreadsheet}
         action={
           <Button
             type="button"

@@ -7,6 +7,7 @@ import { PageHeader } from '../components/page-header';
 import { ExpensesForm } from './components/expenses.form';
 import { expensesApi } from './expenses.api';
 import type { CreateExpensePayload, Expense, ExpenseSource } from './types';
+import { ReceiptText } from 'lucide-react';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
@@ -63,10 +64,10 @@ export function NewExpensePage() {
     const projectFundDetails =
       detailsRecord && ('project_fund' in detailsRecord || 'project_fund_id' in detailsRecord)
         ? (detailsRecord as {
-            project_fund_id?: number;
-            project_fund?: { id?: number; project_id?: number; project?: { id?: number } };
-            id?: number;
-          })
+          project_fund_id?: number;
+          project_fund?: { id?: number; project_id?: number; project?: { id?: number } };
+          id?: number;
+        })
         : null;
 
     const userFundDetails =
@@ -94,15 +95,15 @@ export function NewExpensePage() {
       expenseable_info: expense.expenseable_info,
       ...(source === 'company_fund'
         ? {
-            company_fund_id: expense.expenseable_info?.company_fund_id ?? expense.expenseable_info?.id,
-          }
+          company_fund_id: expense.expenseable_info?.company_fund_id ?? expense.expenseable_info?.id,
+        }
         : source === 'project_fund'
           ? {
-              project_id:
-                expense.expenseable_info?.project_id ??
-                projectFundDetails?.project_fund?.project_id ??
-                projectFundDetails?.project_fund?.project?.id,
-            }
+            project_id:
+              expense.expenseable_info?.project_id ??
+              projectFundDetails?.project_fund?.project_id ??
+              projectFundDetails?.project_fund?.project?.id,
+          }
           : {}),
     };
   }, [expenseQuery.data]);
@@ -133,6 +134,7 @@ export function NewExpensePage() {
       <PageHeader
         badge="المصروفات"
         title={isEditMode ? 'تعديل مصروف' : 'إضافة مصروف'}
+        icon={ReceiptText}
         action={
           <Button type="button" variant="outline" onClick={() => navigate('/expenses')}>
             رجوع

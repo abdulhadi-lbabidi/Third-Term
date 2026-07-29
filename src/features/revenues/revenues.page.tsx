@@ -5,6 +5,7 @@ import { RevenuesTable } from './components/revenues.table';
 import { RevenuesDialog } from './components/revenues.dialog';
 import { useRevenues, useCreateRevenue, useUpdateRevenue, useDeleteRevenue } from './revenues.hooks';
 import type { Revenue, CreateRevenuePayload } from './types';
+import { TrendingUp } from 'lucide-react';
 
 export function RevenuesPage() {
   const { data: revenues = [], isLoading } = useRevenues();
@@ -42,6 +43,7 @@ export function RevenuesPage() {
       <PageHeader
         badge="الإيرادات"
         title="الإيرادات"
+        icon={TrendingUp}
         action={
           <Button
             type="button"

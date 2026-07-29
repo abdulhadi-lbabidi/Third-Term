@@ -12,6 +12,7 @@ import { CompanyFundCurrenciesDialog } from './components/company-fund-currencie
 import { CompanyFundCurrencyDialog } from './components/company-fund-currency.dialog';
 import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
 import { PageHeader } from '../components/page-header';
+import { Wallet } from 'lucide-react';
 
 const companyFundsQueryKeys = {
   all: ['company-funds'] as const,
@@ -110,6 +111,7 @@ export function CompanyFundsPage() {
       <PageHeader
         badge="المالية"
         title="صندوق الشركة"
+        icon={Wallet}
         action={
           <Button
             onClick={() => {

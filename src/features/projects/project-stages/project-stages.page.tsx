@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Layers } from 'lucide-react';
+import { FolderKanban } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { PageHeader } from '@/features/components/page-header';
@@ -29,20 +29,20 @@ export function ProjectStagesPage() {
     <div className="space-y-5 p-6 h-full flex flex-col">
       <PageHeader
         badge="المشاريع"
+        icon={FolderKanban}
         title={
           projectName ||
           currentProject?.name || (
             <Skeleton className="h-8 w-48 inline-block align-middle" />
           )
         }
-        icon={Layers}
         description="تفاصيل مراحل المشروع وتحديثاته الزمنية"
         action={
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate(-1)}
-            
+
           >
             العودة
           </Button>

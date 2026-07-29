@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, BadgeDollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { usersApi } from '@/features/users/api/users.api';
@@ -86,34 +86,35 @@ export function EmployeePaymentsPage() {
       <PageHeader
         badge="الموظفون"
         title={selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : 'رواتب الموظفين'}
+        icon={BadgeDollarSign}
         action={
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3"  >
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
-              <select
-                className="field-control h-10 w-[210px] shrink-0"
-                value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
-                onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
-              >
-                <option value="">كل الموظفين</option>
-                {employeesQuery.data?.map((employee) => (
-                  <option key={employee.id} value={String(employee.id)}>
-                    {employee.user.name}
-                  </option>
-                ))}
-              </select>
-              {selectedEmployeeId ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setSelectedEmployeeId(null)}
-                  aria-label="عرض الكل"
-                  title="عرض الكل"
+                <select
+                  className="field-control h-10 w-[210px] shrink-0"
+                  value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
+                  onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
                 >
-                  <RotateCcw className="size-4" />
-                </Button>
-              ) : null}
+                  <option value="">كل الموظفين</option>
+                  {employeesQuery.data?.map((employee) => (
+                    <option key={employee.id} value={String(employee.id)}>
+                      {employee.user.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedEmployeeId ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setSelectedEmployeeId(null)}
+                    aria-label="عرض الكل"
+                    title="عرض الكل"
+                  >
+                    <RotateCcw className="size-4" />
+                  </Button>
+                ) : null}
               </div>
             ) : null}
             {params.employeeId ? (

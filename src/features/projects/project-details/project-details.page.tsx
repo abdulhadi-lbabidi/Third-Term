@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Wallet, User, Cloud, Pencil, Users, Layers } from 'lucide-react';
+import { Wallet, User, Cloud, Pencil, Users, Layers, FolderKanban } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -67,6 +67,7 @@ export function ProjectDetailsPage() {
     <div className="space-y-5">
       <PageHeader
         badge="تفاصيل المشروع"
+        icon={FolderKanban}
         title={projectName || currentProject?.name || <Skeleton className="h-8 w-48 inline-block align-middle" />}
         tabs={PROJECT_TABS}
         defaultTab={searchParams.has('dirId') ? 'cloud' : 'funds'}

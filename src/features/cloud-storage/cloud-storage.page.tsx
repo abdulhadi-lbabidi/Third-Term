@@ -5,7 +5,7 @@ import { PageHeader } from '../components/page-header';
 export function CloudStoragePage() {
   return (
     <div className="space-y-5">
-      <PageHeader badge="إدارة الملفات" title="التخزين السحابي" />
+      <PageHeader badge="إدارة الملفات" title="التخزين السحابي"  icon={Cloud} />
 
       <div className="surface-panel p-5">
         <div className="mb-5 flex items-center gap-3 border-b border-border pb-4">

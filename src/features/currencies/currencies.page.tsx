@@ -5,6 +5,7 @@ import { CurrencyDialog } from './components/currency.dialog';
 import type { Currency, CreateCurrencyPayload } from './types';
 import { useCurrencies, useMutateCurrency, useDeleteCurrency } from './currencies.hooks';
 import { PageHeader } from '../components/page-header';
+import { Banknote } from 'lucide-react';
 
 export function CurrenciesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -38,12 +39,9 @@ export function CurrenciesPage() {
       <PageHeader
         badge="المالية"
         title="العملات"
+        icon={Banknote}
         action={
-          <Button
-            onClick={openCreateDialog}
-          >
-            إضافة عملة جديدة
-          </Button>
+          <Button onClick={openCreateDialog}>إضافة عملة جديدة</Button>
         }
       />
 

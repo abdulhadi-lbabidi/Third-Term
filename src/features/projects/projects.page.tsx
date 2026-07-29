@@ -8,6 +8,7 @@ import { ProjectsDialog } from './components/projects.dialog';
 import { ProjectsTable } from './components/projects.table';
 import type { CreateProjectPayload, Project } from './types';
 import { PageHeader } from '../components/page-header';
+import { FolderKanban } from 'lucide-react';
 
 const projectsQueryKeys = {
   all: ['projects'] as const,
@@ -76,13 +77,8 @@ export function ProjectsPage() {
       <PageHeader
         badge="المشاريع"
         title="المشاريع"
-        action={
-          <Button
-            onClick={handleCreate}
-          >
-            إضافة مشروع جديد
-          </Button>
-        }
+        icon={FolderKanban}
+        action={<Button onClick={handleCreate}>إضافة مشروع جديد</Button>}
       />
 
       <ProjectsTable
