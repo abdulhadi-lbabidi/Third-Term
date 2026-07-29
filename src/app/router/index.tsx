@@ -28,9 +28,9 @@ function getAuthToken() {
 }
 
 function ProtectedRoute() {
-  // if (!getAuthToken()) {
-  //   return <Navigate to="/auth/login" replace />;
-  // }
+  if (!getAuthToken()) {
+    return <Navigate to="/auth/login" replace />;
+  }
 
   return <Outlet />;
 }

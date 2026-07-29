@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from 'react-router-dom';
+import { apiClient } from '@/shared/api/axios.instance';
 import { Sidebar } from './components/sidebar';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
@@ -6,8 +7,14 @@ const AUTH_TOKEN_KEY = 'token_finance_nouh';
 export function Layout() {
   const navigate = useNavigate();
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await apiClient.post('/logout');
+    } catch {
+    }
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_info');
     navigate('/auth/login', { replace: true });
   }
 
