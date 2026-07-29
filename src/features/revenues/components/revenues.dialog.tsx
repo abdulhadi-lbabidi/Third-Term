@@ -1,11 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
-import { ExpensesForm } from './expenses.form';
-import type { CreateExpensePayload, Expense } from '../types';
+import { RevenuesForm } from './revenues.form';
+import type { CreateRevenuePayload, Revenue } from '../types';
 
-type ExpensesDialogProps = {
+type RevenuesDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultValues?: Expense | null;
+  defaultValues?: Revenue | null;
   fixedValues?: {
     source?: 'company_fund' | 'user_fund' | 'project_fund';
     project_id?: number;
@@ -13,19 +13,19 @@ type ExpensesDialogProps = {
     user_id?: number;
     user_fund_id?: number;
   };
-  onSubmit: (data: CreateExpensePayload) => Promise<void>;
+  onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
 };
 
-export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: ExpensesDialogProps) {
+export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: RevenuesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{defaultValues ? 'تعديل المصروف' : 'إضافة مصروف جديد'}</DialogTitle>
+          <DialogTitle>{defaultValues ? 'تعديل الإيراد' : 'إضافة إيراد جديد'}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          <ExpensesForm
+          <RevenuesForm
             defaultValues={defaultValues}
             fixedValues={fixedValues}
             onSubmit={async (data) => {

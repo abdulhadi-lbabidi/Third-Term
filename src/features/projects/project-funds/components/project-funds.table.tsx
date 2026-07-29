@@ -1,4 +1,4 @@
-import { Banknote } from 'lucide-react';
+import { Banknote, Eye } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { ProjectFund } from '../project-funds.types';
@@ -11,6 +11,7 @@ type ProjectFundsTableProps = {
   onAttachCurrency?: (fund: ProjectFund) => void;
   onCurrencyClick?: (fund: ProjectFund, currencyId: number) => void;
   onMoreCurrenciesClick?: (fund: ProjectFund) => void;
+  onView?: (fund: ProjectFund) => void;
 };
 
 export function ProjectFundsTable({
@@ -21,6 +22,7 @@ export function ProjectFundsTable({
   onAttachCurrency,
   onCurrencyClick,
   onMoreCurrenciesClick,
+  onView,
 }: ProjectFundsTableProps) {
   const columns: DataTableColumn<ProjectFund>[] = [
     { header: 'اسم الصندوق', cell: (fund) => fund.name },
@@ -80,15 +82,26 @@ export function ProjectFundsTable({
       actions={{
         onEdit,
         onDelete,
-        extraActions: onAttachCurrency
-          ? [
-            {
-              label: 'إرفاق عملة',
-              icon: <Banknote className="size-4" />,
-              onClick: onAttachCurrency,
-            },
-          ]
-          : undefined,
+        extraActions: [
+          ...(onView
+            ? [
+                {
+                  label: 'عرض التفاصيل',
+                  icon: <Eye className="size-4" />,
+                  onClick: onView,
+                },
+              ]
+            : []),
+          ...(onAttachCurrency
+            ? [
+                {
+                  label: 'إرفاق عملة',
+                  icon: <Banknote className="size-4" />,
+                  onClick: onAttachCurrency,
+                },
+              ]
+            : []),
+        ],
       }}
     />
   );

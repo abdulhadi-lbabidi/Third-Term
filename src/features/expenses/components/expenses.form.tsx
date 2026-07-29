@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { CompanyFund } from '@/features/company-funds/types';
 import type { Fund } from '@/features/funds/types';
@@ -35,6 +36,13 @@ import type { CreateExpensePayload, Expense, ExpenseProjectFundCurrencyDetails, 
 
 type ExpensesFormProps = {
   defaultValues?: Expense | null;
+  fixedValues?: {
+    source?: ExpenseSource;
+    project_id?: number;
+    project_fund_id?: number;
+    user_id?: number;
+    user_fund_id?: number;
+  };
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
   loading?: boolean;
 };
@@ -286,22 +294,22 @@ function getExpenseCreatedById(expense?: Expense | null): number {
   return 1;
 }
 
-export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormProps) {
+export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: ExpensesFormProps) {
   const navigate = useNavigate();
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      source: getInitialSource(defaultValues),
-      expenseable_type: defaultValues?.expenseable_type ?? sourceToExpenseableType.company_fund,
+      source: fixedValues?.source ?? getInitialSource(defaultValues),
+      expenseable_type: defaultValues?.expenseable_type ?? (fixedValues?.source ? sourceToExpenseableType[fixedValues.source] : sourceToExpenseableType.company_fund),
       expenseable_id: getExpenseableCurrencyId(defaultValues),
       company_fund_id: defaultValues?.expenseable_info?.company_fund_id ?? undefined,
       user_role: getExpenseUserRole(defaultValues),
       user_id: getExpenseUserId(defaultValues),
       fund_user_role: getFundUserRole(defaultValues),
-      fund_user_id: getFundUserId(defaultValues),
-      user_fund_id: getUserFundId(defaultValues),
-      project_fund_id: getExpenseProjectFundId(defaultValues),
-      project_id: getExpenseProjectId(defaultValues),
+      fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
+      user_fund_id: fixedValues?.user_fund_id ?? getUserFundId(defaultValues),
+      project_fund_id: fixedValues?.project_fund_id ?? getExpenseProjectFundId(defaultValues),
+      project_id: fixedValues?.project_id ?? getExpenseProjectId(defaultValues),
       description: defaultValues?.description ?? '',
       amount: Number(defaultValues?.amount ?? 0),
       is_posted: Boolean(defaultValues?.is_posted ?? true),
@@ -322,8 +330,8 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
       user_role: getExpenseUserRole(defaultValues),
       user_id: getExpenseUserId(defaultValues),
       fund_user_role: getFundUserRole(defaultValues),
-      fund_user_id: getFundUserId(defaultValues),
-      user_fund_id: getUserFundId(defaultValues),
+      fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
+      user_fund_id: fixedValues?.user_fund_id ?? getUserFundId(defaultValues),
       project_fund_id: getExpenseProjectFundId(defaultValues),
       project_id: getExpenseProjectId(defaultValues),
       description: defaultValues.description ?? '',
@@ -337,7 +345,7 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
   const companyFundId = form.watch('company_fund_id');
   const selectedExpenseableId = form.watch('expenseable_id');
   const userRole = form.watch('user_role') as UserRole | '';
-  const userId = form.watch('user_id');
+  form.watch('user_id');
   const fundUserRole = form.watch('fund_user_role') as UserRole | '';
   const fundUserId = form.watch('fund_user_id');
   const userFundId = form.watch('user_fund_id');
@@ -635,39 +643,6 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
     return '';
   }, [defaultValues, selectedExpenseableId, selectedUserFund]);
 
-  const selectedFundUserName = useMemo(() => {
-    if (!fundUserId) return '';
-
-    const fromRoleUsers = fundRoleUsers.find((user) => user.id === fundUserId)?.user.name;
-    if (fromRoleUsers) return fromRoleUsers;
-
-    // اسم مستخدم الصندوق فقط من expenseable_info.user_info
-    const userInfo = getExpenseUserFundUserInfo(defaultValues);
-    if (userInfo?.user?.name) {
-      return userInfo.user.name;
-    }
-
-    const details = getExpenseUserFundDetails(defaultValues);
-    if (details?.fund?.user?.name) {
-      return details.fund.user.name;
-    }
-
-    return '';
-  }, [defaultValues, fundRoleUsers, fundUserId]);
-
-  const selectedUserName = useMemo(() => {
-    if (!userId) return '';
-
-    const fromRoleUsers = roleUsers.find((user) => user?.user.id === userId)?.user.name;
-    if (fromRoleUsers) return fromRoleUsers;
-
-    // اسم المستخدم السفلي فقط من كائن user الأعلى
-    if (defaultValues?.user && typeof defaultValues.user === 'object') {
-      return defaultValues.user.name ?? '';
-    }
-
-    return '';
-  }, [defaultValues?.user, roleUsers, userId]);
 
   return (
     <Form {...form}>
@@ -687,48 +662,50 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
           );
         })}
       >
-        <FormField
-          control={form.control}
-          name="source"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>نوع الصندوق</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={(value) => {
-                    const nextSource = value as ExpenseSource;
-                    const nextExpenseableType: ExpenseableType = sourceToExpenseableType[nextSource];
-                    field.onChange(nextSource);
-                    form.setValue('expenseable_type', nextExpenseableType);
-                    form.setValue('expenseable_id', undefined);
-                    form.setValue('company_fund_id', undefined);
-                    form.setValue('fund_user_role', '');
-                    form.setValue('fund_user_id', undefined);
-                    form.setValue('user_fund_id', undefined);
-                    form.setValue('project_fund_id', undefined);
+        {!fixedValues?.source && (
+          <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>نوع الصندوق</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={(value) => {
+                      const nextSource = value as ExpenseSource;
+                      const nextExpenseableType: ExpenseableType = sourceToExpenseableType[nextSource];
+                      field.onChange(nextSource);
+                      form.setValue('expenseable_type', nextExpenseableType);
+                      form.setValue('expenseable_id', undefined);
+                      form.setValue('company_fund_id', undefined);
+                      form.setValue('fund_user_role', '');
+                      form.setValue('fund_user_id', undefined);
+                      form.setValue('user_fund_id', undefined);
+                      form.setValue('project_fund_id', undefined);
 
-                    if (nextSource !== 'project_fund') {
-                      form.setValue('project_id', undefined);
-                    }
-                  }}
-                  className="grid gap-3 md:grid-cols-3"
-                >
-                  {(Object.keys(expenseSourceLabels) as ExpenseSource[]).map((item) => (
-                    <label
-                      key={item}
-                      className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
-                    >
-                      <span>{expenseSourceLabels[item]}</span>
-                      <RadioGroupItem value={item} />
-                    </label>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                      if (nextSource !== 'project_fund') {
+                        form.setValue('project_id', undefined);
+                      }
+                    }}
+                    className="grid gap-3 md:grid-cols-3"
+                  >
+                    {(Object.keys(expenseSourceLabels) as ExpenseSource[]).map((item) => (
+                      <label
+                        key={item}
+                        className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
+                      >
+                        <span>{expenseSourceLabels[item]}</span>
+                        <RadioGroupItem value={item} />
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {source === 'company_fund' ? (
           <div className="grid gap-4 md:grid-cols-2">
@@ -803,71 +780,75 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
 
         {source === 'project_fund' ? (
           <div className="grid gap-4 md:grid-cols-3">
-            <FormField
-              control={form.control}
-              name="project_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المشروع</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.setValue('project_fund_id', undefined);
-                      form.setValue('expenseable_id', undefined);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        {field.value ? selectedProjectName : <SelectValue placeholder="اختر المشروع" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={String(project.id)}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!fixedValues?.project_id && (
+              <FormField
+                control={form.control}
+                name="project_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>المشروع</FormLabel>
+                    <Select
+                      value={field.value ? String(field.value) : ''}
+                      onValueChange={(value) => {
+                        field.onChange(Number(value));
+                        form.setValue('project_fund_id', undefined);
+                        form.setValue('expenseable_id', undefined);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          {field.value ? selectedProjectName : <SelectValue placeholder="اختر المشروع" />}
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={String(project.id)}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            <FormField
-              control={form.control}
-              name="project_fund_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>صندوق المشروع</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.setValue('expenseable_id', undefined);
-                    }}
-                    disabled={!selectedProjectId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!selectedProjectId}>
-                        {field.value
-                          ? (selectedProjectFundName || 'اختر صندوق المشروع')
-                          : <SelectValue placeholder="اختر صندوق المشروع" />}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {projectFunds.map((fund) => (
-                        <SelectItem key={fund.id} value={String(fund.id)}>
-                          {fund.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!fixedValues?.project_fund_id && (
+              <FormField
+                control={form.control}
+                name="project_fund_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>صندوق المشروع</FormLabel>
+                    <Select
+                      value={field.value ? String(field.value) : ''}
+                      onValueChange={(value) => {
+                        field.onChange(Number(value));
+                        form.setValue('expenseable_id', undefined);
+                      }}
+                      disabled={!selectedProjectId}
+                    >
+                      <FormControl>
+                        <SelectTrigger disabled={!selectedProjectId}>
+                          {field.value
+                            ? (selectedProjectFundName || 'اختر صندوق المشروع')
+                            : <SelectValue placeholder="اختر صندوق المشروع" />}
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {projectFunds.map((fund) => (
+                          <SelectItem key={fund.id} value={String(fund.id)}>
+                            {fund.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -905,11 +886,11 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
           </div>
         ) : null}
 
-        {source === 'user_fund' ? (
+        {source === 'user_fund' && !fixedValues?.user_fund_id ? (
           <div className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
-           
+
             </div>
 
             <div className="grid gap-4 md:grid-cols-4">
@@ -952,35 +933,27 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>المستخدم</FormLabel>
-                    <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => {
-                        field.onChange(Number(value));
-                        form.setValue('user_fund_id', undefined);
-                        form.setValue('expenseable_id', undefined);
-                      }}
-                      disabled={!fundUserRole}
-                    >
-                      <FormControl>
-                        <SelectTrigger disabled={!fundUserRole}>
-                          {field.value
-                            ? (selectedFundUserName || 'اختر المستخدم')
-                            : <SelectValue placeholder="اختر المستخدم" />}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {fundRoleUsers.map((user) => (
-                          <SelectItem key={user.id} value={String(user.id)}>
-                            {user.user.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(Number(value));
+                          form.setValue('user_fund_id', undefined);
+                          form.setValue('expenseable_id', undefined);
+                        }}
+                        disabled={!fundUserRole}
+                        placeholder="اختر المستخدم"
+                        options={fundRoleUsers.map((user) => ({
+                          value: user.id,
+                          label: user.user.name
+                        }))}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-                <FormField
+              <FormField
                 control={form.control}
                 name="user_fund_id"
                 render={({ field }) => (
@@ -1049,71 +1022,101 @@ export function ExpensesForm({ defaultValues, onSubmit, loading }: ExpensesFormP
               />
             </div>
           </div>
+        ) : source === 'user_fund' ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="expenseable_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عملة الصندوق</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    disabled={!userFundId}
+                  >
+                    <FormControl>
+                      <SelectTrigger disabled={!userFundId}>
+                        {field.value
+                          ? (selectedUserCurrencyName || 'اختر العملة')
+                          : <SelectValue placeholder="اختر العملة" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {selectedUserFund?.currencies?.map((currency) => {
+                        const value = getCurrencyExpenseableId(currency);
+                        return (
+                          <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                            {getCurrencyLabel(currency)}
+                          </SelectItem>
+                        );
+                      }) ?? null}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="user_role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>نوع المستخدم</FormLabel>
-                <Select
-                  value={field.value ?? ''}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    form.setValue('user_id', undefined);
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      {field.value ? getRoleLabel(field.value as UserRole) : <SelectValue placeholder="اختر نوع المستخدم" />}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {userRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {roleLabels[role]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {!fixedValues?.user_id && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="user_role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نوع المستخدم</FormLabel>
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('user_id', undefined);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        {field.value ? getRoleLabel(field.value as UserRole) : <SelectValue placeholder="اختر نوع المستخدم" />}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {userRoles.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {roleLabels[role]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="user_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>المستخدم</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(value) => field.onChange(Number(value))}
-                  disabled={!userRole}
-                >
+            <FormField
+              control={form.control}
+              name="user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>المستخدم</FormLabel>
                   <FormControl>
-                    <SelectTrigger disabled={!userRole}>
-                      {field.value
-                        ? (selectedUserName || 'اختر المستخدم')
-                        : <SelectValue placeholder="اختر المستخدم" />}
-                    </SelectTrigger>
+                    <SearchableSelect
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      disabled={!userRole}
+                      placeholder="اختر المستخدم"
+                      options={roleUsers.map((user) => ({
+                        value: user?.user.id,
+                        label: user?.user.name
+                      }))}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    {roleUsers.map((user) => (
-                      <SelectItem key={user?.user.id} value={String(user.user.id)}>
-                        {user.user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         <FormField
           control={form.control}

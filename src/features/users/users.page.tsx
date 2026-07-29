@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
-import { UserTabs } from './components/user-tabs';
 import { UsersTable } from './components/users.table';
 import { usersApi } from './api/users.api';
 import type {
@@ -18,8 +17,20 @@ import type {
   UserRole,
 } from './types';
 import { PageHeader } from '../components/page-header';
+import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock } from 'lucide-react';
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
+
+const USER_TABS = [
+  { value: 'admin', label: 'المدراء', icon: <Shield className="h-4 w-4" /> },
+  { value: 'client', label: 'العملاء', icon: <User className="h-4 w-4" /> },
+  { value: 'investor', label: 'المستثمرون', icon: <TrendingUp className="h-4 w-4" /> },
+  { value: 'craftsman', label: 'الحرفيون', icon: <Hammer className="h-4 w-4" /> },
+  { value: 'employee', label: 'الموظفون', icon: <BadgeCheck className="h-4 w-4" /> },
+  { value: 'engineer', label: 'المهندسون', icon: <HardHat className="h-4 w-4" /> },
+  { value: 'supplier', label: 'الموردون', icon: <Truck className="h-4 w-4" /> },
+  { value: 'trustee', label: 'الأوصياء', icon: <Lock className="h-4 w-4" /> },
+];
 
 type UsersTabRecord =
   | AdminRecord
@@ -64,7 +75,7 @@ function UsersTableSkeleton() {
 export function UsersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('tab');
   const [activeRole, setActiveRole] = useState<UserRole>(() => {
     return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';
@@ -135,24 +146,17 @@ export function UsersPage() {
   const showSkeleton = usersQuery.isFetching && !usersQuery.data;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <PageHeader
         badge="المستخدمون"
         title="المستخدمون"
+        tabs={USER_TABS}
+        defaultTab={activeRole}
         action={
           <Button>
             <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
           </Button>
         }
-      />
-
-      <UserTabs
-        roles={userRoles}
-        activeRole={activeRole}
-        onChange={(role) => {
-          setActiveRole(role);
-          setSearchParams({ tab: role });
-        }}
       />
 
       {showSkeleton ? (
