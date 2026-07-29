@@ -11,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/components/ui/form';
-import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/lib/utils';
 import type { Currency } from '@/features/currencies/types';
 import { attachProjectCurrencySchema, type AttachProjectCurrencyValues } from '../../schemas/projects.schema';
@@ -33,12 +32,12 @@ export function AttachCurrencyDialog({
 }: AttachCurrencyDialogProps) {
   const form = useForm<AttachProjectCurrencyValues>({
     resolver: zodResolver(attachProjectCurrencySchema) as any,
-    defaultValues: { currency_id: 0, balance: '' },
+    defaultValues: { currency_id: 0, balance: '0' },
   });
 
   useEffect(() => {
     if (!open) {
-      form.reset({ currency_id: 0, balance: '' });
+      form.reset({ currency_id: 0, balance: '0' });
     }
   }, [form, open]);
 
@@ -101,20 +100,6 @@ export function AttachCurrencyDialog({
               )}
             />
 
-            {/* Initial Balance */}
-            <FormField
-              control={form.control}
-              name="balance"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الرصيد الافتتاحي</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="مثال: 0.00" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'جاري الإرفاق...' : 'إرفاق العملة'}

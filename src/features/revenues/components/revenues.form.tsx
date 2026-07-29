@@ -415,7 +415,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
         {/* User Fund Fields */}
         {source === 'user_fund' && !fixedValues?.user_fund_id && (
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+          <div className="space-y-4 px-5">
             <h3 className="font-semibold text-slate-800">صندوق المستخدم</h3>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -536,81 +536,81 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
         {/* Auth User Fields */}
         {!fixedValues?.user_id && (
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="space-y-4 px-2">
             <h3 className="font-semibold text-slate-800">تفاصيل المستلم (آمر التأكيد)</h3>
             <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="user_role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>نوع المستخدم</FormLabel>
-                  <Select
-                    value={field.value ?? ''}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      form.setValue('user_id', undefined);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="اختر نوع المستخدم">
-                          {field.value ? (
-                            <div className="flex items-center gap-2">
-                              {(() => {
-                                const Icon = roleIcons[field.value as UserRole] || User;
-                                return <Icon className="size-4 text-slate-500" />;
-                              })()}
-                              <span>{getRoleLabel(field.value as UserRole)}</span>
-                            </div>
-                          ) : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {userRoles.map((role) => {
-                        const Icon = roleIcons[role] || User;
-                        return (
-                          <SelectItem key={role} value={role}>
-                            <div className="flex items-center gap-2">
-                              <Icon className="size-4 text-slate-500" />
-                              <span>{roleLabels[role]}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="user_role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع المستخدم</FormLabel>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('user_id', undefined);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder="اختر نوع المستخدم">
+                            {field.value ? (
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const Icon = roleIcons[field.value as UserRole] || User;
+                                  return <Icon className="size-4 text-slate-500" />;
+                                })()}
+                                <span>{getRoleLabel(field.value as UserRole)}</span>
+                              </div>
+                            ) : null}
+                          </SelectValue>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {userRoles.map((role) => {
+                          const Icon = roleIcons[role] || User;
+                          return (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex items-center gap-2">
+                                <Icon className="size-4 text-slate-500" />
+                                <span>{roleLabels[role]}</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="user_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المستخدم</FormLabel>
-                  <FormControl>
-                    <SearchableSelect
-                      disabled={!userRole && !defaultValues?.user_id}
-                      options={userOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="اختر المستخدم..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="user_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>المستخدم</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        disabled={!userRole && !defaultValues?.user_id}
+                        options={userOptions}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="اختر المستخدم..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-        </div>
         )}
 
         {/* Fund Selection and Money Fields */}
-        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="space-y-4 px-2">
           <h3 className="font-semibold text-slate-800">بيانات الإيراد</h3>
           <div className="grid gap-4">
             {source === 'company_fund' && (
@@ -808,7 +808,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         </div>
 
         {/* Switch and Submit at the bottom */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200 mt-4">
+        <div className="flex items-center justify-between pt-4 mt-4">
           <FormField
             control={form.control}
             name="is_posted"
@@ -835,7 +835,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           />
 
           <Button type="submit" className="h-11 bg-slate-950 text-white min-w-[140px] shadow-md hover:bg-slate-800" disabled={loading}>
-            {loading ? 'جاري الحفظ...' : 'حفظ الإيراد'}
+            {loading
+              ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')
+              : (defaultValues?.id ? 'تحديث الإيراد' : 'إضافة')}
             <CheckCircle2 className="size-4 ml-2" />
           </Button>
         </div>

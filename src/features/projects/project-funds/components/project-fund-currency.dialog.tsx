@@ -69,19 +69,6 @@ export function ProjectFundCurrencyDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="balance"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الرصيد</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'جاري الحفظ...' : 'حفظ'}

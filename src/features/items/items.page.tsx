@@ -7,6 +7,7 @@ import { ItemsDialog } from './components/items.dialog';
 import { ItemsTable } from './components/items.table';
 import type { CreateItemPayload, Item } from './types';
 import { PageHeader } from '../components/page-header';
+import { ListChecks } from 'lucide-react';
 
 const itemsQueryKeys = {
   all: ['items'] as const,
@@ -58,6 +59,7 @@ export function ItemsPage() {
       <PageHeader
         badge="البنود"
         title="البنود"
+        icon={ListChecks}
         action={
           <Button
             onClick={() => {

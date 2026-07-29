@@ -7,6 +7,7 @@ import { materialsApi } from './materials.api';
 import { MaterialDialog } from './components/material.dialog';
 import { MaterialsTable } from './components/materials.table';
 import type { CreateMaterialPayload, Material } from './types';
+import { Boxes } from 'lucide-react';
 
 const materialsQueryKeys = {
   all: ['materials'] as const,
@@ -58,6 +59,7 @@ export function MaterialsPage() {
       <PageHeader
         badge="المواد"
         title="المواد"
+        icon={Boxes}
         action={
           <Button
             onClick={() => {

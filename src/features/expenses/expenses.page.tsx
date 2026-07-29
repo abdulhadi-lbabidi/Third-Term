@@ -8,6 +8,7 @@ import { expensesApi } from './expenses.api';
 import { ExpensesTable } from './components/expenses.table';
 import { ExpenseDetailsDialog } from './components/expense-details.dialog';
 import type { Expense } from './types';
+import { ReceiptText } from 'lucide-react';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
@@ -46,6 +47,7 @@ export function ExpensesPage() {
       <PageHeader
         badge="المصروفات"
         title="المصروفات"
+        icon={ReceiptText}
         action={
           <Button type="button" onClick={() => navigate('/expenses/new')}>
             إضافة مصروف جديد

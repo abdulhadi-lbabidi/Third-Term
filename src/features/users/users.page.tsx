@@ -17,7 +17,7 @@ import type {
   UserRole,
 } from './types';
 import { PageHeader } from '../components/page-header';
-import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock } from 'lucide-react';
+import {  Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock , Users } from 'lucide-react';
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
@@ -150,6 +150,7 @@ export function UsersPage() {
       <PageHeader
         badge="المستخدمون"
         title="المستخدمون"
+        icon={Users}
         tabs={USER_TABS}
         defaultTab={activeRole}
         action={
@@ -168,8 +169,6 @@ export function UsersPage() {
           loading={usersQuery.isFetching}
           onDelete={handleDelete}
           onEdit={handleEdit}
-          onFunds={handleFunds}
-          onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
         />
       )}
     </div>

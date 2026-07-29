@@ -12,6 +12,7 @@ import { CompanyFundCurrenciesDialog } from './components/company-fund-currencie
 import { CompanyFundCurrencyDialog } from './components/company-fund-currency.dialog';
 import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
 import { PageHeader } from '../components/page-header';
+import { Wallet } from 'lucide-react';
 
 const companyFundsQueryKeys = {
   all: ['company-funds'] as const,
@@ -100,13 +101,6 @@ export function CompanyFundsPage() {
     toast.success('تم حذف صندوق الشركة بنجاح');
   };
 
-  const openCurrencyEditDialog = (fund: CompanyFund, currencyId: number) => {
-    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
-    setSelectedCompanyFund(fund);
-    setSelectedCompanyFundCurrency(currency);
-    setCurrencyEditDialogOpen(true);
-  };
-
   const handleAttachCurrency = async (payload: { currency_id: number; balance: string }) => {
     await attachMutation.mutateAsync(payload);
     toast.success('تم حفظ العملة بصندوق الشركة بنجاح');
@@ -117,6 +111,7 @@ export function CompanyFundsPage() {
       <PageHeader
         badge="المالية"
         title="صندوق الشركة"
+        icon={Wallet}
         action={
           <Button
             onClick={() => {
@@ -141,7 +136,7 @@ export function CompanyFundsPage() {
           setSelectedCompanyFundForCurrency(fund);
           setAttachDialogOpen(true);
         }}
-        onCurrencyClick={openCurrencyEditDialog}
+
         onMoreCurrenciesClick={(fund) => {
           setSelectedCompanyFundForView(fund);
           setCurrenciesDialogOpen(true);
@@ -176,7 +171,7 @@ export function CompanyFundsPage() {
           if (!open) setSelectedCompanyFundForView(null);
         }}
         fund={selectedCompanyFundForView}
-        onCurrencyClick={openCurrencyEditDialog}
+
       />
 
       <CompanyFundCurrencyDialog

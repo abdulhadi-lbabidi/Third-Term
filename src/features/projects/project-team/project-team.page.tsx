@@ -101,6 +101,7 @@ export function ProjectTeamPage() {
     <div className="space-y-5">
       <PageHeader
         badge="المشاريع"
+        icon={Users}
         title={
           projectName ||
           currentProject?.name || (

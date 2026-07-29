@@ -18,7 +18,6 @@ export function CompanyFundsTable({
   onEdit,
   onDelete,
   onAttachCurrency,
-  onCurrencyClick,
   onMoreCurrenciesClick,
 }: CompanyFundsTableProps) {
   const columns: DataTableColumn<CompanyFund>[] = [
@@ -36,7 +35,6 @@ export function CompanyFundsTable({
               <button
                 key={currency.id}
                 type="button"
-                onClick={() => onCurrencyClick?.(fund, currency.id)}
                 className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800 transition-opacity hover:opacity-80"
               >
                 <span>{currency.currency} {currency.symbol}</span>
@@ -75,12 +73,12 @@ export function CompanyFundsTable({
         onDelete,
         extraActions: onAttachCurrency
           ? [
-              {
-                label: 'إضافة عملة',
-                icon: <Banknote className="size-4" />,
-                onClick: onAttachCurrency,
-              },
-            ]
+            {
+              label: 'إضافة عملة',
+              icon: <Banknote className="size-4" />,
+              onClick: onAttachCurrency,
+            },
+          ]
           : undefined,
       }}
     />

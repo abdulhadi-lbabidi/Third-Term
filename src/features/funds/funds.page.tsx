@@ -44,11 +44,11 @@ export function FundsPage() {
   const queryClient = useQueryClient();
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const userId = Number(params.userId || '');
+  const userId = Number(params.userId || params.id || '');
   const userName = params.userName ? decodeURIComponent(params.userName) : '';
   const hasUserId = Number.isFinite(userId) && userId > 0;
-  const roleParam = searchParams.get('tab');
-  const userRole = userRoles.includes(roleParam as UserRole) ? (roleParam as UserRole) : null;
+  const rawRoleParam = params.role || searchParams.get('role') || searchParams.get('tab');
+  const userRole = userRoles.includes(rawRoleParam as UserRole) ? (rawRoleParam as UserRole) : null;
   const hasUserContext = hasUserId && !!userRole;
 
   const currentTab = searchParams.get('fundTab') || 'funds';
@@ -164,13 +164,6 @@ export function FundsPage() {
     setCurrenciesDialogOpen(true);
   };
 
-  const openCurrencyEditDialog = (fund: Fund, currencyId: number) => {
-    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
-    setSelectedFundForView(fund);
-    setSelectedCurrencyForEdit(currency);
-    setCurrencyEditDialogOpen(true);
-  };
-
   const handleSubmit = async (payload: CreateFundPayload) => {
     await saveFundMutation.mutateAsync(payload);
     toast.success(selectedFund ? 'تم تعديل الصندوق بنجاح' : 'تم إنشاء الصندوق بنجاح');
@@ -193,8 +186,9 @@ export function FundsPage() {
           <PageHeader
             badge="المالية"
             title={hasUserContext ? `صناديق ${resolvedUserName || 'المستخدم'}` : 'الصناديق'}
+            icon={Wallet}
             action={
-              <div className="flex gap-3">
+              <div className="flex gap-3" >
                 {!hasUserContext ? (
                   <Button type="button" variant="outline" onClick={() => navigate('/users')}>
                     العودة إلى المستخدمين
@@ -237,7 +231,6 @@ export function FundsPage() {
                         return prev;
                       });
                     }}
-                    onCurrencyClick={openCurrencyEditDialog}
                     onMoreCurrenciesClick={openCurrenciesDialog}
                   />
                 ))}
@@ -273,7 +266,6 @@ export function FundsPage() {
                         return prev;
                       });
                     }}
-                    onCurrencyClick={openCurrencyEditDialog}
                     onMoreCurrenciesClick={openCurrenciesDialog}
                   />
                 ))}
@@ -308,7 +300,6 @@ export function FundsPage() {
                   <button
                     key={currency.id}
                     type="button"
-                    onClick={() => openCurrencyEditDialog(currentFund, currency.id)}
                     className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
                     title="تعديل الرصيد"
                   >
@@ -440,7 +431,6 @@ export function FundsPage() {
           if (!open) setSelectedFundForView(null);
         }}
         fund={selectedFundForView}
-        onCurrencyClick={openCurrencyEditDialog}
       />
 
       <FundCurrencyDialog

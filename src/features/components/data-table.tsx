@@ -33,6 +33,7 @@ type ExtraAction<T> = {
 
 type DataTableActions<T> = {
   onEdit?: (row: T) => void;
+  editLabel?: string;
   onDelete?: (row: T) => void;
   extraActions?: ExtraAction<T>[];
 };
@@ -161,7 +162,7 @@ export function DataTable<T>({
                                 }}
                               >
                                 <Pencil className="size-4" />
-                                <span>تعديل</span>
+                                <span>{actions.editLabel || 'تعديل'}</span>
                               </DropdownMenuItem>
                             ) : null}
 

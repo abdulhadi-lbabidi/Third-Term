@@ -1,14 +1,19 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { User, Wallet, BadgeDollarSign, Pencil, Mail, Phone, MapPin, Briefcase, DollarSign, Heart, Calendar, ShieldCheck } from 'lucide-react';
+import dayjs from 'dayjs';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
+import { PageHeader } from '@/features/components/page-header';
+import { FundsPage } from '@/features/funds/funds.page';
+import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
 import { usersApi } from './api/users.api';
 import type {
   CreateUserPayload,
@@ -156,8 +161,10 @@ export function NewUserPage() {
   const editMode = Boolean(params.id && params.role);
   const role = params.role as UserRole | undefined;
   const id = params.id ? Number(params.id) : undefined;
-  const returnRole = searchParams.get('tab');
-  const initialRole = isUserRole(returnRole) ? returnRole : 'admin';
+  const returnRole = searchParams.get('returnRole') || (role ? role : undefined);
+  const initialRole = isUserRole(role) ? role : 'admin';
+
+  const [isEditingMode, setIsEditingMode] = useState(false);
 
   const form = useForm<NewUserFormValues>({
     resolver: zodResolver(baseSchema),
@@ -176,21 +183,12 @@ export function NewUserPage() {
     },
     enabled: editMode && Boolean(role) && Boolean(id),
   });
+
   useEffect(() => {
     if (userQuery.data && role) {
       form.reset(mapRecordToFormValues(userQuery.data, role));
     }
   }, [form, role, userQuery.data]);
-
-  useEffect(() => {
-    if (!editMode && isUserRole(returnRole) && form.getValues('role') !== returnRole) {
-      form.setValue('role', returnRole, {
-        shouldDirty: false,
-        shouldTouch: false,
-        shouldValidate: true,
-      });
-    }
-  }, [editMode, form, returnRole]);
 
   const saveMutation = useMutation({
     mutationFn: async (values: NewUserFormValues) => {
@@ -204,7 +202,11 @@ export function NewUserPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
-      navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`, { replace: true });
+      if (editMode) {
+        setIsEditingMode(false);
+      } else {
+        navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`, { replace: true });
+      }
     },
   });
 
@@ -222,16 +224,122 @@ export function NewUserPage() {
     [watchedRole]
   );
 
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="px-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
-              {editMode ? 'تعديل مستخدم' : 'إضافة مستخدم'}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">{editMode ? 'تحديث بيانات المستخدم الحالية' : 'إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه'}</p>
+  const activeRole = role || watchedRole;
+  const isEmployee = activeRole === 'employee';
+
+  const USER_TABS = useMemo(() => {
+    const tabs = [
+      { value: 'details', label: 'التفاصيل', icon: <User className="size-4" /> },
+      { value: 'funds', label: 'الصناديق', icon: <Wallet className="size-4" /> },
+    ];
+    if (isEmployee) {
+      tabs.push({ value: 'payments', label: 'الرواتب', icon: <BadgeDollarSign className="size-4" /> });
+    }
+    return tabs;
+  }, [isEmployee]);
+
+  const rawTab = searchParams.get('tab');
+  const activeTab = rawTab === 'funds' || rawTab === 'payments' ? rawTab : 'details';
+
+  if (!editMode) {
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="px-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
+                إضافة مستخدم
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
+            >
+              رجوع
+            </Button>
           </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-3 pt-1">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
+              <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الاسم</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>كلمة المرور</FormLabel><FormControl><Input {...field} type="password" className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+
+              <FormField control={form.control} name="role" render={({ field }) => (
+                <FormItem className="md:col-span-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                  <FormLabel className="mb-3 block">نوع المستخدم</FormLabel>
+                  <FormControl>
+                    <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-8">
+                      {userRoles.map((item) => (
+                        <RadioGroupItem key={item} value={item}>
+                          {userRoleLabels[item]}
+                        </RadioGroupItem>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+              {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+              {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+              {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+              <div className="md:col-span-3 flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
+                >
+                  إلغاء
+                </Button>
+                <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ المستخدم'}</Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentUserData = userQuery.data;
+  const userName = currentUserData?.user.name || form.watch('name') || 'المستخدم';
+  const userEmail = currentUserData?.user.email || form.watch('email');
+  const userPhone = currentUserData?.user.phone_number || form.watch('phone_number');
+  const userAddress = currentUserData?.user.address || form.watch('address');
+  const createdAtFormatted = currentUserData?.created_at ? dayjs(currentUserData.created_at).format('YYYY-MM-DD') : undefined;
+
+  let extraFieldLabel = '';
+  let extraFieldValue = '';
+  if (currentUserData) {
+    if ('investment_ratio' in currentUserData && currentUserData.investment_ratio) {
+      extraFieldLabel = 'نسبة الاستثمار';
+      extraFieldValue = String(currentUserData.investment_ratio);
+    } else if ('base_salary' in currentUserData && currentUserData.base_salary) {
+      extraFieldLabel = 'الراتب الأساسي';
+      extraFieldValue = String(currentUserData.base_salary);
+    } else if ('job_title' in currentUserData && currentUserData.job_title) {
+      extraFieldLabel = 'المسمى الوظيفي';
+      extraFieldValue = String(currentUserData.job_title);
+    } else if ('kinship_relation' in currentUserData && currentUserData.kinship_relation) {
+      extraFieldLabel = 'صلة القرابة';
+      extraFieldValue = String(currentUserData.kinship_relation);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        badge={userRoleLabels[activeRole] || 'المستخدم'}
+        icon={User}
+        title={userName}
+        tabs={USER_TABS}
+        defaultTab="details"
+        action={
           <Button
             type="button"
             variant="outline"
@@ -239,49 +347,138 @@ export function NewUserPage() {
           >
             رجوع
           </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="px-6 pb-3 pt-1">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الاسم</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>كلمة المرور</FormLabel><FormControl><Input {...field} type="password" disabled={editMode} placeholder={editMode ? 'اتركه فارغًا للاحتفاظ بكلمة المرور الحالية' : ''} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+        }
+      />
 
-            <FormField control={form.control} name="role" render={({ field }) => (
-              <FormItem className="md:col-span-3 rounded-lg border border-border bg-muted/40 p-3.5">
-                <FormLabel className="mb-3 block">نوع المستخدم</FormLabel>
-                <FormControl>
-                  <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-8">
-                    {userRoles.map((item) => (
-                      <RadioGroupItem key={item} value={item} disabled={editMode}>
-                        {userRoleLabels[item]}
-                      </RadioGroupItem>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-            <div className="md:col-span-3 flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
-              >
-                إلغاء
-              </Button>
-              <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : editMode ? 'حفظ التعديلات' : 'حفظ المستخدم'}</Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+      <div className="surface-panel p-4 sm:p-5">
+        {activeTab === 'details' && (
+          <div>
+            {!isEditingMode ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <User className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">{userName}</h3>
+                      <p className="text-xs text-muted-foreground">{userRoleLabels[activeRole]}</p>
+                    </div>
+                  </div>
+                  <Button type="button" onClick={() => setIsEditingMode(true)} className="gap-2">
+                    <Pencil className="size-4" />
+                    تعديل البيانات
+                  </Button>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
+                    <Mail className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userEmail || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
+                    <Phone className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">رقم الهاتف</p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userPhone || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
+                    <MapPin className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">العنوان</p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userAddress || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
+                    <ShieldCheck className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">نوع المستخدم</p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userRoleLabels[activeRole]}</p>
+                    </div>
+                  </div>
+
+                  {extraFieldLabel ? (
+                    <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
+                      {extraFieldLabel.includes('المسمى') ? (
+                        <Briefcase className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                      ) : extraFieldLabel.includes('الراتب') || extraFieldLabel.includes('استثمار') ? (
+                        <DollarSign className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                      ) : (
+                        <Heart className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground">{extraFieldLabel}</p>
+                        <p className="mt-0.5 truncate text-sm font-medium text-foreground">{extraFieldValue}</p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {createdAtFormatted ? (
+                    <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
+                      <Calendar className="mt-0.5 size-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground">تاريخ الإنشاء</p>
+                        <p className="mt-0.5 truncate text-sm font-medium text-foreground">{createdAtFormatted}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
+                  <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الاسم</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>كلمة المرور</FormLabel><FormControl><Input {...field} type="password" placeholder="اتركه فارغًا للاحتفاظ بكلمة المرور الحالية" className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+
+                  <FormField control={form.control} name="role" render={({ field }) => (
+                    <FormItem className="md:col-span-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                      <FormLabel className="mb-3 block">نوع المستخدم</FormLabel>
+                      <FormControl>
+                        <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-8">
+                          {userRoles.map((item) => (
+                            <RadioGroupItem key={item} value={item} disabled={editMode}>
+                              {userRoleLabels[item]}
+                            </RadioGroupItem>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  <div className="md:col-span-3 flex justify-end gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsEditingMode(false)}
+                    >
+                      إلغاء التعديل
+                    </Button>
+                    <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ التعديلات'}</Button>
+                  </div>
+                </form>
+              </Form>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'funds' && <FundsPage />}
+
+        {activeTab === 'payments' && isEmployee && <EmployeePaymentsPage />}
+      </div>
+    </div>
   );
 }

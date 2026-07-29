@@ -11,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/components/ui/form';
-import { Input } from '@/shared/components/ui/input';
 import type { Currency } from '@/features/currencies/types';
 import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '@/features/funds/schemas/funds.schema';
 
@@ -32,12 +31,12 @@ export function AttachCurrencyDialog({
 }: AttachCurrencyDialogProps) {
   const form = useForm<AttachFundCurrencyValues>({
     resolver: zodResolver(attachFundCurrencySchema),
-    defaultValues: { currency_id: 0, balance: '' },
+    defaultValues: { currency_id: 0, balance: '0' },
   });
 
   useEffect(() => {
     if (!open) {
-      form.reset({ currency_id: 0, balance: '' });
+      form.reset({ currency_id: 0, balance: '0' });
     }
   }, [form, open]);
 
@@ -85,19 +84,6 @@ export function AttachCurrencyDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="balance"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الرصيد</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'جاري الحفظ...' : 'حفظ'}

@@ -6,6 +6,7 @@ import { DepartmentDialog } from './components/department.dialog';
 import { PageHeader } from '../components/page-header';
 import type { Department, CreateDepartmentPayload } from './types';
 import { useDepartments, useMutateDepartment, useDeleteDepartment } from './departments.hooks';
+import { Building2 } from 'lucide-react';
 
 export function DepartmentsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -39,12 +40,9 @@ export function DepartmentsPage() {
       <PageHeader
         badge="الهيكلية الإدارية"
         title="الأقسام"
+        icon={Building2}
         action={
-          <Button
-            onClick={openCreateDialog}
-          >
-            إضافة قسم جديد
-          </Button>
+          <Button onClick={openCreateDialog}>إضافة قسم جديد</Button>
         }
       />
       <DepartmentTable

@@ -33,10 +33,9 @@ export function PageHeader({
 }: PageHeaderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab =
-    tabs && tabs.length > 0
-      ? (searchParams.get(tabParam) ?? defaultTab ?? tabs[0].value)
-      : undefined;
+  const rawTab = searchParams.get(tabParam);
+  const isValidTab = tabs?.some((t) => t.value === rawTab);
+  const activeTab = isValidTab ? rawTab : (defaultTab ?? tabs?.[0]?.value);
 
   function handleTabChange(value: string) {
     setSearchParams((prev) => {

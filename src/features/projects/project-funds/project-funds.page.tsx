@@ -207,13 +207,6 @@ export function ProjectFundsPage() {
     toast.success('تم حذف الصندوق بنجاح');
   };
 
-  const openCurrencyEditDialog = (fund: ProjectFund, currencyId: number) => {
-    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
-    setSelectedProjectFund(fund);
-    setSelectedProjectFundCurrency(currency);
-    setCurrencyEditDialogOpen(true);
-  };
-
   return (
     <div className="space-y-5">
       {!selectedFundId ? (
@@ -221,8 +214,9 @@ export function ProjectFundsPage() {
           <PageHeader
             title={'صناديق المشروع'}
             boxed={false}
+            icon={Wallet}
             action={
-              <div className="flex gap-3">
+              <div className="flex gap-3" >
                 <Button
                   type="button"
                   onClick={() => {
@@ -265,7 +259,6 @@ export function ProjectFundsPage() {
                       return prev;
                     });
                   }}
-                  onCurrencyClick={openCurrencyEditDialog}
                   onMoreCurrenciesClick={(fund) => {
                     setSelectedProjectFundForView(fund);
                     setCurrenciesDialogOpen(true);
@@ -301,10 +294,7 @@ export function ProjectFundsPage() {
                 {currentFund?.currencies?.map((currency) => (
                   <button
                     key={currency.id}
-                    type="button"
-                    onClick={() => openCurrencyEditDialog(currentFund, currency.id)}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
-                    title="تعديل الرصيد"
+                    className="inline-flex cursor-default items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors"
                   >
                     <span>
                       {currency.currency} {currency.symbol}
@@ -432,7 +422,7 @@ export function ProjectFundsPage() {
             <TabsContent value="expenses" className="space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-foreground">مصروفات الصندوق</h3>
-                <Button 
+                <Button
                   onClick={() => {
                     setSelectedExpense(null);
                     setExpenseDialogOpen(true);
@@ -510,7 +500,7 @@ export function ProjectFundsPage() {
           if (!open) setSelectedProjectFundForView(null);
         }}
         fund={selectedProjectFundForView}
-        onCurrencyClick={openCurrencyEditDialog}
+
       />
 
       <ProjectFundCurrencyDialog
@@ -534,10 +524,10 @@ export function ProjectFundsPage() {
         fixedValues={
           currentFund
             ? {
-                source: 'project_fund',
-                project_id: Number(projectId),
-                project_fund_id: currentFund.id,
-              }
+              source: 'project_fund',
+              project_id: Number(projectId),
+              project_fund_id: currentFund.id,
+            }
             : undefined
         }
         onSubmit={handleRevenueSubmit}
@@ -551,10 +541,10 @@ export function ProjectFundsPage() {
         fixedValues={
           currentFund
             ? {
-                source: 'project_fund',
-                project_id: Number(projectId),
-                project_fund_id: currentFund.id,
-              }
+              source: 'project_fund',
+              project_id: Number(projectId),
+              project_fund_id: currentFund.id,
+            }
             : undefined
         }
         onSubmit={handleExpenseSubmit}
