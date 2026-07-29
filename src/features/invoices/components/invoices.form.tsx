@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { CalendarIcon, CheckCircle2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { formatArabicDate } from '@/shared/lib/utils';
 
 import {
   Form,
@@ -227,7 +228,7 @@ export function InvoicesForm({
                         )}
                       >
                         {field.value ? (
-                          format(field.value, 'PPP')
+                          formatArabicDate(field.value)
                         ) : (
                           <span>اختر التاريخ</span>
                         )}
@@ -290,7 +291,7 @@ export function InvoicesForm({
           />
         </div>
 
-        <div className="flex flex-col gap-4 py-4 border-t border-slate-200">
+        <div className="flex flex-col gap-4 py-4">
           <FormField
             control={form.control as any}
             name="is_posted"
@@ -342,10 +343,10 @@ export function InvoicesForm({
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+        <div className="flex items-center justify-end gap-3">
           <Button type="submit" className="h-11 bg-slate-950 text-white min-w-[140px]" disabled={isPending}>
-            {isPending ? (isEdit ? 'جاري التحديث...' : 'جاري الإضافة...') : (isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة')}
             <CheckCircle2 className="size-4 ml-2" />
+            {isPending ? (isEdit ? 'جاري التحديث...' : 'جاري الإضافة...') : (isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة')}
           </Button>
         </div>
       </form>

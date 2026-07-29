@@ -12,34 +12,20 @@ export function cn(...inputs: ClassValue[]) {
  * @param {boolean} includeYear - هل نعرض السنة
  * @returns {string}
  */
-export function formatArabicDate(date: Date | string, locale = 'ar-SY', padDay = true, includeYear = true) {
+export function formatArabicDate(date: Date | string, padDay = true, includeYear = true) {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const levantMonths = ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'];
 
-  // 1. استخدام formatToParts للحصول على الأجزاء بدقة
-  const formatter = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'long',
-    year: includeYear ? 'numeric' : undefined,
-    numberingSystem: 'latn', // أرقام غربية
-  });
-
-  const parts = formatter.formatToParts(dateObj);
-
-  // 2. استخراج القيم
-  const dayPart = parts.find(p => p.type === 'day');
-  const monthPart = parts.find(p => p.type === 'month');
-  const yearPart = parts.find(p => p.type === 'year');
-
-  // 3. معالجة اليوم (إضافة صفر إذا لزم الأمر)
-  let day = dayPart ? dayPart.value : '';
+  let day = dateObj.getDate().toString();
   if (padDay) {
     day = day.padStart(2, '0');
   }
 
-  // 4. إعادة التجميع
-  let result = `${day} ${monthPart ? monthPart.value : ''}`;
-  if (includeYear && yearPart) {
-    result += ` ${yearPart.value}`;
+  const month = levantMonths[dateObj.getMonth()];
+  
+  let result = `${day} ${month}`;
+  if (includeYear) {
+    result += ` ${dateObj.getFullYear()}`;
   }
 
   return result;
