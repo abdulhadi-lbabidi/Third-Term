@@ -1,12 +1,10 @@
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Wallet, User, Cloud, Pencil, Users, Layers, Receipt } from 'lucide-react';
+import { Wallet, User, Cloud, Pencil, Users, Layers } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { projectsApi } from '../projects.api';
 import { ProjectsDialog } from '../components/projects.dialog';
-import type { Project, CreateProjectPayload } from '../types';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { ProjectClientTab } from './components/project-client-tab';
 import { PageHeader } from '../../components/page-header';
@@ -14,6 +12,8 @@ import { ProjectCloudStorageTab } from './components/project-cloud-storage-tab';
 import { ProjectTeamTab } from './components/project-team-tab';
 import { ProjectFundsPage } from '../project-funds/project-funds.page';
 import { ProjectStagesTab } from './components/project-stages-tab';
+import type { Project, CreateProjectPayload } from '../types';
+import toast from 'react-hot-toast';
 
 const PROJECT_TABS = [
   { value: 'funds', label: 'المالية', icon: <Wallet className="h-4 w-4" /> },
