@@ -164,13 +164,6 @@ export function FundsPage() {
     setCurrenciesDialogOpen(true);
   };
 
-  const openCurrencyEditDialog = (fund: Fund, currencyId: number) => {
-    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
-    setSelectedFundForView(fund);
-    setSelectedCurrencyForEdit(currency);
-    setCurrencyEditDialogOpen(true);
-  };
-
   const handleSubmit = async (payload: CreateFundPayload) => {
     await saveFundMutation.mutateAsync(payload);
     toast.success(selectedFund ? 'تم تعديل الصندوق بنجاح' : 'تم إنشاء الصندوق بنجاح');
@@ -237,7 +230,6 @@ export function FundsPage() {
                         return prev;
                       });
                     }}
-                    onCurrencyClick={openCurrencyEditDialog}
                     onMoreCurrenciesClick={openCurrenciesDialog}
                   />
                 ))}
@@ -273,7 +265,6 @@ export function FundsPage() {
                         return prev;
                       });
                     }}
-                    onCurrencyClick={openCurrencyEditDialog}
                     onMoreCurrenciesClick={openCurrenciesDialog}
                   />
                 ))}
@@ -308,7 +299,6 @@ export function FundsPage() {
                   <button
                     key={currency.id}
                     type="button"
-                    onClick={() => openCurrencyEditDialog(currentFund, currency.id)}
                     className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
                     title="تعديل الرصيد"
                   >
@@ -440,7 +430,6 @@ export function FundsPage() {
           if (!open) setSelectedFundForView(null);
         }}
         fund={selectedFundForView}
-        onCurrencyClick={openCurrencyEditDialog}
       />
 
       <FundCurrencyDialog

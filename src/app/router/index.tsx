@@ -20,6 +20,7 @@ import { ProjectStagesPage } from '@/features/projects/project-stages/project-st
 import { MaterialsPage } from '@/features/materials/materials.page';
 import { RevenuesPage } from '@/features/revenues/revenues.page';
 import { InvoiceItemsPage } from '@/features/invoice-items/invoice-items.page';
+import { InvoicesPage } from '@/features/invoices/invoices.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -127,6 +128,10 @@ export const router = createBrowserRouter([
           {
             path: '/revenues',
             element: <RevenuesPage />,
+          },
+          {
+            path: '/invoices',
+            element: <InvoicesPage />,
           },
           {
             path: '/employees/:employeeId/:employeeName/payments',

@@ -5,14 +5,12 @@ import type { ProjectFund } from '../project-funds.types';
 type ProjectFundCardProps = {
   fund: ProjectFund;
   onClick: (fund: ProjectFund) => void;
-  onCurrencyClick?: (fund: ProjectFund, currencyId: number) => void;
   onMoreCurrenciesClick?: (fund: ProjectFund) => void;
 };
 
 export function ProjectFundCard({
   fund,
   onClick,
-  onCurrencyClick,
   onMoreCurrenciesClick,
 }: ProjectFundCardProps) {
   const currencies = fund.currencies ?? [];
@@ -57,10 +55,10 @@ export function ProjectFundCard({
                   <button
                     key={currency.id}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCurrencyClick?.(fund, currency.id);
-                    }}
+                    // onClick={(e) => {
+                    //   e.stopPropagation();
+                    //   onCurrencyClick?.(fund, currency.id);
+                    // }}
                     className="inline-flex items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
                   >
                     <span>

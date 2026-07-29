@@ -100,13 +100,6 @@ export function CompanyFundsPage() {
     toast.success('تم حذف صندوق الشركة بنجاح');
   };
 
-  const openCurrencyEditDialog = (fund: CompanyFund, currencyId: number) => {
-    const currency = fund.currencies?.find((item) => item.id === currencyId) ?? null;
-    setSelectedCompanyFund(fund);
-    setSelectedCompanyFundCurrency(currency);
-    setCurrencyEditDialogOpen(true);
-  };
-
   const handleAttachCurrency = async (payload: { currency_id: number; balance: string }) => {
     await attachMutation.mutateAsync(payload);
     toast.success('تم حفظ العملة بصندوق الشركة بنجاح');
@@ -141,7 +134,7 @@ export function CompanyFundsPage() {
           setSelectedCompanyFundForCurrency(fund);
           setAttachDialogOpen(true);
         }}
-        onCurrencyClick={openCurrencyEditDialog}
+
         onMoreCurrenciesClick={(fund) => {
           setSelectedCompanyFundForView(fund);
           setCurrenciesDialogOpen(true);
@@ -176,7 +169,7 @@ export function CompanyFundsPage() {
           if (!open) setSelectedCompanyFundForView(null);
         }}
         fund={selectedCompanyFundForView}
-        onCurrencyClick={openCurrencyEditDialog}
+
       />
 
       <CompanyFundCurrencyDialog

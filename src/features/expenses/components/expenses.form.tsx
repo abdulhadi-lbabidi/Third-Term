@@ -1157,7 +1157,9 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </Button>
 
           <Button type="submit" disabled={loading}>
-            {loading ? 'جاري الحفظ...' : 'حفظ'}
+            {loading
+              ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')
+              : (defaultValues?.id ? 'تحديث المصروف' : 'إضافة')}
           </Button>
         </div>
       </form>
