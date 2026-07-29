@@ -444,31 +444,21 @@ export function ProjectFundsPage() {
                 </Button>
               </div>
 
-              {fundExpenses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
-                  <ArrowDownToLine className="mb-4 size-10 text-muted-foreground" />
-                  <h4 className="text-sm font-medium text-foreground">لا توجد مصروفات</h4>
-                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                    لم يتم إضافة أي مصروفات لهذا الصندوق بعد.
-                  </p>
-                </div>
-              ) : (
-                <ExpensesTable
-                  data={fundExpenses}
-                  loading={isLoadingExpenses}
-                  onView={(expense) => {
-                    setSelectedExpenseForView(expense.id);
-                    setExpenseDetailsOpen(true);
-                  }}
-                  onEdit={(expense) => {
-                    setSelectedExpense(expense);
-                    setExpenseDialogOpen(true);
-                  }}
-                  onDelete={async (expense) => {
-                    await deleteExpenseMutation.mutateAsync(expense.id);
-                  }}
-                />
-              )}
+              <ExpensesTable
+                data={fundExpenses}
+                loading={isLoadingExpenses}
+                onView={(expense) => {
+                  setSelectedExpenseForView(expense.id);
+                  setExpenseDetailsOpen(true);
+                }}
+                onEdit={(expense) => {
+                  setSelectedExpense(expense);
+                  setExpenseDialogOpen(true);
+                }}
+                onDelete={async (expense) => {
+                  await deleteExpenseMutation.mutateAsync(expense.id);
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="invoices" className="space-y-5">

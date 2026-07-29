@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { CompanyFund } from '@/features/company-funds/types';
 import type { Fund } from '@/features/funds/types';
@@ -963,30 +964,22 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>المستخدم</FormLabel>
-                    <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => {
-                        field.onChange(Number(value));
-                        form.setValue('user_fund_id', undefined);
-                        form.setValue('expenseable_id', undefined);
-                      }}
-                      disabled={!fundUserRole}
-                    >
-                      <FormControl>
-                        <SelectTrigger disabled={!fundUserRole}>
-                          {field.value
-                            ? (selectedFundUserName || 'اختر المستخدم')
-                            : <SelectValue placeholder="اختر المستخدم" />}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {fundRoleUsers.map((user) => (
-                          <SelectItem key={user.id} value={String(user.id)}>
-                            {user.user.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(Number(value));
+                          form.setValue('user_fund_id', undefined);
+                          form.setValue('expenseable_id', undefined);
+                        }}
+                        disabled={!fundUserRole}
+                        placeholder="اختر المستخدم"
+                        options={fundRoleUsers.map((user) => ({
+                          value: user.id,
+                          label: user.user.name
+                        }))}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1100,26 +1093,18 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             render={({ field }) => (
               <FormItem>
                 <FormLabel>المستخدم</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(value) => field.onChange(Number(value))}
-                  disabled={!userRole}
-                >
-                  <FormControl>
-                    <SelectTrigger disabled={!userRole}>
-                      {field.value
-                        ? (selectedUserName || 'اختر المستخدم')
-                        : <SelectValue placeholder="اختر المستخدم" />}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {roleUsers.map((user) => (
-                      <SelectItem key={user?.user.id} value={String(user.user.id)}>
-                        {user.user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <SearchableSelect
+                    value={field.value}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    disabled={!userRole}
+                    placeholder="اختر المستخدم"
+                    options={roleUsers.map((user) => ({
+                      value: user?.user.id,
+                      label: user?.user.name
+                    }))}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

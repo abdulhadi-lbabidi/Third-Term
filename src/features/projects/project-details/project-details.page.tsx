@@ -8,18 +8,16 @@ import { projectsApi } from '../projects.api';
 import { ProjectsDialog } from '../components/projects.dialog';
 import type { Project, CreateProjectPayload } from '../types';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { ProjectFinancialsTab } from './components/project-financials-tab';
 import { ProjectClientTab } from './components/project-client-tab';
 import { PageHeader } from '../../components/page-header';
 import { ProjectCloudStorageTab } from './components/project-cloud-storage-tab';
 import { ProjectTeamTab } from './components/project-team-tab';
-import { ProjectStagesTab } from './components/project-stages-tab';
 import { ProjectFundsPage } from '../project-funds/project-funds.page';
+import { ProjectStagesTab } from './components/project-stages-tab';
 
 const PROJECT_TABS = [
-  { value: 'funds', label: 'الصناديق', icon: <Wallet className="h-4 w-4" /> },
+  { value: 'funds', label: 'المالية', icon: <Wallet className="h-4 w-4" /> },
   { value: 'cloud', label: 'التخزين السحابي', icon: <Cloud className="h-4 w-4" /> },
-  { value: 'financials', label: 'المالية', icon: <Receipt className="h-4 w-4" /> },
   { value: 'stages', label: 'المراحل', icon: <Layers className="h-4 w-4" /> },
   { value: 'client', label: 'العميل', icon: <User className="h-4 w-4" /> },
   { value: 'team', label: 'فريق العمل', icon: <Users className="h-4 w-4" /> },
@@ -36,7 +34,7 @@ export function ProjectDetailsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Determine active tab from URL param; fall back to 'cloud' when dirId present
-  const activeTab = searchParams.get('tab') ?? (searchParams.has('dirId') ? 'cloud' : 'financials');
+  const activeTab = searchParams.get('tab') ?? (searchParams.has('dirId') ? 'cloud' : 'funds');
 
   const projectsQuery = useQuery<Project>({
     queryKey: ['projects', projectId] as const,
@@ -71,7 +69,7 @@ export function ProjectDetailsPage() {
         badge="تفاصيل المشروع"
         title={projectName || currentProject?.name || <Skeleton className="h-8 w-48 inline-block align-middle" />}
         tabs={PROJECT_TABS}
-        defaultTab={searchParams.has('dirId') ? 'cloud' : 'financials'}
+        defaultTab={searchParams.has('dirId') ? 'cloud' : 'funds'}
         action={
           <div className="flex gap-3">
             <Button type="button" variant="default" onClick={() => setDialogOpen(true)}>
@@ -85,7 +83,6 @@ export function ProjectDetailsPage() {
       <div className="surface-panel p-4 sm:p-5">
         {activeTab === 'funds' && <ProjectFundsPage />}
         {activeTab === 'cloud' && <ProjectCloudStorageTab project={currentProject} />}
-        {activeTab === 'financials' && <ProjectFinancialsTab project={currentProject} />}
         {activeTab === 'stages' && <ProjectStagesTab projectId={projectId} />}
         {activeTab === 'client' && <ProjectClientTab project={currentProject} />}
         {activeTab === 'team' && <ProjectTeamTab projectId={projectId} />}
