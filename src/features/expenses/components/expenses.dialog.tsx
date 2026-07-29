@@ -10,6 +10,8 @@ type ExpensesDialogProps = {
     source?: 'company_fund' | 'user_fund' | 'project_fund';
     project_id?: number;
     project_fund_id?: number;
+    user_id?: number;
+    user_fund_id?: number;
   };
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
   loading?: boolean;

@@ -42,6 +42,8 @@ type RevenuesFormProps = {
     source?: RevenueSource;
     project_id?: number;
     project_fund_id?: number;
+    user_id?: number;
+    user_fund_id?: number;
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
@@ -140,7 +142,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
       company_fund_id: undefined,
       user_role: defaultValues?.user_role ?? '',
-      user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : undefined),
+      user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
       received_by: (() => {
         if (!defaultValues?.received_by) return undefined;
         const val = typeof defaultValues.received_by === 'object'
@@ -150,8 +152,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         return Number.isNaN(num) ? undefined : num;
       })(),
       fund_user_role: '',
-      fund_user_id: undefined,
-      user_fund_id: undefined,
+      fund_user_id: fixedValues?.user_id ?? undefined,
+      user_fund_id: fixedValues?.user_fund_id ?? undefined,
       project_fund_id: fixedValues?.project_fund_id ?? undefined,
       project_id: fixedValues?.project_id ?? undefined,
       statement: defaultValues?.statement ?? '',
@@ -412,7 +414,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         )}
 
         {/* User Fund Fields */}
-        {source === 'user_fund' && (
+        {source === 'user_fund' && !fixedValues?.user_fund_id && (
           <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
             <h3 className="font-semibold text-slate-800">صندوق المستخدم</h3>
 
@@ -533,9 +535,10 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         )}
 
         {/* Auth User Fields */}
-        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-800">تفاصيل المستلم (آمر التأكيد)</h3>
-          <div className="grid gap-4 md:grid-cols-2">
+        {!fixedValues?.user_id && (
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="font-semibold text-slate-800">تفاصيل المستلم (آمر التأكيد)</h3>
+            <div className="grid gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="user_role"
@@ -604,6 +607,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             />
           </div>
         </div>
+        )}
 
         {/* Fund Selection and Money Fields */}
         <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

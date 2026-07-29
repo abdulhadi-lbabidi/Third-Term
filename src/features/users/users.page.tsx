@@ -31,6 +31,7 @@ const USER_TABS = [
   { value: 'supplier', label: 'الموردون', icon: <Truck className="h-4 w-4" /> },
   { value: 'trustee', label: 'الأوصياء', icon: <Lock className="h-4 w-4" /> },
 ];
+
 type UsersTabRecord =
   | AdminRecord
   | ClientRecord
@@ -74,7 +75,7 @@ function UsersTableSkeleton() {
 export function UsersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('tab');
   const [activeRole, setActiveRole] = useState<UserRole>(() => {
     return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';

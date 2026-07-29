@@ -5,10 +5,20 @@ export type RevenueableType =
   | 'App\\Models\\CurrencyFund'
   | 'App\\Models\\ProjectFundCurrency';
 
+export type RevenueableInfo = {
+  type?: RevenueSource | 'currency_fund' | string;
+  company_fund_id?: number;
+  project_id?: number;
+  id?: number;
+  details?: Record<string, any>;
+  user_info?: Record<string, any>;
+};
+
 export type Revenue = {
   id: number;
   revenueable_type?: RevenueableType;
   revenueable_id?: number;
+  revenueable_info?: RevenueableInfo;
   user_role?: string;
   statement: string;
   amount: string;
