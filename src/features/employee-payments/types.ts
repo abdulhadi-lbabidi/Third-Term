@@ -1,6 +1,7 @@
 export type EmployeePayment = {
   id: number;
   employee_id: number;
+  company_fund_currency_id?: number;
   employee: {
     id: number;
     user_id?: number;
@@ -26,6 +27,7 @@ export type EmployeePayment = {
 
 export type CreateEmployeePaymentPayload = {
   employee_id: number;
+  company_fund_currency_id?: number;
   bonuses: number;
   deductions: number;
   payment_date: string;

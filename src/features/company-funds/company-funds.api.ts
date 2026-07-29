@@ -7,9 +7,9 @@ import type {
 } from './types';
 
 export const companyFundsApi = {
-  getCompanyFunds: async (): Promise<CompanyFund[]> => {
-    const response = await apiClient.get('/company-funds');
-    return response.data.data
+  getCompanyFunds: async (params?: { paginate?: boolean }): Promise<CompanyFund[]> => {
+    const response = await apiClient.get('/company-funds', { params });
+    return Array.isArray(response.data) ? response.data : (response.data?.data ?? []);
   },
 
   getCompanyFundById: async (id: number): Promise<CompanyFund> => {

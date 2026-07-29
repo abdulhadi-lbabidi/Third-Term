@@ -12,8 +12,10 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
+import { apiClient } from '@/shared/api/axios.instance';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -26,6 +28,7 @@ type LoginFormValues = {
 export function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     defaultValues: {
@@ -35,9 +38,31 @@ export function LoginPage() {
     },
   });
 
-  const onSubmit: SubmitHandler<LoginFormValues> = () => {
-    localStorage.setItem(AUTH_TOKEN_KEY, 'demo-token');
-    navigate('/', { replace: true });
+  const onSubmit: SubmitHandler<LoginFormValues> = async (values) => {
+    try {
+      setLoading(true);
+      const response = await apiClient.post('/login', {
+        email: values.email,
+        password: values.password,
+      });
+
+      const token = response.data?.token;
+      if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+        if (response.data?.user) {
+          localStorage.setItem('user_info', JSON.stringify(response.data.user));
+        }
+        toast.success('تم تسجيل الدخول بنجاح');
+        navigate('/', { replace: true });
+      } else {
+        toast.error('حدث خطأ أثناء تسجيل الدخول');
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'فشل تسجيل الدخول، يرجى التأكد من البيانات');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -135,8 +160,8 @@ export function LoginPage() {
                   )}
                 />
 
-                <Button type="submit" className="h-10 w-full">
-                  تسجيل الدخول
+                <Button type="submit" className="h-10 w-full" disabled={loading}>
+                  {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
                 </Button>
               </form>
             </Form>

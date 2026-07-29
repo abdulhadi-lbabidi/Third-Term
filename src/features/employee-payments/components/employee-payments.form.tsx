@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -11,6 +12,7 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { EmployeeRecord } from '@/features/users/types';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from '../types';
 import { employeePaymentFormSchema, type EmployeePaymentFormValues } from '../schemas/employee-payments.schema';
@@ -32,10 +34,16 @@ export function EmployeePaymentsForm({
   onSubmit,
   loading,
 }: EmployeePaymentsFormProps) {
+  const { data: companyFunds = [], isLoading: isLoadingCompanyFunds } = useQuery({
+    queryKey: ['company-funds', { paginate: false }],
+    queryFn: () => companyFundsApi.getCompanyFunds({ paginate: false }),
+  });
+
   const form = useForm<EmployeePaymentFormValues>({
     resolver: zodResolver(employeePaymentFormSchema),
     defaultValues: {
       employee_id: lockedEmployeeId ? String(lockedEmployeeId) : defaultValues?.employee_id ? String(defaultValues.employee_id) : '',
+      company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : '',
       bonuses: defaultValues?.bonuses ? String(defaultValues.bonuses) : '',
       deductions: defaultValues?.deductions ? String(defaultValues.deductions) : '',
       payment_date: defaultValues?.payment_date ?? today,
@@ -46,6 +54,7 @@ export function EmployeePaymentsForm({
   useEffect(() => {
     form.reset({
       employee_id: lockedEmployeeId ? String(lockedEmployeeId) : defaultValues?.employee_id ? String(defaultValues.employee_id) : '',
+      company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : '',
       bonuses: defaultValues?.bonuses ? String(defaultValues.bonuses) : '',
       deductions: defaultValues?.deductions ? String(defaultValues.deductions) : '',
       payment_date: defaultValues?.payment_date ?? today,
@@ -60,6 +69,7 @@ export function EmployeePaymentsForm({
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit({
             employee_id: Number(values.employee_id),
+            company_fund_currency_id: Number(values.company_fund_currency_id),
             bonuses: Number(values.bonuses),
             deductions: Number(values.deductions),
             payment_date: values.payment_date,
@@ -91,6 +101,36 @@ export function EmployeePaymentsForm({
                 </select>
               </FormControl>
             
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="company_fund_currency_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel> صندوق الشركة</FormLabel>
+              <FormControl>
+                <select
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+                  value={field.value}
+                  onChange={(event) => field.onChange(event.target.value)}
+                  disabled={isLoadingCompanyFunds}
+                >
+                  <option value="" disabled>
+                    اختر عملة صندوق الشركة
+                  </option>
+                  {companyFunds.flatMap((fund) =>
+                    (fund.currencies ?? []).map((currency) => (
+                      <option key={currency.id} value={String(currency.id)}>
+                        {fund.name} - {currency.currency} ({currency.balance} {currency.symbol})
+                      </option>
+                    )),
+                  )}
+                </select>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
