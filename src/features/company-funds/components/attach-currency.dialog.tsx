@@ -11,6 +11,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/components/ui/form';
+import { cn } from '@/shared/lib/utils';
 import type { Currency } from '@/features/currencies/types';
 import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '@/features/funds/schemas/funds.schema';
 
@@ -61,23 +62,38 @@ export function AttachCurrencyDialog({
               control={form.control}
               name="currency_id"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col space-y-2">
                   <FormLabel>العملة</FormLabel>
                   <FormControl>
-                    <select
-                      value={field.value ? String(field.value) : ''}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-                    >
-                      <option value="" disabled>
-                        اختر العملة
-                      </option>
-                      {currencies.map((currency) => (
-                        <option key={currency.id} value={String(currency.id)}>
-                          {currency.currency} {currency.symbol}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      {currencies.length === 0 ? (
+                        <p className="w-full py-2 text-center text-sm text-muted-foreground">
+                          لا يوجد عملات متاحة للإرفاق
+                        </p>
+                      ) : (
+                        currencies.map((currency) => {
+                          const isSelected = field.value === currency.id;
+                          return (
+                            <button
+                              key={currency.id}
+                              type="button"
+                              onClick={() => field.onChange(currency.id)}
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors',
+                                isSelected
+                                  ? 'border-sky-500 bg-sky-500 text-white'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                              )}
+                            >
+                              <span>{currency.currency}</span>
+                              <span className={cn('text-xs', isSelected ? 'text-sky-100' : 'text-slate-400')}>
+                                {currency.symbol}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

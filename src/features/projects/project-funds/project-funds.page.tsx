@@ -5,6 +5,7 @@ import { Wallet, TrendingUp, ArrowDownToLine, Receipt, ArrowRight, Edit2, Trash2
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +40,7 @@ import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-det
 import type { Expense } from '@/features/expenses/types';
 const projectFundsQueryKeys = { all: ['project-funds'] as const };
 
-export function ProjectFundsPage() {
+export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('fundTab') || 'funds';
@@ -130,7 +131,9 @@ export function ProjectFundsPage() {
     }
   };
 
-  const visibleProjectFunds = (projectFundsQuery.data ?? []).filter((fund) => fund.project?.id === projectId);
+  const visibleProjectFunds = hasProjectId 
+    ? (projectFundsQuery.data ?? []).filter((fund) => fund.project?.id === projectId)
+    : (projectFundsQuery.data ?? []);
 
   const saveMutation = useMutation({
     mutationFn: async (payload: CreateProjectFundPayload) => {
@@ -208,27 +211,29 @@ export function ProjectFundsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className={cn("space-y-5", isTab && "space-y-0")}>
       {!selectedFundId ? (
         <>
-          <PageHeader
-            title={'صناديق المشروع'}
-            boxed={false}
-            icon={Wallet}
-            action={
-              <div className="flex gap-3" >
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setSelectedProjectFund(null);
-                    setDialogOpen(true);
-                  }}
-                >
-                  إضافة صندوق جديد
-                </Button>
-              </div>
-            }
-          />
+          {!isTab && (
+            <PageHeader
+              title={'صناديق المشروع'}
+              boxed={false}
+              icon={Wallet}
+              action={
+                <div className="flex gap-3" >
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProjectFund(null);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    إضافة صندوق جديد
+                  </Button>
+                </div>
+              }
+            />
+          )}
 
           {projectFundsQuery.isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

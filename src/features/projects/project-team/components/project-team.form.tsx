@@ -12,8 +12,8 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import type { ProjectTeamMember } from '../project-team.types';
+import { InlineSearchableSelect } from '@/shared/components/ui/inline-searchable-select';
 
 // ───────────────────────────────────────────────
 // Exported user option shape (used by parent/dialog)
@@ -100,7 +100,7 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
             <FormItem className="flex flex-col space-y-2">
               <FormLabel>{member ? 'عضو الفريق' : 'أعضاء الفريق'}</FormLabel>
               <FormControl>
-                <SearchableSelect
+                <InlineSearchableSelect
                   multiple={!member}
                   value={!member ? field.value : (field.value[0] || null)}
                   onValueChange={(val) => {
@@ -111,7 +111,7 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
                     }
                   }}
                   options={userOptions}
-                  placeholder="اختر عضو الفريق..."
+                  // placeholder="اختر عضو الفريق..."
                   searchPlaceholder="ابحث عن عضو الفريق..."
                   emptyMessage="لم يتم العثور على مستخدمين."
                 />

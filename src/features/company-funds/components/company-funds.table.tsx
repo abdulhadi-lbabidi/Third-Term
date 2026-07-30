@@ -1,10 +1,11 @@
-import { Banknote } from 'lucide-react';
+import { Banknote, Eye } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { CompanyFund } from '../types';
 
 type CompanyFundsTableProps = {
   data: CompanyFund[];
   loading?: boolean;
+  onView?: (fund: CompanyFund) => void;
   onEdit?: (fund: CompanyFund) => void;
   onDelete?: (fund: CompanyFund) => void;
   onAttachCurrency?: (fund: CompanyFund) => void;
@@ -15,6 +16,7 @@ type CompanyFundsTableProps = {
 export function CompanyFundsTable({
   data,
   loading,
+  onView,
   onEdit,
   onDelete,
   onAttachCurrency,
@@ -71,15 +73,26 @@ export function CompanyFundsTable({
       actions={{
         onEdit,
         onDelete,
-        extraActions: onAttachCurrency
-          ? [
-            {
-              label: 'إضافة عملة',
-              icon: <Banknote className="size-4" />,
-              onClick: onAttachCurrency,
-            },
-          ]
-          : undefined,
+        extraActions: [
+          ...(onView
+            ? [
+                {
+                  label: 'عرض التفاصيل',
+                  icon: <Eye className="size-4" />,
+                  onClick: onView,
+                },
+              ]
+            : []),
+          ...(onAttachCurrency
+            ? [
+                {
+                  label: 'إضافة عملة',
+                  icon: <Banknote className="size-4" />,
+                  onClick: onAttachCurrency,
+                },
+              ]
+            : []),
+        ],
       }}
     />
   );

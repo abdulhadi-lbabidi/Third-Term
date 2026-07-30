@@ -5,14 +5,9 @@ import * as z from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { Clock, PlayCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
@@ -36,11 +31,11 @@ const formSchema = z.object({
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled'] as const),
 });
 
-const statusOptions: { value: ProjectStatus; label: string }[] = [
-  { value: 'pending', label: 'قيد الانتظار' },
-  { value: 'in_progress', label: 'قيد التنفيذ' },
-  { value: 'completed', label: 'مكتمل' },
-  { value: 'cancelled', label: 'ملغى' },
+const statusOptions: { value: ProjectStatus; label: string; icon: React.ElementType; color: string }[] = [
+  { value: 'pending', label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
+  { value: 'in_progress', label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-blue-500' },
+  { value: 'completed', label: 'مكتمل', icon: CheckCircle2, color: 'text-emerald-500' },
+  { value: 'cancelled', label: 'ملغى', icon: XCircle, color: 'text-red-500' },
 ];
 
 export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {
@@ -181,18 +176,36 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
                 <FormControl>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="اختر الحالة">
-                      {field.value
-                        ? statusOptions.find((o) => o.value === field.value)?.label
-                        : null}
+                      {field.value && (
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const selected = statusOptions.find((o) => o.value === field.value);
+                            if (!selected) return null;
+                            const Icon = selected.icon;
+                            return (
+                              <>
+                                <Icon className={`size-4 ${selected.color}`} />
+                                <span>{selected.label}</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {statusOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+                  {statusOptions.map((opt) => {
+                    const Icon = opt.icon;
+                    return (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className={`size-4 ${opt.color}`} />
+                          <span>{opt.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <FormMessage />

@@ -83,7 +83,7 @@ export function EmployeePaymentsForm({
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit({
             employee_id: Number(values.employee_id),
-            company_fund_currency_id: Number(values.company_fund_currency_id),
+            company_fund_currency_id: values.company_fund_currency_id ? Number(values.company_fund_currency_id) : undefined,
             bonuses: Number(values.bonuses),
             deductions: Number(values.deductions),
             payment_date: values.payment_date,

@@ -4,6 +4,7 @@ import { LoginPage } from '@/features/Auth/pages/login.page';
 import { UsersPage } from '@/features/users/users.page';
 import { NewUserPage } from '@/features/users/new-user.page';
 import { FundsPage } from '@/features/funds/funds.page';
+import { FundsDashboardPage } from '@/features/funds/funds-dashboard.page';
 import { CurrenciesPage } from '@/features/currencies/currencies.page';
 import { CompanyFundsPage } from '@/features/company-funds/company-funds.page';
 import { ProjectsPage } from '@/features/projects/projects.page';
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
           {
             path: '/users/:userId/:userName/funds',
             element: <FundsPage />,
+          },
+          {
+            path: '/funds',
+            element: <FundsDashboardPage />,
           },
           {
             path: '/company-funds',

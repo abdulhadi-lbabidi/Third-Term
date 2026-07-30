@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
 import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/lib/utils';
 import { FundCard } from './components/fund.card';
 import { FundsDialog } from './components/funds.dialog';
 import { AttachCurrencyDialog } from './components/attach-currency.dialog';
@@ -39,7 +40,7 @@ const fundsQueryKeys = {
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
-export function FundsPage() {
+export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useParams();
@@ -180,26 +181,28 @@ export function FundsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className={cn("space-y-5", isTab && "space-y-0")}>
       {!selectedFundId ? (
         <>
-          <PageHeader
-            badge="المالية"
-            title={hasUserContext ? `صناديق ${resolvedUserName || 'المستخدم'}` : 'الصناديق'}
-            icon={Wallet}
-            action={
-              <div className="flex gap-3" >
-                {!hasUserContext ? (
-                  <Button type="button" variant="outline" onClick={() => navigate('/users')}>
-                    العودة إلى المستخدمين
+          {!isTab && (
+            <PageHeader
+              badge="المالية"
+              title={hasUserContext ? `صناديق ${resolvedUserName || 'المستخدم'}` : 'الصناديق'}
+              icon={Wallet}
+              action={
+                <div className="flex gap-3" >
+                  {!hasUserContext ? (
+                    <Button type="button" variant="outline" onClick={() => navigate('/users')}>
+                      العودة إلى المستخدمين
+                    </Button>
+                  ) : null}
+                  <Button onClick={openCreateDialog} disabled={hasUserContext ? !hasUserId : false}>
+                    إضافة صندوق جديد
                   </Button>
-                ) : null}
-                <Button onClick={openCreateDialog} disabled={hasUserContext ? !hasUserId : false}>
-                  إضافة صندوق جديد
-                </Button>
-              </div>
-            }
-          />
+                </div>
+              }
+            />
+          )}
 
           {hasUserContext ? (
             userRecordQuery.isLoading ? (
