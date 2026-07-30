@@ -6,12 +6,16 @@ import type { Currency, CreateCurrencyPayload } from './types';
 import { useCurrencies, useMutateCurrency, useDeleteCurrency } from './currencies.hooks';
 import { PageHeader } from '../components/page-header';
 import { Banknote } from 'lucide-react';
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function CurrenciesPage() {
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
 
-  const { data: currencies = [], isLoading: loading } = useCurrencies();
+  const { data: response, isLoading: loading } = useCurrencies(page, perPage);
   const { mutateAsync: saveCurrency, isPending: isSaving } = useMutateCurrency();
   const { mutateAsync: deleteCurrency } = useDeleteCurrency();
 
@@ -34,8 +38,13 @@ export function CurrenciesPage() {
     setDialogOpen(true);
   };
 
+  const currencies = response?.data ?? [];
+  const meta = response?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="المالية"
         title="العملات"
@@ -50,6 +59,13 @@ export function CurrenciesPage() {
         loading={loading}
         onEdit={openEditDialog}
         onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <CurrencyDialog

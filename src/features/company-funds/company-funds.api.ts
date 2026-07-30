@@ -5,11 +5,25 @@ import type {
   CreateCompanyFundPayload,
   UpdateCompanyFundPayload,
 } from './types';
+import type { PaginationMeta } from '@/components/ui/pagination';
+
+export type CompanyFundResponse = {
+  data: CompanyFund[];
+  meta?: PaginationMeta;
+};
 
 export const companyFundsApi = {
-  getCompanyFunds: async (params?: { paginate?: boolean }): Promise<CompanyFund[]> => {
-    const response = await apiClient.get('/company-funds', { params });
-    return Array.isArray(response.data) ? response.data : (response.data?.data ?? []);
+  getCompanyFunds: async (page = 1, perPage = 50): Promise<CompanyFundResponse> => {
+    const response = await apiClient.get('/company-funds', {
+      params: { paginate: true, page, per_page: perPage },
+    });
+    if (Array.isArray(response.data)) {
+      return { data: response.data };
+    }
+    return {
+      data: response.data?.data ?? [],
+      meta: response.data?.meta,
+    };
   },
 
   getCompanyFundById: async (id: number): Promise<CompanyFund> => {

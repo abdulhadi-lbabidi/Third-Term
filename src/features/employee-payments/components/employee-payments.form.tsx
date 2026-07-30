@@ -48,10 +48,12 @@ export function EmployeePaymentsForm({
   onSubmit,
   loading,
 }: EmployeePaymentsFormProps) {
-  const { data: companyFunds = [], isLoading: isLoadingCompanyFunds } = useQuery({
-    queryKey: ['company-funds', { paginate: false }],
-    queryFn: () => companyFundsApi.getCompanyFunds({ paginate: false }),
+  const companyFundsQuery = useQuery({
+    queryKey: ['company-funds'],
+    queryFn: () => companyFundsApi.getCompanyFunds(),
   });
+  const companyFunds = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+  const isLoadingCompanyFunds = companyFundsQuery.isLoading;
 
   const form = useForm<EmployeePaymentFormValues>({
     resolver: zodResolver(employeePaymentFormSchema),
@@ -119,7 +121,7 @@ export function EmployeePaymentsForm({
           name="company_fund_currency_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel> صندوق الشركة</FormLabel>
+              <FormLabel>عملة صندوق الشركة</FormLabel>
               <FormControl>
                 <SearchableSelect
                   value={field.value}

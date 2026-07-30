@@ -34,7 +34,10 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
 
   const { data: materials = [] } = useQuery<Material[]>({
     queryKey: ['invoice-items', 'materials'] as const,
-    queryFn: () => materialsApi.getMaterials(),
+    queryFn: async () => {
+      const response = await materialsApi.getMaterials(1, 100);
+      return response.data;
+    },
   });
 
   const form = useForm<InvoiceItemFormValues>({

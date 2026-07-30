@@ -1,16 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { expensesApi } from './expenses.api';
-import type { Expense, UpdateExpensePayload } from './types';
+import { expensesApi, type ExpenseResponse } from './expenses.api';
+import type { UpdateExpensePayload } from './types';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
+  list: (page: number, perPage: number) => ['expenses', page, perPage] as const,
 };
 
-export function useExpenses() {
-  return useQuery<Expense[]>({
-    queryKey: expensesQueryKeys.all,
-    queryFn: () => expensesApi.getExpenses(),
+export function useExpenses(page = 1, perPage = 50) {
+  return useQuery<ExpenseResponse>({
+    queryKey: expensesQueryKeys.list(page, perPage),
+    queryFn: () => expensesApi.getExpenses(page, perPage),
   });
 }
 

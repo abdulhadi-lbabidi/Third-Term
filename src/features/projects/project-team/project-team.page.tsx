@@ -6,7 +6,6 @@ import { Users } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { usersApi } from '@/features/users/api/users.api';
-import type { EmployeeRecord } from '@/features/users/types';
 import { PageHeader } from '../../components/page-header';
 import { projectsApi } from '../projects.api';
 import type { Project } from '../types';
@@ -40,14 +39,17 @@ export function ProjectTeamPage() {
     queryFn: () => projectTeamApi.getAll(),
   });
 
-  const employeesQuery = useQuery<EmployeeRecord[]>({
+  const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
-    queryFn: () => usersApi.getUsersByRole('employee') as Promise<EmployeeRecord[]>,
+    queryFn: async () => {
+      const res = await usersApi.getUsersByRole('employee');
+      return (res as any)?.data ?? res;
+    },
   });
 
   const members = (teamQuery.data ?? []).filter((m) => m.project?.id === projectId);
 
-  const userOptions = (employeesQuery.data ?? []).map((e) => ({
+  const userOptions = ((employeesQuery.data ?? []) as any[]).map((e: any) => ({
     id: e.user.id,
     name: e.user?.name ?? `موظف #${e.id}`,
   }));

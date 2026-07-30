@@ -54,3 +54,17 @@ export type CreateInvoiceItemPayload = {
 };
 
 export type UpdateInvoiceItemPayload = CreateInvoiceItemPayload;
+
+export type PaginationMeta = {
+  current_page: number;
+  from: number | null;
+  last_page: number;
+  per_page: number;
+  to: number | null;
+  total: number;
+};
+
+export type InvoiceItemResponse = {
+  data: InvoiceItem[];
+  meta?: PaginationMeta;
+};

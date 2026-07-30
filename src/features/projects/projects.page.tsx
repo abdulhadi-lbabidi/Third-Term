@@ -3,26 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
-import { projectsApi } from './projects.api';
+import { projectsApi, type ProjectResponse } from './projects.api';
 import { ProjectsDialog } from './components/projects.dialog';
 import { ProjectsTable } from './components/projects.table';
 import type { CreateProjectPayload, Project } from './types';
 import { PageHeader } from '../components/page-header';
 import { FolderKanban } from 'lucide-react';
-
-const projectsQueryKeys = {
-  all: ['projects'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const projectsQuery = useQuery<Project[]>({
-    queryKey: projectsQueryKeys.all,
-    queryFn: () => projectsApi.getProjects(),
+  const projectsQuery = useQuery<ProjectResponse>({
+    queryKey: ['projects', page, perPage],
+    queryFn: () => projectsApi.getProjects(page, perPage),
   });
 
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
@@ -38,7 +38,7 @@ export function ProjectsPage() {
       return projectsApi.createProject(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
       setDialogOpen(false);
       setSelectedProject(null);
     },
@@ -50,7 +50,7 @@ export function ProjectsPage() {
   const deleteMutation = useMutation({
     mutationFn: (project: Project) => projectsApi.deleteProject(project.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف المشروع');
@@ -72,8 +72,13 @@ export function ProjectsPage() {
     setDialogOpen(true);
   };
 
+  const projects = projectsQuery.data?.data ?? [];
+  const meta = projectsQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="المشاريع"
         title="المشاريع"
@@ -82,7 +87,7 @@ export function ProjectsPage() {
       />
 
       <ProjectsTable
-        data={Array.isArray(projectsQuery.data) ? projectsQuery.data : []}
+        data={projects}
         loading={projectsQuery.isLoading}
         onEdit={(project) => {
           setSelectedProject(project);
@@ -95,6 +100,13 @@ export function ProjectsPage() {
         onView={(project) => {
           navigate(`/projects/${project.id}/${encodeURIComponent(project.name)}`);
         }}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <ProjectsDialog
@@ -111,4 +123,3 @@ export function ProjectsPage() {
     </div>
   );
 }
-

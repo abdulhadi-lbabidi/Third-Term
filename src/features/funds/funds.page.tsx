@@ -25,7 +25,6 @@ import { FundCurrencyDialog } from './components/fund-currency.dialog';
 import { fundsApi } from './funds.api';
 import type { CreateFundPayload, Fund, FundCurrency } from './types';
 import { currenciesApi } from '@/features/currencies/currencies.api';
-import type { Currency } from '@/features/currencies/types';
 import { PageHeader } from '../components/page-header';
 import type { UserRole } from '@/features/users/types';
 import { usersApi } from '@/features/users/api/users.api';
@@ -91,7 +90,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     enabled: !hasUserContext,
   });
 
-  const currenciesQuery = useQuery<Currency[]>({
+  const currenciesQuery = useQuery({
     queryKey: ['currencies'] as const,
     queryFn: () => currenciesApi.getAll(),
   });
@@ -422,7 +421,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
           setAttachDialogOpen(open);
           if (!open) setSelectedFundForCurrency(null);
         }}
-        currencies={currenciesQuery.data ?? []}
+        currencies={currenciesQuery.data?.data ?? (Array.isArray(currenciesQuery.data) ? currenciesQuery.data : [])}
         onSubmit={handleAttachCurrency}
         loading={attachCurrencyMutation.isPending}
       />

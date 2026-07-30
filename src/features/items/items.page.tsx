@@ -2,25 +2,25 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
-import { itemsApi } from './items.api';
+import { itemsApi, type ItemResponse } from './items.api';
 import { ItemsDialog } from './components/items.dialog';
 import { ItemsTable } from './components/items.table';
 import type { CreateItemPayload, Item } from './types';
 import { PageHeader } from '../components/page-header';
 import { ListChecks } from 'lucide-react';
-
-const itemsQueryKeys = {
-  all: ['items'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function ItemsPage() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
-  const itemsQuery = useQuery<Item[]>({
-    queryKey: itemsQueryKeys.all,
-    queryFn: () => itemsApi.getItems(),
+  const itemsQuery = useQuery<ItemResponse>({
+    queryKey: ['items', page, perPage],
+    queryFn: () => itemsApi.getItems(page, perPage),
   });
 
   const saveMutation = useMutation({
@@ -31,7 +31,7 @@ export function ItemsPage() {
       return itemsApi.createItem(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: itemsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['items'] });
       setDialogOpen(false);
       setSelectedItem(null);
     },
@@ -40,7 +40,7 @@ export function ItemsPage() {
   const deleteMutation = useMutation({
     mutationFn: (item: Item) => itemsApi.deleteItem(item.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: itemsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['items'] });
     },
   });
 
@@ -54,8 +54,13 @@ export function ItemsPage() {
     toast.success('تم حذف البند بنجاح');
   };
 
+  const items = itemsQuery.data?.data ?? [];
+  const meta = itemsQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="البنود"
         title="البنود"
@@ -73,13 +78,20 @@ export function ItemsPage() {
       />
 
       <ItemsTable
-        data={itemsQuery.data ?? []}
+        data={items}
         loading={itemsQuery.isLoading}
         onEdit={(item) => {
           setSelectedItem(item);
           setDialogOpen(true);
         }}
         onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <ItemsDialog
@@ -95,4 +107,3 @@ export function ItemsPage() {
     </div>
   );
 }
-

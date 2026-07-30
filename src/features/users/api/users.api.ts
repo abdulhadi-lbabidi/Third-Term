@@ -11,6 +11,7 @@ import type {
   TrusteeRecord,
   UserRole,
 } from '../types';
+import type { PaginationMeta } from '@/components/ui/pagination';
 
 const endpointByRole: Record<UserRole, string> = {
   admin: '/admins',
@@ -21,6 +22,11 @@ const endpointByRole: Record<UserRole, string> = {
   engineer: '/engineers',
   supplier: '/suppliers',
   trustee: '/trustees',
+};
+
+export type UsersRoleResponse<T> = {
+  data: T[];
+  meta?: PaginationMeta;
 };
 
 export const usersApi = {
@@ -34,18 +40,19 @@ export const usersApi = {
   },
 
   getUsersByRole: (
-    role: UserRole
-  ): Promise<
-    | AdminRecord[]
-    | ClientRecord[]
-    | InvestorRecord[]
-    | CraftsmanRecord[]
-    | EmployeeRecord[]
-    | EngineerRecord[]
-    | SupplierRecord[]
-    | TrusteeRecord[]
-  > => {
-    return apiClient.get<any>(endpointByRole[role]).then(({ data }: any) => data?.data);
+    role: UserRole,
+    page = 1,
+    perPage = 50
+  ): Promise<UsersRoleResponse<any>> => {
+    return apiClient.get<any>(endpointByRole[role], {
+      params: { paginate: true, page, per_page: perPage },
+    }).then(({ data }: any) => {
+      if (Array.isArray(data)) return { data };
+      return {
+        data: data?.data ?? [],
+        meta: data?.meta,
+      };
+    });
   },
 
   createUser: (payload: CreateUserPayload): Promise<unknown> => {

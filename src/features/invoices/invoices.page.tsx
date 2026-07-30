@@ -9,7 +9,7 @@ export function InvoicesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-10">
+    <div className="flex flex-col flex-1 gap-4 w-full">
       {/* Header */}
       <PageHeader
         badge="INVOICES"

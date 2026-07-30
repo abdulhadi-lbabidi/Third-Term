@@ -23,10 +23,11 @@ function getMaterialItemId(material?: Material | null) {
 }
 
 export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormProps) {
-  const { data: items = [] } = useQuery<Item[]>({
+  const itemsQuery = useQuery({
     queryKey: ['materials', 'items'] as const,
     queryFn: () => itemsApi.getItems(),
   });
+  const items: Item[] = itemsQuery.data?.data ?? (Array.isArray(itemsQuery.data) ? itemsQuery.data : []);
 
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialFormSchema),

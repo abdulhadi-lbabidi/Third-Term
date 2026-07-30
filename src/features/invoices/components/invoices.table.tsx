@@ -7,13 +7,22 @@ import { useInvoices, useDeleteInvoice } from '../invoices.hooks';
 import { InvoicesDialog } from './invoices.dialog';
 import { InvoiceDetailsDialog } from './invoice-details.dialog';
 import type { Invoice } from '../types';
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function InvoicesTable() {
-  const { data: response, isLoading } = useInvoices();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
+  const { data: response, isLoading } = useInvoices({ page, per_page: perPage });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const [invoiceToEditId, setInvoiceToEditId] = useState<number | null>(null);
   const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);
+
+  const invoices = response?.data || [];
+  const meta = response?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
 
   const columns: DataTableColumn<Invoice>[] = [
     {
@@ -67,10 +76,10 @@ export function InvoicesTable() {
   ];
 
   return (
-    <>
+    <div className="flex flex-col flex-1 space-y-4">
       <DataTable
         columns={columns}
-        data={response?.data || []}
+        data={invoices}
         loading={isLoading || isDeleting}
         emptyLabel="لا توجد فواتير"
         loadingLabel="جاري التحميل..."
@@ -87,10 +96,19 @@ export function InvoicesTable() {
             {
               label: 'عرض التفاصيل',
               icon: <Eye className="size-4" />,
-              onClick: (row) => setInvoiceToViewId(row.id),
+              onClick: (row) => {
+                console.log('View details', row);
+              },
             }
           ]
         }}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <InvoicesDialog
@@ -104,6 +122,6 @@ export function InvoicesTable() {
         onClose={() => setInvoiceToViewId(null)}
         invoiceId={invoiceToViewId}
       />
-    </>
+    </div>
   );
 }

@@ -1,12 +1,11 @@
 import { apiClient } from '@/shared/api/axios.instance';
-import type { AuditLog } from './types';
+import type { AuditLogResponse } from './types';
 
 export const auditLogsApi = {
-  getAuditLogs: async (): Promise<AuditLog[]> => {
+  getAuditLogs: async (page = 1, perPage = 10): Promise<AuditLogResponse> => {
     const response = await apiClient.get('/audit-logs', {
-      params: { paginate: true },
+      params: { paginate: true, page, per_page: perPage },
     });
-    const payload = response.data as { data?: AuditLog[] } | AuditLog[];
-    return Array.isArray(payload) ? payload : payload.data ?? [];
+    return response.data;
   },
 };

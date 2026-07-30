@@ -1,12 +1,25 @@
 import { apiClient } from '@/shared/api/axios.instance';
 import { toExpenseApiPayload } from './expenses.payload';
 import type { CreateExpensePayload, Expense, UpdateExpensePayload } from './types';
+import type { PaginationMeta } from '@/components/ui/pagination';
+
+export type ExpenseResponse = {
+  data: Expense[];
+  meta?: PaginationMeta;
+};
 
 export const expensesApi = {
-  getExpenses: async (): Promise<Expense[]> => {
-    const response = await apiClient.get('/expenses');
-    const payload = response.data as { data?: Expense[] } | Expense[];
-    return Array.isArray(payload) ? payload : payload.data ?? [];
+  getExpenses: async (page = 1, perPage = 50): Promise<ExpenseResponse> => {
+    const response = await apiClient.get('/expenses', {
+      params: { paginate: true, page, per_page: perPage },
+    });
+    if (Array.isArray(response.data)) {
+      return { data: response.data };
+    }
+    return {
+      data: response.data?.data ?? [],
+      meta: response.data?.meta,
+    };
   },
 
   getExpenseById: async (id: number): Promise<Expense> => {
@@ -21,7 +34,6 @@ export const expensesApi = {
   },
 
   updateExpense: async (id: number, payload: UpdateExpensePayload): Promise<Expense> => {
-    // نفس body الإضافة بالضبط
     const body = toExpenseApiPayload(payload);
     const response = await apiClient.patch(`/expenses/${id}`, body);
     return response.data?.data ?? response.data;

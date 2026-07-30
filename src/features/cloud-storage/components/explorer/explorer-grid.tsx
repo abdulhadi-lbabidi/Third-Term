@@ -13,6 +13,7 @@ import { DeleteItemDialog } from './delete-item.dialog';
 import { UploadFilesDialog } from './upload-files.dialog';
 import { FilePreviewDialog } from '../FilePreviewDialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { SimplePagination } from '@/components/ui/pagination';
 
 // ── تعريف محلي لـ PaginatedResponse في حال عدم وجوده في types ──
 interface PaginatedResponse<T> {
@@ -56,7 +57,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   // ── Pagination state ──
   const [page, setPage] = useState(1);
-  const perPage = 10;
+  const perPage = 50;
 
   // ── Breadcrumbs ──
   const [breadcrumbs, setBreadcrumbs] = useState<{ id: number | null; name: string }[]>([
@@ -244,18 +245,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     [currentFiles, debouncedSearch]
   );
 
-  // ── Pagination navigation ──
-  const goToPrevPage = useCallback(() => {
-    if (paginationMeta && paginationMeta.current_page > 1) {
-      setPage((p) => p - 1);
-    }
-  }, [paginationMeta]);
 
-  const goToNextPage = useCallback(() => {
-    if (paginationMeta && paginationMeta.current_page < paginationMeta.last_page) {
-      setPage((p) => p + 1);
-    }
-  }, [paginationMeta]);
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -326,32 +316,17 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
             ))}
           </div>
 
-          {/* Pagination controls (only in root) */}
-          {!currentDirId && paginationMeta && paginationMeta.last_page > 1 && (
-            <div className="flex items-center justify-between mt-6 px-2">
-              <span className="text-sm text-slate-500">
-                عرض {paginationMeta.from} - {paginationMeta.to} من {paginationMeta.total}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={goToPrevPage}
-                  disabled={paginationMeta.current_page === 1}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  السابق
-                </button>
-                <span className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
-                  {paginationMeta.current_page}
-                </span>
-                <button
-                  onClick={goToNextPage}
-                  disabled={paginationMeta.current_page === paginationMeta.last_page}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  التالي
-                </button>
-              </div>
-            </div>
+          {!currentDirId && paginationMeta && (
+            <SimplePagination
+              currentPage={paginationMeta.current_page}
+              totalPages={paginationMeta.last_page}
+              onPageChange={setPage}
+              meta={{
+                from: paginationMeta.from,
+                to: paginationMeta.to,
+                total: paginationMeta.total,
+              }}
+            />
           )}
         </>
       )}

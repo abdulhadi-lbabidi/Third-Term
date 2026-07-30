@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { Users } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { usersApi } from '@/features/users/api/users.api';
-import type { EmployeeRecord } from '@/features/users/types';
 import { projectTeamApi } from '../../project-team/project-team.api';
 import { ProjectTeamTable } from '../../project-team/components/project-team.table';
 import { ProjectTeamDialog } from '../../project-team/components/project-team.dialog';
@@ -27,9 +26,12 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
     queryFn: () => projectTeamApi.getAll(),
   });
 
-  const employeesQuery = useQuery<EmployeeRecord[]>({
+  const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
-    queryFn: () => usersApi.getUsersByRole('employee') as Promise<EmployeeRecord[]>,
+    queryFn: async () => {
+      const res = await usersApi.getUsersByRole('employee');
+      return (res as any)?.data ?? res;
+    },
   });
 
   // Filter by current project
@@ -39,9 +41,9 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   const existingUserIds = new Set(members.map(m => m.user?.id));
 
   // Map employees to simple options for the form (excluding existing team members)
-  const userOptions = (employeesQuery.data ?? [])
-    .filter(e => !existingUserIds.has(e.user.id) || e.user.id === selectedMember?.user?.id)
-    .map((e) => ({
+  const userOptions = ((employeesQuery.data ?? []) as any[])
+    .filter((e: any) => !existingUserIds.has(e.user?.id) || e.user?.id === selectedMember?.user?.id)
+    .map((e: any) => ({
       id: e.user.id,
       name: e.user?.name ?? `موظف #${e.id}`,
     }));

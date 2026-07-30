@@ -182,16 +182,17 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const projectFundId = form.watch('project_fund_id') as number | undefined;
   const selectedProjectId = form.watch('project_id') as number | undefined;
 
-  const { data: companyFunds = [] } = useQuery<CompanyFund[]>({
+  const companyFundsQuery = useQuery({
     queryKey: ['revenues', 'company-funds'] as const,
     queryFn: () => companyFundsApi.getCompanyFunds(),
     enabled: source === 'company_fund',
   });
+  const companyFunds: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
 
   const derivedCompanyFundId = useMemo(() => {
     if (companyFundId) return companyFundId;
     if (!selectedRevenueableId) return undefined;
-    return companyFunds.find((fund) => fund.currencies?.some((currency) => currency.id === selectedRevenueableId))?.id;
+    return companyFunds.find((fund: CompanyFund) => fund.currencies?.some((currency: any) => currency.id === selectedRevenueableId))?.id;
   }, [companyFundId, companyFunds, selectedRevenueableId]);
 
   useEffect(() => {
@@ -209,11 +210,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'company_fund' && Boolean(derivedCompanyFundId),
   });
 
-  const { data: projects = [] } = useQuery<Project[]>({
+  const projectsQuery = useQuery({
     queryKey: ['revenues', 'projects'] as const,
     queryFn: () => projectsApi.getProjects(),
     enabled: source === 'project_fund',
   });
+  const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
   const { data: allProjectFunds = [] } = useQuery<ProjectFund[]>({
     queryKey: ['revenues', 'project-funds'] as const,
@@ -225,8 +227,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     queryKey: ['revenues', 'role-users', userRole] as const,
     queryFn: async () => {
       if (!userRole) return [];
-      const users = await usersApi.getUsersByRole(userRole);
-      return users as RoleUser[];
+      const res = await usersApi.getUsersByRole(userRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
     },
     enabled: Boolean(userRole),
   });
@@ -235,8 +238,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     queryKey: ['revenues', 'fund-role-users', fundUserRole] as const,
     queryFn: async () => {
       if (!fundUserRole) return [];
-      const users = await usersApi.getUsersByRole(fundUserRole);
-      return users as RoleUser[];
+      const res = await usersApi.getUsersByRole(fundUserRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
     },
     enabled: source === 'user_fund' && Boolean(fundUserRole),
   });
@@ -642,14 +646,14 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                             {field.value ? (
                               <div className="flex items-center gap-2">
                                 <Wallet className="size-4 text-slate-500" />
-                                <span>{companyFunds.find(f => f.id === field.value)?.name ?? ''}</span>
+                                <span>{companyFunds.find((f: any) => f.id === field.value)?.name ?? ''}</span>
                               </div>
                             ) : null}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {companyFunds.map((fund) => (
+                        {companyFunds.map((fund: any) => (
                           <SelectItem key={fund.id} value={String(fund.id)}>
                             <div className="flex items-center gap-2">
                               <Wallet className="size-4 text-slate-500" />
@@ -686,13 +690,13 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                             <SelectTrigger className="h-11">
                               <SelectValue placeholder="اختر المشروع">
                                 {field.value ? (
-                                  <span>{projects.find(p => p.id === field.value)?.name ?? ''}</span>
+                                  <span>{projects.find((p: any) => p.id === field.value)?.name ?? ''}</span>
                                 ) : null}
                               </SelectValue>
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {projects.map((project) => (
+                            {projects.map((project: any) => (
                               <SelectItem key={project.id} value={String(project.id)}>
                                 {project.name}
                               </SelectItem>

@@ -8,9 +8,13 @@ import type { Revenue, CreateRevenuePayload } from './types';
 import { revenuesApi } from './revenues.api';
 import { toast } from 'sonner';
 import { TrendingUp } from 'lucide-react';
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function RevenuesPage() {
-  const { data: revenues = [], isLoading } = useRevenues();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
+  const { data: response, isLoading } = useRevenues(page, perPage);
   const createMutation = useCreateRevenue();
   const updateMutation = useUpdateRevenue();
   const deleteMutation = useDeleteRevenue();
@@ -45,8 +49,13 @@ export function RevenuesPage() {
     }
   };
 
+  const revenues = response?.data ?? [];
+  const meta = response?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="الإيرادات"
         title="الإيرادات"
@@ -67,6 +76,13 @@ export function RevenuesPage() {
         loading={isLoading}
         onEdit={handleEditClick}
         onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <RevenuesDialog

@@ -6,21 +6,20 @@ import { PageHeader } from '../components/page-header';
 import { materialsApi } from './materials.api';
 import { MaterialDialog } from './components/material.dialog';
 import { MaterialsTable } from './components/materials.table';
-import type { CreateMaterialPayload, Material } from './types';
+import type { CreateMaterialPayload, Material, MaterialResponse } from './types';
 import { Boxes } from 'lucide-react';
-
-const materialsQueryKeys = {
-  all: ['materials'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function MaterialsPage() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 10;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
-  const materialsQuery = useQuery<Material[]>({
-    queryKey: materialsQueryKeys.all,
-    queryFn: () => materialsApi.getMaterials(),
+  const materialsQuery = useQuery<MaterialResponse>({
+    queryKey: ['materials', page, perPage],
+    queryFn: () => materialsApi.getMaterials(page, perPage),
   });
 
   const saveMutation = useMutation({
@@ -31,7 +30,7 @@ export function MaterialsPage() {
       return materialsApi.createMaterial(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: materialsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['materials'] });
       setDialogOpen(false);
       setSelectedMaterial(null);
     },
@@ -40,7 +39,7 @@ export function MaterialsPage() {
   const deleteMutation = useMutation({
     mutationFn: (material: Material) => materialsApi.deleteMaterial(material.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: materialsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['materials'] });
     },
   });
 
@@ -54,8 +53,13 @@ export function MaterialsPage() {
     toast.success('تم حذف المادة بنجاح');
   };
 
+  const materials = materialsQuery.data?.data ?? [];
+  const meta = materialsQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-2">
       <PageHeader
         badge="المواد"
         title="المواد"
@@ -73,7 +77,7 @@ export function MaterialsPage() {
       />
 
       <MaterialsTable
-        data={materialsQuery.data ?? []}
+        data={materials}
         loading={materialsQuery.isLoading}
         onEdit={(material) => {
           setSelectedMaterial({
@@ -84,6 +88,13 @@ export function MaterialsPage() {
           setDialogOpen(true);
         }}
         onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <MaterialDialog

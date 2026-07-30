@@ -21,7 +21,6 @@ import { currenciesApi } from '@/features/currencies/currencies.api';
 import type { Currency } from '@/features/currencies/types';
 import { PageHeader } from '../../components/page-header';
 import { projectsApi } from '../projects.api';
-import type { Project } from '../types';
 import { projectFundsApi } from './project-funds.api';
 import type { CreateProjectFundPayload, ProjectFund, ProjectFundCurrency } from './project-funds.types';
 import { ProjectFundCard } from '../project-funds/components/project-fund.card';
@@ -70,7 +69,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
 
-  const projectQuery = useQuery<Project[]>({
+  const projectQuery = useQuery({
     queryKey: ['projects'] as const,
     queryFn: () => projectsApi.getProjects(),
   });
@@ -80,7 +79,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
     queryFn: () => projectFundsApi.getProjectFunds(),
   });
 
-  const currenciesQuery = useQuery<Currency[]>({
+  const currenciesQuery = useQuery({
     queryKey: ['currencies'] as const,
     queryFn: () => currenciesApi.getAll(),
   });
@@ -93,13 +92,15 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
 
   const currentFund = fundDetailsQuery.data || projectFundsQuery.data?.find((f) => f.id === selectedFundId) || null;
 
-  const { data: allRevenues = [], isLoading: isLoadingRevenues } = useRevenues();
+  const revenuesQuery = useRevenues();
+  const allRevenues = revenuesQuery.data?.data ?? (Array.isArray(revenuesQuery.data) ? revenuesQuery.data : []);
+  const isLoadingRevenues = revenuesQuery.isLoading;
   const createRevenueMutation = useCreateRevenue();
   const updateRevenueMutation = useUpdateRevenue();
   const deleteRevenueMutation = useDeleteRevenue();
 
   const fundRevenues = allRevenues.filter(
-    (r) =>
+    (r: any) =>
       r.revenueable_type === 'App\\Models\\ProjectFundCurrency' &&
       currentFund?.currencies?.some((c) => c.id === r.revenueable_id)
   );
@@ -112,13 +113,15 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
     }
   };
 
-  const { data: allExpenses = [], isLoading: isLoadingExpenses } = useExpenses();
+  const expensesQuery = useExpenses();
+  const allExpenses = expensesQuery.data?.data ?? (Array.isArray(expensesQuery.data) ? expensesQuery.data : []);
+  const isLoadingExpenses = expensesQuery.isLoading;
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
 
   const fundExpenses = allExpenses.filter(
-    (e) =>
+    (e: any) =>
       e.expenseable_type === 'App\\Models\\ProjectFundCurrency' &&
       currentFund?.currencies?.some((c) => c.id === e.expenseable_id)
   );
@@ -487,7 +490,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
           setAttachDialogOpen(open);
           if (!open) setSelectedProjectFund(null);
         }}
-        currencies={(currenciesQuery.data ?? []).filter((c) => {
+        currencies={((currenciesQuery.data?.data ?? (Array.isArray(currenciesQuery.data) ? currenciesQuery.data : [])) as Currency[]).filter((c) => {
           const fund = selectedProjectFund?.id === currentFund?.id ? currentFund : selectedProjectFund;
           return !fund?.currencies?.some((attached) => attached.currency === c.currency);
         })}
