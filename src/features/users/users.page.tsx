@@ -169,6 +169,8 @@ export function UsersPage() {
           loading={usersQuery.isFetching}
           onDelete={handleDelete}
           onEdit={handleEdit}
+          onFunds={handleFunds}
+          onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
         />
       )}
     </div>

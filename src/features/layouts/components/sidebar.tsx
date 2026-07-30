@@ -28,6 +28,7 @@ import {
   User,
   TrendingUp,
   FileText,
+  History,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -91,6 +92,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/users', label: 'المستخدمون', icon: Users },
       { to: '/departments', label: 'الأقسام', icon: Building2 },
+      { to: '/audit-logs', label: 'سجل العمليات', icon: History },
     ],
   },
   {

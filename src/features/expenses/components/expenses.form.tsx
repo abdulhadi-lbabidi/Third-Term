@@ -294,6 +294,14 @@ function getExpenseCreatedById(expense?: Expense | null): number {
   return 1;
 }
 
+function formatNumberWithCommas(value: unknown): string {
+  if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
+  const str = String(value).replace(/,/g, '');
+  const parts = str.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
 export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: ExpensesFormProps) {
   const navigate = useNavigate();
   const form = useForm<ExpenseFormValues>({
@@ -693,10 +701,10 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                     {(Object.keys(expenseSourceLabels) as ExpenseSource[]).map((item) => (
                       <label
                         key={item}
-                        className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
+                        className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
                       >
+                        <RadioGroupItem className='border-none !p-1' value={item} />
                         <span>{expenseSourceLabels[item]}</span>
-                        <RadioGroupItem value={item} />
                       </label>
                     ))}
                   </RadioGroup>
@@ -890,7 +898,6 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           <div className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
-
             </div>
 
             <div className="grid gap-4 md:grid-cols-4">
@@ -1060,8 +1067,8 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         ) : null}
 
-        {!fixedValues?.user_id && (
-          <div className="grid gap-4 md:grid-cols-2">
+        {!fixedValues?.user_id ? (
+          <div className="grid gap-4 md:grid-cols-3">
             <FormField
               control={form.control}
               name="user_role"
@@ -1115,7 +1122,55 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>المبلغ</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={formatNumberWithCommas(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        if (/^\d*\.?\d*$/.test(raw)) {
+                          field.onChange(raw === '' ? '' : Number(raw));
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
+        ) : (
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>المبلغ</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(field.value)}
+                    onChange={(event) => {
+                      const raw = event.target.value.replace(/,/g, '');
+                      if (/^\d*\.?\d*$/.test(raw)) {
+                        field.onChange(raw === '' ? '' : Number(raw));
+                      }
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
 
         <FormField
@@ -1126,25 +1181,6 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               <FormLabel>الوصف</FormLabel>
               <FormControl>
                 <Textarea rows={4} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>المبلغ</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(Number(event.target.value))}
-                />
               </FormControl>
               <FormMessage />
             </FormItem>

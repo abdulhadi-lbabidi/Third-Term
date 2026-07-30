@@ -105,6 +105,14 @@ const roleIcons: Record<UserRole, React.ElementType> = {
   trustee: Lock,
 };
 
+function formatNumberWithCommas(value: unknown): string {
+  if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
+  const str = String(value).replace(/,/g, '');
+  const parts = str.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
 const sourceToRevenueableType: Record<RevenueSource, RevenueableType> = {
   company_fund: 'App\\Models\\CompanyFundCurrency',
   user_fund: 'App\\Models\\CurrencyFund',
@@ -747,12 +755,15 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                       <div className="relative">
                         <Input
                           className="h-11 bg-white pl-4"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          {...field}
-                          value={field.value as string | number | undefined}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          type="text"
+                          inputMode="decimal"
+                          value={formatNumberWithCommas(field.value)}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/,/g, '');
+                            if (/^\d*\.?\d*$/.test(raw)) {
+                              field.onChange(raw === '' ? '' : Number(raw));
+                            }
+                          }}
                         />
 
                       </div>

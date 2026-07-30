@@ -14,3 +14,14 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token_finance_nouh');
+      // window.location.href = '/auth/login';
+    }
+    return Promise.reject(error);
+  }
+);

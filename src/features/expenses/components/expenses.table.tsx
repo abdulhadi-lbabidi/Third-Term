@@ -56,7 +56,7 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete }: Expen
     { header: 'الوصف', cell: (row) => row.description },
     {
       header: 'المبلغ',
-      cell: (row) => <span className="finance-num font-medium">{row.amount}</span>,
+      cell: (row) => <span className="finance-num font-medium">{Number(row.amount || 0).toLocaleString()}</span>,
     },
     { header: 'المستخدم', cell: (row) => getTextLabel((row as ExpenseRow).user) },
     { header: 'نوع الصرف', cell: (row) => getExpenseableTypeLabel(row.expenseable_type) },

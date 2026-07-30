@@ -52,7 +52,7 @@ type RevenuesTableProps = {
 export function RevenuesTable({ data, loading, onEdit, onDelete }: RevenuesTableProps) {
   const columns: DataTableColumn<Revenue>[] = [
     { header: 'البيان', cell: (row) => row.statement },
-    { header: 'المبلغ', cell: (row) => row.amount },
+    { header: 'المبلغ', cell: (row) => Number(row.amount || 0).toLocaleString() },
     { header: 'المستخدم', cell: (row) => getTextLabel((row as RevenueRow).user) },
     { header: 'نوع الإيراد', cell: (row) => getRevenueableTypeLabel(row.revenueable_type) },
     {

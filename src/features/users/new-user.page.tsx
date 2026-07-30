@@ -41,7 +41,7 @@ const userRoleLabels: Record<UserRole, string> = {
   trustee: 'الوصي',
 };
 
-function isUserRole(value: string | null): value is UserRole {
+function isUserRole(value: string | null | undefined): value is UserRole {
   return Boolean(value && userRoles.includes(value as UserRole));
 }
 

@@ -16,6 +16,7 @@ import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { EmployeeRecord } from '@/features/users/types';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from '../types';
 import { employeePaymentFormSchema, type EmployeePaymentFormValues } from '../schemas/employee-payments.schema';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 
 type EmployeePaymentsFormProps = {
   employees: EmployeeRecord[];
@@ -26,6 +27,14 @@ type EmployeePaymentsFormProps = {
 };
 
 const today = new Date().toISOString().slice(0, 10);
+
+function formatNumberWithCommas(value: unknown): string {
+  if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
+  const str = String(value).replace(/,/g, '');
+  const parts = str.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
 
 export function EmployeePaymentsForm({
   employees,
@@ -60,7 +69,7 @@ export function EmployeePaymentsForm({
       payment_date: defaultValues?.payment_date ?? today,
       amount: defaultValues?.amount ? String(defaultValues.amount) : '',
     });
-  }, [defaultValues, employees, form, lockedEmployeeId]);
+  }, [defaultValues, form, lockedEmployeeId]);
 
   return (
     <Form {...form}>
@@ -83,24 +92,24 @@ export function EmployeePaymentsForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>الموظف</FormLabel>
-              <FormControl>
-                <select
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                  disabled={Boolean(lockedEmployeeId)}
-                >
-                  <option value="" disabled>
-                    اختر الموظف
-                  </option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={String(employee.id)}>
-                      {employee.user.name}
-                    </option>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={Boolean(lockedEmployeeId)}
+              >
+                <FormControl>
+                  <SelectTrigger disabled={Boolean(lockedEmployeeId)}>
+                    <SelectValue placeholder="اختر الموظف" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={String(emp.id)}>
+                      {emp.user.name} ({emp.job_title})
+                    </SelectItem>
                   ))}
-                </select>
-              </FormControl>
-            
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -111,68 +120,71 @@ export function EmployeePaymentsForm({
           name="company_fund_currency_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel> صندوق الشركة</FormLabel>
-              <FormControl>
-                <select
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                  disabled={isLoadingCompanyFunds}
-                >
-                  <option value="" disabled>
-                    اختر عملة صندوق الشركة
-                  </option>
+              <FormLabel>عملة صندوق الشركة</FormLabel>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={isLoadingCompanyFunds}
+              >
+                <FormControl>
+                  <SelectTrigger disabled={isLoadingCompanyFunds}>
+                    <SelectValue placeholder={isLoadingCompanyFunds ? 'جاري التحميل...' : 'اختر عملة الصندوق'} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
                   {companyFunds.flatMap((fund) =>
-                    (fund.currencies ?? []).map((currency) => (
-                      <option key={currency.id} value={String(currency.id)}>
-                        {fund.name} - {currency.currency} ({currency.balance} {currency.symbol})
-                      </option>
-                    )),
+                    (fund.currencies ?? []).map((curr) => (
+                      <SelectItem key={curr.id} value={String(curr.id)}>
+                        {fund.name} - {curr.currency} ({curr.balance})
+                      </SelectItem>
+                    ))
                   )}
-                </select>
-              </FormControl>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="bonuses"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الزيادات</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="bonuses"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الزيادات</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="deductions"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الاستقطاعات</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="deductions"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الاستقطاعات</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -196,10 +208,15 @@ export function EmployeePaymentsForm({
               <FormLabel>المبلغ</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={formatNumberWithCommas(field.value)}
+                  onChange={(event) => {
+                    const raw = event.target.value.replace(/,/g, '');
+                    if (/^\d*\.?\d*$/.test(raw)) {
+                      field.onChange(raw);
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />

@@ -184,7 +184,7 @@ function ExpenseDetailsContent({ expense }: { expense: Expense }) {
       <div className="grid gap-2.5 md:grid-cols-2">
         <DetailSection title="معلومات عامة" icon={FileText}>
           <DetailRow label="الوصف" value={expense.description || '-'} />
-          <DetailRow label="المبلغ" value={<span className="finance-num">{expense.amount}</span>} />
+          <DetailRow label="المبلغ" value={<span className="finance-num">{Number(expense.amount || 0).toLocaleString()}</span>} />
           <DetailRow label="نوع الصندوق" value={source.label} />
           <DetailRow label="تاريخ الإنشاء" value={expense.created_at ?? '-'} />
         </DetailSection>
