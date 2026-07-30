@@ -2,6 +2,21 @@ export type EmployeePayment = {
   id: number;
   employee_id: number;
   company_fund_currency_id?: number;
+  company_fund_currency?: {
+    id: number;
+    company_fund_id?: number;
+    currency_id?: number;
+    balance?: string;
+    company_fund?: {
+      id: number;
+      name: string;
+    };
+    currency?: {
+      id: number;
+      currency: string;
+      symbol?: string;
+    };
+  };
   employee: {
     id: number;
     user_id?: number;
