@@ -1,34 +1,32 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { expensesApi } from './expenses.api';
+import { useExpenses } from './expenses.hooks';
 import { ExpensesTable } from './components/expenses.table';
 import { ExpenseDetailsDialog } from './components/expense-details.dialog';
 import type { Expense } from './types';
 import { ReceiptText } from 'lucide-react';
-
-const expensesQueryKeys = {
-  all: ['expenses'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function ExpensesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
 
-  const expensesQuery = useQuery<Expense[]>({
-    queryKey: expensesQueryKeys.all,
-    queryFn: () => expensesApi.getExpenses(),
-  });
+  const expensesQuery = useExpenses(page, perPage);
 
   const deleteMutation = useMutation({
     mutationFn: (expense: Expense) => expensesApi.deleteExpense(expense.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: expensesQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
     },
   });
 
@@ -42,8 +40,13 @@ export function ExpensesPage() {
     setDetailsOpen(true);
   };
 
+  const expenses = expensesQuery.data?.data ?? [];
+  const meta = expensesQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="المصروفات"
         title="المصروفات"
@@ -56,11 +59,18 @@ export function ExpensesPage() {
       />
 
       <ExpensesTable
-        data={expensesQuery.data ?? []}
+        data={expenses}
         loading={expensesQuery.isLoading}
         onView={handleView}
         onEdit={(expense) => navigate(`/expenses/new?expenseId=${expense.id}`)}
         onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <ExpenseDetailsDialog

@@ -1,22 +1,18 @@
 import { apiClient } from '@/shared/api/axios.instance';
 import type { Invoice, CreateInvoicePayload, UpdateInvoicePayload } from './types';
+import type { PaginationMeta } from '@/components/ui/pagination';
 
 const BASE_URL = '/invoices';
 
 export interface PaginatedResponse<T> {
   data: T[];
-  meta?: {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-  };
+  meta?: PaginationMeta;
 }
 
 export const invoicesApi = {
   getInvoices: async (params?: Record<string, any>) => {
     const response = await apiClient.get<PaginatedResponse<Invoice>>(BASE_URL, {
-      params,
+      params: { paginate: true, page: 1, per_page: 50, ...params },
     });
     return response.data;
   },

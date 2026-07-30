@@ -6,12 +6,21 @@ import { Badge } from '@/shared/components/ui/badge';
 import { useInvoices, useDeleteInvoice } from '../invoices.hooks';
 import { InvoicesDialog } from './invoices.dialog';
 import type { Invoice } from '../types';
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function InvoicesTable() {
-  const { data: response, isLoading } = useInvoices();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
+  const { data: response, isLoading } = useInvoices({ page, per_page: perPage });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
+
+  const invoices = response?.data || [];
+  const meta = response?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
 
   const columns: DataTableColumn<Invoice>[] = [
     {
@@ -61,10 +70,10 @@ export function InvoicesTable() {
   ];
 
   return (
-    <>
+    <div className="flex flex-col flex-1 space-y-4">
       <DataTable
         columns={columns}
-        data={response?.data || []}
+        data={invoices}
         loading={isLoading || isDeleting}
         emptyLabel="لا توجد فواتير"
         loadingLabel="جاري التحميل..."
@@ -82,7 +91,6 @@ export function InvoicesTable() {
               label: 'عرض التفاصيل',
               icon: <Eye className="size-4" />,
               onClick: (row) => {
-                // TODO: Handle view details
                 console.log('View details', row);
               },
             }
@@ -90,11 +98,18 @@ export function InvoicesTable() {
         }}
       />
 
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
+      />
+
       <InvoicesDialog
         isOpen={!!invoiceToEdit}
         onClose={() => setInvoiceToEdit(null)}
         invoice={invoiceToEdit || undefined}
       />
-    </>
+    </div>
   );
 }

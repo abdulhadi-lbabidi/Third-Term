@@ -360,11 +360,12 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const projectFundId = form.watch('project_fund_id');
   const selectedProjectId = form.watch('project_id');
 
-  const { data: companyFunds = [] } = useQuery<CompanyFund[]>({
+  const companyFundsQuery = useQuery({
     queryKey: ['expenses', 'company-funds'] as const,
     queryFn: () => companyFundsApi.getCompanyFunds(),
     enabled: source === 'company_fund',
   });
+  const companyFunds: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
 
   const derivedCompanyFundId = useMemo(() => {
     if (companyFundId) {
@@ -404,11 +405,12 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'company_fund' && Boolean(derivedCompanyFundId),
   });
 
-  const { data: projects = [] } = useQuery<Project[]>({
+  const projectsQuery = useQuery({
     queryKey: ['expenses', 'projects'] as const,
     queryFn: () => projectsApi.getProjects(),
     enabled: source === 'project_fund',
   });
+  const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
   // عند اختيار مشروع: نجلب تفاصيله مع الصناديق والعملات من /projects/:id
   const { data: selectedProjectDetails } = useQuery<Project | null>({
@@ -430,8 +432,9 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         return [];
       }
 
-      const users = await usersApi.getUsersByRole(userRole);
-      return users as RoleUser[];
+      const res = await usersApi.getUsersByRole(userRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
     },
     enabled: Boolean(userRole),
   });
@@ -443,8 +446,9 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         return [];
       }
 
-      const users = await usersApi.getUsersByRole(fundUserRole);
-      return users as RoleUser[];
+      const res = await usersApi.getUsersByRole(fundUserRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
     },
     enabled: source === 'user_fund' && Boolean(fundUserRole),
   });

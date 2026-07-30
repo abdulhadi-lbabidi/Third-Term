@@ -56,7 +56,7 @@ export function PageHeader({
     >
       <div
         className={cn(
-          "flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5",
+          "flex flex-col gap-4 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-5",
           hasTabs && "pb-3"
         )}
       >

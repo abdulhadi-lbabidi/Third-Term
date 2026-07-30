@@ -45,9 +45,14 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 
 export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {
 
-  const { data: clients } = useQuery<ClientRecord[]>(
-    { queryKey: ['clients'] as const, queryFn: () => usersApi.getUsersByRole('client') as Promise<ClientRecord[]> }
-  );
+  const clientsQuery = useQuery({
+    queryKey: ['clients'] as const,
+    queryFn: async () => {
+      const res = await usersApi.getUsersByRole('client');
+      return (res as any)?.data ?? res;
+    },
+  });
+  const clients: ClientRecord[] = clientsQuery.data ?? [];
 
   const form = useForm<ProjectsFormValues>({
     resolver: zodResolver(formSchema),

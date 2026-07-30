@@ -6,37 +6,40 @@ import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { usersApi } from '@/features/users/api/users.api';
 import type { EmployeeRecord } from '@/features/users/types';
-import { employeePaymentsApi } from './employee-payments.api';
+import { employeePaymentsApi, type EmployeePaymentResponse } from './employee-payments.api';
 import { EmployeePaymentsDialog } from './components/employee-payments.dialog';
 import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
 import { PageHeader } from '../components/page-header';
-
-const employeePaymentsQueryKeys = {
-  all: ['employee-payments'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function EmployeePaymentsPage() {
   const params = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<EmployeePayment | null>(null);
   const resolvedEmployeeId = params.employeeId
     ? Number(params.employeeId)
     : params.role === 'employee' && params.id
-    ? Number(params.id)
-    : null;
+      ? Number(params.id)
+      : null;
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(resolvedEmployeeId);
 
-  const paymentsQuery = useQuery<EmployeePayment[]>({
-    queryKey: employeePaymentsQueryKeys.all,
-    queryFn: () => employeePaymentsApi.getEmployeePayments(),
+  const paymentsQuery = useQuery<EmployeePaymentResponse>({
+    queryKey: ['employee-payments', page, perPage],
+    queryFn: () => employeePaymentsApi.getEmployeePayments(page, perPage),
   });
 
-  const employeesQuery = useQuery<EmployeeRecord[]>({
+  const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
-    queryFn: () => usersApi.getUsersByRole('employee') as Promise<EmployeeRecord[]>,
+    queryFn: async () => {
+      const res = await usersApi.getUsersByRole('employee');
+      return (res as any)?.data ?? res;
+    },
   });
 
   useEffect(() => {
@@ -45,13 +48,17 @@ export function EmployeePaymentsPage() {
     }
   }, [resolvedEmployeeId]);
 
-  const selectedEmployee = employeesQuery.data?.find((employee) => employee.id === selectedEmployeeId) ?? null;
+  const selectedEmployee = (employeesQuery.data as EmployeeRecord[] | undefined)?.find((employee: EmployeeRecord) => employee.id === selectedEmployeeId) ?? null;
+
+  const payments = paymentsQuery.data?.data ?? [];
+  const meta = paymentsQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
 
   const visiblePayments = useMemo(() => {
-    const payments = paymentsQuery.data ?? [];
     if (!selectedEmployeeId) return payments;
     return payments.filter((payment) => payment.employee_id === selectedEmployeeId);
-  }, [paymentsQuery.data, selectedEmployeeId]);
+  }, [payments, selectedEmployeeId]);
 
   const saveMutation = useMutation({
     mutationFn: async (payload: CreateEmployeePaymentPayload) => {
@@ -61,7 +68,7 @@ export function EmployeePaymentsPage() {
       return employeePaymentsApi.createEmployeePayment(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: employeePaymentsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['employee-payments'] });
       setDialogOpen(false);
       setSelectedPayment(null);
     },
@@ -70,7 +77,7 @@ export function EmployeePaymentsPage() {
   const deleteMutation = useMutation({
     mutationFn: (payment: EmployeePayment) => employeePaymentsApi.deleteEmployeePayment(payment.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: employeePaymentsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['employee-payments'] });
     },
   });
 
@@ -85,13 +92,13 @@ export function EmployeePaymentsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="الموظفون"
         title={selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : 'رواتب الموظفين'}
         icon={BadgeDollarSign}
         action={
-          <div className="flex shrink-0 items-center gap-3"  >
+          <div className="flex shrink-0 items-center gap-3">
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
                 <select
@@ -100,7 +107,7 @@ export function EmployeePaymentsPage() {
                   onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
                 >
                   <option value="">كل الموظفين</option>
-                  {employeesQuery.data?.map((employee) => (
+                  {(employeesQuery.data as EmployeeRecord[] | undefined)?.map((employee: EmployeeRecord) => (
                     <option key={employee.id} value={String(employee.id)}>
                       {employee.user.name}
                     </option>
@@ -151,6 +158,13 @@ export function EmployeePaymentsPage() {
         onDelete={handleDelete}
       />
 
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
+      />
+
       <EmployeePaymentsDialog
         open={dialogOpen}
         onOpenChange={(open) => {
@@ -166,4 +180,3 @@ export function EmployeePaymentsPage() {
     </div>
   );
 }
-

@@ -7,21 +7,20 @@ import { InvoiceItemDialog } from './components/invoice-item.dialog';
 import { InvoiceItemsTable } from './components/invoice-items.table';
 import { invoiceItemsApi } from './invoice-items.api';
 import type { InvoiceItemFormValues } from './schemas/invoice-items.schema';
-import type { CreateInvoiceItemPayload, InvoiceItem } from './types';
+import type { CreateInvoiceItemPayload, InvoiceItem, InvoiceItemResponse } from './types';
 import { FileSpreadsheet } from 'lucide-react';
-
-const invoiceItemsQueryKeys = {
-  all: ['invoice-items'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function InvoiceItemsPage() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 10;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InvoiceItem | null>(null);
 
-  const invoiceItemsQuery = useQuery<InvoiceItem[]>({
-    queryKey: invoiceItemsQueryKeys.all,
-    queryFn: () => invoiceItemsApi.getInvoiceItems(),
+  const invoiceItemsQuery = useQuery<InvoiceItemResponse>({
+    queryKey: ['invoice-items', page, perPage],
+    queryFn: () => invoiceItemsApi.getInvoiceItems(page, perPage),
   });
 
   const saveMutation = useMutation({
@@ -32,7 +31,7 @@ export function InvoiceItemsPage() {
       return invoiceItemsApi.createInvoiceItem(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: invoiceItemsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['invoice-items'] });
       setDialogOpen(false);
       setSelectedItem(null);
     },
@@ -41,7 +40,7 @@ export function InvoiceItemsPage() {
   const deleteMutation = useMutation({
     mutationFn: (item: InvoiceItem) => invoiceItemsApi.deleteInvoiceItem(item.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: invoiceItemsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['invoice-items'] });
     },
   });
 
@@ -64,8 +63,13 @@ export function InvoiceItemsPage() {
     toast.success('تم حذف صنف الفاتورة بنجاح');
   };
 
+  const invoiceItems = invoiceItemsQuery.data?.data ?? [];
+  const meta = invoiceItemsQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="الفواتير"
         title="أصناف الفاتورة"
@@ -84,7 +88,7 @@ export function InvoiceItemsPage() {
       />
 
       <InvoiceItemsTable
-        data={invoiceItemsQuery.data ?? []}
+        data={invoiceItems}
         loading={invoiceItemsQuery.isLoading}
         onEdit={(item) => {
           setSelectedItem({
@@ -95,6 +99,13 @@ export function InvoiceItemsPage() {
           setDialogOpen(true);
         }}
         onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <InvoiceItemDialog

@@ -1,17 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { revenuesApi } from './revenues.api';
-import type { CreateRevenuePayload, Revenue, UpdateRevenuePayload } from './types';
+import type { CreateRevenuePayload, UpdateRevenuePayload } from './types';
 import { toast } from 'sonner';
 
 export const revenuesQueryKeys = {
   all: ['revenues'] as const,
+  list: (page: number, perPage: number) => [...revenuesQueryKeys.all, page, perPage] as const,
   detail: (id: number) => [...revenuesQueryKeys.all, id] as const,
 };
 
-export function useRevenues() {
-  return useQuery<Revenue[]>({
-    queryKey: revenuesQueryKeys.all,
-    queryFn: () => revenuesApi.getRevenues(),
+export function useRevenues(page = 1, perPage = 50) {
+  return useQuery({
+    queryKey: revenuesQueryKeys.list(page, perPage),
+    queryFn: () => revenuesApi.getRevenues(page, perPage),
   });
 }
 
@@ -25,7 +26,7 @@ export function useCreateRevenue() {
     },
     onError: () => {
       toast.error('حدث خطأ أثناء إضافة الإيراد');
-    }
+    },
   });
 }
 
@@ -33,14 +34,14 @@ export function useUpdateRevenue() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: UpdateRevenuePayload }) => 
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateRevenuePayload }) =>
       revenuesApi.updateRevenue(id, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
     },
     onError: () => {
       toast.error('حدث خطأ أثناء تعديل الإيراد');
-    }
+    },
   });
 }
 
@@ -54,6 +55,6 @@ export function useDeleteRevenue() {
     },
     onError: () => {
       toast.error('حدث خطأ أثناء حذف الإيراد');
-    }
+    },
   });
 }

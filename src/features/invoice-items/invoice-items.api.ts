@@ -2,6 +2,7 @@ import { apiClient } from '@/shared/api/axios.instance';
 import type {
   CreateInvoiceItemPayload,
   InvoiceItem,
+  InvoiceItemResponse,
   InvoiceOption,
   UpdateInvoiceItemPayload,
 } from './types';
@@ -15,12 +16,17 @@ export const invoiceItemsApi = {
     return Array.isArray(payload) ? payload : payload.data ?? [];
   },
 
-  getInvoiceItems: async (): Promise<InvoiceItem[]> => {
+  getInvoiceItems: async (page = 1, perPage = 10): Promise<InvoiceItemResponse> => {
     const response = await apiClient.get('/invoice-items', {
-      params: { paginate: true, per_page: 50, page: 1 },
+      params: { paginate: true, per_page: perPage, page },
     });
-    const payload = response.data as { data?: InvoiceItem[] } | InvoiceItem[];
-    return Array.isArray(payload) ? payload : payload.data ?? [];
+    if (Array.isArray(response.data)) {
+      return { data: response.data };
+    }
+    return {
+      data: response.data?.data ?? [],
+      meta: response.data?.meta,
+    };
   },
 
   getInvoiceItemById: async (id: number): Promise<InvoiceItem> => {

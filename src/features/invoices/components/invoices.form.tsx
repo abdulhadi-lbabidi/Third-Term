@@ -86,23 +86,25 @@ export function InvoicesForm({
   }, [defaultValues, fixedValues, form]);
 
   // Fetch Items
-  const { data: items } = useQuery({
+  const { data: itemsRes } = useQuery({
     queryKey: ['items'],
-    queryFn: itemsApi.getItems,
+    queryFn: () => itemsApi.getItems(),
   });
+  const items = itemsRes?.data ?? (Array.isArray(itemsRes) ? itemsRes : []);
 
   // Fetch Suppliers
-  const { data: suppliers } = useQuery({
+  const { data: suppliersRes } = useQuery({
     queryKey: ['users', 'supplier'],
     queryFn: () => usersApi.getUsersByRole('supplier'),
   });
+  const suppliers = (suppliersRes as any)?.data ?? (Array.isArray(suppliersRes) ? suppliersRes : []);
 
   // Fetch Expenses
   const { data: expensesRes } = useQuery({
     queryKey: ['expenses'],
     queryFn: () => expensesApi.getExpenses(),
   });
-  const expenses = expensesRes || [];
+  const expenses = expensesRes?.data ?? (Array.isArray(expensesRes) ? expensesRes : []);
 
   const itemOptions = useMemo(() => {
     return items?.map((item: any) => ({

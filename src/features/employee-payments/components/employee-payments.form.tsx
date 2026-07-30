@@ -43,10 +43,12 @@ export function EmployeePaymentsForm({
   onSubmit,
   loading,
 }: EmployeePaymentsFormProps) {
-  const { data: companyFunds = [], isLoading: isLoadingCompanyFunds } = useQuery({
-    queryKey: ['company-funds', { paginate: false }],
-    queryFn: () => companyFundsApi.getCompanyFunds({ paginate: false }),
+  const companyFundsQuery = useQuery({
+    queryKey: ['company-funds'],
+    queryFn: () => companyFundsApi.getCompanyFunds(),
   });
+  const companyFunds = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+  const isLoadingCompanyFunds = companyFundsQuery.isLoading;
 
   const form = useForm<EmployeePaymentFormValues>({
     resolver: zodResolver(employeePaymentFormSchema),
@@ -132,8 +134,8 @@ export function EmployeePaymentsForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {companyFunds.flatMap((fund) =>
-                    (fund.currencies ?? []).map((curr) => (
+                  {companyFunds.flatMap((fund: any) =>
+                    (fund.currencies ?? []).map((curr: any) => (
                       <SelectItem key={curr.id} value={String(curr.id)}>
                         {fund.name} - {curr.currency} ({curr.balance})
                       </SelectItem>

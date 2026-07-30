@@ -3,8 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { currenciesApi } from '@/features/currencies/currencies.api';
-import type { Currency } from '@/features/currencies/types';
-import { companyFundsApi } from './company-funds.api';
+import { companyFundsApi, type CompanyFundResponse } from './company-funds.api';
 import { CompanyFundsDialog } from './components/company-funds.dialog';
 import { CompanyFundsTable } from './components/company-funds.table';
 import { AttachCurrencyDialog } from './components/attach-currency.dialog';
@@ -13,13 +12,13 @@ import { CompanyFundCurrencyDialog } from './components/company-fund-currency.di
 import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
 import { PageHeader } from '../components/page-header';
 import { Wallet } from 'lucide-react';
-
-const companyFundsQueryKeys = {
-  all: ['company-funds'] as const,
-};
+import { SimplePagination } from '@/components/ui/pagination';
 
 export function CompanyFundsPage() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
   const [currenciesDialogOpen, setCurrenciesDialogOpen] = useState(false);
@@ -29,12 +28,12 @@ export function CompanyFundsPage() {
   const [selectedCompanyFundForView, setSelectedCompanyFundForView] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundCurrency, setSelectedCompanyFundCurrency] = useState<CompanyFundCurrency | null>(null);
 
-  const companyFundsQuery = useQuery<CompanyFund[]>({
-    queryKey: companyFundsQueryKeys.all,
-    queryFn: () => companyFundsApi.getCompanyFunds(),
+  const companyFundsQuery = useQuery<CompanyFundResponse>({
+    queryKey: ['company-funds', page, perPage],
+    queryFn: () => companyFundsApi.getCompanyFunds(page, perPage),
   });
 
-  const currenciesQuery = useQuery<Currency[]>({
+  const currenciesQuery = useQuery({
     queryKey: ['currencies'] as const,
     queryFn: () => currenciesApi.getAll(),
   });
@@ -47,7 +46,7 @@ export function CompanyFundsPage() {
       return companyFundsApi.createCompanyFund(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       setDialogOpen(false);
       setSelectedCompanyFund(null);
     },
@@ -56,7 +55,7 @@ export function CompanyFundsPage() {
   const deleteMutation = useMutation({
     mutationFn: (fund: CompanyFund) => companyFundsApi.deleteCompanyFund(fund.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
     },
   });
 
@@ -68,7 +67,7 @@ export function CompanyFundsPage() {
       return companyFundsApi.attachCurrency(selectedCompanyFundForCurrency.id, payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       setAttachDialogOpen(false);
       setSelectedCompanyFundForCurrency(null);
     },
@@ -82,7 +81,7 @@ export function CompanyFundsPage() {
       return companyFundsApi.attachCurrency(selectedCompanyFund.id, payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       setCurrencyEditDialogOpen(false);
       setSelectedCompanyFundCurrency(null);
     },
@@ -106,8 +105,13 @@ export function CompanyFundsPage() {
     toast.success('تم حفظ العملة بصندوق الشركة بنجاح');
   };
 
+  const companyFunds = companyFundsQuery.data?.data ?? [];
+  const meta = companyFundsQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="المالية"
         title="صندوق الشركة"
@@ -125,7 +129,7 @@ export function CompanyFundsPage() {
       />
 
       <CompanyFundsTable
-        data={companyFundsQuery.data ?? []}
+        data={companyFunds}
         loading={companyFundsQuery.isLoading}
         onEdit={(fund) => {
           setSelectedCompanyFund(fund);
@@ -136,11 +140,17 @@ export function CompanyFundsPage() {
           setSelectedCompanyFundForCurrency(fund);
           setAttachDialogOpen(true);
         }}
-
         onMoreCurrenciesClick={(fund) => {
           setSelectedCompanyFundForView(fund);
           setCurrenciesDialogOpen(true);
         }}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
       />
 
       <CompanyFundsDialog
@@ -159,7 +169,7 @@ export function CompanyFundsPage() {
             setSelectedCompanyFundForCurrency(null);
           }
         }}
-        currencies={currenciesQuery.data ?? []}
+        currencies={currenciesQuery.data?.data ?? (Array.isArray(currenciesQuery.data) ? currenciesQuery.data : [])}
         onSubmit={handleAttachCurrency}
         loading={attachMutation.isPending}
       />
@@ -171,7 +181,6 @@ export function CompanyFundsPage() {
           if (!open) setSelectedCompanyFundForView(null);
         }}
         fund={selectedCompanyFundForView}
-
       />
 
       <CompanyFundCurrencyDialog
@@ -190,4 +199,3 @@ export function CompanyFundsPage() {
     </div>
   );
 }
-

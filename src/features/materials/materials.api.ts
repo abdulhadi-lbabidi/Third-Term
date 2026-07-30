@@ -1,12 +1,18 @@
 import { apiClient } from '@/shared/api/axios.instance';
-import type { CreateMaterialPayload, Material, UpdateMaterialPayload } from './types';
+import type { CreateMaterialPayload, Material, MaterialResponse, UpdateMaterialPayload } from './types';
 
 export const materialsApi = {
-  getMaterials: async (): Promise<Material[]> => {
+  getMaterials: async (page = 1, perPage = 10): Promise<MaterialResponse> => {
     const response = await apiClient.get('/materials', {
-      params: { paginate: true, per_page: 5, page: 1, 'filter[search]': '' },
+      params: { paginate: true, per_page: perPage, page, 'filter[search]': '' },
     });
-    return response.data?.data ?? response.data ?? [];
+    if (Array.isArray(response.data)) {
+      return { data: response.data };
+    }
+    return {
+      data: response.data?.data ?? [],
+      meta: response.data?.meta,
+    };
   },
   getMaterialById: async (id: number): Promise<Material> => {
     const response = await apiClient.get(`/materials/${id}`);

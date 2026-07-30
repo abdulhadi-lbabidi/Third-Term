@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { UsersTable } from './components/users.table';
-import { usersApi } from './api/users.api';
+import { usersApi, type UsersRoleResponse } from './api/users.api';
 import type {
   AdminRecord,
   ClientRecord,
@@ -17,7 +17,8 @@ import type {
   UserRole,
 } from './types';
 import { PageHeader } from '../components/page-header';
-import {  Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock , Users } from 'lucide-react';
+import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users } from 'lucide-react';
+import { SimplePagination } from '@/components/ui/pagination';
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
@@ -44,7 +45,7 @@ type UsersTabRecord =
 
 const usersQueryKeys = {
   all: ['users'] as const,
-  byRole: (role: UserRole) => ['users', role] as const,
+  byRole: (role: UserRole, page: number, perPage: number) => ['users', role, page, perPage] as const,
 };
 
 function UsersTableSkeleton() {
@@ -81,16 +82,20 @@ export function UsersPage() {
     return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';
   });
 
+  const [page, setPage] = useState(1);
+  const perPage = 50;
+
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab && userRoles.includes(tab as UserRole) && tab !== activeRole) {
       setActiveRole(tab as UserRole);
+      setPage(1);
     }
   }, [activeRole, searchParams]);
 
-  const usersQuery = useQuery<UsersTabRecord[]>({
-    queryKey: usersQueryKeys.byRole(activeRole),
-    queryFn: () => usersApi.getUsersByRole(activeRole) as Promise<UsersTabRecord[]>,
+  const usersQuery = useQuery<UsersRoleResponse<UsersTabRecord>>({
+    queryKey: usersQueryKeys.byRole(activeRole, page, perPage),
+    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage),
   });
 
   const deleteMutation = useMutation({
@@ -144,9 +149,13 @@ export function UsersPage() {
   );
 
   const showSkeleton = usersQuery.isFetching && !usersQuery.data;
+  const users = usersQuery.data?.data ?? [];
+  const meta = usersQuery.data?.meta;
+  const totalPages = meta?.last_page ?? 1;
+  const currentPage = meta?.current_page ?? page;
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="المستخدمون"
         title="المستخدمون"
@@ -163,17 +172,25 @@ export function UsersPage() {
       {showSkeleton ? (
         <UsersTableSkeleton />
       ) : (
-        <UsersTable
-          columns={columns.filter(Boolean) as NonNullable<typeof columns[number]>[]}
-          data={usersQuery.data ?? []}
-          loading={usersQuery.isFetching}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          onFunds={handleFunds}
-          onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
-        />
+        <>
+          <UsersTable
+            columns={columns.filter(Boolean) as NonNullable<typeof columns[number]>[]}
+            data={users}
+            loading={usersQuery.isFetching}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onFunds={handleFunds}
+            onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
+          />
+
+          <SimplePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            meta={meta}
+          />
+        </>
       )}
     </div>
   );
 }
-

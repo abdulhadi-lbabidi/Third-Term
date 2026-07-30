@@ -15,7 +15,9 @@ export function FundRevenues({ fund }: FundRevenuesProps) {
   const [revenueDialogOpen, setRevenueDialogOpen] = useState(false);
   const [selectedRevenue, setSelectedRevenue] = useState<Revenue | null>(null);
 
-  const { data: allRevenues = [], isLoading: isLoadingRevenues } = useRevenues();
+  const revenuesQuery = useRevenues();
+  const allRevenues = revenuesQuery.data?.data ?? (Array.isArray(revenuesQuery.data) ? revenuesQuery.data : []);
+  const isLoadingRevenues = revenuesQuery.isLoading;
   const createRevenueMutation = useCreateRevenue();
   const updateRevenueMutation = useUpdateRevenue();
   const deleteRevenueMutation = useDeleteRevenue();

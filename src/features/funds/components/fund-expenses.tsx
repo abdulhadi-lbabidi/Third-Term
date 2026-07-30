@@ -18,7 +18,9 @@ export function FundExpenses({ fund }: FundExpensesProps) {
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
 
-  const { data: allExpenses = [], isLoading: isLoadingExpenses } = useExpenses();
+  const expensesQuery = useExpenses();
+  const allExpenses = expensesQuery.data?.data ?? (Array.isArray(expensesQuery.data) ? expensesQuery.data : []);
+  const isLoadingExpenses = expensesQuery.isLoading;
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
