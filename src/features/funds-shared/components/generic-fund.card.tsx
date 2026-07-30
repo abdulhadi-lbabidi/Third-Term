@@ -1,4 +1,4 @@
-import { Banknote, Wallet, ChevronLeft } from 'lucide-react';
+import { Banknote, Wallet } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 
 export type GenericFundCurrency = {
@@ -23,7 +23,6 @@ export function GenericFundCard({
   name,
   subtitle,
   currencies,
-  createdAt,
   onClick,
   onMoreCurrenciesClick,
 }: GenericFundCardProps) {
@@ -35,7 +34,7 @@ export function GenericFundCard({
       className="group relative flex cursor-pointer flex-col overflow-hidden transition-all hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-200 to-slate-100 transition-colors group-hover:from-sky-400 group-hover:to-blue-500" />
-      <CardContent className="flex flex-1 flex-col justify-between p-5">
+      <CardContent className="flex flex-1 flex-col justify-between p-5 !py-0">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -46,9 +45,6 @@ export function GenericFundCard({
                 <h3 className="font-semibold text-foreground">{name}</h3>
                 <p className="text-xs text-muted-foreground">{subtitle}</p>
               </div>
-            </div>
-            <div className="flex size-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
-              <ChevronLeft className="size-4 rtl:rotate-180" />
             </div>
           </div>
 
@@ -92,10 +88,14 @@ export function GenericFundCard({
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400">
+        {/* <div className="flex size-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
+          <ChevronLeft className="size-4" />
+        </div> */}
+
+        {/* <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400">
           <span>تم الإنشاء:</span>
           <span>{createdAt ?? '-'}</span>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

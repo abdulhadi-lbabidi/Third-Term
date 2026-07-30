@@ -109,7 +109,7 @@ export function EmployeePaymentsPage() {
                     onValueChange={(val) => setSelectedEmployeeId(val ? Number(val) : null)}
                     options={[
                       { value: '', label: 'كل الموظفين' },
-                      ...(employeesQuery.data?.map(e => ({ value: String(e.id), label: e.user.name })) || [])
+                      ...(employeesQuery.data?.map((e: any) => ({ value: String(e.id), label: e.user.name })) || [])
                     ]}
                     placeholder="كل الموظفين"
                     searchPlaceholder="ابحث عن موظف..."

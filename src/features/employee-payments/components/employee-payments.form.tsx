@@ -127,7 +127,7 @@ export function EmployeePaymentsForm({
                   value={field.value}
                   onValueChange={field.onChange}
                   options={companyFunds.flatMap((fund) =>
-                    (fund.currencies ?? []).map((currency) => ({
+                    (fund.currencies ?? []).map((currency: any) => ({
                       value: String(currency.id),
                       label: `${fund.name} - ${currency.currency} (${currency.balance} ${currency.symbol})`,
                     }))

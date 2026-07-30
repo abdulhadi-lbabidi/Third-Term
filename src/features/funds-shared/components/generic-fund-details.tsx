@@ -77,13 +77,16 @@ export function GenericFundDetails({
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
 
   // Revenues setup
-  const { data: allRevenues = [], isLoading: isLoadingRevenues } = useRevenues();
+  const revenuesQuery = useRevenues();
+  const allRevenues = revenuesQuery.data?.data ?? [];
+  const isLoadingRevenues = revenuesQuery.isLoading;
+
   const createRevenueMutation = useCreateRevenue();
   const updateRevenueMutation = useUpdateRevenue();
   const deleteRevenueMutation = useDeleteRevenue();
 
   const fundRevenues = allRevenues.filter(
-    (r) =>
+    (r: any) =>
       r.revenueable_type === modelType &&
       fundCurrencies.some((c) => c.id === r.revenueable_id)
   );
@@ -97,13 +100,16 @@ export function GenericFundDetails({
   };
 
   // Expenses setup
-  const { data: allExpenses = [], isLoading: isLoadingExpenses } = useExpenses();
+  const expensesQuery = useExpenses();
+  const allExpenses = expensesQuery.data?.data ?? [];
+  const isLoadingExpenses = expensesQuery.isLoading;
+
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
 
   const fundExpenses = allExpenses.filter(
-    (e) =>
+    (e: any) =>
       e.expenseable_type === modelType &&
       fundCurrencies.some((c) => c.id === e.expenseable_id)
   );
@@ -117,8 +123,8 @@ export function GenericFundDetails({
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start gap-3">
+    <div className="space-y-5 shadow-md rounded-xl p-3 bg-white">
+      <div className="flex items-start gap-3 ">
         <Button
           variant="outline"
           size="icon"
@@ -135,15 +141,16 @@ export function GenericFundDetails({
 
           <div className="flex flex-wrap gap-2">
             {fundCurrencies.map((currency) => (
-              <button
+              <Button
                 key={currency.id}
-                className="inline-flex cursor-default items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors"
+                size={"sm"}
+                variant={"outline"}
               >
                 <span>
                   {currency.currency} {currency.symbol}
                 </span>
                 <span className="text-[11px] text-sky-700/80">({currency.balance})</span>
-              </button>
+              </Button>
             ))}
             {fundCurrencies.length === 0 && (
               <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-200 bg-slate-50 p-2 text-xs text-slate-400">
@@ -164,7 +171,7 @@ export function GenericFundDetails({
             تعديل
           </Button>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
+            <AlertDialogTrigger>
               <Button variant="destructive" size="sm">
                 <Trash2 className="ml-2 size-4" />
                 حذف
@@ -299,20 +306,10 @@ export function GenericFundDetails({
           defaultValues={selectedRevenue}
           onSubmit={handleRevenueSubmit}
           loading={createRevenueMutation.isPending || updateRevenueMutation.isPending}
-          fixedType={modelType}
           fixedValues={{
             source: sourceType,
             [fundIdField]: fundId,
           }}
-          fixedFundCurrencies={fundCurrencies.map((c) => ({
-            id: c.id,
-            currency: {
-              symbol: c.symbol,
-              code: c.currency,
-              name: c.currency,
-            },
-            balance: Number(c.balance || 0),
-          }))}
         />
       )}
 
@@ -326,20 +323,10 @@ export function GenericFundDetails({
           defaultValues={selectedExpense}
           onSubmit={handleExpenseSubmit}
           loading={createExpenseMutation.isPending || updateExpenseMutation.isPending}
-          fixedType={modelType}
           fixedValues={{
             source: sourceType,
             [fundIdField]: fundId,
           }}
-          fixedFundCurrencies={fundCurrencies.map((c) => ({
-            id: c.id,
-            currency: {
-              symbol: c.symbol,
-              code: c.currency,
-              name: c.currency,
-            },
-            balance: Number(c.balance || 0),
-          }))}
         />
       )}
 
