@@ -44,11 +44,11 @@ export function FundsPage() {
   const queryClient = useQueryClient();
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const userId = Number(params.userId || '');
+  const userId = Number(params.userId || params.id || '');
   const userName = params.userName ? decodeURIComponent(params.userName) : '';
   const hasUserId = Number.isFinite(userId) && userId > 0;
-  const roleParam = searchParams.get('tab');
-  const userRole = userRoles.includes(roleParam as UserRole) ? (roleParam as UserRole) : null;
+  const rawRoleParam = params.role || searchParams.get('role') || searchParams.get('tab');
+  const userRole = userRoles.includes(rawRoleParam as UserRole) ? (rawRoleParam as UserRole) : null;
   const hasUserContext = hasUserId && !!userRole;
 
   const currentTab = searchParams.get('fundTab') || 'funds';

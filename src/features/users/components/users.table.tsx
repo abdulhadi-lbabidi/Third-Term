@@ -1,4 +1,4 @@
-import { BadgeDollarSign, WalletMinimal } from 'lucide-react';
+import { Wallet, BadgeDollarSign } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 
 type UsersTableProps<T> = {
@@ -20,6 +20,11 @@ export function UsersTable<T>({
   onFunds,
   onEmployeePayments,
 }: UsersTableProps<T>) {
+  const extraActions = [
+    ...(onFunds ? [{ label: 'الصناديق', icon: <Wallet className="size-4" />, onClick: onFunds }] : []),
+    ...(onEmployeePayments ? [{ label: 'الرواتب', icon: <BadgeDollarSign className="size-4" />, onClick: onEmployeePayments }] : []),
+  ];
+
   return (
     <DataTable
       columns={columns}
@@ -34,26 +39,8 @@ export function UsersTable<T>({
       actions={{
         onDelete,
         onEdit,
-        extraActions: [
-          ...(onFunds
-            ? [
-                {
-                  label: 'صناديقي',
-                  icon: <WalletMinimal className="size-4" />,
-                  onClick: onFunds,
-                },
-              ]
-            : []),
-          ...(onEmployeePayments
-            ? [
-                {
-                  label: 'الرواتب',
-                  icon: <BadgeDollarSign className="size-4" />,
-                  onClick: onEmployeePayments,
-                },
-              ]
-            : []),
-        ],
+        editLabel: 'عرض تفاصيل المستخدم',
+        extraActions: extraActions.length ? extraActions : undefined,
       }}
     />
   );

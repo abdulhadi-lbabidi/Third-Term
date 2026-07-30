@@ -23,9 +23,12 @@ export function EmployeePaymentsPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<EmployeePayment | null>(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
-    params.employeeId ? Number(params.employeeId) : null
-  );
+  const resolvedEmployeeId = params.employeeId
+    ? Number(params.employeeId)
+    : params.role === 'employee' && params.id
+    ? Number(params.id)
+    : null;
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(resolvedEmployeeId);
 
   const paymentsQuery = useQuery<EmployeePayment[]>({
     queryKey: employeePaymentsQueryKeys.all,
@@ -38,10 +41,10 @@ export function EmployeePaymentsPage() {
   });
 
   useEffect(() => {
-    if (params.employeeId) {
-      setSelectedEmployeeId(Number(params.employeeId));
+    if (resolvedEmployeeId !== null) {
+      setSelectedEmployeeId(resolvedEmployeeId);
     }
-  }, [params.employeeId]);
+  }, [resolvedEmployeeId]);
 
   const selectedEmployee = employeesQuery.data?.find((employee) => employee.id === selectedEmployeeId) ?? null;
 

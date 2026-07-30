@@ -35,7 +35,7 @@ export function DashboardPage() {
       sortable: true,
       cell: (row: any) => (
         <span className={`font-mono font-medium ${row.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {Math.abs(row.amount).toLocaleString()} $
+          {Number(Math.abs(row.amount || 0)).toLocaleString()} $
         </span>
       ),
     },

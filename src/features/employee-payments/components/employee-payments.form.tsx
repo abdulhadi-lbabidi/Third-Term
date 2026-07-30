@@ -33,6 +33,14 @@ type EmployeePaymentsFormProps = {
 
 const today = new Date().toISOString().slice(0, 10);
 
+function formatNumberWithCommas(value: unknown): string {
+  if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
+  const str = String(value).replace(/,/g, '');
+  const parts = str.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
 export function EmployeePaymentsForm({
   employees,
   defaultValues,
@@ -66,7 +74,7 @@ export function EmployeePaymentsForm({
       payment_date: defaultValues?.payment_date ?? today,
       amount: defaultValues?.amount ? String(defaultValues.amount) : '',
     });
-  }, [defaultValues, employees, form, lockedEmployeeId]);
+  }, [defaultValues, form, lockedEmployeeId]);
 
   return (
     <Form {...form}>
@@ -131,43 +139,45 @@ export function EmployeePaymentsForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="bonuses"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الزيادات</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="bonuses"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الزيادات</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="deductions"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الاستقطاعات</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="deductions"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الاستقطاعات</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -215,10 +225,15 @@ export function EmployeePaymentsForm({
               <FormLabel>المبلغ</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
-                  step="0.01"
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={formatNumberWithCommas(field.value)}
+                  onChange={(event) => {
+                    const raw = event.target.value.replace(/,/g, '');
+                    if (/^\d*\.?\d*$/.test(raw)) {
+                      field.onChange(raw);
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />

@@ -21,6 +21,7 @@ import { MaterialsPage } from '@/features/materials/materials.page';
 import { RevenuesPage } from '@/features/revenues/revenues.page';
 import { InvoiceItemsPage } from '@/features/invoice-items/invoice-items.page';
 import { InvoicesPage } from '@/features/invoices/invoices.page';
+import { AuditLogsPage } from '@/features/audit-logs/audit-logs.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -144,7 +145,8 @@ export const router = createBrowserRouter([
           { path: '/funds', element: <FundsPage /> },
           { path: '/currencies', element: <CurrenciesPage /> },
           { path: '/departments', element: <DepartmentsPage /> },
-          { path: '/cloud-storage', element: <CloudStoragePage /> }
+          { path: '/cloud-storage', element: <CloudStoragePage /> },
+          { path: '/audit-logs', element: <AuditLogsPage /> }
         ],
       },
     ],
