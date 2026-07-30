@@ -38,10 +38,14 @@ function Calendar({
       captionLayout={captionLayout}
       locale={locale}
       formatters={{
-        formatCaption: (date) =>
-          new Intl.DateTimeFormat('ar-SY', { month: 'long', year: 'numeric' }).format(date),
-        formatMonthDropdown: (date) =>
-          new Intl.DateTimeFormat('ar-SY', { month: 'short' }).format(date),
+        formatCaption: (date) => {
+          const levantMonths = ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'];
+          return `${levantMonths[date.getMonth()]} ${date.getFullYear()}`;
+        },
+        formatMonthDropdown: (date) => {
+          const levantMonths = ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'];
+          return levantMonths[date.getMonth()];
+        },
         ...formatters,
       }}
       classNames={{

@@ -60,25 +60,34 @@ type UserProfile = {
 
 const navGroups: NavGroup[] = [
   {
+    label: 'المستخدمون والأقسام',
+    items: [
+      { to: '/users', label: 'المستخدمون', icon: Users },
+    ],
+  },
+  {
+    label: 'المشاريع',
+    items: [
+      { to: '/projects', label: 'المشاريع', icon: FolderKanban },
+      { to: '/departments', label: 'الأقسام', icon: Building2 },
+    ],
+  },
+  {
     label: 'الإدارة المالية',
     items: [
       { to: '/expenses', label: 'المصروفات', icon: ReceiptText },
       { to: '/revenues', label: 'الإيرادات', icon: TrendingUp },
+      { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
       { to: '/invoices', label: 'الفواتير', icon: FileText },
       { to: '/invoice-items', label: 'أصناف الفاتورة', icon: FileSpreadsheet },
-      { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
     ],
   },
   {
     label: 'الصناديق والعملات',
     items: [
-      { to: '/company-funds', label: 'صناديق الشركة', icon: Wallet },
+      { to: '/funds', label: 'إدارة الصناديق', icon: Wallet },
       { to: '/currencies', label: 'العملات', icon: Banknote },
     ],
-  },
-  {
-    label: 'المشاريع',
-    items: [{ to: '/projects', label: 'المشاريع', icon: FolderKanban }],
   },
   {
     label: 'المواد والبنود',
@@ -88,16 +97,11 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'المستخدمون والأقسام',
+    label: 'التخزين',
     items: [
-      { to: '/users', label: 'المستخدمون', icon: Users },
-      { to: '/departments', label: 'الأقسام', icon: Building2 },
+      { to: '/cloud-storage', label: 'التخزين السحابي', icon: Cloud },
       { to: '/audit-logs', label: 'سجل العمليات', icon: History },
     ],
-  },
-  {
-    label: 'التخزين',
-    items: [{ to: '/cloud-storage', label: 'التخزين السحابي', icon: Cloud }],
   },
 ];
 

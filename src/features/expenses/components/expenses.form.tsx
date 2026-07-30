@@ -42,7 +42,15 @@ type ExpensesFormProps = {
     project_fund_id?: number;
     user_id?: number;
     user_fund_id?: number;
+    company_fund_id?: number;
   };
+  fixedType?: string;
+  fixedFundCurrencies?: {
+    id: number;
+    currency: string;
+    symbol: string;
+    balance: string;
+  }[];
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
   loading?: boolean;
 };

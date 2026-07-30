@@ -12,6 +12,12 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { Calendar } from '@/shared/components/ui/calendar';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { cn, formatArabicDate } from '@/shared/lib/utils';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { EmployeeRecord } from '@/features/users/types';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from '../types';
@@ -80,7 +86,7 @@ export function EmployeePaymentsForm({
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit({
             employee_id: Number(values.employee_id),
-            company_fund_currency_id: Number(values.company_fund_currency_id),
+            company_fund_currency_id: values.company_fund_currency_id ? Number(values.company_fund_currency_id) : undefined,
             bonuses: Number(values.bonuses),
             deductions: Number(values.deductions),
             payment_date: values.payment_date,
@@ -237,11 +243,35 @@ export function EmployeePaymentsForm({
           control={form.control}
           name="payment_date"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>تاريخ الدفع</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger>
+                  <FormControl>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full pl-3 text-right font-normal h-11 px-4 py-2 flex justify-between items-center',
+                        !field.value && 'text-muted-foreground'
+                      )}
+                    >
+                      {field.value ? (
+                        formatArabicDate(new Date(field.value))
+                      ) : (
+                        <span>اختر التاريخ</span>
+                      )}
+                      <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}

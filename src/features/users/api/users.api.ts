@@ -30,6 +30,22 @@ export type UsersRoleResponse<T> = {
 };
 
 export const usersApi = {
+  getUsers: async (): Promise<any[]> => {
+    const roles: UserRole[] = [
+      'admin',
+      'client',
+      'investor',
+      'craftsman',
+      'employee',
+      'engineer',
+      'supplier',
+      'trustee',
+    ];
+    const promises = roles.map((role) => usersApi.getUsersByRole(role, 1, 1000));
+    const results = await Promise.all(promises);
+    return results.flatMap((res) => res.data);
+  },
+
   getUserByRole: (
     role: UserRole,
     id: number

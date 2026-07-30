@@ -11,7 +11,9 @@ import { EmployeePaymentsDialog } from './components/employee-payments.dialog';
 import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
 import { PageHeader } from '../components/page-header';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { SimplePagination } from '@/components/ui/pagination';
+
 
 export function EmployeePaymentsPage() {
   const params = useParams();

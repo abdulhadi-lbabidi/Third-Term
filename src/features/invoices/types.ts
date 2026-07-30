@@ -16,9 +16,10 @@ export type Invoice = {
   is_visible_to_client: boolean;
   
   // Relations
-  item?: Item;
+  item?: Item | string;
   expense?: Expense;
-  supplier?: BaseUserProfile;
+  expense_description?: string;
+  supplier?: BaseUserProfile | string;
   target_account?: any;
   created_at?: string;
   updated_at?: string;

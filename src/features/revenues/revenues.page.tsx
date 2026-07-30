@@ -5,6 +5,8 @@ import { RevenuesTable } from './components/revenues.table';
 import { RevenuesDialog } from './components/revenues.dialog';
 import { useRevenues, useCreateRevenue, useUpdateRevenue, useDeleteRevenue } from './revenues.hooks';
 import type { Revenue, CreateRevenuePayload } from './types';
+import { revenuesApi } from './revenues.api';
+import { toast } from 'sonner';
 import { TrendingUp } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 
@@ -25,9 +27,14 @@ export function RevenuesPage() {
     setDialogOpen(true);
   };
 
-  const handleEditClick = (revenue: Revenue) => {
-    setSelectedRevenue(revenue);
-    setDialogOpen(true);
+  const handleEditClick = async (revenue: Revenue) => {
+    try {
+      const fullRevenue = await revenuesApi.getRevenue(revenue.id);
+      setSelectedRevenue(fullRevenue);
+      setDialogOpen(true);
+    } catch (error) {
+      toast.error('حدث خطأ أثناء جلب بيانات الإيراد');
+    }
   };
 
   const handleDelete = async (revenue: Revenue) => {

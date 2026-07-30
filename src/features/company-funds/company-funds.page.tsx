@@ -1,36 +1,48 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { Wallet } from 'lucide-react';
+
 import { Button } from '@/shared/components/ui/button';
 import { currenciesApi } from '@/features/currencies/currencies.api';
-import { companyFundsApi, type CompanyFundResponse } from './company-funds.api';
-import { CompanyFundsDialog } from './components/company-funds.dialog';
-import { CompanyFundsTable } from './components/company-funds.table';
-import { AttachCurrencyDialog } from './components/attach-currency.dialog';
+import { companyFundsApi } from './company-funds.api';
+import { GenericFundDetails } from '@/features/funds-shared/components/generic-fund-details';
+import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
+import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
+import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { CompanyFundCurrenciesDialog } from './components/company-fund-currencies.dialog';
 import { CompanyFundCurrencyDialog } from './components/company-fund-currency.dialog';
-import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
+import type { CompanyFund, CompanyFundCurrency } from './types';
 import { PageHeader } from '../components/page-header';
-import { Wallet } from 'lucide-react';
-import { SimplePagination } from '@/components/ui/pagination';
+import { cn } from '@/shared/lib/utils';
 
-export function CompanyFundsPage() {
+const companyFundsQueryKeys = {
+  all: ['company-funds'] as const,
+};
+
+export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const perPage = 50;
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const selectedFundId = searchParams.get('fundId') ? Number(searchParams.get('fundId')) : null;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
   const [currenciesDialogOpen, setCurrenciesDialogOpen] = useState(false);
   const [currencyEditDialogOpen, setCurrencyEditDialogOpen] = useState(false);
+
   const [selectedCompanyFund, setSelectedCompanyFund] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundForCurrency, setSelectedCompanyFundForCurrency] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundForView, setSelectedCompanyFundForView] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundCurrency, setSelectedCompanyFundCurrency] = useState<CompanyFundCurrency | null>(null);
 
-  const companyFundsQuery = useQuery<CompanyFundResponse>({
-    queryKey: ['company-funds', page, perPage],
-    queryFn: () => companyFundsApi.getCompanyFunds(page, perPage),
+  const companyFundsQuery = useQuery({
+    queryKey: companyFundsQueryKeys.all,
+    queryFn: async () => {
+      const response = await companyFundsApi.getCompanyFunds();
+      return response.data;
+    },
   });
 
   const currenciesQuery = useQuery({
@@ -38,15 +50,17 @@ export function CompanyFundsPage() {
     queryFn: () => currenciesApi.getAll(),
   });
 
+  const currentFund = companyFundsQuery.data?.find((f) => f.id === selectedFundId) || null;
+
   const saveMutation = useMutation({
-    mutationFn: async (payload: CreateCompanyFundPayload) => {
+    mutationFn: async (payload: { name: string }) => {
       if (selectedCompanyFund) {
         return companyFundsApi.updateCompanyFund(selectedCompanyFund.id, { name: payload.name });
       }
       return companyFundsApi.createCompanyFund(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
       setDialogOpen(false);
       setSelectedCompanyFund(null);
     },
@@ -55,33 +69,31 @@ export function CompanyFundsPage() {
   const deleteMutation = useMutation({
     mutationFn: (fund: CompanyFund) => companyFundsApi.deleteCompanyFund(fund.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
     },
   });
 
   const attachMutation = useMutation({
     mutationFn: async (payload: { currency_id: number; balance: string }) => {
-      if (!selectedCompanyFundForCurrency) {
-        throw new Error('صندوق الشركة غير محدد');
-      }
-      return companyFundsApi.attachCurrency(selectedCompanyFundForCurrency.id, payload);
+      const fund = selectedCompanyFundForCurrency || selectedCompanyFund;
+      if (!fund) throw new Error('صندوق الشركة غير محدد');
+      return companyFundsApi.attachCurrency(fund.id, payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
       setAttachDialogOpen(false);
       setSelectedCompanyFundForCurrency(null);
+      setSelectedCompanyFund(null);
     },
   });
 
   const updateCurrencyMutation = useMutation({
     mutationFn: async (payload: { currency_id: number; balance: string }) => {
-      if (!selectedCompanyFund) {
-        throw new Error('صندوق الشركة غير محدد');
-      }
+      if (!selectedCompanyFund) throw new Error('صندوق الشركة غير محدد');
       return companyFundsApi.attachCurrency(selectedCompanyFund.id, payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
       setCurrencyEditDialogOpen(false);
       setSelectedCompanyFundCurrency(null);
     },
@@ -90,7 +102,7 @@ export function CompanyFundsPage() {
     },
   });
 
-  const handleSubmit = async (payload: CreateCompanyFundPayload) => {
+  const handleSubmit = async (payload: { name: string }) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedCompanyFund ? 'تم تعديل صندوق الشركة بنجاح' : 'تم إنشاء صندوق الشركة بنجاح');
   };
@@ -98,6 +110,12 @@ export function CompanyFundsPage() {
   const handleDelete = async (fund: CompanyFund) => {
     await deleteMutation.mutateAsync(fund);
     toast.success('تم حذف صندوق الشركة بنجاح');
+    if (selectedFundId === fund.id) {
+      setSearchParams((prev) => {
+        prev.delete('fundId');
+        return prev;
+      });
+    }
   };
 
   const handleAttachCurrency = async (payload: { currency_id: number; balance: string }) => {
@@ -105,58 +123,113 @@ export function CompanyFundsPage() {
     toast.success('تم حفظ العملة بصندوق الشركة بنجاح');
   };
 
-  const companyFunds = companyFundsQuery.data?.data ?? [];
-  const meta = companyFundsQuery.data?.meta;
-  const totalPages = meta?.last_page ?? 1;
-  const currentPage = meta?.current_page ?? page;
-
   return (
-    <div className="flex flex-col flex-1 space-y-4">
-      <PageHeader
-        badge="المالية"
-        title="صندوق الشركة"
-        icon={Wallet}
-        action={
-          <Button
-            onClick={() => {
-              setSelectedCompanyFund(null);
+    <div className={cn("space-y-5", isTab && "space-y-0")}>
+      {!selectedFundId ? (
+        <>
+          {!isTab && (
+            <PageHeader
+              badge="المالية"
+              title="صندوق الشركة"
+              icon={Wallet}
+              action={
+                <Button
+                  onClick={() => {
+                    setSelectedCompanyFund(null);
+                    setDialogOpen(true);
+                  }}
+                >
+                  إضافة صندوق الشركة
+                </Button>
+              }
+            />
+          )}
+
+          {companyFundsQuery.isLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
+              ))}
+            </div>
+          ) : (companyFundsQuery.data ?? []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
+              <Wallet className="mb-4 size-10 text-muted-foreground" />
+              <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                لم يتم إضافة أي صناديق شركة بعد.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {(companyFundsQuery.data ?? []).map((fund) => (
+                <GenericFundCard
+                  key={fund.id}
+                  fundId={fund.id}
+                  name={fund.name}
+                  subtitle="صندوق شركة"
+                  currencies={(fund.currencies ?? []).map(c => ({
+                    id: c.id,
+                    currency: c.currency,
+                    symbol: c.symbol,
+                    balance: c.balance
+                  }))}
+                  createdAt={fund.created_at}
+                  onClick={(id) => {
+                    setSearchParams((prev) => {
+                      prev.set('fundId', id.toString());
+                      if (!prev.has('fundTab')) prev.set('fundTab', 'revenues');
+                      return prev;
+                    });
+                  }}
+                  onMoreCurrenciesClick={() => {
+                    setSelectedCompanyFundForView(fund);
+                    setCurrenciesDialogOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        currentFund && (
+          <GenericFundDetails
+            fundId={currentFund.id}
+            fundName={currentFund.name}
+            fundCurrencies={(currentFund.currencies ?? []).map(c => ({
+              id: c.id,
+              currency: c.currency,
+              symbol: c.symbol,
+              balance: c.balance
+            }))}
+            modelType="App\\Models\\CompanyFundCurrency"
+            sourceType="company_fund"
+            fundIdField="company_fund_id"
+            onBack={() => {
+              setSearchParams((prev) => {
+                prev.delete('fundId');
+                return prev;
+              });
+            }}
+            onEdit={() => {
+              setSelectedCompanyFund(currentFund);
               setDialogOpen(true);
             }}
-          >
-            إضافة صندوق الشركة
-          </Button>
-        }
-      />
+            onDelete={async () => {
+              await handleDelete(currentFund);
+            }}
+            onAttachCurrency={() => {
+              setSelectedCompanyFund(currentFund);
+              setAttachDialogOpen(true);
+            }}
+          />
+        )
+      )}
 
-      <CompanyFundsTable
-        data={companyFunds}
-        loading={companyFundsQuery.isLoading}
-        onEdit={(fund) => {
-          setSelectedCompanyFund(fund);
-          setDialogOpen(true);
-        }}
-        onDelete={handleDelete}
-        onAttachCurrency={(fund) => {
-          setSelectedCompanyFundForCurrency(fund);
-          setAttachDialogOpen(true);
-        }}
-        onMoreCurrenciesClick={(fund) => {
-          setSelectedCompanyFundForView(fund);
-          setCurrenciesDialogOpen(true);
-        }}
-      />
-
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        meta={meta}
-      />
-
-      <CompanyFundsDialog
+      <GenericFundDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        companyFund={selectedCompanyFund}
+        fundType="company"
+        defaultValues={selectedCompanyFund}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
@@ -167,9 +240,15 @@ export function CompanyFundsPage() {
           setAttachDialogOpen(open);
           if (!open) {
             setSelectedCompanyFundForCurrency(null);
+            setSelectedCompanyFund(null);
           }
         }}
-        currencies={currenciesQuery.data?.data ?? (Array.isArray(currenciesQuery.data) ? currenciesQuery.data : [])}
+        currencies={(currenciesQuery.data?.data ?? []).filter(
+          (c) =>
+            !(selectedCompanyFundForCurrency || selectedCompanyFund)?.currencies?.some(
+              (fc) => fc.currency === c.currency
+            )
+        )}
         onSubmit={handleAttachCurrency}
         loading={attachMutation.isPending}
       />

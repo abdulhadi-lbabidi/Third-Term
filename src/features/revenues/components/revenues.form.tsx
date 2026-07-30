@@ -44,6 +44,7 @@ type RevenuesFormProps = {
     project_fund_id?: number;
     user_id?: number;
     user_fund_id?: number;
+    company_fund_id?: number;
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
@@ -121,8 +122,8 @@ const sourceToRevenueableType: Record<RevenueSource, RevenueableType> = {
 
 function getSourceFromType(type?: string): RevenueSource {
   if (type === 'App\\Models\\ProjectFundCurrency') return 'project_fund';
-  if (type === 'App\\Models\\CurrencyFund') return 'user_fund';
-  return 'company_fund';
+  if (type === 'App\\Models\\CompanyFundCurrency') return 'company_fund';
+  return 'user_fund';
 }
 
 function getFundLabel(item: FundLabelSource) {
@@ -145,8 +146,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const form = useForm<RevenueFormInput, any, RevenueFormValues>({
     resolver: zodResolver(revenueFormSchema),
     defaultValues: {
-      source: fixedValues?.source ?? getSourceFromType(defaultValues?.revenueable_type),
-      revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : sourceToRevenueableType.company_fund),
+      source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : 'user_fund'),
+      revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : sourceToRevenueableType.user_fund),
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
       company_fund_id: undefined,
       user_role: defaultValues?.user_role ?? '',
@@ -159,9 +160,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         const num = Number(val);
         return Number.isNaN(num) ? undefined : num;
       })(),
-      fund_user_role: '',
-      fund_user_id: fixedValues?.user_id ?? undefined,
-      user_fund_id: fixedValues?.user_fund_id ?? undefined,
+      fund_user_role: defaultValues?.revenueable_info?.user_info?.role ?? '',
+      fund_user_id: defaultValues?.revenueable_info?.user_info?.id ?? fixedValues?.user_id ?? undefined,
+      user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
       project_fund_id: fixedValues?.project_fund_id ?? undefined,
       project_id: fixedValues?.project_id ?? undefined,
       statement: defaultValues?.statement ?? '',
@@ -849,11 +850,11 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             )}
           />
 
-          <Button type="submit" className="h-11 bg-slate-950 text-white min-w-[140px] shadow-md hover:bg-slate-800" disabled={loading}>
+          <Button type="submit" className="h-11 flex bg-slate-950 text-white min-w-[140px] shadow-md hover:bg-slate-800" disabled={loading}>
+            <CheckCircle2 className="size-4 ml-2" />
             {loading
               ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')
               : (defaultValues?.id ? 'تحديث الإيراد' : 'إضافة')}
-            <CheckCircle2 className="size-4 ml-2" />
           </Button>
         </div>
       </form>

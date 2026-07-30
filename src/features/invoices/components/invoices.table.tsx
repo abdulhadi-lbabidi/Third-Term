@@ -5,6 +5,7 @@ import { DataTable, type DataTableColumn } from '@/features/components/data-tabl
 import { Badge } from '@/shared/components/ui/badge';
 import { useInvoices, useDeleteInvoice } from '../invoices.hooks';
 import { InvoicesDialog } from './invoices.dialog';
+import { InvoiceDetailsDialog } from './invoice-details.dialog';
 import type { Invoice } from '../types';
 import { SimplePagination } from '@/components/ui/pagination';
 
@@ -15,7 +16,8 @@ export function InvoicesTable() {
   const { data: response, isLoading } = useInvoices({ page, per_page: perPage });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
-  const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
+  const [invoiceToEditId, setInvoiceToEditId] = useState<number | null>(null);
+  const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);
 
   const invoices = response?.data || [];
   const meta = response?.meta;
@@ -41,14 +43,18 @@ export function InvoicesTable() {
       header: 'المورد',
       cell: (row: Invoice) => (
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900">{row.supplier?.name || '-'}</span>
+          <span className="text-sm font-medium text-slate-900">
+            {typeof row.supplier === 'string' ? row.supplier : row.supplier?.name || '-'}
+          </span>
         </div>
       ),
     },
     {
       header: 'البند',
       cell: (row: Invoice) => (
-        <span className="text-sm text-slate-600">{row.item?.name || '-'}</span>
+        <span className="text-sm text-slate-600">
+          {typeof row.item === 'string' ? row.item : row.item?.name || '-'}
+        </span>
       ),
     },
     {
@@ -82,7 +88,7 @@ export function InvoicesTable() {
         cancelLabel="إلغاء"
         deleteLabel="حذف"
         actions={{
-          onEdit: setInvoiceToEdit,
+          onEdit: (row) => setInvoiceToEditId(row.id),
           onDelete: async (invoice) => {
             await deleteInvoice(invoice.id);
           },
@@ -106,9 +112,15 @@ export function InvoicesTable() {
       />
 
       <InvoicesDialog
-        isOpen={!!invoiceToEdit}
-        onClose={() => setInvoiceToEdit(null)}
-        invoice={invoiceToEdit || undefined}
+        isOpen={!!invoiceToEditId}
+        onClose={() => setInvoiceToEditId(null)}
+        invoiceId={invoiceToEditId || undefined}
+      />
+
+      <InvoiceDetailsDialog
+        isOpen={!!invoiceToViewId}
+        onClose={() => setInvoiceToViewId(null)}
+        invoiceId={invoiceToViewId}
       />
     </div>
   );

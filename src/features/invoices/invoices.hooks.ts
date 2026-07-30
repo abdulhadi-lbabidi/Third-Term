@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { invoicesApi } from './invoices.api';
 
 export const INVOICES_KEYS = {
@@ -56,6 +57,7 @@ export const useDeleteInvoice = () => {
     mutationFn: invoicesApi.deleteInvoice,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: INVOICES_KEYS.lists() });
+      toast.success('تم حذف الفاتورة بنجاح');
     },
   });
 };

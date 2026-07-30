@@ -23,6 +23,7 @@ export function useCreateRevenue() {
     mutationFn: (payload: CreateRevenuePayload) => revenuesApi.createRevenue(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
+      toast.success('تم إضافة الإيراد بنجاح');
     },
     onError: () => {
       toast.error('حدث خطأ أثناء إضافة الإيراد');
@@ -38,6 +39,7 @@ export function useUpdateRevenue() {
       revenuesApi.updateRevenue(id, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
+      toast.success('تم تعديل الإيراد بنجاح');
     },
     onError: () => {
       toast.error('حدث خطأ أثناء تعديل الإيراد');
@@ -52,6 +54,7 @@ export function useDeleteRevenue() {
     mutationFn: (id: number) => revenuesApi.deleteRevenue(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
+      toast.success('تم حذف الإيراد بنجاح');
     },
     onError: () => {
       toast.error('حدث خطأ أثناء حذف الإيراد');
