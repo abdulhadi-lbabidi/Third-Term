@@ -11,6 +11,7 @@ import { EmployeePaymentsDialog } from './components/employee-payments.dialog';
 import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
 import { PageHeader } from '../components/page-header';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 
 const employeePaymentsQueryKeys = {
   all: ['employee-payments'] as const,
@@ -91,18 +92,18 @@ export function EmployeePaymentsPage() {
           <div className="flex shrink-0 items-center gap-3"  >
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
-                <select
-                  className="field-control h-10 w-[210px] shrink-0"
-                  value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
-                  onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
-                >
-                  <option value="">كل الموظفين</option>
-                  {employeesQuery.data?.map((employee) => (
-                    <option key={employee.id} value={String(employee.id)}>
-                      {employee.user.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-[210px] shrink-0">
+                  <SearchableSelect
+                    value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
+                    onValueChange={(val) => setSelectedEmployeeId(val ? Number(val) : null)}
+                    options={[
+                      { value: '', label: 'كل الموظفين' },
+                      ...(employeesQuery.data?.map(e => ({ value: String(e.id), label: e.user.name })) || [])
+                    ]}
+                    placeholder="كل الموظفين"
+                    searchPlaceholder="ابحث عن موظف..."
+                  />
+                </div>
                 {selectedEmployeeId ? (
                   <Button
                     type="button"

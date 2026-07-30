@@ -1,21 +1,24 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/components/ui/dialog';
 import { InvoicesForm } from './invoices.form';
-import type { Invoice, CreateInvoicePayload } from '../types';
+import { useInvoice } from '../invoices.hooks';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import type { CreateInvoicePayload } from '../types';
 
 type InvoicesDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  invoice?: Invoice;
+  invoiceId?: number;
   fixedValues?: Partial<CreateInvoicePayload>;
 };
 
 export function InvoicesDialog({
   isOpen,
   onClose,
-  invoice,
+  invoiceId,
   fixedValues,
 }: InvoicesDialogProps) {
-  const isEdit = !!invoice;
+  const isEdit = !!invoiceId;
+  const { data: invoice, isLoading } = useInvoice(invoiceId as number, isEdit && isOpen);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -29,11 +32,23 @@ export function InvoicesDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
-          <InvoicesForm
-            defaultValues={invoice}
-            onSuccess={onClose}
-            fixedValues={fixedValues}
-          />
+          {isEdit && isLoading ? (
+            <div className="space-y-4">
+               {Array.from({ length: 4 }).map((_, i) => (
+                 <div key={i} className="space-y-2">
+                   <Skeleton className="h-4 w-20" />
+                   <Skeleton className="h-10 w-full" />
+                 </div>
+               ))}
+               <Skeleton className="h-10 w-full mt-6" />
+            </div>
+          ) : (
+            <InvoicesForm
+              defaultValues={invoice}
+              onSuccess={onClose}
+              fixedValues={fixedValues}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

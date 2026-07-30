@@ -36,7 +36,7 @@ function formatDateRange(start: string, end: string) {
   }
 
   if (isSameYear(startDate, endDate)) {
-    return `${formatArabicDate(startDate, 'ar-SY', true, false)} - ${formatArabicDate(endDate)}`;
+    return `${formatArabicDate(startDate, true, false)} - ${formatArabicDate(endDate)}`;
   }
 
   return `${formatArabicDate(startDate)} - ${formatArabicDate(endDate)}`;

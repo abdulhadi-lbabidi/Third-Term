@@ -12,6 +12,12 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { Calendar } from '@/shared/components/ui/calendar';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { cn, formatArabicDate } from '@/shared/lib/utils';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { EmployeeRecord } from '@/features/users/types';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from '../types';
@@ -84,23 +90,17 @@ export function EmployeePaymentsForm({
             <FormItem>
               <FormLabel>الموظف</FormLabel>
               <FormControl>
-                <select
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+                <SearchableSelect
                   value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
+                  onValueChange={field.onChange}
+                  options={employees.map((employee) => ({
+                    value: String(employee.id),
+                    label: employee.user.name,
+                  }))}
+                  placeholder="اختر الموظف"
                   disabled={Boolean(lockedEmployeeId)}
-                >
-                  <option value="" disabled>
-                    اختر الموظف
-                  </option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={String(employee.id)}>
-                      {employee.user.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </FormControl>
-            
               <FormMessage />
             </FormItem>
           )}
@@ -113,23 +113,18 @@ export function EmployeePaymentsForm({
             <FormItem>
               <FormLabel> صندوق الشركة</FormLabel>
               <FormControl>
-                <select
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
+                <SearchableSelect
                   value={field.value}
-                  onChange={(event) => field.onChange(event.target.value)}
-                  disabled={isLoadingCompanyFunds}
-                >
-                  <option value="" disabled>
-                    اختر عملة صندوق الشركة
-                  </option>
-                  {companyFunds.flatMap((fund) =>
-                    (fund.currencies ?? []).map((currency) => (
-                      <option key={currency.id} value={String(currency.id)}>
-                        {fund.name} - {currency.currency} ({currency.balance} {currency.symbol})
-                      </option>
-                    )),
+                  onValueChange={field.onChange}
+                  options={companyFunds.flatMap((fund) =>
+                    (fund.currencies ?? []).map((currency) => ({
+                      value: String(currency.id),
+                      label: `${fund.name} - ${currency.currency} (${currency.balance} ${currency.symbol})`,
+                    }))
                   )}
-                </select>
+                  placeholder="اختر عملة صندوق الشركة"
+                  disabled={isLoadingCompanyFunds}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -178,11 +173,35 @@ export function EmployeePaymentsForm({
           control={form.control}
           name="payment_date"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>تاريخ الدفع</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger>
+                  <FormControl>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full pl-3 text-right font-normal h-11 px-4 py-2 flex justify-between items-center',
+                        !field.value && 'text-muted-foreground'
+                      )}
+                    >
+                      {field.value ? (
+                        formatArabicDate(new Date(field.value))
+                      ) : (
+                        <span>اختر التاريخ</span>
+                      )}
+                      <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { itemsApi } from '@/features/items/items.api';
 import type { Item } from '@/features/items/types';
@@ -64,20 +65,17 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
             <FormItem>
               <FormLabel>البند</FormLabel>
               <FormControl>
-                <select
-                  value={field.value ? String(field.value) : ''}
-                  onChange={(event) => field.onChange(Number(event.target.value))}
-                  className="field-control"
-                >
-                  <option value="" disabled>
-                    اختر البند
-                  </option>
-                  {itemOptions.map((item) => (
-                    <option key={item.id} value={String(item.id)}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  onValueChange={(value) => field.onChange(Number(value))}
+                  value={field.value ? String(field.value) : undefined}
+                  options={itemOptions.map((item) => ({
+                    value: String(item.id),
+                    label: item.name,
+                  }))}
+                  placeholder="اختر البند"
+                  searchPlaceholder="ابحث عن بند..."
+                  emptyMessage="لا توجد بنود."
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
