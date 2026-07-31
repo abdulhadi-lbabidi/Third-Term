@@ -25,9 +25,6 @@ import type {
   CreateStageTimelinePayload
 } from '../../stage-timelines/stage-timelines.types';
 
-const STAGES_QUERY_KEY = ['project-stages'] as const;
-const TIMELINES_QUERY_KEY = ['stage-timelines'] as const;
-
 type ProjectStagesTabProps = {
   projectId: number;
 };
@@ -50,12 +47,17 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
 
   // ── Data fetching ──────────────────────────────────────────────
   const stagesQuery = useQuery<ProjectStage[]>({
-    queryKey: STAGES_QUERY_KEY,
-    queryFn: () => projectStagesApi.getAll(),
+    queryKey: ['project-stages', projectId],
+    queryFn: () => projectStagesApi.getAll({
+      'filter[project_id]': projectId,
+      paginate: true,
+      per_page: 5,
+      page: 1,
+    }),
   });
 
   const timelinesQuery = useQuery<StageTimeline[]>({
-    queryKey: TIMELINES_QUERY_KEY,
+    queryKey: ['stage-timelines', projectId],
     queryFn: () => stageTimelinesApi.getAll(),
   });
 
@@ -66,7 +68,10 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
   const stagesWithTimelines: ProjectStage[] = rawStages.map((stage) => ({
     ...stage,
     timelines: rawTimelines.filter((tl) => tl.project_stage_id === stage.id).sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()),
-  })).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+  }))
+    .sort((a, b) => new Date(a.start_date)
+      .getTime() - new Date(b.start_date)
+        .getTime());
 
   // ── Stage Mutations ─────────────────────────────────────────────
   const saveStageMutation = useMutation({
@@ -77,7 +82,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
       return projectStagesApi.create(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: STAGES_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ['project-stages', projectId] });
       setStageDialogOpen(false);
       setSelectedStage(null);
       toast.success(selectedStage ? 'تم تعديل المرحلة بنجاح' : 'تمت إضافة المرحلة بنجاح');
@@ -90,7 +95,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
   const deleteStageMutation = useMutation({
     mutationFn: (stage: ProjectStage) => projectStagesApi.delete(stage.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: STAGES_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ['project-stages', projectId] });
       setStageToDelete(null);
       toast.success('تم حذف المرحلة بنجاح');
     },
@@ -108,7 +113,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
       return stageTimelinesApi.create(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: TIMELINES_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ['stage-timelines', projectId] });
       setTimelineDialogOpen(false);
       setSelectedTimeline(null);
       setParentStageForTimeline(null);
@@ -122,7 +127,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
   const deleteTimelineMutation = useMutation({
     mutationFn: (timeline: StageTimeline) => stageTimelinesApi.delete(timeline.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: TIMELINES_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ['stage-timelines', projectId] });
       setTimelineToDelete(null);
       toast.success('تم حذف التفصيل الزمني بنجاح');
     },
@@ -176,7 +181,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
           <Button
             type="button"
             onClick={handleAddStage}
-            
+
           >
             <Plus className="size-4" />
             إضافة مرحلة

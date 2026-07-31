@@ -6,7 +6,15 @@ import { DirectionProvider } from '@radix-ui/react-direction';
 import { DirectionProvider as BaseUIDirectionProvider } from '@base-ui/react/direction-provider';
 import { router } from './router';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export function App() {
   return (

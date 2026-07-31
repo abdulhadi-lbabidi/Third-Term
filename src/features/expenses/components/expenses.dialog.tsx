@@ -27,15 +27,17 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
           <DialogTitle>{defaultValues ? 'تعديل المصروف' : 'إضافة مصروف جديد'}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          <ExpensesForm
-            defaultValues={defaultValues}
-            fixedValues={fixedValues}
-            onSubmit={async (data) => {
-              await onSubmit(data);
-              onOpenChange(false);
-            }}
-            loading={loading}
-          />
+          {open && (
+            <ExpensesForm
+              defaultValues={defaultValues}
+              fixedValues={fixedValues}
+              onSubmit={async (data) => {
+                await onSubmit(data);
+                onOpenChange(false);
+              }}
+              loading={loading}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

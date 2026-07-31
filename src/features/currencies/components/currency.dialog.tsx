@@ -23,13 +23,15 @@ export function CurrencyDialog({
         <DialogHeader>
           <DialogTitle>{currency ? 'تعديل عملة' : 'إضافة عملة جديدة'}</DialogTitle>
         </DialogHeader>
-        <CurrencyForm
-          defaultValues={currency || undefined}
-          onSubmit={async (data) => {
-            await onSubmit(data);
-          }}
-          loading={loading}
-        />
+        {open && (
+          <CurrencyForm
+            defaultValues={currency || undefined}
+            onSubmit={async (data) => {
+              await onSubmit(data);
+            }}
+            loading={loading}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

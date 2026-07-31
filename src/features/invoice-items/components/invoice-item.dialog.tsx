@@ -24,7 +24,7 @@ export function InvoiceItemDialog({
         <DialogHeader>
           <DialogTitle>{invoiceItem ? 'تعديل صنف فاتورة' : 'إضافة صنف فاتورة'}</DialogTitle>
         </DialogHeader>
-        <InvoiceItemForm defaultValues={invoiceItem} onSubmit={onSubmit} loading={loading} />
+        {open && <InvoiceItemForm defaultValues={invoiceItem} onSubmit={onSubmit} loading={loading} />}
       </DialogContent>
     </Dialog>
   );

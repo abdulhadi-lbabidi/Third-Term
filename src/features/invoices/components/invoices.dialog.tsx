@@ -41,13 +41,13 @@ export function InvoicesDialog({
               ))}
               <Skeleton className="h-10 w-full mt-6" />
             </div>
-          ) : (
+          ) : isOpen ? (
             <InvoicesForm
               defaultValues={invoice}
               onSuccess={onClose}
               fixedValues={fixedValues}
             />
-          )}
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>

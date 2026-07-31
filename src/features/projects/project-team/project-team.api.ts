@@ -6,10 +6,10 @@ import type {
 } from './project-team.types';
 
 export const projectTeamApi = {
-  /** GET /api/project-teams — returns all members (optionally filtered by project_id client-side) */
-  getAll: async (): Promise<ProjectTeamMember[]> => {
-    const response = await apiClient.get('/project-teams');
-    return response.data?.data ?? response.data ?? [];
+  /** GET /api/project-teams — returns all members (optionally filtered by project_id) */
+  getAll: async (params?: Record<string, any>): Promise<ProjectTeamMember[]> => {
+    const response = await apiClient.get('/project-teams', { params });
+    return response.data?.data?.data ?? response.data?.data ?? response.data ?? [];
   },
 
   /** GET /api/project-teams/:id */

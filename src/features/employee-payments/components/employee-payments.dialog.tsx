@@ -28,13 +28,15 @@ export function EmployeePaymentsDialog({
         <DialogHeader>
           <DialogTitle>{employeePayment ? 'تعديل راتب الموظف' : 'إضافة راتب موظف'}</DialogTitle>
         </DialogHeader>
-        <EmployeePaymentsForm
-          employees={employees}
-          defaultValues={employeePayment}
-          lockedEmployeeId={lockedEmployeeId}
-          onSubmit={onSubmit}
-          loading={loading}
-        />
+        {open && (
+          <EmployeePaymentsForm
+            employees={employees}
+            defaultValues={employeePayment}
+            lockedEmployeeId={lockedEmployeeId}
+            onSubmit={onSubmit}
+            loading={loading}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
