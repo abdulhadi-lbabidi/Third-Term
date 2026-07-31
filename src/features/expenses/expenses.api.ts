@@ -9,9 +9,9 @@ export type ExpenseResponse = {
 };
 
 export const expensesApi = {
-  getExpenses: async (page = 1, perPage = 50): Promise<ExpenseResponse> => {
+  getExpenses: async (page = 1, perPage = 50, filters?: Record<string, any>): Promise<ExpenseResponse> => {
     const response = await apiClient.get('/expenses', {
-      params: { paginate: true, page, per_page: perPage },
+      params: { paginate: true, page, per_page: perPage, ...filters },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

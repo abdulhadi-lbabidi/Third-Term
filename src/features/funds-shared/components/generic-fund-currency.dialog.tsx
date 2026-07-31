@@ -3,48 +3,40 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/shared/components/ui/form';
-import type { Currency } from '@/features/currencies/types';
-import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '../schemas/funds.schema';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
+import { Input } from '@/shared/components/ui/input';
+import type { GenericFundCurrency } from './generic-fund.card';
+import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '@/features/funds/schemas/funds.schema';
 
-type AttachCurrencyDialogProps = {
+type GenericFundCurrencyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currencies: Currency[];
+  currency?: GenericFundCurrency | null;
   onSubmit: (values: { currency_id: number; balance: string }) => Promise<void>;
   loading?: boolean;
 };
 
-export function AttachCurrencyDialog({
-  open,
-  onOpenChange,
-  currencies,
-  onSubmit,
-  loading,
-}: AttachCurrencyDialogProps) {
+export function GenericFundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loading }: GenericFundCurrencyDialogProps) {
   const form = useForm<AttachFundCurrencyValues>({
     resolver: zodResolver(attachFundCurrencySchema),
-    defaultValues: { currency_id: 0, balance: '0' },
+    defaultValues: { currency_id: 0, balance: '' },
   });
 
   useEffect(() => {
-    if (!open) {
-      form.reset({ currency_id: 0, balance: '0' });
+    if (open && currency) {
+      form.reset({ currency_id: currency.id, balance: String(currency.balance) });
+      return;
     }
-  }, [form, open]);
+    if (!open) {
+      form.reset({ currency_id: 0, balance: '' });
+    }
+  }, [currency, form, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>إضافة عملة بالصندوق</DialogTitle>
+          <DialogTitle>{currency ? `تعديل ${currency.currency}` : 'تعديل العملة'}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -60,30 +52,16 @@ export function AttachCurrencyDialog({
             <FormField
               control={form.control}
               name="currency_id"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>العملة</FormLabel>
                   <FormControl>
-                    <select
-                      value={field.value ? String(field.value) : ''}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900"
-                    >
-                      <option value="" disabled>
-                        اختر العملة
-                      </option>
-                      {currencies.map((currency) => (
-                        <option key={currency.id} value={String(currency.id)}>
-                          {currency.currency} {currency.symbol}
-                        </option>
-                      ))}
-                    </select>
+                    <Input value={currency ? `${currency.currency} ${currency.symbol}` : ''} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'جاري الحفظ...' : 'حفظ'}

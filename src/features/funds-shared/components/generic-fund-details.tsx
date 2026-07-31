@@ -26,6 +26,10 @@ import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
 import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
 
+// Invoices
+import { InvoicesTable } from '@/features/invoices/components/invoices.table';
+import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
+
 type GenericFundDetailsProps = {
   fundId: number;
   fundName: string;
@@ -40,10 +44,11 @@ type GenericFundDetailsProps = {
   onDelete: () => Promise<void>;
   onAttachCurrency: () => void;
 
-  // Configuration for Revenues and Expenses
   modelType: string; // e.g., 'App\\Models\\CompanyFundCurrency'
   sourceType: any; // e.g., 'company_fund'
   fundIdField: 'company_fund_id' | 'project_fund_id' | 'user_fund_id';
+  extraDetails?: React.ReactNode;
+  extraFixedValues?: Record<string, any>;
 };
 
 export function GenericFundDetails({
@@ -54,9 +59,10 @@ export function GenericFundDetails({
   onEdit,
   onDelete,
   onAttachCurrency,
-  modelType,
   sourceType,
   fundIdField,
+  extraDetails,
+  extraFixedValues,
 }: GenericFundDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('fundTab') || 'revenues';
@@ -76,20 +82,19 @@ export function GenericFundDetails({
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
 
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+
+  const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
+  const filters = { [`filter[${apiFilterField}]`]: fundId };
+
   // Revenues setup
-  const revenuesQuery = useRevenues();
-  const allRevenues = revenuesQuery.data?.data ?? [];
+  const revenuesQuery = useRevenues(1, 50, filters);
+  const fundRevenues = revenuesQuery.data?.data ?? [];
   const isLoadingRevenues = revenuesQuery.isLoading;
 
   const createRevenueMutation = useCreateRevenue();
   const updateRevenueMutation = useUpdateRevenue();
   const deleteRevenueMutation = useDeleteRevenue();
-
-  const fundRevenues = allRevenues.filter(
-    (r: any) =>
-      r.revenueable_type === modelType &&
-      fundCurrencies.some((c) => c.id === r.revenueable_id)
-  );
 
   const handleRevenueSubmit = async (data: any) => {
     if (selectedRevenue) {
@@ -100,19 +105,13 @@ export function GenericFundDetails({
   };
 
   // Expenses setup
-  const expensesQuery = useExpenses();
-  const allExpenses = expensesQuery.data?.data ?? [];
+  const expensesQuery = useExpenses(1, 50, filters);
+  const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
 
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
-
-  const fundExpenses = allExpenses.filter(
-    (e: any) =>
-      e.expenseable_type === modelType &&
-      fundCurrencies.some((c) => c.id === e.expenseable_id)
-  );
 
   const handleExpenseSubmit = async (data: any) => {
     if (selectedExpense) {
@@ -138,6 +137,7 @@ export function GenericFundDetails({
           <p className="mb-3 text-sm text-muted-foreground">
             إدارة الحركات المالية المتعلقة بهذا الصندوق
           </p>
+          {extraDetails && <div className="mb-4">{extraDetails}</div>}
 
           <div className="flex flex-wrap gap-2">
             {fundCurrencies.map((currency) => (
@@ -286,13 +286,27 @@ export function GenericFundDetails({
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-5">
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
-            <Receipt className="mb-4 size-10 text-muted-foreground" />
-            <h4 className="text-sm font-medium text-foreground">جدول الفواتير</h4>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              سيتم عرض الفواتير التابعة لهذا الصندوق قريباً.
-            </p>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">فواتير الصندوق</h3>
+            <Button
+              onClick={() => {
+                setInvoiceDialogOpen(true);
+              }}
+              className="bg-slate-950 text-white"
+            >
+              <PlusCircle className="mr-2 size-4" />
+              إضافة فاتورة
+            </Button>
           </div>
+          
+          <InvoicesTable 
+            filters={filters}
+            fixedValues={{
+              source: sourceType,
+              [fundIdField]: fundId,
+              ...extraFixedValues,
+            }}
+          />
         </TabsContent>
       </Tabs>
 
@@ -309,6 +323,7 @@ export function GenericFundDetails({
           fixedValues={{
             source: sourceType,
             [fundIdField]: fundId,
+            ...extraFixedValues,
           }}
         />
       )}
@@ -326,6 +341,7 @@ export function GenericFundDetails({
           fixedValues={{
             source: sourceType,
             [fundIdField]: fundId,
+            ...extraFixedValues,
           }}
         />
       )}
@@ -340,6 +356,16 @@ export function GenericFundDetails({
           expenseId={selectedExpenseForView}
         />
       )}
+
+      <InvoicesDialog
+        isOpen={invoiceDialogOpen}
+        onClose={() => setInvoiceDialogOpen(false)}
+        fixedValues={{
+          source: sourceType,
+          [fundIdField]: fundId,
+          ...extraFixedValues,
+        }}
+      />
     </div>
   );
 }

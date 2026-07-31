@@ -9,11 +9,16 @@ import { InvoiceDetailsDialog } from './invoice-details.dialog';
 import type { Invoice } from '../types';
 import { SimplePagination } from '@/components/ui/pagination';
 
-export function InvoicesTable() {
+type InvoicesTableProps = {
+  filters?: Record<string, any>;
+  fixedValues?: Record<string, any>;
+};
+
+export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {}) {
   const [page, setPage] = useState(1);
   const perPage = 50;
 
-  const { data: response, isLoading } = useInvoices({ page, per_page: perPage });
+  const { data: response, isLoading } = useInvoices({ page, per_page: perPage, ...filters });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const [invoiceToEditId, setInvoiceToEditId] = useState<number | null>(null);
@@ -115,6 +120,7 @@ export function InvoicesTable() {
         isOpen={!!invoiceToEditId}
         onClose={() => setInvoiceToEditId(null)}
         invoiceId={invoiceToEditId || undefined}
+        fixedValues={fixedValues}
       />
 
       <InvoiceDetailsDialog

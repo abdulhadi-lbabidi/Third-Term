@@ -11,8 +11,8 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
-import { CompanyFundCurrenciesDialog } from './components/company-fund-currencies.dialog';
-import { CompanyFundCurrencyDialog } from './components/company-fund-currency.dialog';
+import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
+import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
 import type { CompanyFund, CompanyFundCurrency } from './types';
 import { PageHeader } from '../components/page-header';
 import { cn } from '@/shared/lib/utils';
@@ -221,6 +221,9 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               setSelectedCompanyFund(currentFund);
               setAttachDialogOpen(true);
             }}
+            extraFixedValues={{
+              company_fund_id: currentFund.id,
+            }}
           />
         )
       )}
@@ -253,22 +256,22 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
         loading={attachMutation.isPending}
       />
 
-      <CompanyFundCurrenciesDialog
+      <GenericFundCurrenciesDialog
         open={currenciesDialogOpen}
         onOpenChange={(open) => {
           setCurrenciesDialogOpen(open);
           if (!open) setSelectedCompanyFundForView(null);
         }}
-        fund={selectedCompanyFundForView}
+        fund={selectedCompanyFundForView as any}
       />
 
-      <CompanyFundCurrencyDialog
+      <GenericFundCurrencyDialog
         open={currencyEditDialogOpen}
         onOpenChange={(open) => {
           setCurrencyEditDialogOpen(open);
           if (!open) setSelectedCompanyFundCurrency(null);
         }}
-        currency={selectedCompanyFundCurrency}
+        currency={selectedCompanyFundCurrency as any}
         onSubmit={async (payload) => {
           await updateCurrencyMutation.mutateAsync(payload);
           toast.success('تم تعديل العملة بنجاح');

@@ -5,13 +5,13 @@ import type { UpdateExpensePayload } from './types';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
-  list: (page: number, perPage: number) => ['expenses', page, perPage] as const,
+  list: (page: number, perPage: number, filters?: Record<string, any>) => ['expenses', page, perPage, filters] as const,
 };
 
-export function useExpenses(page = 1, perPage = 50) {
+export function useExpenses(page = 1, perPage = 50, filters?: Record<string, any>) {
   return useQuery<ExpenseResponse>({
-    queryKey: expensesQueryKeys.list(page, perPage),
-    queryFn: () => expensesApi.getExpenses(page, perPage),
+    queryKey: expensesQueryKeys.list(page, perPage, filters),
+    queryFn: () => expensesApi.getExpenses(page, perPage, filters),
   });
 }
 

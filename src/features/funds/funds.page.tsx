@@ -16,7 +16,7 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
-import { FundCurrenciesDialog } from './components/fund-currencies.dialog';
+import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 
 type UserRecord = Awaited<ReturnType<typeof usersApi.getUserByRole>>;
 
@@ -236,6 +236,11 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               setSelectedFund(currentFund);
               setAttachDialogOpen(true);
             }}
+            extraFixedValues={{
+              user_id: currentFund.user?.id,
+              user_fund_id: currentFund.id,
+              fund_user_role: userRole ?? undefined,
+            }}
           />
         )
       )}
@@ -271,13 +276,13 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
         loading={attachCurrencyMutation.isPending}
       />
 
-      <FundCurrenciesDialog
+      <GenericFundCurrenciesDialog
         open={currenciesDialogOpen}
         onOpenChange={(open) => {
           setCurrenciesDialogOpen(open);
           if (!open) setSelectedFundForView(null);
         }}
-        fund={selectedFundForView}
+        fund={selectedFundForView as any}
       />
     </div>
   );

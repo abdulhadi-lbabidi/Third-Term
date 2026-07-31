@@ -13,6 +13,7 @@ type RevenuesDialogProps = {
     user_id?: number;
     user_fund_id?: number;
     company_fund_id?: number;
+    fund_user_role?: string;
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;

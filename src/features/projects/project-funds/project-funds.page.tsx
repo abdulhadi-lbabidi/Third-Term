@@ -17,8 +17,8 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
-import { ProjectFundCurrenciesDialog } from './components/project-fund-currencies.dialog';
-import { ProjectFundCurrencyDialog } from './components/project-fund-currency.dialog';
+import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
+import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
 
 const projectFundsQueryKeys = { all: ['project-funds'] as const };
 
@@ -236,6 +236,31 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
               setSelectedProjectFund(currentFund);
               setAttachDialogOpen(true);
             }}
+            extraFixedValues={{
+              project_id: currentFund.project?.id,
+            }}
+            extraDetails={
+              currentFund.project ? (
+                <div className="flex flex-wrap gap-2 mb-4 mt-2">
+                  <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                    <span className="text-slate-500">المشروع:</span>
+                    <span>{currentFund.project.name}</span>
+                  </div>
+                  {currentFund.project.expected_cost !== undefined && (
+                    <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm">
+                      <span className="text-emerald-600/80">التكلفة المتوقعة:</span>
+                      <span>{Number(currentFund.project.expected_cost).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {currentFund.project.status && (
+                    <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 shadow-sm">
+                      <span className="text-blue-600/80">الحالة:</span>
+                      <span className="capitalize">{currentFund.project.status}</span>
+                    </div>
+                  )}
+                </div>
+              ) : null
+            }
           />
         )
       )}
@@ -271,22 +296,22 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
         loading={attachMutation.isPending}
       />
 
-      <ProjectFundCurrenciesDialog
+      <GenericFundCurrenciesDialog
         open={currenciesDialogOpen}
         onOpenChange={(open) => {
           setCurrenciesDialogOpen(open);
           if (!open) setSelectedProjectFundForView(null);
         }}
-        fund={selectedProjectFundForView}
+        fund={selectedProjectFundForView as any}
       />
 
-      <ProjectFundCurrencyDialog
+      <GenericFundCurrencyDialog
         open={currencyEditDialogOpen}
         onOpenChange={(open) => {
           setCurrencyEditDialogOpen(open);
           if (!open) setSelectedProjectFundCurrency(null);
         }}
-        currency={selectedProjectFundCurrency}
+        currency={selectedProjectFundCurrency as any}
         onSubmit={async (payload) => { await updateCurrencyMutation.mutateAsync(payload); }}
         loading={updateCurrencyMutation.isPending}
       />

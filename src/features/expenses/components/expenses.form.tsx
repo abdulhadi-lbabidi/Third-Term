@@ -43,6 +43,7 @@ type ExpensesFormProps = {
     user_id?: number;
     user_fund_id?: number;
     company_fund_id?: number;
+    fund_user_role?: string;
   };
   fixedType?: string;
   fixedFundCurrencies?: {
@@ -126,12 +127,12 @@ function getCurrencyLabel(currency: { currency: string; balance: string }) {
 }
 
 /** القيمة المرسلة في expenseable_id — من حقل expenseable_id وليس id العملة */
-function getCurrencyExpenseableId(currency: { id: number; expenseable_id?: number }) {
-  return currency.expenseable_id ?? currency.id;
+function getCurrencyExpenseableId(currency: { id: number; expenseable_id?: number; pivot?: { id: number } }) {
+  return currency.expenseable_id ?? currency.pivot?.id ?? currency.id;
 }
 
 function currencyMatchesExpenseableId(
-  currency: { id: number; expenseable_id?: number },
+  currency: { id: number; expenseable_id?: number; pivot?: { id: number } },
   expenseableId: number,
 ) {
   return getCurrencyExpenseableId(currency) === expenseableId;
@@ -318,10 +319,10 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       source: fixedValues?.source ?? getInitialSource(defaultValues),
       expenseable_type: defaultValues?.expenseable_type ?? (fixedValues?.source ? sourceToExpenseableType[fixedValues.source] : sourceToExpenseableType.company_fund),
       expenseable_id: getExpenseableCurrencyId(defaultValues),
-      company_fund_id: defaultValues?.expenseable_info?.company_fund_id ?? undefined,
+      company_fund_id: fixedValues?.company_fund_id ?? defaultValues?.expenseable_info?.company_fund_id ?? undefined,
       user_role: getExpenseUserRole(defaultValues),
       user_id: getExpenseUserId(defaultValues),
-      fund_user_role: getFundUserRole(defaultValues),
+      fund_user_role: fixedValues?.fund_user_role ?? getFundUserRole(defaultValues),
       fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
       user_fund_id: fixedValues?.user_fund_id ?? getUserFundId(defaultValues),
       project_fund_id: fixedValues?.project_fund_id ?? getExpenseProjectFundId(defaultValues),
@@ -342,10 +343,10 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       source: getInitialSource(defaultValues),
       expenseable_type: defaultValues.expenseable_type ?? sourceToExpenseableType.company_fund,
       expenseable_id: getExpenseableCurrencyId(defaultValues),
-      company_fund_id: defaultValues.expenseable_info?.company_fund_id ?? undefined,
+      company_fund_id: fixedValues?.company_fund_id ?? defaultValues.expenseable_info?.company_fund_id ?? undefined,
       user_role: getExpenseUserRole(defaultValues),
       user_id: getExpenseUserId(defaultValues),
-      fund_user_role: getFundUserRole(defaultValues),
+      fund_user_role: fixedValues?.fund_user_role ?? getFundUserRole(defaultValues),
       fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
       user_fund_id: fixedValues?.user_fund_id ?? getUserFundId(defaultValues),
       project_fund_id: getExpenseProjectFundId(defaultValues),
@@ -729,8 +730,9 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
         {source === 'company_fund' ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
+            {!fixedValues?.company_fund_id && (
+              <FormField
+                control={form.control}
               name="company_fund_id"
               render={({ field }) => (
                 <FormItem>
@@ -757,10 +759,10 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
                 </FormItem>
               )}
             />
+            )}
 
             <FormField
               control={form.control}
