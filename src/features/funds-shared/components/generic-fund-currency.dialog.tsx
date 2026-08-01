@@ -12,23 +12,23 @@ type GenericFundCurrencyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currency?: GenericFundCurrency | null;
-  onSubmit: (values: { currency_id: number; balance: string }) => Promise<void>;
+  onSubmit: (values: { currency_id: number; balance: number }) => Promise<void>;
   loading?: boolean;
 };
 
 export function GenericFundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loading }: GenericFundCurrencyDialogProps) {
   const form = useForm<AttachFundCurrencyValues>({
     resolver: zodResolver(attachFundCurrencySchema),
-    defaultValues: { currency_id: 0, balance: '' },
+    defaultValues: { currency_id: 0, balance: 0 },
   });
 
   useEffect(() => {
     if (open && currency) {
-      form.reset({ currency_id: currency.id, balance: String(currency.balance) });
+      form.reset({ currency_id: currency.id, balance: Number(currency.balance) });
       return;
     }
     if (!open) {
-      form.reset({ currency_id: 0, balance: '' });
+      form.reset({ currency_id: 0, balance: 0 });
     }
   }, [currency, form, open]);
 
@@ -45,7 +45,7 @@ export function GenericFundCurrencyDialog({ open, onOpenChange, currency, onSubm
             onSubmit={form.handleSubmit(async (values) => {
               await onSubmit({
                 currency_id: values.currency_id,
-                balance: values.balance,
+                balance: Number(values.balance),
               });
             })}
           >

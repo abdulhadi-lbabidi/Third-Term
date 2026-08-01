@@ -83,10 +83,8 @@ export function RevenueCard({ revenue, onEdit, onDelete }: RevenueCardProps) {
           )}
           {onDelete && (
             <AlertDialog>
-              <AlertDialogTrigger>
-                <Button variant="ghost" size="icon" className="size-8" title="حذف">
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
+              <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="size-8" title="حذف" />}>
+                <Trash2 className="size-4 text-destructive" />
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

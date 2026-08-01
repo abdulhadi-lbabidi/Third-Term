@@ -665,6 +665,34 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   }, [defaultValues, selectedExpenseableId, selectedUserFund]);
 
 
+  useEffect(() => {
+    if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
+      form.setValue('project_fund_id', projectFunds[0].id);
+    }
+  }, [source, selectedProjectId, projectFunds, projectFundId, form]);
+
+  useEffect(() => {
+    if (source === 'company_fund' && companyFunds.length === 1 && !companyFundId) {
+      form.setValue('company_fund_id', companyFunds[0].id);
+    }
+  }, [source, companyFunds, companyFundId, form]);
+
+  useEffect(() => {
+    let currencies: any[] = [];
+    if (source === 'company_fund') {
+      currencies = selectedCompanyFund?.currencies ?? [];
+    } else if (source === 'project_fund') {
+      currencies = selectedProjectFundCurrencies;
+    } else if (source === 'user_fund') {
+      currencies = selectedUserFund?.currencies ?? [];
+    }
+    
+    if (currencies.length === 1 && !selectedExpenseableId) {
+      const val = getCurrencyExpenseableId(currencies[0]);
+      if (val) form.setValue('expenseable_id', val);
+    }
+  }, [source, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund, selectedExpenseableId, form]);
+
   return (
     <Form {...form}>
       <form

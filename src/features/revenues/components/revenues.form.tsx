@@ -230,8 +230,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
   const { data: allProjectFunds = [] } = useQuery<ProjectFund[]>({
-    queryKey: ['revenues', 'project-funds'] as const,
-    queryFn: () => projectFundsApi.getProjectFunds(),
+    queryKey: ['revenues', 'project-funds', fixedValues?.project_id] as const,
+    queryFn: () => projectFundsApi.getProjectFunds(fixedValues?.project_id),
     enabled: source === 'project_fund',
   });
 
@@ -353,6 +353,28 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const companyCurrencyOptions = selectedCompanyFund?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
   const projectCurrencyOptions = selectedProjectFund?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
   const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+
+  useEffect(() => {
+    if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
+      form.setValue('project_fund_id', projectFunds[0].id);
+    }
+  }, [source, selectedProjectId, projectFunds, projectFundId, form]);
+
+  useEffect(() => {
+    if (source === 'company_fund' && companyFunds.length === 1 && !companyFundId) {
+      form.setValue('company_fund_id', companyFunds[0].id);
+    }
+  }, [source, companyFunds, companyFundId, form]);
+
+  useEffect(() => {
+    const options = source === 'company_fund' ? companyCurrencyOptions
+      : source === 'project_fund' ? projectCurrencyOptions
+        : userCurrencyOptions;
+
+    if (options.length === 1 && !selectedRevenueableId) {
+      form.setValue('revenueable_id', options[0].value);
+    }
+  }, [source, companyCurrencyOptions, projectCurrencyOptions, userCurrencyOptions, selectedRevenueableId, form]);
 
   return (
     <Form {...form}>
@@ -720,7 +742,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                     )}
                   />
                 )}
-
                 {!fixedValues?.project_fund_id && (
                   <FormField
                     control={form.control}

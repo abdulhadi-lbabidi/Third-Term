@@ -23,6 +23,9 @@ export function useCreateRevenue() {
     mutationFn: (payload: CreateRevenuePayload) => revenuesApi.createRevenue(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['funds'] });
       toast.success('تم إضافة الإيراد بنجاح');
     },
     onError: () => {

@@ -139,7 +139,7 @@ export function GenericFundDialog({
               )}
             />
 
-            {fundType === 'project' && (
+            {fundType === 'project' && !isEditing && (
               <FormField
                 control={form.control}
                 name="project_id"
@@ -163,7 +163,7 @@ export function GenericFundDialog({
               />
             )}
 
-            {fundType === 'user' && (
+            {fundType === 'user' && !isEditing && (
               <FormField
                 control={form.control}
                 name="user_id"

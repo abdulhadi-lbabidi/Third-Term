@@ -171,11 +171,9 @@ export function GenericFundDetails({
             تعديل
           </Button>
           <AlertDialog>
-            <AlertDialogTrigger>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="ml-2 size-4" />
-                حذف
-              </Button>
+            <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
+              <Trash2 className="ml-2 size-4" />
+              حذف
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>

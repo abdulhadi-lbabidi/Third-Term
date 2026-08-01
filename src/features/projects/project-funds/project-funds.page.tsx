@@ -20,7 +20,13 @@ import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
 
-const projectFundsQueryKeys = { all: ['project-funds'] as const };
+const projectFundsQueryKeys = { 
+  all: ['project-funds'] as const,
+  lists: () => [...projectFundsQueryKeys.all, 'list'] as const,
+  list: (projectId?: number) => [...projectFundsQueryKeys.lists(), projectId] as const,
+  details: () => [...projectFundsQueryKeys.all, 'detail'] as const,
+  detail: (id: number) => [...projectFundsQueryKeys.details(), id] as const,
+};
 
 export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   const params = useParams();
@@ -46,8 +52,8 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   });
 
   const projectFundsQuery = useQuery<ProjectFund[]>({
-    queryKey: projectFundsQueryKeys.all,
-    queryFn: () => projectFundsApi.getProjectFunds(),
+    queryKey: projectFundsQueryKeys.list(hasProjectId ? projectId : undefined),
+    queryFn: () => projectFundsApi.getProjectFunds(hasProjectId ? projectId : undefined),
   });
 
   const currenciesQuery = useQuery({
@@ -56,7 +62,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   });
 
   const fundDetailsQuery = useQuery({
-    queryKey: ['project-funds', selectedFundId],
+    queryKey: projectFundsQueryKeys.detail(selectedFundId!),
     queryFn: () => projectFundsApi.getProjectFundById(selectedFundId!),
     enabled: !!selectedFundId,
   });
@@ -100,10 +106,13 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   });
 
   const attachMutation = useMutation({
-    mutationFn: async (payload: { currency_id: number; balance: string }) => {
+    mutationFn: async (payload: { currency_id: number; balance: number }) => {
       const fund = selectedProjectFund || currentFund;
-      if (!fund) throw new Error('صندوق المشروع غير محدد');
-      return projectFundsApi.attachCurrency(fund.id, payload);
+      if (!fund) throw new Error('لم يتم تحديد صندوق');
+      return projectFundsApi.attachCurrency(fund.id, {
+        currency_id: payload.currency_id,
+        balance: String(payload.balance),
+      });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
@@ -111,7 +120,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
       setSelectedProjectFund(null);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء إضافة الرصيد الافتتاحي');
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء إرفاق العملة');
     },
   });
 
@@ -166,9 +175,19 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
               <Wallet className="mb-4 size-10 text-muted-foreground" />
               <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 {currentProject ? `لم يتم إضافة أي صناديق لمشروع ${currentProject.name} بعد.` : 'لم يتم إضافة أي صناديق بعد.'}
               </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setSelectedProjectFund(null);
+                  setDialogOpen(true);
+                }}
+              >
+                إضافة صندوق مشروع
+              </Button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

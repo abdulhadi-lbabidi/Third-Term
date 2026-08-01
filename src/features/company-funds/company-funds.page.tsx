@@ -155,9 +155,19 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
               <Wallet className="mb-4 size-10 text-muted-foreground" />
               <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 لم يتم إضافة أي صناديق شركة بعد.
               </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setSelectedCompanyFund(null);
+                  setDialogOpen(true);
+                }}
+              >
+                إضافة صندوق شركة
+              </Button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -1,27 +1,26 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { useInvoices, useDeleteInvoice } from '../invoices.hooks';
-import { InvoicesDialog } from './invoices.dialog';
 import { InvoiceDetailsDialog } from './invoice-details.dialog';
 import type { Invoice } from '../types';
 import { SimplePagination } from '@/components/ui/pagination';
 
 type InvoicesTableProps = {
   filters?: Record<string, any>;
-  fixedValues?: Record<string, any>;
 };
 
-export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {}) {
+export function InvoicesTable({ filters }: InvoicesTableProps = {}) {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const perPage = 50;
 
   const { data: response, isLoading } = useInvoices({ page, per_page: perPage, ...filters });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
-  const [invoiceToEditId, setInvoiceToEditId] = useState<number | null>(null);
   const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);
 
   const invoices = response?.data || [];
@@ -93,7 +92,7 @@ export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {})
         cancelLabel="إلغاء"
         deleteLabel="حذف"
         actions={{
-          onEdit: (row) => setInvoiceToEditId(row.id),
+          onEdit: (row) => navigate(`/invoices/new?invoiceId=${row.id}`),
           onDelete: async (invoice) => {
             await deleteInvoice(invoice.id);
           },
@@ -101,9 +100,7 @@ export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {})
             {
               label: 'عرض التفاصيل',
               icon: <Eye className="size-4" />,
-              onClick: (row) => {
-                console.log('View details', row);
-              },
+              onClick: (row) => setInvoiceToViewId(row.id),
             }
           ]
         }}
@@ -114,13 +111,6 @@ export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {})
         totalPages={totalPages}
         onPageChange={setPage}
         meta={meta}
-      />
-
-      <InvoicesDialog
-        isOpen={!!invoiceToEditId}
-        onClose={() => setInvoiceToEditId(null)}
-        invoiceId={invoiceToEditId || undefined}
-        fixedValues={fixedValues}
       />
 
       <InvoiceDetailsDialog
