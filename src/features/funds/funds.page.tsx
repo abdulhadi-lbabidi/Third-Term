@@ -32,7 +32,6 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const userId = Number(params.userId || params.id || '');
-  const userName = params.userName ? decodeURIComponent(params.userName) : '';
   const hasUserId = Number.isFinite(userId) && userId > 0;
   const rawRoleParam = params.role || searchParams.get('role') || searchParams.get('tab');
   const userRole = userRoles.includes(rawRoleParam as UserRole) ? (rawRoleParam as UserRole) : null;
@@ -70,7 +69,6 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   });
 
   const resolvedUserId = userRecordQuery.data?.user.id ?? userId;
-  const resolvedUserName = userRecordQuery.data?.user.name ?? userName;
   const visibleFunds = hasUserContext
     ? ((userRecordQuery.data?.user.funds as Fund[] | undefined) ?? [])
     : (fundsQuery.data ?? []);
@@ -92,6 +90,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: fundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       if (hasUserContext && userRole) {
         await queryClient.invalidateQueries({ queryKey: ['funds', 'user-record', userRole, userId] });
       }
@@ -118,6 +117,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: fundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       if (hasUserContext && userRole) {
         await queryClient.invalidateQueries({ queryKey: ['funds', 'user-record', userRole, userId] });
       }
@@ -289,7 +289,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               (fc) => fc.currency === c.currency
             )
         )}
-        onSubmit={async (payload) => { await attachCurrencyMutation.mutateAsync(payload); }}
+        onSubmit={async (payload) => { await attachCurrencyMutation.mutateAsync({ ...payload, balance: payload.balance.toString() }); }}
         loading={attachCurrencyMutation.isPending}
       />
 

@@ -14,7 +14,6 @@ import {
 import { Input } from '@/shared/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Calendar } from '@/shared/components/ui/calendar';
-import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { cn, formatArabicDate } from '@/shared/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';

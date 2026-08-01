@@ -20,7 +20,7 @@ import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
 
-const projectFundsQueryKeys = { 
+const projectFundsQueryKeys = {
   all: ['project-funds'] as const,
   lists: () => [...projectFundsQueryKeys.all, 'list'] as const,
   list: (projectId?: number) => [...projectFundsQueryKeys.lists(), projectId] as const,
@@ -87,6 +87,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       setDialogOpen(false);
       setSelectedProjectFund(null);
     },
@@ -116,6 +117,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       setAttachDialogOpen(false);
       setSelectedProjectFund(null);
     },
@@ -132,6 +134,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       setCurrencyEditDialogOpen(false);
       setSelectedProjectFundCurrency(null);
     },
@@ -152,6 +155,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
               badge="المالية"
               title={currentProject ? `صناديق المشروع: ${currentProject.name}` : 'صناديق المشاريع'}
               icon={Wallet}
+              className='border-0 shadow-none'
               action={
                 <Button
                   onClick={() => {
@@ -178,9 +182,9 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
               <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 {currentProject ? `لم يتم إضافة أي صناديق لمشروع ${currentProject.name} بعد.` : 'لم يتم إضافة أي صناديق بعد.'}
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setSelectedProjectFund(null);
                   setDialogOpen(true);
@@ -295,6 +299,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
         }}
         onSubmit={async (values) => { await saveMutation.mutateAsync(values); }}
         loading={saveMutation.isPending}
+        hideProjectSelection={!!projectId}
       />
 
       <AttachCurrencyDialog
@@ -331,7 +336,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
           if (!open) setSelectedProjectFundCurrency(null);
         }}
         currency={selectedProjectFundCurrency as any}
-        onSubmit={async (payload) => { await updateCurrencyMutation.mutateAsync(payload); }}
+        onSubmit={async (payload) => { await updateCurrencyMutation.mutateAsync({ ...payload, balance: payload.balance.toString() }); }}
         loading={updateCurrencyMutation.isPending}
       />
     </div>

@@ -61,6 +61,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       setDialogOpen(false);
       setSelectedCompanyFund(null);
     },
@@ -81,6 +82,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       setAttachDialogOpen(false);
       setSelectedCompanyFundForCurrency(null);
       setSelectedCompanyFund(null);
@@ -94,6 +96,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       setCurrencyEditDialogOpen(false);
       setSelectedCompanyFundCurrency(null);
     },
@@ -118,8 +121,8 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     }
   };
 
-  const handleAttachCurrency = async (payload: { currency_id: number; balance: string }) => {
-    await attachMutation.mutateAsync(payload);
+  const handleAttachCurrency = async (payload: { currency_id: number; balance: number }) => {
+    await attachMutation.mutateAsync({ ...payload, balance: payload.balance.toString() });
     toast.success('تم حفظ العملة بصندوق الشركة بنجاح');
   };
 
@@ -283,7 +286,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
         }}
         currency={selectedCompanyFundCurrency as any}
         onSubmit={async (payload) => {
-          await updateCurrencyMutation.mutateAsync(payload);
+          await updateCurrencyMutation.mutateAsync({ ...payload, balance: payload.balance.toString() });
           toast.success('تم تعديل العملة بنجاح');
         }}
         loading={updateCurrencyMutation.isPending}
