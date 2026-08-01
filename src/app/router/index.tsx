@@ -23,11 +23,23 @@ import { RevenuesPage } from '@/features/revenues/revenues.page';
 import { InvoiceItemsPage } from '@/features/invoice-items/invoice-items.page';
 import { InvoicesPage } from '@/features/invoices/invoices.page';
 import { AuditLogsPage } from '@/features/audit-logs/audit-logs.page';
+import { PublicProjectsPage } from '@/features/public-projects/public-projects.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
 function getAuthToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function getUserRole(): string | null {
+  try {
+    const raw = localStorage.getItem('user_info');
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user?.role_type || null;
+  } catch {
+    return null;
+  }
 }
 
 function ProtectedRoute() {
@@ -40,10 +52,22 @@ function ProtectedRoute() {
 
 function PublicOnlyRoute() {
   if (getAuthToken()) {
+    const role = getUserRole();
+    if (role === 'client') {
+      return <Navigate to="/client/projects" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
+}
+
+function RootRedirect() {
+  const role = getUserRole();
+  if (role === 'client') {
+    return <Navigate to="/client/projects" replace />;
+  }
+  return <Navigate to="/users" replace />;
 }
 
 export const router = createBrowserRouter([
@@ -59,6 +83,10 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      {
+        path: '/client/projects',
+        element: <PublicProjectsPage />,
+      },
       {
         element: <Layout />,
         children: [
@@ -130,7 +158,6 @@ export const router = createBrowserRouter([
             path: '/expenses/new',
             element: <NewExpensePage />,
           },
-
           {
             path: '/revenues',
             element: <RevenuesPage />,
@@ -145,16 +172,19 @@ export const router = createBrowserRouter([
           },
           {
             path: '/',
-            element: <Navigate to="/users" replace />,
+            element: <RootRedirect />,
           },
-          { path: '/funds', element: <FundsPage /> },
           { path: '/currencies', element: <CurrenciesPage /> },
           { path: '/departments', element: <DepartmentsPage /> },
           { path: '/cloud-storage', element: <CloudStoragePage /> },
-          { path: '/audit-logs', element: <AuditLogsPage /> }
+          { path: '/audit-logs', element: <AuditLogsPage /> },
         ],
       },
     ],
+  },
+  {
+    path: '/public-projects',
+    element: <PublicProjectsPage />,
   },
   {
     path: '*',

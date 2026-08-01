@@ -8,7 +8,7 @@ import { ProjectsDialog } from './components/projects.dialog';
 import { ProjectsTable } from './components/projects.table';
 import type { CreateProjectPayload, Project } from './types';
 import { PageHeader } from '../components/page-header';
-import { FolderKanban } from 'lucide-react';
+import { FolderKanban, ExternalLink } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 
 export function ProjectsPage() {
@@ -83,7 +83,19 @@ export function ProjectsPage() {
         badge="المشاريع"
         title="المشاريع"
         icon={FolderKanban}
-        action={<Button onClick={handleCreate}>إضافة مشروع جديد</Button>}
+        action={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => window.open('/public-projects', '_blank')}
+              className="gap-2"
+            >
+              <ExternalLink className="size-4" />
+              <span>معاينة صفحة العملاء العامة</span>
+            </Button>
+            <Button onClick={handleCreate}>إضافة مشروع جديد</Button>
+          </div>
+        }
       />
 
       <ProjectsTable

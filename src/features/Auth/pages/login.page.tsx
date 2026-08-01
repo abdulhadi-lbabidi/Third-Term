@@ -49,11 +49,17 @@ export function LoginPage() {
       const token = response.data?.token;
       if (token) {
         localStorage.setItem(AUTH_TOKEN_KEY, token);
-        if (response.data?.user) {
-          localStorage.setItem('user_info', JSON.stringify(response.data.user));
+        const user = response.data?.user;
+        if (user) {
+          localStorage.setItem('user_info', JSON.stringify(user));
         }
         toast.success('تم تسجيل الدخول بنجاح');
-        navigate('/', { replace: true });
+
+        if (user?.role_type === 'client') {
+          navigate('/client/projects', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       } else {
         toast.error('حدث خطأ أثناء تسجيل الدخول');
       }
