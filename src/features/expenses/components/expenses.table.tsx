@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react';
+import { Eye, Receipt } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Expense } from '../types';
 
@@ -49,9 +49,10 @@ type ExpensesTableProps = {
   onView?: (expense: Expense) => void;
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
+  onInvoices?: (expense: Expense) => void;
 };
 
-export function ExpensesTable({ data, loading, onView, onEdit, onDelete }: ExpensesTableProps) {
+export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoices }: ExpensesTableProps) {
   const columns: DataTableColumn<Expense>[] = [
     { header: 'الوصف', cell: (row) => row.description },
     {
@@ -87,15 +88,45 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete }: Expen
       actions={{
         onEdit,
         onDelete,
-        extraActions: onView
-          ? [
-              {
-                label: 'تفاصيل المصروف',
-                icon: <Eye className="size-4" />,
-                onClick: onView,
-              },
-            ]
-          : undefined,
+        extraActions: [
+          ...(onView
+            ? [
+                {
+                  label: 'تفاصيل المصروف',
+                  icon: <Eye className="size-4" />,
+                  onClick: onView,
+                },
+              ]
+            : []),
+          ...(onInvoices
+            ? [
+                {
+                  label: 'فواتير المصروف',
+                  icon: <Receipt className="size-4" />,
+                  onClick: onInvoices,
+                },
+              ]
+            : []),
+        ].length > 0 ? [
+          ...(onView
+            ? [
+                {
+                  label: 'تفاصيل المصروف',
+                  icon: <Eye className="size-4" />,
+                  onClick: onView,
+                },
+              ]
+            : []),
+          ...(onInvoices
+            ? [
+                {
+                  label: 'فواتير المصروف',
+                  icon: <Receipt className="size-4" />,
+                  onClick: onInvoices,
+                },
+              ]
+            : []),
+        ] : undefined,
       }}
     />
   );

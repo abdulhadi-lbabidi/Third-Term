@@ -18,8 +18,9 @@ export const invoicesApi = {
   },
 
   getInvoice: async (id: number) => {
-    const response = await apiClient.get<{ data: Invoice }>(`${BASE_URL}/${id}`);
-    return response.data.data;
+    if (!id) return null;
+    const response = await apiClient.get<any>(`${BASE_URL}/${id}`);
+    return response.data?.data ?? response.data ?? null;
   },
 
   createInvoice: async (payload: CreateInvoicePayload) => {

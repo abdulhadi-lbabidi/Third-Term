@@ -34,13 +34,13 @@ import type { TransferableType, CreateTransferPayload } from '../types';
 const transferFormSchema = z.object({
   name: z.string().min(1, 'الرجاء إدخال البيان'),
   amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
-  morph_from_id: z.number({ required_error: 'الرجاء اختيار عملة المصدر' }),
+  morph_from_id: z.number({ message: 'الرجاء اختيار عملة المصدر' }),
   morph_to_type: z.enum([
     'App\\Models\\CompanyFundCurrency',
     'App\\Models\\CurrencyFund',
     'App\\Models\\ProjectFundCurrency',
   ]),
-  morph_to_id: z.number({ required_error: 'الرجاء اختيار عملة الوجهة' }),
+  morph_to_id: z.number({ message: 'الرجاء اختيار عملة الوجهة' }),
   company_fund_id: z.number().optional(),
   user_role: z.string().optional(),
   user_id: z.number().optional(),

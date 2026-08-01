@@ -32,6 +32,7 @@ import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } fro
 import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
 import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
+import { ExpenseInvoicesDialog } from '@/features/expenses/components/expense-invoices.dialog';
 
 import { useTransfers, useCreateTransfer, useDeleteTransfer } from '@/features/transfers/transfers.hooks';
 import { TransfersTable } from '@/features/transfers/components/transfers.table';
@@ -89,6 +90,8 @@ export function GenericFundDetails({
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
+  const [expenseInvoicesOpen, setExpenseInvoicesOpen] = useState(false);
+  const [selectedExpenseForInvoices, setSelectedExpenseForInvoices] = useState<any | null>(null);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
 
@@ -306,6 +309,10 @@ export function GenericFundDetails({
             onDelete={async (expense) => {
               await deleteExpenseMutation.mutateAsync(expense.id);
             }}
+            onInvoices={(expense) => {
+              setSelectedExpenseForInvoices(expense);
+              setExpenseInvoicesOpen(true);
+            }}
           />
         </TabsContent>
 
@@ -398,6 +405,17 @@ export function GenericFundDetails({
           loading={createTransferMutation.isPending}
         />
       )}
+
+      <ExpenseInvoicesDialog
+        open={expenseInvoicesOpen}
+        onOpenChange={setExpenseInvoicesOpen}
+        expense={selectedExpenseForInvoices}
+        fixedValues={{
+          source: sourceType,
+          [fundIdField]: fundId,
+          ...extraFixedValues,
+        }}
+      />
     </div>
   );
 }
