@@ -9,7 +9,6 @@ import { ProjectTeamTable } from '../../project-team/components/project-team.tab
 import { ProjectTeamDialog } from '../../project-team/components/project-team.dialog';
 import type { ProjectTeamMember } from '../../project-team/project-team.types';
 
-const QUERY_KEY = ['project-team'] as const;
 
 type ProjectTeamTabProps = {
   projectId: number;
@@ -22,8 +21,13 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
 
   // ── Data fetching ──────────────────────────────────────────────
   const teamQuery = useQuery<ProjectTeamMember[]>({
-    queryKey: QUERY_KEY,
-    queryFn: () => projectTeamApi.getAll(),
+    queryKey: ['project-team', projectId],
+    queryFn: () => projectTeamApi.getAll({
+      'filter[project_id]': projectId,
+      paginate: true,
+      per_page: 50,
+      page: 1,
+    }),
   });
 
   const employeesQuery = useQuery({
@@ -70,7 +74,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
       return Promise.all(promises);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ['project-team', projectId] });
       setDialogOpen(false);
       setSelectedMember(null);
       toast.success(selectedMember ? 'تم تعديل بيانات العضو بنجاح' : 'تم إضافة الأعضاء بنجاح');
@@ -83,7 +87,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   const deleteMutation = useMutation({
     mutationFn: (member: ProjectTeamMember) => projectTeamApi.delete(member.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ['project-team', projectId] });
       toast.success('تم حذف العضو من فريق المشروع بنجاح');
     },
     onError: (error: any) => {

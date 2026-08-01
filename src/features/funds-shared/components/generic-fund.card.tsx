@@ -6,6 +6,7 @@ export type GenericFundCurrency = {
   currency: string;
   symbol: string;
   balance: string | number;
+  created_at?: string;
 };
 
 type GenericFundCardProps = {

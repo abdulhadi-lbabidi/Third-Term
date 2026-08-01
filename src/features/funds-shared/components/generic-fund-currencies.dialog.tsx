@@ -1,31 +1,39 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
-import type { CompanyFund, CompanyFundCurrency } from '../types';
+import type { GenericFundCurrency } from './generic-fund.card';
 
-type CompanyFundCurrenciesDialogProps = {
+export type GenericFundWithCurrencies<T = any> = {
+  id: number;
+  name: string;
+  currencies?: GenericFundCurrency[];
+} & T;
+
+type GenericFundCurrenciesDialogProps<T = any> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  fund: CompanyFund | null;
-  onCurrencyClick?: (fund: CompanyFund, currencyId: number) => void;
+  fund: GenericFundWithCurrencies<T> | null;
+  onCurrencyClick?: (fund: GenericFundWithCurrencies<T>, currencyId: number) => void;
+  titlePrefix?: string;
 };
 
-export function CompanyFundCurrenciesDialog({
+export function GenericFundCurrenciesDialog<T = any>({
   open,
   onOpenChange,
   fund,
   onCurrencyClick,
-}: CompanyFundCurrenciesDialogProps) {
+  titlePrefix = 'عملات',
+}: GenericFundCurrenciesDialogProps<T>) {
   const currencies = fund?.currencies ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
-          <DialogTitle>عملات {fund?.name || 'صندوق الشركة'}</DialogTitle>
+          <DialogTitle>{titlePrefix} {fund?.name || 'الصندوق'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
           {currencies.length ? (
-            currencies.map((currency: CompanyFundCurrency) => (
+            currencies.map((currency) => (
               <button
                 key={currency.id}
                 type="button"

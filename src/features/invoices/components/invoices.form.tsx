@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, CheckCircle2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { CalendarIcon, CheckCircle2, Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { formatArabicDate } from '@/shared/lib/utils';
 
 import {
@@ -27,6 +28,9 @@ import type { Invoice, CreateInvoicePayload } from '../types';
 import { itemsApi } from '@/features/items/items.api';
 import { usersApi } from '@/features/users/api/users.api';
 import { expensesApi } from '@/features/expenses/expenses.api';
+import { ItemsDialog } from '@/features/items/components/items.dialog';
+import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
+import { QuickSupplierDialog } from '@/features/users/components/quick-supplier.dialog';
 
 const invoiceSchema = z.object({
   item_id: z.number().min(1, 'البند مطلوب'),
@@ -60,28 +64,69 @@ export function InvoicesForm({
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      item_id: fixedValues?.item_id ?? defaultValues?.item_id ?? 0,
-      expense_id: fixedValues?.expense_id ?? defaultValues?.expense_id ?? 0,
-      supplier_id: fixedValues?.supplier_id ?? defaultValues?.supplier_id ?? 0,
+      item_id: Number(fixedValues?.item_id ?? defaultValues?.item_id ?? 0),
+      expense_id: Number(fixedValues?.expense_id ?? defaultValues?.expense_id ?? 0),
+      supplier_id: Number(fixedValues?.supplier_id ?? defaultValues?.supplier_id ?? 0),
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
-      discount: defaultValues?.discount ?? 0,
-      final_total: defaultValues?.final_total ?? 0,
-      is_posted: defaultValues?.is_posted ?? false,
-      is_visible_to_client: defaultValues?.is_visible_to_client ?? true,
+      discount: Number(defaultValues?.discount ?? 0),
+      final_total: Number(defaultValues?.final_total ?? 0),
+      is_posted: Boolean(defaultValues?.is_posted ?? false),
+      is_visible_to_client: Boolean(defaultValues?.is_visible_to_client ?? true),
+    },
+  });
+
+  const queryClient = useQueryClient();
+  const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
+
+  const createItemMutation = useMutation({
+    mutationFn: itemsApi.createItem,
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      if (res?.data?.id || res?.id) {
+        form.setValue('item_id', res.data?.id || res.id);
+      }
+      setIsItemDialogOpen(false);
+      toast.success('تم إضافة البند بنجاح');
+    },
+  });
+
+  const createExpenseMutation = useMutation({
+    mutationFn: expensesApi.createExpense,
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      if (res?.data?.id || res?.id) {
+        form.setValue('expense_id', res.data?.id || res.id);
+      }
+      setIsExpenseDialogOpen(false);
+      toast.success('تم إضافة المصروف بنجاح');
+    },
+  });
+
+  const createSupplierMutation = useMutation({
+    mutationFn: usersApi.createUser,
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['users', 'supplier'] });
+      if (res?.data?.id || res?.id) {
+        form.setValue('supplier_id', res.data?.id || res.id);
+      }
+      setIsSupplierDialogOpen(false);
+      toast.success('تم إضافة المورد بنجاح');
     },
   });
 
   useEffect(() => {
     if (defaultValues) {
       form.reset({
-        item_id: fixedValues?.item_id ?? defaultValues.item_id ?? 0,
-        expense_id: fixedValues?.expense_id ?? defaultValues.expense_id ?? 0,
-        supplier_id: fixedValues?.supplier_id ?? defaultValues.supplier_id ?? 0,
+        item_id: Number(fixedValues?.item_id ?? defaultValues.item_id ?? 0),
+        expense_id: Number(fixedValues?.expense_id ?? defaultValues.expense_id ?? 0),
+        supplier_id: Number(fixedValues?.supplier_id ?? defaultValues.supplier_id ?? 0),
         date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
-        discount: defaultValues.discount ?? 0,
-        final_total: defaultValues.final_total ?? 0,
-        is_posted: defaultValues.is_posted ?? false,
-        is_visible_to_client: defaultValues.is_visible_to_client ?? true,
+        discount: Number(defaultValues.discount ?? 0),
+        final_total: Number(defaultValues.final_total ?? 0),
+        is_posted: Boolean(defaultValues.is_posted ?? false),
+        is_visible_to_client: Boolean(defaultValues.is_visible_to_client ?? true),
       });
     }
   }, [defaultValues, fixedValues, form]);
@@ -163,6 +208,18 @@ export function InvoicesForm({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="اختر البند..."
+                      bottomAction={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-primary"
+                          onClick={() => setIsItemDialogOpen(true)}
+                        >
+                          <Plus className="mr-2 size-4" />
+                          إضافة بند جديد
+                        </Button>
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -184,6 +241,18 @@ export function InvoicesForm({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="اختر المصروف..."
+                      bottomAction={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-primary"
+                          onClick={() => setIsExpenseDialogOpen(true)}
+                        >
+                          <Plus className="mr-2 size-4" />
+                          إضافة مصروف جديد
+                        </Button>
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -205,6 +274,18 @@ export function InvoicesForm({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="اختر المورد..."
+                      bottomAction={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-primary"
+                          onClick={() => setIsSupplierDialogOpen(true)}
+                        >
+                          <Plus className="mr-2 size-4" />
+                          إضافة مورد جديد
+                        </Button>
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -352,6 +433,34 @@ export function InvoicesForm({
           </Button>
         </div>
       </form>
+
+      {/* Dialogs */}
+      <ItemsDialog
+        open={isItemDialogOpen}
+        onOpenChange={setIsItemDialogOpen}
+        onSubmit={async (data) => {
+          await createItemMutation.mutateAsync(data);
+        }}
+        loading={createItemMutation.isPending}
+      />
+
+      <ExpensesDialog
+        open={isExpenseDialogOpen}
+        onOpenChange={setIsExpenseDialogOpen}
+        onSubmit={async (data) => {
+          await createExpenseMutation.mutateAsync(data);
+        }}
+        loading={createExpenseMutation.isPending}
+      />
+
+      <QuickSupplierDialog
+        open={isSupplierDialogOpen}
+        onOpenChange={setIsSupplierDialogOpen}
+        onSubmit={async (data) => {
+          await createSupplierMutation.mutateAsync(data);
+        }}
+        loading={createSupplierMutation.isPending}
+      />
     </Form>
   );
 }

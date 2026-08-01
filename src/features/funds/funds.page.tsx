@@ -16,7 +16,7 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
-import { FundCurrenciesDialog } from './components/fund-currencies.dialog';
+import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 
 type UserRecord = Awaited<ReturnType<typeof usersApi.getUserByRole>>;
 
@@ -166,9 +166,20 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
               <Wallet className="mb-4 size-10 text-muted-foreground" />
               <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 لم يتم إضافة أي صناديق لهذا المستخدم بعد.
               </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={hasUserContext ? !hasUserId : false}
+                onClick={() => {
+                  setSelectedFund(null);
+                  setDialogOpen(true);
+                }}
+              >
+                إضافة صندوق جديد
+              </Button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -236,6 +247,11 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               setSelectedFund(currentFund);
               setAttachDialogOpen(true);
             }}
+            extraFixedValues={{
+              user_id: currentFund.user?.id,
+              user_fund_id: currentFund.id,
+              fund_user_role: userRole ?? undefined,
+            }}
           />
         )
       )}
@@ -271,13 +287,13 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
         loading={attachCurrencyMutation.isPending}
       />
 
-      <FundCurrenciesDialog
+      <GenericFundCurrenciesDialog
         open={currenciesDialogOpen}
         onOpenChange={(open) => {
           setCurrenciesDialogOpen(open);
           if (!open) setSelectedFundForView(null);
         }}
-        fund={selectedFundForView}
+        fund={selectedFundForView as any}
       />
     </div>
   );

@@ -5,30 +5,30 @@ import { Button } from '@/shared/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import type { FundCurrency } from '../types';
-import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '../schemas/funds.schema';
+import type { GenericFundCurrency } from './generic-fund.card';
+import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '@/features/funds/schemas/funds.schema';
 
-type FundCurrencyDialogProps = {
+type GenericFundCurrencyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currency?: FundCurrency | null;
-  onSubmit: (values: { currency_id: number; balance: string }) => Promise<void>;
+  currency?: GenericFundCurrency | null;
+  onSubmit: (values: { currency_id: number; balance: number }) => Promise<void>;
   loading?: boolean;
 };
 
-export function FundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loading }: FundCurrencyDialogProps) {
+export function GenericFundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loading }: GenericFundCurrencyDialogProps) {
   const form = useForm<AttachFundCurrencyValues>({
     resolver: zodResolver(attachFundCurrencySchema),
-    defaultValues: { currency_id: 0, balance: '' },
+    defaultValues: { currency_id: 0, balance: 0 },
   });
 
   useEffect(() => {
     if (open && currency) {
-      form.reset({ currency_id: currency.id, balance: currency.balance });
+      form.reset({ currency_id: currency.id, balance: Number(currency.balance) });
       return;
     }
     if (!open) {
-      form.reset({ currency_id: 0, balance: '' });
+      form.reset({ currency_id: 0, balance: 0 });
     }
   }, [currency, form, open]);
 
@@ -45,7 +45,7 @@ export function FundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loa
             onSubmit={form.handleSubmit(async (values) => {
               await onSubmit({
                 currency_id: values.currency_id,
-                balance: values.balance,
+                balance: Number(values.balance),
               });
             })}
           >
@@ -62,7 +62,6 @@ export function FundCurrencyDialog({ open, onOpenChange, currency, onSubmit, loa
                 </FormItem>
               )}
             />
-
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'جاري الحفظ...' : 'حفظ'}

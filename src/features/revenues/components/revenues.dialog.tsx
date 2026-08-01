@@ -13,6 +13,7 @@ type RevenuesDialogProps = {
     user_id?: number;
     user_fund_id?: number;
     company_fund_id?: number;
+    fund_user_role?: string;
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
@@ -26,15 +27,17 @@ export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues,
           <DialogTitle>{defaultValues ? 'تعديل الإيراد' : 'إضافة إيراد جديد'}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          <RevenuesForm
-            defaultValues={defaultValues}
-            fixedValues={fixedValues}
-            onSubmit={async (data) => {
-              await onSubmit(data);
-              onOpenChange(false);
-            }}
-            loading={loading}
-          />
+          {open && (
+            <RevenuesForm
+              defaultValues={defaultValues}
+              fixedValues={fixedValues}
+              onSubmit={async (data) => {
+                await onSubmit(data);
+                onOpenChange(false);
+              }}
+              loading={loading}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

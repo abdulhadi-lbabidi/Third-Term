@@ -7,7 +7,7 @@ export const fundFormSchema = z.object({
 
 export const attachFundCurrencySchema = z.object({
   currency_id: z.number().int().positive('العملة مطلوبة'),
-  balance: z.string().trim().min(1, 'الرصيد مطلوب'),
+  balance: z.number().default(0),
 });
 
 export type FundFormValues = z.infer<typeof fundFormSchema>;

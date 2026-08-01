@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import { UploadCloud } from 'lucide-react';
 import { useDirectories, useDirectory, useMoveItems } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile } from '../../types';
@@ -209,9 +210,8 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
     const toastId = toast.loading('جاري تجهيز الملف للتحميل...');
     try {
-      const response = await fetch(file.url);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const blob = await response.blob();
+      const response = await axios.get(file.url, { responseType: 'blob' });
+      const blob = response.data;
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;

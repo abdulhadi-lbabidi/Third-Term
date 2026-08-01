@@ -8,9 +8,9 @@ export type RevenueResponse = {
 };
 
 export const revenuesApi = {
-  getRevenues: async (page = 1, perPage = 50): Promise<RevenueResponse> => {
+  getRevenues: async (page = 1, perPage = 50, filters?: Record<string, any>): Promise<RevenueResponse> => {
     const response = await apiClient.get('/revenues', {
-      params: { paginate: true, page, per_page: perPage },
+      params: { paginate: true, page, per_page: perPage, ...filters },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

@@ -22,6 +22,7 @@ type SearchableSelectProps = {
   className?: string;
   disabled?: boolean;
   multiple?: boolean;
+  bottomAction?: React.ReactNode;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ export function SearchableSelect({
   className,
   disabled = false,
   multiple = false,
+  bottomAction,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -191,6 +193,13 @@ export function SearchableSelect({
               );
             })}
           </div>
+
+          {/* Bottom Action */}
+          {bottomAction && (
+            <div className="p-1 border-t bg-muted/30">
+              {bottomAction}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -19,7 +19,7 @@ type AttachCurrencyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currencies: Currency[];
-  onSubmit: (values: { currency_id: number; balance: string }) => Promise<void>;
+  onSubmit: (values: { currency_id: number; balance: number }) => Promise<void>;
   loading?: boolean;
 };
 
@@ -32,12 +32,12 @@ export function AttachCurrencyDialog({
 }: AttachCurrencyDialogProps) {
   const form = useForm<AttachFundCurrencyValues>({
     resolver: zodResolver(attachFundCurrencySchema),
-    defaultValues: { currency_id: 0, balance: '0' },
+    defaultValues: { currency_id: 0, balance: 0 },
   });
 
   useEffect(() => {
     if (!open) {
-      form.reset({ currency_id: 0, balance: '0' });
+      form.reset({ currency_id: 0, balance: 0 });
     }
   }, [form, open]);
 
@@ -54,7 +54,7 @@ export function AttachCurrencyDialog({
             onSubmit={form.handleSubmit(async (values) => {
               await onSubmit({
                 currency_id: values.currency_id,
-                balance: values.balance,
+                balance: Number(values.balance),
               });
             })}
           >

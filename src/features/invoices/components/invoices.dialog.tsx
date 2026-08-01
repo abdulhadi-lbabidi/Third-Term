@@ -2,13 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { InvoicesForm } from './invoices.form';
 import { useInvoice } from '../invoices.hooks';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import type { CreateInvoicePayload } from '../types';
 
 type InvoicesDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   invoiceId?: number;
-  fixedValues?: Partial<CreateInvoicePayload>;
+  fixedValues?: Record<string, any>;
 };
 
 export function InvoicesDialog({
@@ -34,21 +33,21 @@ export function InvoicesDialog({
         <div className="py-4">
           {isEdit && isLoading ? (
             <div className="space-y-4">
-               {Array.from({ length: 4 }).map((_, i) => (
-                 <div key={i} className="space-y-2">
-                   <Skeleton className="h-4 w-20" />
-                   <Skeleton className="h-10 w-full" />
-                 </div>
-               ))}
-               <Skeleton className="h-10 w-full mt-6" />
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+              <Skeleton className="h-10 w-full mt-6" />
             </div>
-          ) : (
+          ) : isOpen ? (
             <InvoicesForm
               defaultValues={invoice}
               onSuccess={onClose}
               fixedValues={fixedValues}
             />
-          )}
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>

@@ -29,13 +29,15 @@ export function ProjectTeamDialog({
             {member ? 'تعديل بيانات العضو' : 'إضافة عضو جديد لفريق المشروع'}
           </DialogTitle>
         </DialogHeader>
-        <ProjectTeamForm
-          projectId={projectId}
-          member={member}
-          users={users}
-          onSubmit={onSubmit}
-          loading={loading}
-        />
+        {open && (
+          <ProjectTeamForm
+            projectId={projectId}
+            member={member}
+            users={users}
+            onSubmit={onSubmit}
+            loading={loading}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

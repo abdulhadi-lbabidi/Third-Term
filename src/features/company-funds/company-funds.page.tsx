@@ -11,8 +11,8 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
-import { CompanyFundCurrenciesDialog } from './components/company-fund-currencies.dialog';
-import { CompanyFundCurrencyDialog } from './components/company-fund-currency.dialog';
+import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
+import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
 import type { CompanyFund, CompanyFundCurrency } from './types';
 import { PageHeader } from '../components/page-header';
 import { cn } from '@/shared/lib/utils';
@@ -155,9 +155,19 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
               <Wallet className="mb-4 size-10 text-muted-foreground" />
               <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 لم يتم إضافة أي صناديق شركة بعد.
               </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setSelectedCompanyFund(null);
+                  setDialogOpen(true);
+                }}
+              >
+                إضافة صندوق شركة
+              </Button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -221,6 +231,9 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               setSelectedCompanyFund(currentFund);
               setAttachDialogOpen(true);
             }}
+            extraFixedValues={{
+              company_fund_id: currentFund.id,
+            }}
           />
         )
       )}
@@ -253,22 +266,22 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
         loading={attachMutation.isPending}
       />
 
-      <CompanyFundCurrenciesDialog
+      <GenericFundCurrenciesDialog
         open={currenciesDialogOpen}
         onOpenChange={(open) => {
           setCurrenciesDialogOpen(open);
           if (!open) setSelectedCompanyFundForView(null);
         }}
-        fund={selectedCompanyFundForView}
+        fund={selectedCompanyFundForView as any}
       />
 
-      <CompanyFundCurrencyDialog
+      <GenericFundCurrencyDialog
         open={currencyEditDialogOpen}
         onOpenChange={(open) => {
           setCurrencyEditDialogOpen(open);
           if (!open) setSelectedCompanyFundCurrency(null);
         }}
-        currency={selectedCompanyFundCurrency}
+        currency={selectedCompanyFundCurrency as any}
         onSubmit={async (payload) => {
           await updateCurrencyMutation.mutateAsync(payload);
           toast.success('تم تعديل العملة بنجاح');

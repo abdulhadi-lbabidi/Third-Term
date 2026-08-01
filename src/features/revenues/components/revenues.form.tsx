@@ -45,6 +45,7 @@ type RevenuesFormProps = {
     user_id?: number;
     user_fund_id?: number;
     company_fund_id?: number;
+    fund_user_role?: string;
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
@@ -134,6 +135,17 @@ function getCompanyFundLabel(item: CompanyFund) {
   return item.name;
 }
 
+function getCurrencyRevenueableId(currency: { id: number; revenueable_id?: number; pivot?: { id: number } }) {
+  return currency.revenueable_id ?? currency.pivot?.id ?? currency.id;
+}
+
+function currencyMatchesRevenueableId(
+  currency: { id: number; revenueable_id?: number; pivot?: { id: number } },
+  revenueableId: number,
+) {
+  return getCurrencyRevenueableId(currency) === revenueableId;
+}
+
 function getCurrencyLabel(currency: { currency: string; balance: string }) {
   return `${currency.currency} - ${currency.balance}`;
 }
@@ -149,7 +161,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : 'user_fund'),
       revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : sourceToRevenueableType.user_fund),
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
-      company_fund_id: undefined,
+      company_fund_id: fixedValues?.company_fund_id ?? undefined,
       user_role: defaultValues?.user_role ?? '',
       user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
       received_by: (() => {
@@ -160,7 +172,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         const num = Number(val);
         return Number.isNaN(num) ? undefined : num;
       })(),
-      fund_user_role: defaultValues?.revenueable_info?.user_info?.role ?? '',
+      fund_user_role: fixedValues?.fund_user_role ?? defaultValues?.revenueable_info?.user_info?.role ?? '',
       fund_user_id: defaultValues?.revenueable_info?.user_info?.id ?? fixedValues?.user_id ?? undefined,
       user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
       project_fund_id: fixedValues?.project_fund_id ?? undefined,
@@ -192,7 +204,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const derivedCompanyFundId = useMemo(() => {
     if (companyFundId) return companyFundId;
     if (!selectedRevenueableId) return undefined;
-    return companyFunds.find((fund: CompanyFund) => fund.currencies?.some((currency: any) => currency.id === selectedRevenueableId))?.id;
+    return companyFunds.find((fund: CompanyFund) => fund.currencies?.some((currency: any) => currencyMatchesRevenueableId(currency, selectedRevenueableId)))?.id;
   }, [companyFundId, companyFunds, selectedRevenueableId]);
 
   useEffect(() => {
@@ -218,8 +230,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
   const { data: allProjectFunds = [] } = useQuery<ProjectFund[]>({
-    queryKey: ['revenues', 'project-funds'] as const,
-    queryFn: () => projectFundsApi.getProjectFunds(),
+    queryKey: ['revenues', 'project-funds', fixedValues?.project_id] as const,
+    queryFn: () => projectFundsApi.getProjectFunds(fixedValues?.project_id),
     enabled: source === 'project_fund',
   });
 
@@ -264,7 +276,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     if (projectFundId) return projectFundId;
     if (!selectedRevenueableId) return undefined;
     return allProjectFunds.find((fund) =>
-      fund.currencies?.some((currency) => currency.id === selectedRevenueableId),
+      fund.currencies?.some((currency) => currencyMatchesRevenueableId(currency, selectedRevenueableId)),
     )?.id;
   }, [projectFundId, allProjectFunds, selectedRevenueableId]);
 
@@ -295,7 +307,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     if (userFundId) return userFundId;
     if (!selectedRevenueableId) return undefined;
     return allUserFunds.find((fund) =>
-      fund.currencies?.some((currency) => currency.id === selectedRevenueableId),
+      fund.currencies?.some((currency) => currencyMatchesRevenueableId(currency, selectedRevenueableId)),
     )?.id;
   }, [selectedRevenueableId, allUserFunds, userFundId]);
 
@@ -338,9 +350,31 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const fundUserOptions = fundRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
 
   // Options for currencies
-  const companyCurrencyOptions = selectedCompanyFund?.currencies?.map(c => ({ value: c.id, label: getCurrencyLabel(c) })) || [];
-  const projectCurrencyOptions = selectedProjectFund?.currencies?.map(c => ({ value: c.id, label: getCurrencyLabel(c) })) || [];
-  const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(c => ({ value: c.id, label: getCurrencyLabel(c) })) || [];
+  const companyCurrencyOptions = selectedCompanyFund?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+  const projectCurrencyOptions = selectedProjectFund?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+  const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+
+  useEffect(() => {
+    if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
+      form.setValue('project_fund_id', projectFunds[0].id);
+    }
+  }, [source, selectedProjectId, projectFunds, projectFundId, form]);
+
+  useEffect(() => {
+    if (source === 'company_fund' && companyFunds.length === 1 && !companyFundId) {
+      form.setValue('company_fund_id', companyFunds[0].id);
+    }
+  }, [source, companyFunds, companyFundId, form]);
+
+  useEffect(() => {
+    const options = source === 'company_fund' ? companyCurrencyOptions
+      : source === 'project_fund' ? projectCurrencyOptions
+        : userCurrencyOptions;
+
+    if (options.length === 1 && !selectedRevenueableId) {
+      form.setValue('revenueable_id', options[0].value);
+    }
+  }, [source, companyCurrencyOptions, projectCurrencyOptions, userCurrencyOptions, selectedRevenueableId, form]);
 
   return (
     <Form {...form}>
@@ -626,7 +660,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         <div className="space-y-4 px-2">
           <h3 className="font-semibold text-slate-800">بيانات الإيراد</h3>
           <div className="grid gap-4">
-            {source === 'company_fund' && (
+            {source === 'company_fund' && !fixedValues?.company_fund_id && (
               <FormField
                 control={form.control}
                 name="company_fund_id"
@@ -708,7 +742,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                     )}
                   />
                 )}
-
                 {!fixedValues?.project_fund_id && (
                   <FormField
                     control={form.control}

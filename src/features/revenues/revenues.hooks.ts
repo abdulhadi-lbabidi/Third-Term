@@ -5,14 +5,14 @@ import { toast } from 'sonner';
 
 export const revenuesQueryKeys = {
   all: ['revenues'] as const,
-  list: (page: number, perPage: number) => [...revenuesQueryKeys.all, page, perPage] as const,
+  list: (page: number, perPage: number, filters?: Record<string, any>) => [...revenuesQueryKeys.all, page, perPage, filters] as const,
   detail: (id: number) => [...revenuesQueryKeys.all, id] as const,
 };
 
-export function useRevenues(page = 1, perPage = 50) {
+export function useRevenues(page = 1, perPage = 50, filters?: Record<string, any>) {
   return useQuery({
-    queryKey: revenuesQueryKeys.list(page, perPage),
-    queryFn: () => revenuesApi.getRevenues(page, perPage),
+    queryKey: revenuesQueryKeys.list(page, perPage, filters),
+    queryFn: () => revenuesApi.getRevenues(page, perPage, filters),
   });
 }
 
@@ -23,6 +23,9 @@ export function useCreateRevenue() {
     mutationFn: (payload: CreateRevenuePayload) => revenuesApi.createRevenue(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['funds'] });
       toast.success('تم إضافة الإيراد بنجاح');
     },
     onError: () => {

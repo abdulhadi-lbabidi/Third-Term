@@ -17,7 +17,7 @@ export function ItemsDialog({ open, onOpenChange, item, onSubmit, loading }: Ite
         <DialogHeader>
           <DialogTitle>{item ? 'تعديل البند' : 'إضافة بند جديد'}</DialogTitle>
         </DialogHeader>
-        <ItemsForm defaultValues={item} onSubmit={onSubmit} loading={loading} />
+        {open && <ItemsForm defaultValues={item} onSubmit={onSubmit} loading={loading} />}
       </DialogContent>
     </Dialog>
   );
