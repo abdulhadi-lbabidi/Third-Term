@@ -22,7 +22,7 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     const errorMessage = error.response?.data?.message || error.response?.data?.error;
-
+    toast.error(errorMessage)
     // if (errorMessage) {
     //   toast.error(errorMessage);
     // } else if (error.message && error.response?.status !== 401) {
