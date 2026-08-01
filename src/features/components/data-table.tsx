@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react';
-import { MoreVertical, Pencil, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,8 @@ type ExtraAction<T> = {
 };
 
 type DataTableActions<T> = {
+  onView?: (row: T) => void;
+  viewLabel?: string;
   onEdit?: (row: T) => void;
   editLabel?: string;
   onDelete?: (row: T) => void;
@@ -68,9 +70,10 @@ export function DataTable<T>({
   const [pendingDelete, setPendingDelete] = useState<T | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const actionCount =
-    (actions?.extraActions?.length ?? 0) +
-    Number(Boolean(actions?.onEdit)) +
-    Number(Boolean(actions?.onDelete));
+    (actions?.onView ? 1 : 0) +
+    (actions?.onEdit ? 1 : 0) +
+    (actions?.onDelete ? 1 : 0) +
+    (actions?.extraActions?.length || 0);
 
   const toggleRow = (index: number) => {
     const next = new Set(expandedRows);
@@ -139,19 +142,32 @@ export function DataTable<T>({
                           <DropdownMenuContent align="start" className="w-48">
                             {actions?.extraActions?.length
                               ? actions.extraActions.map((action) => (
-                                  <DropdownMenuItem
-                                    key={action.label}
-                                    onSelect={() => {
-                                      setTimeout(() => {
-                                        action.onClick(row);
-                                      }, 0);
-                                    }}
-                                  >
-                                    {action.icon}
-                                    <span>{action.label}</span>
-                                  </DropdownMenuItem>
-                                ))
+                                <DropdownMenuItem
+                                  key={action.label}
+                                  onSelect={() => {
+                                    setTimeout(() => {
+                                      action.onClick(row);
+                                    }, 0);
+                                  }}
+                                >
+                                  {action.icon}
+                                  <span>{action.label}</span>
+                                </DropdownMenuItem>
+                              ))
                               : null}
+
+                            {actions?.onView ? (
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setTimeout(() => {
+                                    actions.onView?.(row);
+                                  }, 0);
+                                }}
+                              >
+                                <Eye className="size-4" />
+                                <span>{actions.viewLabel || 'عرض'}</span>
+                              </DropdownMenuItem>
+                            ) : null}
 
                             {actions?.onEdit ? (
                               <DropdownMenuItem
@@ -168,7 +184,7 @@ export function DataTable<T>({
 
                             {actions?.onDelete ? (
                               <>
-                                {actions?.onEdit || actions?.extraActions?.length ? (
+                                {actions?.onView || actions?.onEdit || actions?.extraActions?.length ? (
                                   <DropdownMenuSeparator />
                                 ) : null}
                                 <DropdownMenuItem

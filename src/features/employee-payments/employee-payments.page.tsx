@@ -38,11 +38,15 @@ export function EmployeePaymentsPage() {
 
   const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
-    queryFn: async () => {
-      const res = await usersApi.getUsersByRole('employee');
-      return (res as any)?.data ?? res;
-    },
+    queryFn: () => usersApi.getUsersByRole('employee'),
   });
+
+  const employeesList = useMemo(() => {
+    const raw = employeesQuery.data;
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) return (raw as any).data;
+    return [];
+  }, [employeesQuery.data]);
 
   useEffect(() => {
     if (resolvedEmployeeId !== null) {
@@ -50,7 +54,7 @@ export function EmployeePaymentsPage() {
     }
   }, [resolvedEmployeeId]);
 
-  const selectedEmployee = (employeesQuery.data as EmployeeRecord[] | undefined)?.find((employee: EmployeeRecord) => employee.id === selectedEmployeeId) ?? null;
+  const selectedEmployee = employeesList.find((employee: any) => employee.id === selectedEmployeeId) ?? null;
 
   const payments = paymentsQuery.data?.data ?? [];
   const meta = paymentsQuery.data?.meta;
@@ -103,18 +107,18 @@ export function EmployeePaymentsPage() {
           <div className="flex shrink-0 items-center gap-3">
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
-                <div className="w-[210px] shrink-0">
-                  <SearchableSelect
-                    value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
-                    onValueChange={(val) => setSelectedEmployeeId(val ? Number(val) : null)}
-                    options={[
-                      { value: '', label: 'كل الموظفين' },
-                      ...(employeesQuery.data?.map((e: any) => ({ value: String(e.id), label: e.user.name })) || [])
-                    ]}
-                    placeholder="كل الموظفين"
-                    searchPlaceholder="ابحث عن موظف..."
-                  />
-                </div>
+                <select
+                  className="field-control h-10 w-[210px] shrink-0"
+                  value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
+                  onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
+                >
+                  <option value="">كل الموظفين</option>
+                  {employeesList.map((employee: any) => (
+                    <option key={employee.id} value={String(employee.id)}>
+                      {employee.user.name}
+                    </option>
+                  ))}
+                </select>
                 {selectedEmployeeId ? (
                   <Button
                     type="button"
@@ -173,7 +177,7 @@ export function EmployeePaymentsPage() {
           setDialogOpen(open);
           if (!open) setSelectedPayment(null);
         }}
-        employees={employeesQuery.data ?? []}
+        employees={employeesList}
         employeePayment={selectedPayment}
         lockedEmployeeId={params.employeeId ? Number(params.employeeId) : null}
         onSubmit={handleSubmit}

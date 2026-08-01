@@ -39,7 +39,7 @@ type GenericFundDetailsProps = {
     symbol: string;
     balance: string;
   }[];
-  onBack: () => void;
+  onBack?: () => void;
   onEdit: () => void;
   onDelete: () => Promise<void>;
   onAttachCurrency: () => void;
@@ -124,14 +124,16 @@ export function GenericFundDetails({
   return (
     <div className="space-y-5 shadow-md rounded-xl p-3 bg-white">
       <div className="flex items-start gap-3 ">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onBack}
-          title="العودة"
-        >
-          <ArrowRight className="size-4" />
-        </Button>
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <ArrowRight className="size-5" />
+          </Button>
+        )}
         <div>
           <h3 className="text-lg font-semibold">صندوق: {fundName}</h3>
           <p className="mb-3 text-sm text-muted-foreground">

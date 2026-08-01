@@ -14,6 +14,8 @@ export function EmployeePaymentsTable({ data, loading, onEdit, onDelete }: Emplo
   const columns: DataTableColumn<EmployeePayment>[] = [
     { header: 'الموظف', cell: (payment) => payment.employee?.user?.name ?? '-' },
     { header: 'المسمى الوظيفي', cell: (payment) => payment.employee?.job_title ?? '-' },
+    { header: 'صندوق الشركة', cell: (payment) => payment.company_fund_currency?.company_fund?.name ?? '-' },
+    { header: 'العملة', cell: (payment) => payment.company_fund_currency?.currency?.currency ?? '-' },
     { header: 'الزيادات', cell: (payment) => String(payment.bonuses) },
     { header: 'الاستقطاعات', cell: (payment) => String(payment.deductions) },
     { header: 'تاريخ الدفع', cell: (payment) => payment.payment_date ? dayjs(payment.payment_date).format('YYYY-MM-DD') : '-' },

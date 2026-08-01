@@ -110,16 +110,7 @@ export function UsersPage() {
   };
 
   function handleEdit(row: UsersTabRecord) {
-    navigate(`/users/edit/${activeRole}/${row.id}?tab=${activeRole}`);
-  }
-
-  function handleFunds(row: UsersTabRecord) {
-    navigate(`/users/${row.id}/${encodeURIComponent(row.user.name)}/funds?tab=${activeRole}`);
-  }
-
-  function handleEmployeePayments(row: UsersTabRecord) {
-    if (activeRole !== 'employee') return;
-    navigate(`/employees/${row.id}/${encodeURIComponent(row.user.name)}/payments`);
+    navigate(`/users/view/${activeRole}/${row.id}?tab=${activeRole}`);
   }
 
   const columns = useMemo(
@@ -178,9 +169,7 @@ export function UsersPage() {
             data={users}
             loading={usersQuery.isFetching}
             onDelete={handleDelete}
-            onEdit={handleEdit}
-            onFunds={handleFunds}
-            onEmployeePayments={activeRole === 'employee' ? handleEmployeePayments : undefined}
+            onView={handleEdit}
           />
 
           <SimplePagination

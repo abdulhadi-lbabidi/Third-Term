@@ -20,6 +20,7 @@ import { NewExpensePage } from '@/features/expenses/new-expense.page';
 import { ProjectStagesPage } from '@/features/projects/project-stages/project-stages.page';
 import { MaterialsPage } from '@/features/materials/materials.page';
 import { RevenuesPage } from '@/features/revenues/revenues.page';
+import { NewRevenuePage } from '@/features/revenues/new-revenue.page';
 import { InvoiceItemsPage } from '@/features/invoice-items/invoice-items.page';
 import { InvoicesPage } from '@/features/invoices/invoices.page';
 import { NewInvoicePage } from '@/features/invoices/new-invoice.page';
@@ -72,7 +73,7 @@ export const router = createBrowserRouter([
             element: <NewUserPage />,
           },
           {
-            path: '/users/edit/:role/:id',
+            path: '/users/view/:role/:id',
             element: <NewUserPage />,
           },
           {
@@ -135,6 +136,10 @@ export const router = createBrowserRouter([
           {
             path: '/revenues',
             element: <RevenuesPage />,
+          },
+          {
+            path: '/revenues/new',
+            element: <NewRevenuePage />,
           },
           {
             path: '/invoices',

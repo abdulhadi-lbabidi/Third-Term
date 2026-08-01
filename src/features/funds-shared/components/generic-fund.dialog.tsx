@@ -59,6 +59,8 @@ type GenericFundFormProps = {
   fundType: 'company' | 'project' | 'user';
   onSubmit: (values: GenericFundFormValues) => Promise<void>;
   loading?: boolean;
+  hideProjectSelection?: boolean;
+  hideUserSelection?: boolean;
 };
 
 export function GenericFundDialog({
@@ -68,6 +70,8 @@ export function GenericFundDialog({
   fundType,
   onSubmit,
   loading,
+  hideProjectSelection,
+  hideUserSelection,
 }: GenericFundFormProps) {
   const isEditing = !!defaultValues?.id;
 
@@ -139,7 +143,7 @@ export function GenericFundDialog({
               )}
             />
 
-            {fundType === 'project' && !isEditing && (
+            {fundType === 'project' && !isEditing && !hideProjectSelection && (
               <FormField
                 control={form.control}
                 name="project_id"
@@ -163,7 +167,7 @@ export function GenericFundDialog({
               />
             )}
 
-            {fundType === 'user' && !isEditing && (
+            {fundType === 'user' && !isEditing && !hideUserSelection && (
               <FormField
                 control={form.control}
                 name="user_id"

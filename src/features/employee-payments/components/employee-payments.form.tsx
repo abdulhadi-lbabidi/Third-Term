@@ -22,6 +22,7 @@ import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { EmployeeRecord } from '@/features/users/types';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from '../types';
 import { employeePaymentFormSchema, type EmployeePaymentFormValues } from '../schemas/employee-payments.schema';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 
 type EmployeePaymentsFormProps = {
   employees: EmployeeRecord[];
@@ -59,7 +60,7 @@ export function EmployeePaymentsForm({
     resolver: zodResolver(employeePaymentFormSchema),
     defaultValues: {
       employee_id: lockedEmployeeId ? String(lockedEmployeeId) : defaultValues?.employee_id ? String(defaultValues.employee_id) : '',
-      company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : '',
+      company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : defaultValues?.company_fund_currency?.id ? String(defaultValues.company_fund_currency.id) : '',
       bonuses: defaultValues?.bonuses ? String(defaultValues.bonuses) : '',
       deductions: defaultValues?.deductions ? String(defaultValues.deductions) : '',
       payment_date: defaultValues?.payment_date ?? today,
@@ -70,13 +71,13 @@ export function EmployeePaymentsForm({
   useEffect(() => {
     form.reset({
       employee_id: lockedEmployeeId ? String(lockedEmployeeId) : defaultValues?.employee_id ? String(defaultValues.employee_id) : '',
-      company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : '',
+      company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : defaultValues?.company_fund_currency?.id ? String(defaultValues.company_fund_currency.id) : '',
       bonuses: defaultValues?.bonuses ? String(defaultValues.bonuses) : '',
       deductions: defaultValues?.deductions ? String(defaultValues.deductions) : '',
       payment_date: defaultValues?.payment_date ?? today,
       amount: defaultValues?.amount ? String(defaultValues.amount) : '',
     });
-  }, [defaultValues, form, lockedEmployeeId]);
+  }, [defaultValues, form, lockedEmployeeId, today]);
 
   return (
     <Form {...form}>
@@ -96,49 +97,106 @@ export function EmployeePaymentsForm({
         <FormField
           control={form.control}
           name="employee_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الموظف</FormLabel>
-              <FormControl>
-                <SearchableSelect
+          render={({ field }) => {
+            const employeesList = Array.isArray(employees) ? employees : (employees as any)?.data ?? [];
+            const selectedEmployeeLabel = (() => {
+              if (!field.value) return null;
+              const found = employeesList.find((emp: any) => String(emp.id) === String(field.value));
+              if (found) {
+                const name = found.user?.name ?? found.name ?? `موظف #${found.id}`;
+                const title = found.job_title ? ` (${found.job_title})` : '';
+                return `${name}${title}`;
+              }
+              if (defaultValues?.employee && String(defaultValues.employee.id) === String(field.value)) {
+                const emp = defaultValues.employee;
+                const name = emp.user?.name ?? `موظف #${emp.id}`;
+                const title = emp.job_title ? ` (${emp.job_title})` : '';
+                return `${name}${title}`;
+              }
+              return null;
+            })();
+
+            return (
+              <FormItem>
+                <FormLabel>الموظف</FormLabel>
+                <Select
                   value={field.value}
                   onValueChange={field.onChange}
-                  options={employees.map((employee) => ({
-                    value: String(employee.id),
-                    label: employee.user.name,
-                  }))}
-                  placeholder="اختر الموظف"
                   disabled={Boolean(lockedEmployeeId)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+                >
+                  <FormControl>
+                    <SelectTrigger disabled={Boolean(lockedEmployeeId)}>
+                      <SelectValue placeholder="اختر الموظف">
+                        {selectedEmployeeLabel}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {employeesList.map((emp: any) => (
+                      <SelectItem key={emp.id} value={String(emp.id)}>
+                        {emp.user?.name ?? emp.name ?? `موظف #${emp.id}`} ({emp.job_title ?? ''})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         <FormField
           control={form.control}
           name="company_fund_currency_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>عملة صندوق الشركة</FormLabel>
-              <FormControl>
-                <SearchableSelect
+          render={({ field }) => {
+            const selectedLabel = (() => {
+              if (!field.value) return null;
+              for (const fund of companyFunds) {
+                for (const curr of fund.currencies ?? []) {
+                  if (String(curr.id) === String(field.value)) {
+                    return `${fund.name} - ${curr.currency} (${curr.balance})`;
+                  }
+                }
+              }
+              if (defaultValues?.company_fund_currency && String(defaultValues.company_fund_currency.id) === String(field.value)) {
+                const cfc = defaultValues.company_fund_currency;
+                const fundName = cfc.company_fund?.name ?? '';
+                const currName = cfc.currency?.currency ?? '';
+                const bal = cfc.balance ?? '';
+                return `${fundName} - ${currName} (${bal})`;
+              }
+              return null;
+            })();
+
+            return (
+              <FormItem>
+                <FormLabel>عملة صندوق الشركة</FormLabel>
+                <Select
                   value={field.value}
                   onValueChange={field.onChange}
-                  options={companyFunds.flatMap((fund) =>
-                    (fund.currencies ?? []).map((currency: any) => ({
-                      value: String(currency.id),
-                      label: `${fund.name} - ${currency.currency} (${currency.balance} ${currency.symbol})`,
-                    }))
-                  )}
-                  placeholder="اختر عملة صندوق الشركة"
                   disabled={isLoadingCompanyFunds}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+                >
+                  <FormControl>
+                    <SelectTrigger disabled={isLoadingCompanyFunds}>
+                      <SelectValue placeholder={isLoadingCompanyFunds ? 'جاري التحميل...' : 'اختر عملة الصندوق'}>
+                        {selectedLabel}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {companyFunds.flatMap((fund: any) =>
+                      (fund.currencies ?? []).map((curr: any) => (
+                        <SelectItem key={curr.id} value={String(curr.id)}>
+                          {fund.name} - {curr.currency} ({curr.balance})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         <div className="grid grid-cols-2 gap-4">
