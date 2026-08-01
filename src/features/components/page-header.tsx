@@ -18,6 +18,7 @@ interface PageHeaderProps {
   defaultTab?: string;
   tabParam?: string;
   boxed?: boolean;
+  className?: string;
 }
 
 export function PageHeader({
@@ -26,6 +27,7 @@ export function PageHeader({
   icon: Icon,
   description,
   action,
+  className,
   tabs,
   defaultTab,
   tabParam = "tab",
@@ -51,7 +53,8 @@ export function PageHeader({
     <div
       className={cn(
         "bg-card",
-        boxed && "rounded-lg border border-border shadow-[var(--shadow-finance)]"
+        boxed && "rounded-lg border border-border shadow-[var(--shadow-finance)]",
+        className
       )}
     >
       <div

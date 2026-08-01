@@ -12,7 +12,7 @@ export type GenericFundCurrency = {
 type GenericFundCardProps = {
   fundId: number;
   name: string;
-  subtitle: string;
+  subtitle?: string;
   currencies: GenericFundCurrency[];
   createdAt?: string;
   onClick: (fundId: number) => void;

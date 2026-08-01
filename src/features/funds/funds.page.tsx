@@ -32,7 +32,6 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const userId = Number(params.userId || params.id || '');
-  const userName = params.userName ? decodeURIComponent(params.userName) : '';
   const hasUserId = Number.isFinite(userId) && userId > 0;
   const rawRoleParam = params.role || searchParams.get('role') || searchParams.get('tab');
   const userRole = userRoles.includes(rawRoleParam as UserRole) ? (rawRoleParam as UserRole) : null;
@@ -70,12 +69,12 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   });
 
   const resolvedUserId = userRecordQuery.data?.user.id ?? userId;
-  const resolvedUserName = userRecordQuery.data?.user.name ?? userName;
   const visibleFunds = hasUserContext
     ? ((userRecordQuery.data?.user.funds as Fund[] | undefined) ?? [])
     : (fundsQuery.data ?? []);
 
-  const currentFund = visibleFunds.find((f) => f.id === selectedFundId) || null;
+  const effectiveFundId = selectedFundId;
+  const currentFund = visibleFunds.find((f) => f.id === effectiveFundId) || null;
 
   const saveFundMutation = useMutation({
     mutationFn: async (payload: { name: string; user_id?: number }) => {
@@ -91,6 +90,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: fundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       if (hasUserContext && userRole) {
         await queryClient.invalidateQueries({ queryKey: ['funds', 'user-record', userRole, userId] });
       }
@@ -117,6 +117,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: fundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
       if (hasUserContext && userRole) {
         await queryClient.invalidateQueries({ queryKey: ['funds', 'user-record', userRole, userId] });
       }
@@ -128,29 +129,31 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
 
   return (
     <div className={cn("space-y-5", isTab && "space-y-0")}>
-      {!selectedFundId ? (
+      {!effectiveFundId ? (
         <>
           {!isTab && (
             <PageHeader
               badge="المالية"
-              title={hasUserContext ? `صناديق ${resolvedUserName || 'المستخدم'}` : 'الصناديق'}
+              title="الصناديق"
               icon={Wallet}
+              className="border-0 shadow-none"
               action={
                 <div className="flex gap-3" >
                   {!hasUserContext ? (
                     <Button type="button" variant="outline" onClick={() => navigate('/users')}>
                       العودة إلى المستخدمين
                     </Button>
-                  ) : null}
-                  <Button
-                    onClick={() => {
-                      setSelectedFund(null);
-                      setDialogOpen(true);
-                    }}
-                    disabled={hasUserContext ? !hasUserId : false}
-                  >
-                    إضافة صندوق جديد
-                  </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setSelectedFund(null);
+                        setDialogOpen(true);
+                      }}
+                      disabled={!hasUserId}
+                    >
+                      إضافة صندوق جديد
+                    </Button>
+                  )}
                 </div>
               }
             />
@@ -169,17 +172,19 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 لم يتم إضافة أي صناديق لهذا المستخدم بعد.
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                disabled={hasUserContext ? !hasUserId : false}
-                onClick={() => {
-                  setSelectedFund(null);
-                  setDialogOpen(true);
-                }}
-              >
-                إضافة صندوق جديد
-              </Button>
+              {hasUserContext && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!hasUserId}
+                  onClick={() => {
+                    setSelectedFund(null);
+                    setDialogOpen(true);
+                  }}
+                >
+                  إضافة صندوق جديد
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -188,7 +193,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
                   key={fund.id}
                   fundId={fund.id}
                   name={fund.name}
-                  subtitle={fund.user?.name ?? 'بدون مستخدم'}
+                  subtitle={hasUserContext ? undefined : (fund.user?.name ?? 'بدون مستخدم')}
                   currencies={(fund.currencies ?? []).map(c => ({
                     id: c.id,
                     currency: c.currency,
@@ -267,6 +272,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
         }}
         onSubmit={async (values) => { await saveFundMutation.mutateAsync(values); }}
         loading={saveFundMutation.isPending}
+        hideUserSelection={hasUserContext}
       />
 
       <AttachCurrencyDialog
@@ -283,7 +289,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               (fc) => fc.currency === c.currency
             )
         )}
-        onSubmit={async (payload) => { await attachCurrencyMutation.mutateAsync(payload); }}
+        onSubmit={async (payload) => { await attachCurrencyMutation.mutateAsync({ ...payload, balance: payload.balance.toString() }); }}
         loading={attachCurrencyMutation.isPending}
       />
 

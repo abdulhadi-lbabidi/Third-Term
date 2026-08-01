@@ -11,14 +11,15 @@ import { SimplePagination } from '@/components/ui/pagination';
 
 type InvoicesTableProps = {
   filters?: Record<string, any>;
+  fixedValues?: Record<string, any>;
 };
 
-export function InvoicesTable({ filters }: InvoicesTableProps = {}) {
+export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {}) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const perPage = 50;
 
-  const { data: response, isLoading } = useInvoices({ page, per_page: perPage, ...filters });
+  const { data: response, isLoading } = useInvoices({ page, per_page: perPage, ...filters, ...fixedValues });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);

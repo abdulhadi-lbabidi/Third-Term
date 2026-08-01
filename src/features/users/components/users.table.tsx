@@ -1,4 +1,3 @@
-import { Wallet, BadgeDollarSign } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 
 type UsersTableProps<T> = {
@@ -6,7 +5,7 @@ type UsersTableProps<T> = {
   data: T[];
   loading?: boolean;
   onDelete?: (row: T) => void;
-  onEdit?: (row: T) => void;
+  onView?: (row: T) => void;
   onFunds?: (row: T) => void;
   onEmployeePayments?: (row: T) => void;
 };
@@ -16,14 +15,8 @@ export function UsersTable<T>({
   data,
   loading,
   onDelete,
-  onEdit,
-  onFunds,
-  onEmployeePayments,
+  onView,
 }: UsersTableProps<T>) {
-  const extraActions = [
-    ...(onFunds ? [{ label: 'الصناديق', icon: <Wallet className="size-4" />, onClick: onFunds }] : []),
-    ...(onEmployeePayments ? [{ label: 'الرواتب', icon: <BadgeDollarSign className="size-4" />, onClick: onEmployeePayments }] : []),
-  ];
 
   return (
     <DataTable
@@ -38,9 +31,8 @@ export function UsersTable<T>({
       deleteLabel="حذف"
       actions={{
         onDelete,
-        onEdit,
-        editLabel: 'عرض تفاصيل المستخدم',
-        extraActions: extraActions.length ? extraActions : undefined,
+        onView,
+        viewLabel: 'تفاصيل المستخدم',
       }}
     />
   );

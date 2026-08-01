@@ -5,7 +5,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui
 import {
   TrendingUp,
   ArrowDownToLine,
-  Receipt,
   ArrowRight,
   Edit2,
   Trash2,
@@ -34,9 +33,6 @@ import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
 import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
 
-import { InvoicesTable } from '@/features/invoices/components/invoices.table';
-import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
-
 import { useTransfers, useCreateTransfer, useDeleteTransfer } from '@/features/transfers/transfers.hooks';
 import { TransfersTable } from '@/features/transfers/components/transfers.table';
 import { TransfersDialog } from '@/features/transfers/components/transfers.dialog';
@@ -50,7 +46,7 @@ type GenericFundDetailsProps = {
     symbol: string;
     balance: string;
   }[];
-  onBack: () => void;
+  onBack?: () => void;
   onEdit: () => void;
   onDelete: () => Promise<void>;
   onAttachCurrency: () => void;
@@ -93,8 +89,6 @@ export function GenericFundDetails({
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
-
-  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
 
@@ -154,14 +148,16 @@ export function GenericFundDetails({
   return (
     <div className="space-y-5 shadow-md rounded-xl p-3 bg-white">
       <div className="flex items-start gap-3 ">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onBack}
-          title="العودة"
-        >
-          <ArrowRight className="size-4" />
-        </Button>
+        {onBack && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onBack}
+            title="العودة"
+          >
+            <ArrowRight className="size-4" />
+          </Button>
+        )}
         <div>
           <h3 className="text-lg font-semibold">صندوق: {fundName}</h3>
           <p className="mb-3 text-sm text-muted-foreground">
@@ -232,10 +228,6 @@ export function GenericFundDetails({
           <TabsTrigger value="expenses">
             <ArrowDownToLine className="ml-2 size-4" />
             المصروفات
-          </TabsTrigger>
-          <TabsTrigger value="invoices">
-            <Receipt className="ml-2 size-4" />
-            الفواتير
           </TabsTrigger>
           <TabsTrigger value="transfers">
             <ArrowLeftRight className="ml-2 size-4" />
@@ -317,30 +309,6 @@ export function GenericFundDetails({
           />
         </TabsContent>
 
-        <TabsContent value="invoices" className="space-y-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">فواتير الصندوق</h3>
-            <Button
-              onClick={() => {
-                setInvoiceDialogOpen(true);
-              }}
-              className="bg-slate-950 text-white"
-            >
-              <PlusCircle className="mr-2 size-4" />
-              إضافة فاتورة
-            </Button>
-          </div>
-          
-          <InvoicesTable 
-            filters={filters}
-            fixedValues={{
-              source: sourceType,
-              [fundIdField]: fundId,
-              ...extraFixedValues,
-            }}
-          />
-        </TabsContent>
-
         <TabsContent value="transfers" className="space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
@@ -417,16 +385,6 @@ export function GenericFundDetails({
           expenseId={selectedExpenseForView}
         />
       )}
-
-      <InvoicesDialog
-        isOpen={invoiceDialogOpen}
-        onClose={() => setInvoiceDialogOpen(false)}
-        fixedValues={{
-          source: sourceType,
-          [fundIdField]: fundId,
-          ...extraFixedValues,
-        }}
-      />
 
       {transferDialogOpen && (
         <TransfersDialog

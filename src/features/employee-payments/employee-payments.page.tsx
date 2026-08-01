@@ -5,13 +5,11 @@ import { RotateCcw, BadgeDollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { usersApi } from '@/features/users/api/users.api';
-import type { EmployeeRecord } from '@/features/users/types';
 import { employeePaymentsApi, type EmployeePaymentResponse } from './employee-payments.api';
 import { EmployeePaymentsDialog } from './components/employee-payments.dialog';
 import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
 import { PageHeader } from '../components/page-header';
-import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { SimplePagination } from '@/components/ui/pagination';
 
 
