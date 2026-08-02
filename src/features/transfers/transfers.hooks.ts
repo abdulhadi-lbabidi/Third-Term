@@ -58,3 +58,11 @@ export function useUpdateTransfer() {
     },
   });
 }
+
+export function useTransfer(id: number | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['transfers', 'detail', id],
+    queryFn: () => transfersApi.getTransfer(id!),
+    enabled: Boolean(id) && enabled,
+  });
+}

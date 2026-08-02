@@ -23,13 +23,23 @@ export type TransferFundInfo = {
     project_fund?: {
       id: number;
       name: string;
+      project_id?: number;
     };
     fund?: {
       id: number;
       name: string;
+      user_id?: number;
       user?: {
         name: string;
       };
+    };
+  };
+  user_info?: {
+    user_id: number;
+    role_type: string;
+    user?: {
+      id: number;
+      name: string;
     };
   };
 };

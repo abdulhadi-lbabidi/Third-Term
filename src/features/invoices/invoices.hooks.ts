@@ -10,10 +10,11 @@ export const INVOICES_KEYS = {
   detail: (id: number) => [...INVOICES_KEYS.details(), id] as const,
 };
 
-export const useInvoices = (params?: Record<string, any>) => {
+export const useInvoices = (params?: Record<string, any>, enabled = true) => {
   return useQuery({
     queryKey: INVOICES_KEYS.list(JSON.stringify(params)),
     queryFn: () => invoicesApi.getInvoices(params),
+    enabled,
   });
 };
 

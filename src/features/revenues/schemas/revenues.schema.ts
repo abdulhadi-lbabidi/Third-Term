@@ -20,21 +20,7 @@ export const revenueFormSchema = z
     received_by: z.coerce.number().optional(),
   })
   .superRefine((values, ctx) => {
-    if (!values.user_role && !values.user_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_role'],
-        message: 'الرجاء اختيار نوع المستخدم',
-      });
-    }
-
-    if (!values.user_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_id'],
-        message: 'الرجاء اختيار المستخدم',
-      });
-    }
+    // Removed user_role and user_id mandatory checks
 
     if (values.source === 'company_fund' && !values.company_fund_id && !values.revenueable_id) {
       ctx.addIssue({

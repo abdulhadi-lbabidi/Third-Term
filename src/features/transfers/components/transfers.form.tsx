@@ -25,6 +25,7 @@ import {
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
 import type { CompanyFund } from '@/features/company-funds/types';
+import { fundsApi } from '@/features/funds/funds.api';
 import type { Fund } from '@/features/funds/types';
 import { projectsApi } from '@/features/projects/projects.api';
 import type { Project, ProjectFund } from '@/features/projects/types';
@@ -310,6 +311,87 @@ function formatNumberWithCommas(value: unknown): string {
   return parts.join('.');
 }
 
+function getRoleDetailsId(user: any): number | undefined {
+  if (!user) return undefined;
+  if (user.role_details?.id) return Number(user.role_details.id);
+  const roles = ['client', 'investor', 'employee', 'engineer', 'craftsmen', 'supplier', 'trustee', 'admin'];
+  for (const r of roles) {
+    if (user[r]?.id) return Number(user[r].id);
+  }
+  return undefined;
+}
+
+function normalizeRole(role: string | undefined): UserRole | '' {
+  if (!role) return '';
+  if (role === 'craftsmen') return 'craftsman';
+  if (role === 'user') return 'admin';
+  return role as UserRole;
+}
+
+function getSourceExpenseableId(
+  pivotId: number,
+  morphFromType: TransferableType | undefined,
+  companyFunds: CompanyFund[],
+  projects: Project[],
+  allFunds: Fund[]
+): number {
+  if (morphFromType === 'App\\Models\\CompanyFundCurrency') {
+    for (const fund of companyFunds) {
+      const cur = fund.currencies?.find(c => c.id === pivotId);
+      if (cur) return cur.expenseable_id ?? cur.id;
+    }
+  }
+  if (morphFromType === 'App\\Models\\ProjectFundCurrency') {
+    for (const proj of projects) {
+      if (proj.funds) {
+        for (const fund of proj.funds) {
+          const cur = fund.currencies?.find(c => c.id === pivotId);
+          if (cur) return cur.expenseable_id ?? cur.id;
+        }
+      }
+    }
+  }
+  if (morphFromType === 'App\\Models\\CurrencyFund') {
+    for (const fund of allFunds) {
+      const cur = fund.currencies?.find(c => c.id === pivotId);
+      if (cur) return cur.expenseable_id ?? cur.id;
+    }
+  }
+  return pivotId;
+}
+
+function getPivotIdFromExpenseableId(
+  expenseableId: number,
+  morphFromType: TransferableType | undefined,
+  companyFunds: CompanyFund[],
+  projects: Project[],
+  allFunds: Fund[]
+): number | undefined {
+  if (morphFromType === 'App\\Models\\CompanyFundCurrency') {
+    for (const fund of companyFunds) {
+      const cur = fund.currencies?.find(c => (c.expenseable_id ?? c.id) === expenseableId);
+      if (cur) return cur.id;
+    }
+  }
+  if (morphFromType === 'App\\Models\\ProjectFundCurrency') {
+    for (const proj of projects) {
+      if (proj.funds) {
+        for (const fund of proj.funds) {
+          const cur = fund.currencies?.find(c => (c.expenseable_id ?? c.id) === expenseableId);
+          if (cur) return cur.id;
+        }
+      }
+    }
+  }
+  if (morphFromType === 'App\\Models\\CurrencyFund') {
+    for (const fund of allFunds) {
+      const cur = fund.currencies?.find(c => (c.expenseable_id ?? c.id) === expenseableId);
+      if (cur) return cur.id;
+    }
+  }
+  return undefined;
+}
+
 export function TransfersForm({
   morph_from_type,
   fixedFromCurrencies = [],
@@ -330,13 +412,13 @@ export function TransfersForm({
       company_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CompanyFundCurrency'
         ? (defaultValues?.morph_to_info?.details?.company_fund_id ?? undefined)
         : undefined,
-      user_role: defaultValues?.user?.role_type ?? '',
+      user_role: normalizeRole(defaultValues?.user?.role_type),
       user_id: defaultValues?.user_id ?? defaultValues?.user?.id ?? undefined,
       fund_user_role: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
-        ? (defaultValues?.morph_to_info?.user_info?.role_type ?? '')
+        ? normalizeRole(defaultValues?.morph_to_info?.user_info?.role_type)
         : '',
       fund_user_id: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
-        ? (defaultValues?.morph_to_info?.user_info?.user_id ?? defaultValues?.morph_to_info?.details?.fund?.user_id ?? undefined)
+        ? (getRoleDetailsId(defaultValues?.morph_to_info?.user_info?.user) ?? getRoleDetailsId(defaultValues?.morph_to_info?.details?.fund?.user) ?? undefined)
         : undefined,
       user_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
         ? (defaultValues?.morph_to_info?.details?.fund_id ?? undefined)
@@ -352,10 +434,10 @@ export function TransfersForm({
         ? (defaultValues?.morph_from_info?.details?.company_fund_id ?? undefined)
         : undefined,
       from_user_role: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
-        ? (defaultValues?.morph_from_info?.user_info?.role_type ?? '')
+        ? normalizeRole(defaultValues?.morph_from_info?.user_info?.role_type)
         : '',
       from_user_id: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
-        ? (defaultValues?.morph_from_info?.user_info?.user_id ?? defaultValues?.morph_from_info?.details?.fund?.user_id ?? undefined)
+        ? (getRoleDetailsId(defaultValues?.morph_from_info?.user_info?.user) ?? getRoleDetailsId(defaultValues?.morph_from_info?.details?.fund?.user) ?? undefined)
         : undefined,
       from_user_fund_id: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
         ? (defaultValues?.morph_from_info?.details?.fund_id ?? undefined)
@@ -450,6 +532,30 @@ export function TransfersForm({
     enabled: morphToType === 'App\\Models\\ProjectFundCurrency' || morphFromType === 'App\\Models\\ProjectFundCurrency',
   });
   const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
+
+  const allFundsQuery = useQuery({
+    queryKey: ['transfers', 'all-funds-lookup'] as const,
+    queryFn: () => fundsApi.getFunds(),
+    enabled: !isGeneral && morphFromType === 'App\\Models\\CurrencyFund',
+  });
+  const allFunds = allFundsQuery.data ?? [];
+
+  useEffect(() => {
+    if (!defaultValues?.id || isGeneral) return;
+    const rawId = defaultValues?.morph_from_id;
+    if (!rawId) return;
+
+    const pivotId = getPivotIdFromExpenseableId(
+      rawId,
+      morphFromType,
+      companyFunds,
+      projects,
+      allFunds
+    );
+    if (pivotId) {
+      form.setValue('morph_from_id', pivotId);
+    }
+  }, [defaultValues, morphFromType, companyFunds, projects, allFunds, isGeneral, form]);
 
   const { data: selectedProjectDetails } = useQuery<Project | null>({
     queryKey: ['transfers', 'project-details', selectedProjectId] as const,
@@ -631,7 +737,7 @@ export function TransfersForm({
     } else if (morphFromType === 'App\\Models\\CurrencyFund') {
       currencies = selectedFromUserFund?.currencies ?? [];
     }
-    
+
     if (currencies.length === 1 && !selectedMorphFromId) {
       const val = getCurrencyExpenseableId(currencies[0]);
       if (val) form.setValue('morph_from_id', val);
@@ -659,7 +765,7 @@ export function TransfersForm({
     } else if (morphToType === 'App\\Models\\CurrencyFund') {
       currencies = selectedUserFund?.currencies ?? [];
     }
-    
+
     if (currencies.length === 1 && !selectedMorphToId) {
       const val = getCurrencyExpenseableId(currencies[0]);
       if (val) form.setValue('morph_to_id', val);
@@ -717,7 +823,7 @@ export function TransfersForm({
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit({
             morph_from_type: isGeneral ? values.morph_from_type! : morph_from_type!,
-            morph_from_id: values.morph_from_id,
+            morph_from_id: isGeneral ? values.morph_from_id : getSourceExpenseableId(values.morph_from_id, morphFromType, companyFunds, projects, allFunds),
             morph_to_type: values.morph_to_type,
             morph_to_id: values.morph_to_id,
             name: values.name,
@@ -856,8 +962,8 @@ export function TransfersForm({
                     disabled={!userRole}
                     placeholder="اختر المستخدم"
                     options={roleUsers.map((user) => ({
-                      value: user?.user.id,
-                      label: user?.user.name,
+                      value: user.user.id,
+                      label: user.user.name,
                     }))}
                   />
                 </FormControl>

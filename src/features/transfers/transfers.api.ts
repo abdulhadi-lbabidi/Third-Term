@@ -40,4 +40,9 @@ export const transfersApi = {
     });
     return response.data?.data ?? response.data;
   },
+
+  getTransfer: async (id: number): Promise<Transfer> => {
+    const response = await apiClient.get(`/transactions/${id}`);
+    return response.data?.data ?? response.data;
+  },
 };
