@@ -19,6 +19,7 @@ import { cn } from '@/shared/lib/utils';
 
 const companyFundsQueryKeys = {
   all: ['company-funds'] as const,
+  detail: (id: number) => [...companyFundsQueryKeys.all, id] as const,
 };
 
 export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
@@ -50,7 +51,13 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     queryFn: () => currenciesApi.getAll(),
   });
 
-  const currentFund = companyFundsQuery.data?.find((f) => f.id === selectedFundId) || null;
+  const fundDetailsQuery = useQuery({
+    queryKey: companyFundsQueryKeys.detail(selectedFundId!),
+    queryFn: () => companyFundsApi.getCompanyFundById(selectedFundId!),
+    enabled: !!selectedFundId,
+  });
+
+  const currentFund = fundDetailsQuery.data || companyFundsQuery.data?.find((f) => f.id === selectedFundId) || null;
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { name: string }) => {
@@ -147,61 +154,62 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               }
             />
           )}
-
-          {companyFundsQuery.isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
-              ))}
-            </div>
-          ) : (companyFundsQuery.data ?? []).length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
-              <Wallet className="mb-4 size-10 text-muted-foreground" />
-              <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
-              <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
-                لم يتم إضافة أي صناديق شركة بعد.
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  setSelectedCompanyFund(null);
-                  setDialogOpen(true);
-                }}
-              >
-                إضافة صندوق شركة
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {(companyFundsQuery.data ?? []).map((fund) => (
-                <GenericFundCard
-                  key={fund.id}
-                  fundId={fund.id}
-                  name={fund.name}
-                  subtitle="صندوق شركة"
-                  currencies={(fund.currencies ?? []).map(c => ({
-                    id: c.id,
-                    currency: c.currency,
-                    symbol: c.symbol,
-                    balance: c.balance
-                  }))}
-                  createdAt={fund.created_at}
-                  onClick={(id) => {
-                    setSearchParams((prev) => {
-                      prev.set('fundId', id.toString());
-                      if (!prev.has('fundTab')) prev.set('fundTab', 'revenues');
-                      return prev;
-                    });
+          <div className='flex bg-white '>
+            {companyFundsQuery.isLoading ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
+                ))}
+              </div>
+            ) : (companyFundsQuery.data ?? []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
+                <Wallet className="mb-4 size-10 text-muted-foreground" />
+                <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
+                <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
+                  لم يتم إضافة أي صناديق شركة بعد.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCompanyFund(null);
+                    setDialogOpen(true);
                   }}
-                  onMoreCurrenciesClick={() => {
-                    setSelectedCompanyFundForView(fund);
-                    setCurrenciesDialogOpen(true);
-                  }}
-                />
-              ))}
-            </div>
-          )}
+                >
+                  إضافة صندوق شركة
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {(companyFundsQuery.data ?? []).map((fund) => (
+                  <GenericFundCard
+                    key={fund.id}
+                    fundId={fund.id}
+                    name={fund.name}
+                    subtitle="صندوق شركة"
+                    currencies={(fund.currencies ?? []).map(c => ({
+                      id: c.id,
+                      currency: c.currency,
+                      symbol: c.symbol,
+                      balance: c.balance
+                    }))}
+                    createdAt={fund.created_at}
+                    onClick={(id) => {
+                      setSearchParams((prev) => {
+                        prev.set('fundId', id.toString());
+                        if (!prev.has('fundTab')) prev.set('fundTab', 'revenues');
+                        return prev;
+                      });
+                    }}
+                    onMoreCurrenciesClick={() => {
+                      setSelectedCompanyFundForView(fund);
+                      setCurrenciesDialogOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </>
       ) : (
         currentFund && (

@@ -16,7 +16,7 @@ export function ExpensesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const perPage = 50;
+  const [perPage, setPerPage] = useState(50);
 
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
@@ -71,6 +71,9 @@ export function ExpensesPage() {
         totalPages={totalPages}
         onPageChange={setPage}
         meta={meta}
+        limit={perPage}
+        limitOptions={[5, 10, 20, 50, 100]}
+        onLimitChange={setPerPage}
       />
 
       <ExpenseDetailsDialog

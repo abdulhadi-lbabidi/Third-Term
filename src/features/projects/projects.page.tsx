@@ -107,10 +107,10 @@ export function ProjectsPage() {
         }}
         onDelete={handleDelete}
         onAddFund={(project) => {
-          navigate(`/projects/${project.id}/${encodeURIComponent(project.name)}/funds`);
+          navigate(`/projects/${project.id}/funds`);
         }}
         onView={(project) => {
-          navigate(`/projects/${project.id}/${encodeURIComponent(project.name)}`);
+          navigate(`/projects/${project.id}`);
         }}
       />
 

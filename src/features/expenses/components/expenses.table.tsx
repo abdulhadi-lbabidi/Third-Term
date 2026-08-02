@@ -1,46 +1,18 @@
 import { Eye, Receipt } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
+import {
+  getBooleanLabel,
+  getCurrencyStringFromInfo,
+  UserLink,
+  FundLink,
+  type TableUser
+} from '@/features/components/table-helpers';
+import { formatArabicDate } from '@/shared/lib/utils';
 import type { Expense } from '../types';
 
-function getExpenseableTypeLabel(type?: Expense['expenseable_type']) {
-  switch (type) {
-    case 'App\\Models\\CompanyFundCurrency':
-      return 'صندوق الشركة';
-    case 'App\\Models\\ProjectFundCurrency':
-      return 'صندوق المشروع';
-    case 'App\\Models\\CurrencyFund':
-      return 'صندوق مستخدم';
-    default:
-      return '-';
-  }
-}
-
-function getBooleanLabel(value?: boolean) {
-  return value ? 'نعم' : 'لا';
-}
-
-function getTextLabel(value: unknown) {
-  if (typeof value === 'string' && value.trim().length) {
-    return value;
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  if (value && typeof value === 'object' && 'name' in value) {
-    const name = (value as { name?: unknown }).name;
-    if (typeof name === 'string' && name.trim().length) {
-      return name;
-    }
-  }
-
-  return '-';
-}
-
 type ExpenseRow = Expense & {
-  user?: string | { name?: string } | number;
-  created_by?: string | { name?: string } | number;
+  user?: TableUser;
+  created_by?: TableUser;
 };
 
 type ExpensesTableProps = {
@@ -50,17 +22,27 @@ type ExpensesTableProps = {
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
   onInvoices?: (expense: Expense) => void;
+  hideTypeColumn?: boolean;
 };
 
-export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoices }: ExpensesTableProps) {
-  const columns: DataTableColumn<Expense>[] = [
+export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoices, hideTypeColumn }: ExpensesTableProps) {
+  const allColumns: DataTableColumn<Expense>[] = [
     { header: 'الوصف', cell: (row) => row.description },
     {
       header: 'المبلغ',
-      cell: (row) => <span className="finance-num font-medium">{Number(row.amount || 0).toLocaleString()}</span>,
+      cell: (row) => {
+        const amount = Number(row.amount || 0).toLocaleString();
+        const currency = getCurrencyStringFromInfo(row.expenseable_info);
+        return (
+          <div className="flex items-center gap-1">
+            <span className="finance-num font-medium">{amount}</span>
+            {currency ? <span className="text-xs text-muted-foreground">{currency}</span> : null}
+          </div>
+        );
+      }
     },
-    { header: 'المستخدم', cell: (row) => getTextLabel((row as ExpenseRow).user) },
-    { header: 'نوع الصرف', cell: (row) => getExpenseableTypeLabel(row.expenseable_type) },
+    { header: 'المستخدم', cell: (row) => <UserLink user={(row as ExpenseRow).user} /> },
+    { header: 'نوع الصرف', cell: (row) => <FundLink type={row.expenseable_type} info={row.expenseable_info} fundTab="expenses" fallbackUser={(row as ExpenseRow).user} /> },
     {
       header: 'تم الترحيل',
       cell: (row) => (
@@ -69,10 +51,12 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoi
         </span>
       ),
     },
-    { header: 'أنشئ بواسطة', cell: (row) => getTextLabel((row as ExpenseRow).created_by) },
-    { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
-    { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
+    { header: 'أنشئ بواسطة', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
+    // { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
+    { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
   ];
+
+  const columns = hideTypeColumn ? allColumns.filter((c) => c.header !== 'نوع الصرف') : allColumns;
 
   return (
     <DataTable
@@ -91,40 +75,40 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoi
         extraActions: [
           ...(onView
             ? [
-                {
-                  label: 'تفاصيل المصروف',
-                  icon: <Eye className="size-4" />,
-                  onClick: onView,
-                },
-              ]
+              {
+                label: 'تفاصيل المصروف',
+                icon: <Eye className="size-4" />,
+                onClick: onView,
+              },
+            ]
             : []),
           ...(onInvoices
             ? [
-                {
-                  label: 'فواتير المصروف',
-                  icon: <Receipt className="size-4" />,
-                  onClick: onInvoices,
-                },
-              ]
+              {
+                label: 'فواتير المصروف',
+                icon: <Receipt className="size-4" />,
+                onClick: onInvoices,
+              },
+            ]
             : []),
         ].length > 0 ? [
           ...(onView
             ? [
-                {
-                  label: 'تفاصيل المصروف',
-                  icon: <Eye className="size-4" />,
-                  onClick: onView,
-                },
-              ]
+              {
+                label: 'تفاصيل المصروف',
+                icon: <Eye className="size-4" />,
+                onClick: onView,
+              },
+            ]
             : []),
           ...(onInvoices
             ? [
-                {
-                  label: 'فواتير المصروف',
-                  icon: <Receipt className="size-4" />,
-                  onClick: onInvoices,
-                },
-              ]
+              {
+                label: 'فواتير المصروف',
+                icon: <Receipt className="size-4" />,
+                onClick: onInvoices,
+              },
+            ]
             : []),
         ] : undefined,
       }}

@@ -20,9 +20,7 @@ import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/
 
 type UserRecord = Awaited<ReturnType<typeof usersApi.getUserByRole>>;
 
-const fundsQueryKeys = {
-  all: ['funds'] as const,
-};
+const fundsQueryKeys = { all: ['funds'] as const };
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
@@ -73,8 +71,14 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     ? ((userRecordQuery.data?.user.funds as Fund[] | undefined) ?? [])
     : (fundsQuery.data ?? []);
 
+  const fundDetailsQuery = useQuery({
+    queryKey: ['funds', 'detail', selectedFundId],
+    queryFn: () => fundsApi.getFundById(selectedFundId!),
+    enabled: !!selectedFundId,
+  });
+
   const effectiveFundId = selectedFundId;
-  const currentFund = visibleFunds.find((f) => f.id === effectiveFundId) || null;
+  const currentFund = fundDetailsQuery.data || visibleFunds.find((f) => f.id === effectiveFundId) || null;
 
   const saveFundMutation = useMutation({
     mutationFn: async (payload: { name: string; user_id?: number }) => {

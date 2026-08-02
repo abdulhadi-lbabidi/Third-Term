@@ -11,7 +11,7 @@ import { SimplePagination } from '@/components/ui/pagination';
 export function RevenuesPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const perPage = 50;
+  const [perPage, setPerPage] = useState(50);
 
   const { data: response, isLoading } = useRevenues(page, perPage);
   const deleteMutation = useDeleteRevenue();
@@ -62,6 +62,9 @@ export function RevenuesPage() {
         totalPages={totalPages}
         onPageChange={setPage}
         meta={meta}
+        limit={perPage}
+        limitOptions={[5, 10, 20, 50, 100]}
+        onLimitChange={setPerPage}
       />
     </div>
   );

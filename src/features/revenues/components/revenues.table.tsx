@@ -1,45 +1,16 @@
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
+import {
+  getBooleanLabel,
+  getCurrencyStringFromInfo,
+  UserLink,
+  FundLink,
+  type TableUser
+} from '@/features/components/table-helpers';
 import type { Revenue } from '../types';
 
-function getRevenueableTypeLabel(type?: Revenue['revenueable_type']) {
-  switch (type) {
-    case 'App\\Models\\CompanyFundCurrency':
-      return 'صندوق الشركة';
-    case 'App\\Models\\ProjectFundCurrency':
-      return 'صندوق المشروع';
-    case 'App\\Models\\CurrencyFund':
-      return 'صندوق مستخدم';
-    default:
-      return '-';
-  }
-}
-
-function getBooleanLabel(value?: boolean) {
-  return value ? 'نعم' : 'لا';
-}
-
-function getTextLabel(value: unknown) {
-  if (typeof value === 'string' && value.trim().length) {
-    return value;
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  if (value && typeof value === 'object' && 'name' in value) {
-    const name = (value as { name?: unknown }).name;
-    if (typeof name === 'string' && name.trim().length) {
-      return name;
-    }
-  }
-
-  return '-';
-}
-
 type RevenueRow = Revenue & {
-  user?: string | { name?: string } | number;
-  receiver?: string | { name?: string } | number;
+  user?: TableUser;
+  received_by?: TableUser;
 };
 
 type RevenuesTableProps = {
@@ -47,14 +18,27 @@ type RevenuesTableProps = {
   loading?: boolean;
   onEdit?: (revenue: Revenue) => void;
   onDelete?: (revenue: Revenue) => void;
+  hideTypeColumn?: boolean;
 };
 
-export function RevenuesTable({ data, loading, onEdit, onDelete }: RevenuesTableProps) {
-  const columns: DataTableColumn<Revenue>[] = [
+export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn }: RevenuesTableProps) {
+  const allColumns: DataTableColumn<Revenue>[] = [
     { header: 'البيان', cell: (row) => row.statement },
-    { header: 'المبلغ', cell: (row) => Number(row.amount || 0).toLocaleString() },
-    { header: 'المستخدم', cell: (row) => getTextLabel((row as RevenueRow).user) },
-    { header: 'نوع الإيراد', cell: (row) => getRevenueableTypeLabel(row.revenueable_type) },
+    {
+      header: 'المبلغ',
+      cell: (row) => {
+        const amount = Number(row.amount || 0).toLocaleString();
+        const currency = getCurrencyStringFromInfo(row.revenueable_info);
+        return (
+          <div className="flex items-center gap-1">
+            <span className="finance-num font-medium">{amount}</span>
+            {currency ? <span className="text-xs text-muted-foreground">{currency}</span> : null}
+          </div>
+        );
+      }
+    },
+    { header: 'المستخدم', cell: (row) => <UserLink user={(row as RevenueRow).user} /> },
+    { header: 'نوع الإيراد', cell: (row) => <FundLink type={row.revenueable_type} info={row.revenueable_info} fundTab="revenues" fallbackUser={(row as RevenueRow).user} /> },
     {
       header: 'تم الترحيل',
       cell: (row) => (
@@ -63,10 +47,11 @@ export function RevenuesTable({ data, loading, onEdit, onDelete }: RevenuesTable
         </span>
       ),
     },
-    { header: 'مستلم بواسطة', cell: (row) => getTextLabel((row as RevenueRow).receiver) },
-    { header: 'المعرف', cell: (row) => String(row.revenueable_id ?? '-') },
+    { header: 'مستلم بواسطة', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
     { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
   ];
+
+  const columns = hideTypeColumn ? allColumns.filter((col) => col.header !== 'نوع الإيراد') : allColumns;
 
   return (
     <DataTable
