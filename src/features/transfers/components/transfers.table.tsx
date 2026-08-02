@@ -10,7 +10,7 @@ type CurrentFundInfo = {
 
 function getFundDetailsLabel(info?: Transfer['morph_from_info'], currentFund?: CurrentFundInfo) {
   if (!info) return '-';
-  
+
   let typeLabel = '-';
   if (info.type === 'company_fund') {
     typeLabel = 'صندوق الشركة';
@@ -87,7 +87,6 @@ export function TransfersTable({ data, loading, onDelete, currentFund }: Transfe
         </span>
       ),
     },
-    { header: 'من صندوق', cell: (row) => getFundDetailsLabel(row.morph_from_info, currentFund) },
     { header: 'إلى صندوق', cell: (row) => getFundDetailsLabel(row.morph_to_info, currentFund) },
     { header: 'المستخدم المسؤول', cell: (row) => getTextLabel(row.user) },
     { header: 'أنشئ بواسطة', cell: (row) => getTextLabel(row.created_by) },
