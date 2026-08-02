@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react';
-import { MoreVertical, Pencil, Trash2, ChevronDown, ChevronRight, Eye } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, ChevronDown, ChevronRight, Eye, Inbox } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 import { Button } from '@/shared/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export type DataTableColumn<T> = {
   header: string;
@@ -59,7 +60,7 @@ export function DataTable<T>({
   data,
   loading,
   emptyLabel,
-  loadingLabel,
+  // loadingLabel,
   confirmTitle,
   confirmDescription,
   cancelLabel,
@@ -99,14 +100,25 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + (actionCount > 0 ? 1 : 0) + (renderExpandedRow ? 1 : 0)}
-                  className="h-28 text-center text-muted-foreground"
-                >
-                  {loadingLabel}
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, rowIndex) => (
+                <TableRow key={`skeleton-${rowIndex}`}>
+                  {renderExpandedRow ? (
+                    <TableCell className="w-10 px-2">
+                      <Skeleton className="size-7 rounded-md" />
+                    </TableCell>
+                  ) : null}
+                  {actionCount > 0 ? (
+                    <TableCell className="w-14">
+                      <Skeleton className="size-8 rounded-md" />
+                    </TableCell>
+                  ) : null}
+                  {columns.map((column, colIndex) => (
+                    <TableCell key={`skeleton-col-${colIndex}`} className={column.className}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : data.length ? (
               data.map((row, rowIndex) => (
                 <React.Fragment key={rowIndex}>
@@ -232,9 +244,14 @@ export function DataTable<T>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (actionCount > 0 ? 1 : 0) + (renderExpandedRow ? 1 : 0)}
-                  className="h-28 text-center text-muted-foreground"
+                  className="h-48 text-center text-muted-foreground"
                 >
-                  {emptyLabel}
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                      <Inbox className="size-6 text-muted-foreground/60" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-500">{emptyLabel}</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

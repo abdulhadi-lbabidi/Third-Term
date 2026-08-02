@@ -15,7 +15,7 @@ import type { Revenue } from '../types';
 
 type RevenueRow = Revenue & {
   user?: string | { name?: string } | number;
-  receiver?: string | { name?: string } | number;
+  received_by?: string | { name?: string } | number;
 };
 
 type RevenueCardProps = {
@@ -59,7 +59,7 @@ function getRevenueableTypeLabel(type?: Revenue['revenueable_type']) {
 export function RevenueCard({ revenue, onEdit, onDelete }: RevenueCardProps) {
   const isPosted = revenue.is_posted;
   const userLabel = getTextLabel((revenue as RevenueRow).user);
-  const receiverLabel = getTextLabel((revenue as RevenueRow).receiver);
+  const receiverLabel = getTextLabel((revenue as RevenueRow).received_by);
 
   return (
     <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md">

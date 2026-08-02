@@ -27,30 +27,30 @@ export type UserEntity<TExtra = Record<string, unknown>> = {
 
 export interface ClientRecord extends UserEntity<{
   investment_ratio: string;
-}> {}
+}> { }
 
 export interface InvestorRecord extends UserEntity<{
   investment_ratio?: string;
-}> {}
+}> { }
 
 export interface CraftsmanRecord extends UserEntity<{
   job_title: string;
-}> {}
+}> { }
 
 export interface EmployeeRecord extends UserEntity<{
   job_title: string;
-}> {}
+}> { }
 
 export interface EngineerRecord extends UserEntity<{
   job_title: string;
   base_salary: string;
-}> {}
+}> { }
 
-export interface SupplierRecord extends UserEntity {}
+export interface SupplierRecord extends UserEntity { }
 
 export interface TrusteeRecord extends UserEntity<{
   kinship_relation: string;
-}> {}
+}> { }
 
 export interface AdminRecord {
   id: number;

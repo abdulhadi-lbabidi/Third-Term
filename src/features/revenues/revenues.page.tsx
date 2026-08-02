@@ -52,6 +52,7 @@ export function RevenuesPage() {
 
       <RevenuesTable
         data={revenues}
+        // data={revenues}
         loading={isLoading}
         onEdit={handleEditClick}
         onDelete={handleDelete}

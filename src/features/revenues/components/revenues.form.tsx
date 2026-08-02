@@ -5,22 +5,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { User, Wallet, UserCircle, Briefcase, FileText, CheckCircle2, Shield, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/shared/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { companyFundsApi } from '@/features/company-funds/company-funds.api';
@@ -581,7 +568,80 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         )}
 
+        {/* Auth User Fields */}
+        {!fixedValues?.user_id && (
+          <div className="space-y-4 px-2">
+            <h3 className="font-semibold text-slate-800">تفاصيل المستلم (آمر التأكيد)</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="user_role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع المستخدم</FormLabel>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('user_id', undefined);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder="اختر نوع المستخدم">
+                            {field.value ? (
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const Icon = roleIcons[field.value as UserRole] || User;
+                                  return <Icon className="size-4 text-slate-500" />;
+                                })()}
+                                <span>{getRoleLabel(field.value as UserRole)}</span>
+                              </div>
+                            ) : null}
+                          </SelectValue>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {userRoles.map((role) => {
+                          const Icon = roleIcons[role] || User;
+                          return (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex items-center gap-2">
+                                <Icon className="size-4 text-slate-500" />
+                                <span>{roleLabels[role]}</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <FormField
+                control={form.control}
+                name="user_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>المستخدم</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        disabled={!userRole && !defaultValues?.user_id}
+                        options={userOptions}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="اختر المستخدم..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Fund Selection and Money Fields */}
         <div className="space-y-4 px-2">

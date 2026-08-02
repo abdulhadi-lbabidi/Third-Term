@@ -1,46 +1,18 @@
 import { Eye, Receipt } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
+import { 
+  getBooleanLabel, 
+  getTextLabel, 
+  getCurrencyStringFromInfo, 
+  UserLink, 
+  FundLink,
+  type TableUser
+} from '@/features/components/table-helpers';
 import type { Expense } from '../types';
 
-function getExpenseableTypeLabel(type?: Expense['expenseable_type']) {
-  switch (type) {
-    case 'App\\Models\\CompanyFundCurrency':
-      return 'صندوق الشركة';
-    case 'App\\Models\\ProjectFundCurrency':
-      return 'صندوق المشروع';
-    case 'App\\Models\\CurrencyFund':
-      return 'صندوق مستخدم';
-    default:
-      return '-';
-  }
-}
-
-function getBooleanLabel(value?: boolean) {
-  return value ? 'نعم' : 'لا';
-}
-
-function getTextLabel(value: unknown) {
-  if (typeof value === 'string' && value.trim().length) {
-    return value;
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  if (value && typeof value === 'object' && 'name' in value) {
-    const name = (value as { name?: unknown }).name;
-    if (typeof name === 'string' && name.trim().length) {
-      return name;
-    }
-  }
-
-  return '-';
-}
-
 type ExpenseRow = Expense & {
-  user?: string | { name?: string } | number;
-  created_by?: string | { name?: string } | number;
+  user?: TableUser;
+  created_by?: TableUser;
 };
 
 type ExpensesTableProps = {
@@ -57,10 +29,19 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoi
     { header: 'الوصف', cell: (row) => row.description },
     {
       header: 'المبلغ',
-      cell: (row) => <span className="finance-num font-medium">{Number(row.amount || 0).toLocaleString()}</span>,
+      cell: (row) => {
+        const amount = Number(row.amount || 0).toLocaleString();
+        const currency = getCurrencyStringFromInfo(row.expenseable_info);
+        return (
+          <div className="flex items-center gap-1">
+            <span className="finance-num font-medium">{amount}</span>
+            {currency ? <span className="text-xs text-muted-foreground">{currency}</span> : null}
+          </div>
+        );
+      }
     },
-    { header: 'المستخدم', cell: (row) => getTextLabel((row as ExpenseRow).user) },
-    { header: 'نوع الصرف', cell: (row) => getExpenseableTypeLabel(row.expenseable_type) },
+    { header: 'المستخدم', cell: (row) => <UserLink user={(row as ExpenseRow).user} /> },
+    { header: 'نوع الصرف', cell: (row) => <FundLink type={row.expenseable_type} info={row.expenseable_info} /> },
     {
       header: 'تم الترحيل',
       cell: (row) => (
@@ -69,7 +50,7 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoi
         </span>
       ),
     },
-    { header: 'أنشئ بواسطة', cell: (row) => getTextLabel((row as ExpenseRow).created_by) },
+    { header: 'أنشئ بواسطة', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
     { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
     { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
   ];
