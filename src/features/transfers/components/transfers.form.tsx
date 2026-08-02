@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { cn } from '@/shared/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -29,18 +30,23 @@ import { projectsApi } from '@/features/projects/projects.api';
 import type { Project, ProjectFund } from '@/features/projects/types';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
-import type { TransferableType, CreateTransferPayload } from '../types';
+import type { TransferableType, CreateTransferPayload, Transfer } from '../types';
 
 const transferFormSchema = z.object({
   name: z.string().min(1, 'الرجاء إدخال البيان'),
   amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
-  morph_from_id: z.number({ required_error: 'الرجاء اختيار عملة المصدر' }),
+  morph_from_type: z.enum([
+    'App\\Models\\CompanyFundCurrency',
+    'App\\Models\\CurrencyFund',
+    'App\\Models\\ProjectFundCurrency',
+  ]).optional(),
+  morph_from_id: z.number({ message: 'الرجاء اختيار عملة المصدر' }),
   morph_to_type: z.enum([
     'App\\Models\\CompanyFundCurrency',
     'App\\Models\\CurrencyFund',
     'App\\Models\\ProjectFundCurrency',
   ]),
-  morph_to_id: z.number({ required_error: 'الرجاء اختيار عملة الوجهة' }),
+  morph_to_id: z.number({ message: 'الرجاء اختيار عملة الوجهة' }),
   company_fund_id: z.number().optional(),
   user_role: z.string().optional(),
   user_id: z.number().optional(),
@@ -49,6 +55,13 @@ const transferFormSchema = z.object({
   user_fund_id: z.number().optional(),
   project_fund_id: z.number().optional(),
   project_id: z.number().optional(),
+
+  from_company_fund_id: z.number().optional(),
+  from_user_role: z.string().optional(),
+  from_user_id: z.number().optional(),
+  from_user_fund_id: z.number().optional(),
+  from_project_fund_id: z.number().optional(),
+  from_project_id: z.number().optional(),
 }).superRefine((values, ctx) => {
   if (!values.user_role) {
     ctx.addIssue({
@@ -64,6 +77,79 @@ const transferFormSchema = z.object({
       message: 'الرجاء اختيار المستخدم للتحويل',
     });
   }
+
+  if (values.morph_from_type) {
+    if (values.morph_from_type === 'App\\Models\\CompanyFundCurrency') {
+      if (!values.from_company_fund_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['from_company_fund_id'],
+          message: 'الرجاء اختيار صندوق الشركة للمصدر',
+        });
+      }
+      if (!values.morph_from_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['morph_from_id'],
+          message: 'الرجاء اختيار عملة صندوق الشركة للمصدر',
+        });
+      }
+    }
+    if (values.morph_from_type === 'App\\Models\\ProjectFundCurrency') {
+      if (!values.from_project_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['from_project_id'],
+          message: 'الرجاء اختيار المشروع للمصدر',
+        });
+      }
+      if (!values.from_project_fund_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['from_project_fund_id'],
+          message: 'الرجاء اختيار صندوق المشروع للمصدر',
+        });
+      }
+      if (!values.morph_from_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['morph_from_id'],
+          message: 'الرجاء اختيار عملة صندوق المشروع للمصدر',
+        });
+      }
+    }
+    if (values.morph_from_type === 'App\\Models\\CurrencyFund') {
+      if (!values.from_user_role) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['from_user_role'],
+          message: 'الرجاء اختيار نوع المستخدم لصندوق المصدر',
+        });
+      }
+      if (!values.from_user_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['from_user_id'],
+          message: 'الرجاء اختيار مستخدم لصندوق المصدر',
+        });
+      }
+      if (!values.from_user_fund_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['from_user_fund_id'],
+          message: 'الرجاء اختيار صندوق المصدر',
+        });
+      }
+      if (!values.morph_from_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['morph_from_id'],
+          message: 'الرجاء اختيار عملة صندوق المصدر',
+        });
+      }
+    }
+  }
+
   if (values.morph_to_type === 'App\\Models\\CompanyFundCurrency') {
     if (!values.company_fund_id) {
       ctx.addIssue({
@@ -138,8 +224,8 @@ const transferFormSchema = z.object({
 type TransferFormValues = z.infer<typeof transferFormSchema>;
 
 type TransferFormProps = {
-  morph_from_type: TransferableType;
-  fixedFromCurrencies: {
+  morph_from_type?: TransferableType;
+  fixedFromCurrencies?: {
     id: number;
     currency: string;
     symbol: string;
@@ -147,6 +233,8 @@ type TransferFormProps = {
   }[];
   onSubmit: (data: CreateTransferPayload) => Promise<void>;
   loading?: boolean;
+  defaultValues?: Transfer | null;
+  isGeneral?: boolean;
 };
 
 type RoleUser = {
@@ -222,23 +310,70 @@ function formatNumberWithCommas(value: unknown): string {
   return parts.join('.');
 }
 
-export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, loading }: TransferFormProps) {
+export function TransfersForm({
+  morph_from_type,
+  fixedFromCurrencies = [],
+  onSubmit,
+  loading,
+  defaultValues,
+  isGeneral = false,
+}: TransferFormProps) {
   const form = useForm<TransferFormValues>({
     resolver: zodResolver(transferFormSchema),
     defaultValues: {
-      name: '',
-      amount: 0,
-      morph_from_id: fixedFromCurrencies[0]?.id,
-      morph_to_type: 'App\\Models\\CompanyFundCurrency',
-      morph_to_id: undefined,
-      user_role: '',
-      user_id: undefined,
+      name: defaultValues?.name ?? '',
+      amount: defaultValues?.amount ? Number(defaultValues.amount) : 0,
+      morph_from_type: defaultValues?.morph_from_type ?? (isGeneral ? 'App\\Models\\CompanyFundCurrency' : morph_from_type),
+      morph_from_id: defaultValues?.morph_from_id ?? fixedFromCurrencies[0]?.id,
+      morph_to_type: defaultValues?.morph_to_type ?? 'App\\Models\\CompanyFundCurrency',
+      morph_to_id: defaultValues?.morph_to_id ?? undefined,
+      company_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CompanyFundCurrency'
+        ? (defaultValues?.morph_to_info?.details?.company_fund_id ?? undefined)
+        : undefined,
+      user_role: defaultValues?.user?.role_type ?? '',
+      user_id: defaultValues?.user_id ?? defaultValues?.user?.id ?? undefined,
+      fund_user_role: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
+        ? (defaultValues?.morph_to_info?.user_info?.role_type ?? '')
+        : '',
+      fund_user_id: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
+        ? (defaultValues?.morph_to_info?.user_info?.user_id ?? defaultValues?.morph_to_info?.details?.fund?.user_id ?? undefined)
+        : undefined,
+      user_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
+        ? (defaultValues?.morph_to_info?.details?.fund_id ?? undefined)
+        : undefined,
+      project_fund_id: defaultValues?.morph_to_type === 'App\\Models\\ProjectFundCurrency'
+        ? (defaultValues?.morph_to_info?.details?.project_fund_id ?? undefined)
+        : undefined,
+      project_id: defaultValues?.morph_to_type === 'App\\Models\\ProjectFundCurrency'
+        ? (defaultValues?.morph_to_info?.details?.project_fund?.project_id ?? undefined)
+        : undefined,
+
+      from_company_fund_id: defaultValues?.morph_from_type === 'App\\Models\\CompanyFundCurrency'
+        ? (defaultValues?.morph_from_info?.details?.company_fund_id ?? undefined)
+        : undefined,
+      from_user_role: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
+        ? (defaultValues?.morph_from_info?.user_info?.role_type ?? '')
+        : '',
+      from_user_id: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
+        ? (defaultValues?.morph_from_info?.user_info?.user_id ?? defaultValues?.morph_from_info?.details?.fund?.user_id ?? undefined)
+        : undefined,
+      from_user_fund_id: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
+        ? (defaultValues?.morph_from_info?.details?.fund_id ?? undefined)
+        : undefined,
+      from_project_fund_id: defaultValues?.morph_from_type === 'App\\Models\\ProjectFundCurrency'
+        ? (defaultValues?.morph_from_info?.details?.project_fund_id ?? undefined)
+        : undefined,
+      from_project_id: defaultValues?.morph_from_type === 'App\\Models\\ProjectFundCurrency'
+        ? (defaultValues?.morph_from_info?.details?.project_fund?.project_id ?? undefined)
+        : undefined,
     },
   });
 
+  const morphFromType = form.watch('morph_from_type');
   const morphToType = form.watch('morph_to_type');
   const companyFundId = form.watch('company_fund_id');
   const selectedMorphToId = form.watch('morph_to_id');
+  const selectedMorphFromId = form.watch('morph_from_id');
   const userRole = form.watch('user_role') as UserRole | '';
   const fundUserRole = form.watch('fund_user_role') as UserRole | '';
   const fundUserId = form.watch('fund_user_id');
@@ -246,21 +381,39 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
   const projectFundId = form.watch('project_fund_id');
   const selectedProjectId = form.watch('project_id');
 
+  const fromUserRole = form.watch('from_user_role') as UserRole | '';
+  const fromUserId = form.watch('from_user_id');
+  const fromUserFundId = form.watch('from_user_fund_id');
+  const fromProjectFundId = form.watch('from_project_fund_id');
+  const selectedFromProjectId = form.watch('from_project_id');
+  const fromCompanyFundId = form.watch('from_company_fund_id');
+
   const { data: roleUsers = [] } = useQuery<RoleUser[]>({
     queryKey: ['transfers', 'role-users', userRole] as const,
     queryFn: async () => {
-      if (!userRole) return [];
-      const res = await usersApi.getUsersByRole(userRole);
+      if (!userRole || !userRoles.includes(userRole as UserRole)) return [];
+      const res = await usersApi.getUsersByRole(userRole as UserRole);
       const list = (res as any)?.data ?? res;
       return list as RoleUser[];
     },
-    enabled: Boolean(userRole),
+    enabled: Boolean(userRole) && userRoles.includes(userRole as UserRole),
+  });
+
+  const { data: fromRoleUsers = [] } = useQuery<RoleUser[]>({
+    queryKey: ['transfers', 'from-role-users', fromUserRole] as const,
+    queryFn: async () => {
+      if (!fromUserRole || !userRoles.includes(fromUserRole as UserRole)) return [];
+      const res = await usersApi.getUsersByRole(fromUserRole as UserRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
+    },
+    enabled: isGeneral && morphFromType === 'App\\Models\\CurrencyFund' && Boolean(fromUserRole) && userRoles.includes(fromUserRole as UserRole),
   });
 
   const companyFundsQuery = useQuery({
     queryKey: ['transfers', 'company-funds'] as const,
     queryFn: () => companyFundsApi.getCompanyFunds(),
-    enabled: morphToType === 'App\\Models\\CompanyFundCurrency',
+    enabled: morphToType === 'App\\Models\\CompanyFundCurrency' || morphFromType === 'App\\Models\\CompanyFundCurrency',
   });
   const companyFunds: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
 
@@ -294,7 +447,7 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
   const projectsQuery = useQuery({
     queryKey: ['transfers', 'projects'] as const,
     queryFn: () => projectsApi.getProjects(),
-    enabled: morphToType === 'App\\Models\\ProjectFundCurrency',
+    enabled: morphToType === 'App\\Models\\ProjectFundCurrency' || morphFromType === 'App\\Models\\ProjectFundCurrency',
   });
   const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
@@ -307,25 +460,44 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
     enabled: morphToType === 'App\\Models\\ProjectFundCurrency' && Boolean(selectedProjectId),
   });
 
+  const { data: selectedFromProjectDetails } = useQuery<Project | null>({
+    queryKey: ['transfers', 'from-project-details', selectedFromProjectId] as const,
+    queryFn: async () => {
+      if (!selectedFromProjectId) return null;
+      return projectsApi.getProjectById(selectedFromProjectId);
+    },
+    enabled: isGeneral && morphFromType === 'App\\Models\\ProjectFundCurrency' && Boolean(selectedFromProjectId),
+  });
+
   const { data: fundRoleUsers = [] } = useQuery<RoleUser[]>({
     queryKey: ['transfers', 'fund-role-users', fundUserRole] as const,
     queryFn: async () => {
-      if (!fundUserRole) return [];
-      const res = await usersApi.getUsersByRole(fundUserRole);
+      if (!fundUserRole || !userRoles.includes(fundUserRole as UserRole)) return [];
+      const res = await usersApi.getUsersByRole(fundUserRole as UserRole);
       const list = (res as any)?.data ?? res;
       return list as RoleUser[];
     },
-    enabled: morphToType === 'App\\Models\\CurrencyFund' && Boolean(fundUserRole),
+    enabled: morphToType === 'App\\Models\\CurrencyFund' && Boolean(fundUserRole) && userRoles.includes(fundUserRole as UserRole),
   });
 
   const { data: selectedFundUserRecord } = useQuery<FundUserRecord | null>({
     queryKey: ['transfers', 'fund-user-record', fundUserRole, fundUserId] as const,
     queryFn: async () => {
-      if (!fundUserRole || !fundUserId) return null;
-      const user = await usersApi.getUserByRole(fundUserRole, fundUserId);
+      if (!fundUserRole || !fundUserId || !userRoles.includes(fundUserRole as UserRole)) return null;
+      const user = await usersApi.getUserByRole(fundUserRole as UserRole, fundUserId);
       return user as FundUserRecord;
     },
-    enabled: morphToType === 'App\\Models\\CurrencyFund' && Boolean(fundUserRole) && Boolean(fundUserId),
+    enabled: morphToType === 'App\\Models\\CurrencyFund' && Boolean(fundUserRole) && Boolean(fundUserId) && userRoles.includes(fundUserRole as UserRole),
+  });
+
+  const { data: selectedFromUserRecord } = useQuery<FundUserRecord | null>({
+    queryKey: ['transfers', 'from-user-record', fromUserRole, fromUserId] as const,
+    queryFn: async () => {
+      if (!fromUserRole || !fromUserId || !userRoles.includes(fromUserRole as UserRole)) return null;
+      const user = await usersApi.getUserByRole(fromUserRole as UserRole, fromUserId);
+      return user as FundUserRecord;
+    },
+    enabled: isGeneral && morphFromType === 'App\\Models\\CurrencyFund' && Boolean(fromUserRole) && Boolean(fromUserId) && userRoles.includes(fromUserRole as UserRole),
   });
 
   const projectFunds: ProjectFund[] = useMemo(() => {
@@ -375,6 +547,96 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
     if (!derivedUserFundId) return undefined;
     return selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId);
   }, [derivedUserFundId, selectedFundUserRecord]);
+
+  const fromProjectFunds = useMemo(() => {
+    if (morphFromType !== 'App\\Models\\ProjectFundCurrency' || !selectedFromProjectId) return [];
+    return selectedFromProjectDetails?.funds ?? [];
+  }, [selectedFromProjectDetails?.funds, selectedFromProjectId, morphFromType]);
+
+  const selectedFromCompanyFund = useMemo(() => {
+    if (!fromCompanyFundId) return undefined;
+    return companyFunds.find((fund) => fund.id === fromCompanyFundId);
+  }, [fromCompanyFundId, companyFunds]);
+
+  const selectedFromProjectFund = useMemo(() => {
+    if (!fromProjectFundId) return undefined;
+    return fromProjectFunds.find((fund) => fund.id === fromProjectFundId);
+  }, [fromProjectFundId, fromProjectFunds]);
+
+  const selectedFromUserFund = useMemo(() => {
+    if (!fromUserFundId) return undefined;
+    return selectedFromUserRecord?.user.funds?.find((fund) => fund.id === fromUserFundId);
+  }, [fromUserFundId, selectedFromUserRecord]);
+
+  const derivedFromCompanyFundId = useMemo(() => {
+    if (fromCompanyFundId) return fromCompanyFundId;
+    if (!selectedMorphFromId) return undefined;
+    return companyFunds.find((fund) =>
+      fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedMorphFromId)),
+    )?.id;
+  }, [fromCompanyFundId, companyFunds, selectedMorphFromId]);
+
+  useEffect(() => {
+    if (morphFromType !== 'App\\Models\\CompanyFundCurrency') return;
+    if (fromCompanyFundId || !derivedFromCompanyFundId) return;
+    form.setValue('from_company_fund_id', derivedFromCompanyFundId);
+  }, [fromCompanyFundId, derivedFromCompanyFundId, form, morphFromType]);
+
+  const derivedFromProjectFundId = useMemo(() => {
+    if (fromProjectFundId) return fromProjectFundId;
+    if (!selectedMorphFromId) return undefined;
+    return fromProjectFunds.find((fund) =>
+      fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedMorphFromId)),
+    )?.id;
+  }, [fromProjectFundId, fromProjectFunds, selectedMorphFromId]);
+
+  useEffect(() => {
+    if (morphFromType !== 'App\\Models\\ProjectFundCurrency') return;
+    if (fromProjectFundId || !derivedFromProjectFundId) return;
+    form.setValue('from_project_fund_id', derivedFromProjectFundId);
+  }, [derivedFromProjectFundId, form, fromProjectFundId, morphFromType]);
+
+  const derivedFromUserFundId = useMemo(() => {
+    if (fromUserFundId) return fromUserFundId;
+    if (!selectedMorphFromId) return undefined;
+    return selectedFromUserRecord?.user.funds?.find((fund) =>
+      fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedMorphFromId)),
+    )?.id;
+  }, [selectedMorphFromId, selectedFromUserRecord, fromUserFundId]);
+
+  useEffect(() => {
+    if (morphFromType !== 'App\\Models\\CurrencyFund') return;
+    if (fromUserFundId || !derivedFromUserFundId) return;
+    form.setValue('from_user_fund_id', derivedFromUserFundId);
+  }, [derivedFromUserFundId, form, morphFromType, fromUserFundId]);
+
+  useEffect(() => {
+    if (morphFromType === 'App\\Models\\ProjectFundCurrency' && selectedFromProjectId && fromProjectFunds.length === 1 && !fromProjectFundId) {
+      form.setValue('from_project_fund_id', fromProjectFunds[0].id);
+    }
+  }, [morphFromType, selectedFromProjectId, fromProjectFunds, fromProjectFundId, form]);
+
+  useEffect(() => {
+    if (morphFromType === 'App\\Models\\CompanyFundCurrency' && companyFunds.length === 1 && !fromCompanyFundId) {
+      form.setValue('from_company_fund_id', companyFunds[0].id);
+    }
+  }, [morphFromType, companyFunds, fromCompanyFundId, form]);
+
+  useEffect(() => {
+    let currencies: any[] = [];
+    if (morphFromType === 'App\\Models\\CompanyFundCurrency') {
+      currencies = selectedFromCompanyFund?.currencies ?? [];
+    } else if (morphFromType === 'App\\Models\\ProjectFundCurrency') {
+      currencies = selectedFromProjectFund?.currencies ?? [];
+    } else if (morphFromType === 'App\\Models\\CurrencyFund') {
+      currencies = selectedFromUserFund?.currencies ?? [];
+    }
+    
+    if (currencies.length === 1 && !selectedMorphFromId) {
+      const val = getCurrencyExpenseableId(currencies[0]);
+      if (val) form.setValue('morph_from_id', val);
+    }
+  }, [morphFromType, selectedFromCompanyFund, selectedFromProjectFund, selectedFromUserFund, selectedMorphFromId, form]);
 
   useEffect(() => {
     if (morphToType === 'App\\Models\\ProjectFundCurrency' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
@@ -454,18 +716,25 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
         className="space-y-6"
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit({
-            morph_from_type,
+            morph_from_type: isGeneral ? values.morph_from_type! : morph_from_type!,
             morph_from_id: values.morph_from_id,
             morph_to_type: values.morph_to_type,
             morph_to_id: values.morph_to_id,
             name: values.name,
             amount: values.amount,
-            created_by: 1,
+            created_by: (() => {
+              if (!defaultValues?.created_by) return 1;
+              const val = typeof defaultValues.created_by === 'object'
+                ? (defaultValues.created_by as any).id
+                : defaultValues.created_by;
+              const num = Number(val);
+              return Number.isNaN(num) ? 1 : num;
+            })(),
             user_id: values.user_id ?? 1,
           });
         })}
       >
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className={cn("grid gap-4", isGeneral ? "md:grid-cols-2" : "md:grid-cols-3")}>
           <FormField
             control={form.control}
             name="name"
@@ -503,36 +772,43 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
               </FormItem>
             )}
           />
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="morph_from_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>عملة المصدر</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(val) => field.onChange(Number(val))}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر العملة للمصدر" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {fixedFromCurrencies.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.currency} ({c.balance})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!isGeneral && (
+            <FormField
+              control={form.control}
+              name="morph_from_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عملة المصدر</FormLabel>
+                  <Select
+                    value={field.value ? String(field.value) : ''}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        {field.value ? (
+                          (() => {
+                            const selected = fixedFromCurrencies.find((c) => c.id === Number(field.value));
+                            return selected ? `${selected.currency} (${selected.balance})` : 'اختر العملة للمصدر';
+                          })()
+                        ) : (
+                          <SelectValue placeholder="اختر العملة للمصدر" />
+                        )}
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {fixedFromCurrencies.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.currency} ({c.balance})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 border border-slate-100 rounded-lg p-4 bg-slate-50/50">
@@ -590,6 +866,364 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
             )}
           />
         </div>
+
+        {isGeneral && (
+          <div className="space-y-4 rounded-lg border border-border bg-slate-50/40 p-4">
+            <FormField
+              control={form.control}
+              name="morph_from_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-semibold text-slate-800">نوع صندوق المصدر</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('morph_from_id', undefined as any);
+                        form.setValue('from_company_fund_id', undefined);
+                        form.setValue('from_user_role', '');
+                        form.setValue('from_user_id', undefined);
+                        form.setValue('from_user_fund_id', undefined);
+                        form.setValue('from_project_fund_id', undefined);
+                        form.setValue('from_project_id', undefined);
+                      }}
+                      className="grid gap-3 md:grid-cols-3"
+                    >
+                      <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
+                        <RadioGroupItem className="border-none !p-1" value={'App\\Models\\CompanyFundCurrency'} />
+                        <span>صندوق الشركة</span>
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
+                        <RadioGroupItem className="border-none !p-1" value={'App\\Models\\ProjectFundCurrency'} />
+                        <span>صندوق المشروع</span>
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
+                        <RadioGroupItem className="border-none !p-1" value={'App\\Models\\CurrencyFund'} />
+                        <span>صندوق مستخدم</span>
+                      </label>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {morphFromType === 'App\\Models\\CompanyFundCurrency' && (
+              <div className="grid gap-4 md:grid-cols-2 pt-2">
+                <FormField
+                  control={form.control}
+                  name="from_company_fund_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>صناديق الشركة</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => {
+                          field.onChange(Number(val));
+                          form.setValue('morph_from_id', undefined as any);
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            {field.value
+                              ? (selectedFromCompanyFund?.name || 'اختر صندوق الشركة')
+                              : <SelectValue placeholder="اختر صندوق الشركة" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companyFunds.map((fund) => (
+                            <SelectItem key={fund.id} value={String(fund.id)}>
+                              {getCompanyFundLabel(fund)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="morph_from_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>عملة الصندوق</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => field.onChange(Number(val))}
+                        disabled={!fromCompanyFundId}
+                      >
+                        <FormControl>
+                          <SelectTrigger disabled={!fromCompanyFundId}>
+                            {field.value
+                              ? (selectedFromCompanyFund?.currencies?.find(c => currencyMatchesExpenseableId(c, Number(field.value)))
+                                ? `${selectedFromCompanyFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.currency} (${selectedFromCompanyFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.balance})`
+                                : 'اختر العملة')
+                              : <SelectValue placeholder="اختر العملة" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(selectedFromCompanyFund?.currencies ?? []).map((currency) => {
+                            const value = getCurrencyExpenseableId(currency);
+                            return (
+                              <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                                {getCurrencyLabel(currency)}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {morphFromType === 'App\\Models\\ProjectFundCurrency' && (
+              <div className="grid gap-4 md:grid-cols-3 pt-2">
+                <FormField
+                  control={form.control}
+                  name="from_project_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>المشروع</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => {
+                          field.onChange(Number(val));
+                          form.setValue('from_project_fund_id', undefined);
+                          form.setValue('morph_from_id', undefined as any);
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            {field.value
+                              ? (projects.find(p => p.id === field.value)?.name || 'اختر المشروع')
+                              : <SelectValue placeholder="اختر المشروع" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={String(project.id)}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="from_project_fund_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>صندوق المشروع</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => {
+                          field.onChange(Number(val));
+                          form.setValue('morph_from_id', undefined as any);
+                        }}
+                        disabled={!selectedFromProjectId}
+                      >
+                        <FormControl>
+                          <SelectTrigger disabled={!selectedFromProjectId}>
+                            {field.value
+                              ? (fromProjectFunds.find(f => f.id === field.value)?.name || 'اختر صندوق المشروع')
+                              : <SelectValue placeholder="اختر صندوق المشروع" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {fromProjectFunds.map((fund) => (
+                            <SelectItem key={fund.id} value={String(fund.id)}>
+                              {fund.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="morph_from_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>عملة الصندوق</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => field.onChange(Number(val))}
+                        disabled={!fromProjectFundId}
+                      >
+                        <FormControl>
+                          <SelectTrigger disabled={!fromProjectFundId}>
+                            {field.value
+                              ? (selectedFromProjectFund?.currencies?.find(c => currencyMatchesExpenseableId(c, Number(field.value)))
+                                ? `${selectedFromProjectFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.currency} (${selectedFromProjectFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.balance})`
+                                : 'اختر العملة')
+                              : <SelectValue placeholder="اختر العملة" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(selectedFromProjectFund?.currencies ?? []).map((currency) => {
+                            const value = getCurrencyExpenseableId(currency);
+                            return (
+                              <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                                {getCurrencyLabel(currency)}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {morphFromType === 'App\\Models\\CurrencyFund' && (
+              <div className="grid gap-4 md:grid-cols-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="from_user_role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>نوع المستخدم</FormLabel>
+                      <Select
+                        value={field.value ?? ''}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          form.setValue('from_user_id', undefined);
+                          form.setValue('from_user_fund_id', undefined);
+                          form.setValue('morph_from_id', undefined as any);
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            {field.value ? getRoleLabel(field.value as UserRole) : <SelectValue placeholder="اختر نوع المستخدم" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {userRoles.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {roleLabels[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="from_user_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>المستخدم</FormLabel>
+                      <FormControl>
+                        <SearchableSelect
+                          value={field.value}
+                          onValueChange={(val) => {
+                            field.onChange(Number(val));
+                            form.setValue('from_user_fund_id', undefined);
+                            form.setValue('morph_from_id', undefined as any);
+                          }}
+                          disabled={!fromUserRole}
+                          placeholder="اختر المستخدم"
+                          options={fromRoleUsers.map((item) => ({
+                            value: item.id,
+                            label: item.user.name,
+                          }))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="from_user_fund_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>صندوق المستخدم</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => {
+                          field.onChange(Number(val));
+                          form.setValue('morph_from_id', undefined as any);
+                        }}
+                        disabled={!fromUserId}
+                      >
+                        <FormControl>
+                          <SelectTrigger disabled={!fromUserId}>
+                            {field.value
+                              ? (selectedFromUserFund ? getFundLabel(selectedFromUserFund) : 'اختر صندوق المستخدم')
+                              : <SelectValue placeholder="اختر صندوق المستخدم" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(selectedFromUserRecord?.user.funds ?? []).map((fund) => (
+                            <SelectItem key={fund.id} value={String(fund.id)}>
+                              {getFundLabel(fund)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="morph_from_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>عملة الصندوق</FormLabel>
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(val) => field.onChange(Number(val))}
+                        disabled={!fromUserFundId}
+                      >
+                        <FormControl>
+                          <SelectTrigger disabled={!fromUserFundId}>
+                            {field.value
+                              ? (selectedFromUserFund?.currencies?.find(c => currencyMatchesExpenseableId(c, Number(field.value)))
+                                ? `${selectedFromUserFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.currency} (${selectedFromUserFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.balance})`
+                                : 'اختر العملة')
+                              : <SelectValue placeholder="اختر العملة" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(selectedFromUserFund?.currencies ?? []).map((currency) => {
+                            const value = getCurrencyExpenseableId(currency);
+                            return (
+                              <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                                {getCurrencyLabel(currency)}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4 rounded-lg border border-border bg-slate-50/40 p-4">
           <FormField
@@ -940,7 +1574,7 @@ export function TransfersForm({ morph_from_type, fixedFromCurrencies, onSubmit, 
         </div>
 
         <Button type="submit" className="w-full bg-slate-950 text-white" disabled={loading}>
-          {loading ? 'جاري التحويل...' : 'تأكيد التحويل'}
+          {loading ? (defaultValues ? 'جاري التعديل...' : 'جاري التحويل...') : (defaultValues ? 'حفظ التعديلات' : 'تأكيد التحويل')}
         </Button>
       </form>
     </Form>

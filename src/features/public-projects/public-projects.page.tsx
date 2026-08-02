@@ -10,8 +10,6 @@ import {
   FileText,
   Search,
   CheckCircle2,
-  Clock,
-  XCircle,
   Building,
   RefreshCw,
   LogOut,
@@ -20,6 +18,7 @@ import {
   BarChart3,
   ArrowRight,
   DollarSign,
+  Clock,
 } from 'lucide-react';
 import { publicProjectsApi } from './public-projects.api';
 import { apiClient } from '@/shared/api/axios.instance';
@@ -48,7 +47,7 @@ export function PublicProjectsPage() {
   const handleLogout = async () => {
     try {
       await apiClient.post('/logout');
-    } catch {}
+    } catch { }
     localStorage.removeItem('token_finance_nouh');
     localStorage.removeItem('user_info');
     navigate('/auth/login', { replace: true });
@@ -248,11 +247,10 @@ export function PublicProjectsPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setStatusFilter(tab.id)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                    statusFilter === tab.id
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${statusFilter === tab.id
                       ? 'bg-[#1a1a2e] text-[#c9a84c] shadow-sm'
                       : 'bg-slate-100 text-slate-605 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -289,7 +287,7 @@ export function PublicProjectsPage() {
                     <div className="p-5 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between gap-2.5 mb-3">
-                          <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold border ${statusConf.bg} ${statusConf.border}`}>
+                          <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold border ${statusConf.bg}`}>
                             <span className={`size-1 rounded-full ${statusConf.dot}`} />
                             {statusConf.label}
                           </span>
@@ -399,7 +397,7 @@ export function PublicProjectsPage() {
                     {projectDetails.name}
                   </h2>
                 </div>
-                <span className={`w-fit shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${activeStatusConf.bg} ${activeStatusConf.border}`}>
+                <span className={`w-fit shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${activeStatusConf.bg}`}>
                   <span className={`size-1.5 rounded-full ${activeStatusConf.dot}`} />
                   {activeStatusConf.label}
                 </span>
@@ -453,11 +451,10 @@ export function PublicProjectsPage() {
                               key={fund.id}
                               type="button"
                               onClick={() => setActiveFundTab(fund.id)}
-                              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border ${
-                                isSelected
+                              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border ${isSelected
                                   ? 'bg-[#1a1a2e] text-[#c9a84c] border-[#1a1a2e]'
                                   : 'bg-white text-slate-650 border-slate-200 hover:border-slate-300'
-                              }`}
+                                }`}
                             >
                               {fund.name}
                             </button>
@@ -499,11 +496,10 @@ export function PublicProjectsPage() {
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveSubTab(tab.id)}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold border-b-2 transition-all ${
-                                  activeSubTab === tab.id
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold border-b-2 transition-all ${activeSubTab === tab.id
                                     ? tab.active
                                     : 'border-transparent text-slate-405 hover:text-slate-700'
-                                }`}
+                                  }`}
                               >
                                 <tab.icon className="size-3.5" />
                                 {tab.label}

@@ -33,4 +33,11 @@ export const transfersApi = {
       headers: { 'x-success-message': 'تم حذف التحويل بنجاح' },
     });
   },
+
+  updateTransfer: async (id: number, payload: CreateTransferPayload): Promise<Transfer> => {
+    const response = await apiClient.patch(`/transactions/${id}`, payload, {
+      headers: { 'x-success-message': 'تم تعديل التحويل بنجاح' },
+    });
+    return response.data?.data ?? response.data;
+  },
 };

@@ -41,3 +41,20 @@ export function useDeleteTransfer() {
     },
   });
 }
+
+export function useUpdateTransfer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: CreateTransferPayload }) =>
+      transfersApi.updateTransfer(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transfers'] });
+      queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+      queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      queryClient.invalidateQueries({ queryKey: ['funds'] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تعديل عملية التحويل');
+    },
+  });
+}

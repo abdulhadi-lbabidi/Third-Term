@@ -72,11 +72,12 @@ function getTextLabel(value: unknown) {
 type TransfersTableProps = {
   data: Transfer[];
   loading?: boolean;
+  onEdit?: (transfer: Transfer) => void;
   onDelete?: (transfer: Transfer) => void;
   currentFund?: CurrentFundInfo;
 };
 
-export function TransfersTable({ data, loading, onDelete, currentFund }: TransfersTableProps) {
+export function TransfersTable({ data, loading, onEdit, onDelete, currentFund }: TransfersTableProps) {
   const columns: DataTableColumn<Transfer>[] = [
     { header: 'البيان', cell: (row) => row.name },
     {
@@ -87,6 +88,7 @@ export function TransfersTable({ data, loading, onDelete, currentFund }: Transfe
         </span>
       ),
     },
+    ...(!currentFund ? [{ header: 'من صندوق', cell: (row: Transfer) => getFundDetailsLabel(row.morph_from_info) }] : []),
     { header: 'إلى صندوق', cell: (row) => getFundDetailsLabel(row.morph_to_info, currentFund) },
     { header: 'المستخدم المسؤول', cell: (row) => getTextLabel(row.user) },
     { header: 'أنشئ بواسطة', cell: (row) => getTextLabel(row.created_by) },
@@ -105,6 +107,7 @@ export function TransfersTable({ data, loading, onDelete, currentFund }: Transfe
       cancelLabel="إلغاء"
       deleteLabel="حذف"
       actions={{
+        onEdit,
         onDelete,
       }}
     />

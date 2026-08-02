@@ -32,8 +32,9 @@ import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } fro
 import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
 import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
+import { ExpenseInvoicesDialog } from '@/features/expenses/components/expense-invoices.dialog';
 
-import { useTransfers, useCreateTransfer, useDeleteTransfer } from '@/features/transfers/transfers.hooks';
+import { useTransfers, useCreateTransfer, useUpdateTransfer, useDeleteTransfer } from '@/features/transfers/transfers.hooks';
 import { TransfersTable } from '@/features/transfers/components/transfers.table';
 import { TransfersDialog } from '@/features/transfers/components/transfers.dialog';
 
@@ -89,8 +90,11 @@ export function GenericFundDetails({
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
+  const [expenseInvoicesOpen, setExpenseInvoicesOpen] = useState(false);
+  const [selectedExpenseForInvoices, setSelectedExpenseForInvoices] = useState<any | null>(null);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [selectedTransfer, setSelectedTransfer] = useState<any | null>(null);
 
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
@@ -129,6 +133,7 @@ export function GenericFundDetails({
 
   const transfersQuery = useTransfers();
   const createTransferMutation = useCreateTransfer();
+  const updateTransferMutation = useUpdateTransfer();
   const deleteTransferMutation = useDeleteTransfer();
 
   const fundCurrenciesIds = useMemo(() => fundCurrencies.map((c) => c.id), [fundCurrencies]);
@@ -139,9 +144,7 @@ export function GenericFundDetails({
 
   const fundTransfers = useMemo(() => {
     return (transfersQuery.data?.data ?? []).filter((t) => {
-      const isFrom = t.morph_from_type === normalizedModelType && fundCurrenciesIds.includes(t.morph_from_id);
-      const isTo = t.morph_to_type === normalizedModelType && fundCurrenciesIds.includes(t.morph_to_id);
-      return isFrom || isTo;
+      return t.morph_from_type === normalizedModelType && fundCurrenciesIds.includes(t.morph_from_id);
     });
   }, [transfersQuery.data?.data, normalizedModelType, fundCurrenciesIds]);
 
@@ -306,6 +309,10 @@ export function GenericFundDetails({
             onDelete={async (expense) => {
               await deleteExpenseMutation.mutateAsync(expense.id);
             }}
+            onInvoices={(expense) => {
+              setSelectedExpenseForInvoices(expense);
+              setExpenseInvoicesOpen(true);
+            }}
           />
         </TabsContent>
 
@@ -314,6 +321,7 @@ export function GenericFundDetails({
             <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
             <Button
               onClick={() => {
+                setSelectedTransfer(null);
                 setTransferDialogOpen(true);
               }}
               className="bg-slate-950 text-white"
@@ -326,6 +334,10 @@ export function GenericFundDetails({
           <TransfersTable
             data={fundTransfers}
             loading={transfersQuery.isLoading}
+            onEdit={(transfer) => {
+              setSelectedTransfer(transfer);
+              setTransferDialogOpen(true);
+            }}
             onDelete={async (transfer) => {
               await deleteTransferMutation.mutateAsync(transfer.id);
             }}
@@ -389,15 +401,34 @@ export function GenericFundDetails({
       {transferDialogOpen && (
         <TransfersDialog
           open={transferDialogOpen}
-          onOpenChange={setTransferDialogOpen}
+          onOpenChange={(open) => {
+            setTransferDialogOpen(open);
+            if (!open) setSelectedTransfer(null);
+          }}
           morph_from_type={normalizedModelType as any}
           fixedFromCurrencies={fundCurrencies}
+          defaultValues={selectedTransfer}
           onSubmit={async (data) => {
-            await createTransferMutation.mutateAsync(data);
+            if (selectedTransfer) {
+              await updateTransferMutation.mutateAsync({ id: selectedTransfer.id, payload: data });
+            } else {
+              await createTransferMutation.mutateAsync(data);
+            }
           }}
-          loading={createTransferMutation.isPending}
+          loading={createTransferMutation.isPending || updateTransferMutation.isPending}
         />
       )}
+
+      <ExpenseInvoicesDialog
+        open={expenseInvoicesOpen}
+        onOpenChange={setExpenseInvoicesOpen}
+        expense={selectedExpenseForInvoices}
+        fixedValues={{
+          source: sourceType,
+          [fundIdField]: fundId,
+          ...extraFixedValues,
+        }}
+      />
     </div>
   );
 }

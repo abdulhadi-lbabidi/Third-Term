@@ -26,6 +26,7 @@ export type Project = {
   expected_cost: number;
   status: ProjectStatus;
   client: ClientRecord;
+  department?: { id: number; name: string };
   funds?: ProjectFund[];
   created_at?: string;
 };

@@ -52,7 +52,11 @@ export const usersApi = {
   ): Promise<
     AdminRecord | ClientRecord | InvestorRecord | CraftsmanRecord | EmployeeRecord | EngineerRecord | SupplierRecord | TrusteeRecord
   > => {
-    return apiClient.get<any>(`${endpointByRole[role]}/${id}`).then(({ data }: any) => data);
+    const endpoint = endpointByRole[role];
+    if (!endpoint) {
+      return Promise.resolve(null as any);
+    }
+    return apiClient.get<any>(`${endpoint}/${id}`).then(({ data }: any) => data);
   },
 
   getUsersByRole: (
@@ -60,7 +64,11 @@ export const usersApi = {
     page = 1,
     perPage = 50
   ): Promise<UsersRoleResponse<any>> => {
-    return apiClient.get<any>(endpointByRole[role], {
+    const endpoint = endpointByRole[role];
+    if (!endpoint) {
+      return Promise.resolve({ data: [] });
+    }
+    return apiClient.get<any>(endpoint, {
       params: { paginate: true, page, per_page: perPage },
     }).then(({ data }: any) => {
       if (Array.isArray(data)) return { data };

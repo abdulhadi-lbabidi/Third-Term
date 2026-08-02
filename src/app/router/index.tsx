@@ -21,6 +21,7 @@ import { ProjectStagesPage } from '@/features/projects/project-stages/project-st
 import { MaterialsPage } from '@/features/materials/materials.page';
 import { RevenuesPage } from '@/features/revenues/revenues.page';
 import { NewRevenuePage } from '@/features/revenues/new-revenue.page';
+import { TransfersPage } from '@/features/transfers/transfers.page';
 import { InvoiceItemsPage } from '@/features/invoice-items/invoice-items.page';
 import { InvoicesPage } from '@/features/invoices/invoices.page';
 import { NewInvoicePage } from '@/features/invoices/new-invoice.page';
@@ -163,6 +164,10 @@ export const router = createBrowserRouter([
           {
             path: '/revenues',
             element: <RevenuesPage />,
+          },
+          {
+            path: '/transfers',
+            element: <TransfersPage />,
           },
           {
             path: '/revenues/new',

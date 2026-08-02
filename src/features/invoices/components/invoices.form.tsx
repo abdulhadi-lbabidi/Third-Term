@@ -344,7 +344,7 @@ export function InvoicesForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="1"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
@@ -363,7 +363,7 @@ export function InvoicesForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="1"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />

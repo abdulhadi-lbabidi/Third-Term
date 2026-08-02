@@ -942,7 +942,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="flex flex-wrap gap-4 [&>*]:flex-[1_1_200px]">
               <FormField
                 control={form.control}
                 name="fund_user_role"
