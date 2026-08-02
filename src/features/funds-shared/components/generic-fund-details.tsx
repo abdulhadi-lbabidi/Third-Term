@@ -149,60 +149,59 @@ export function GenericFundDetails({
   }, [transfersQuery.data?.data, normalizedModelType, fundCurrenciesIds]);
 
   return (
-    <div className="space-y-5 shadow-md rounded-xl p-3 bg-white">
-      <div className="flex items-start gap-3 ">
-        {onBack && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onBack}
-            title="العودة"
-          >
-            <ArrowRight className="size-4" />
-          </Button>
-        )}
-        <div>
-          <h3 className="text-lg font-semibold">صندوق: {fundName}</h3>
-          <p className="mb-3 text-sm text-muted-foreground">
-            إدارة الحركات المالية المتعلقة بهذا الصندوق
-          </p>
-          {extraDetails && <div className="mb-4">{extraDetails}</div>}
+    <div className="flex flex-col space-y-6 bg-white p-4 rounded-2xl">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-5">
+        <div className="flex items-start gap-4">
+          {onBack && (
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={onBack}
+              className="mt-1 shrink-0 rounded-full"
+              title="العودة"
+            >
+              <ArrowRight className="size-4" />
+            </Button>
+          )}
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900">{fundName}</h2>
+              {extraDetails && <div>{extraDetails}</div>}
+            </div>
 
-          <div className="flex flex-wrap gap-2">
-            {fundCurrencies.map((currency) => (
-              <Button
-                key={currency.id}
-                size={"sm"}
-                variant={"outline"}
-              >
-                <span>
-                  {currency.currency} {currency.symbol}
-                </span>
-                <span className="text-[11px] text-sky-700/80">({currency.balance})</span>
-              </Button>
-            ))}
-            {fundCurrencies.length === 0 && (
-              <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-200 bg-slate-50 p-2 text-xs text-slate-400">
-                <Banknote className="size-3.5" />
-                <span>لا يوجد عملات مرفقة</span>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {fundCurrencies.length > 0 ? (
+                fundCurrencies.map((currency) => (
+                  <div key={currency.id} className="flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-sm font-medium">
+                    <span className="text-slate-900">{currency.balance}</span>
+                    <span className="text-slate-500">{currency.currency} {currency.symbol}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Banknote className="size-4" />
+                  <span>لا يوجد عملات مرفقة</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="mr-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={onAttachCurrency}>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={onAttachCurrency} className="bg-slate-100 hover:bg-slate-200">
             <Banknote className="ml-2 size-4" />
             إرفاق عملة
           </Button>
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <Button variant="secondary" size="sm" onClick={onEdit} className="bg-slate-100 hover:bg-slate-200">
             <Edit2 className="ml-2 size-4" />
             تعديل
           </Button>
           <AlertDialog>
-            <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-              <Trash2 className="ml-2 size-4" />
-              حذف
+            <AlertDialogTrigger>
+              <Button variant="secondary" size="sm" className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700">
+                <Trash2 className="ml-2 size-4" />
+                حذف
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -213,7 +212,7 @@ export function GenericFundDetails({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete}>
+                <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                   حذف
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -252,32 +251,18 @@ export function GenericFundDetails({
             </Button>
           </div>
 
-          {isLoadingRevenues ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-[150px] rounded-xl border border-border bg-card animate-pulse" />
-              ))}
-            </div>
-          ) : fundRevenues.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
-              <TrendingUp className="mb-4 size-10 text-muted-foreground" />
-              <h4 className="text-sm font-medium text-foreground">لا توجد إيرادات</h4>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                لم يتم إضافة أي إيرادات لهذا الصندوق بعد.
-              </p>
-            </div>
-          ) : (
-            <RevenuesTable
-              data={fundRevenues}
-              onEdit={(revenue) => {
-                setSelectedRevenue(revenue);
-                setRevenueDialogOpen(true);
-              }}
-              onDelete={async (revenue) => {
-                await deleteRevenueMutation.mutateAsync(revenue.id);
-              }}
-            />
-          )}
+          <RevenuesTable
+            data={fundRevenues}
+            loading={isLoadingRevenues}
+            hideTypeColumn={true}
+            onEdit={(revenue) => {
+              setSelectedRevenue(revenue);
+              setRevenueDialogOpen(true);
+            }}
+            onDelete={async (revenue) => {
+              await deleteRevenueMutation.mutateAsync(revenue.id);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="expenses" className="space-y-5">
@@ -298,6 +283,7 @@ export function GenericFundDetails({
           <ExpensesTable
             data={fundExpenses}
             loading={isLoadingExpenses}
+            hideTypeColumn={true}
             onView={(expense) => {
               setSelectedExpenseForView(expense.id);
               setExpenseDetailsOpen(true);

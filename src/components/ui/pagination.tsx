@@ -3,6 +3,13 @@ import * as React from "react"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -136,6 +143,9 @@ export type SimplePaginationProps = {
   totalPages: number;
   onPageChange: (page: number) => void;
   meta?: PaginationMeta;
+  limit?: number;
+  limitOptions?: number[];
+  onLimitChange?: (limit: number) => void;
 };
 
 function getPageNumbers(currentPage: number, lastPage: number) {
@@ -159,14 +169,39 @@ function SimplePagination({
   totalPages,
   onPageChange,
   meta,
+  limit,
+  limitOptions,
+  onLimitChange,
 }: SimplePaginationProps) {
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
     <div className="sticky bottom-0 z-10 mt-auto flex flex-col items-center justify-between gap-4 rounded-lg border border-border bg-card/95 p-4 shadow-sm backdrop-blur sm:flex-row">
       {meta ? (
-        <div className="text-xs text-muted-foreground">
-          عرض {meta.from ?? 0} إلى {meta.to ?? 0} من إجمالي {meta.total ?? 0} عنصر
+        <div className="text-xs text-muted-foreground flex items-center gap-3">
+          <span>
+            عرض {meta.from ?? 0} إلى {meta.to ?? 0} من إجمالي {meta.total ?? 0} عنصر
+          </span>
+          {limitOptions && onLimitChange && limit ? (
+            <div className="flex items-center gap-2 border-r border-border/50 pr-3">
+              <span>عرض</span>
+              <Select value={limit.toString()} onValueChange={(v) => {
+                onPageChange(1); // Reset page on limit change
+                onLimitChange(Number(v));
+              }}>
+                <SelectTrigger className="h-7 w-[70px] text-xs" dir="ltr">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {limitOptions.map((opt) => (
+                    <SelectItem key={opt} value={opt.toString()}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div />

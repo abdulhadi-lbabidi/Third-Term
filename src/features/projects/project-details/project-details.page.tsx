@@ -66,7 +66,7 @@ export function ProjectDetailsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        badge="تفاصيل المشروع"
+        badge={currentProject ? (currentProject.department ? `${currentProject.department.name}` : 'لا يتبع لأي قسم') : undefined}
         icon={FolderKanban}
         title={projectName || currentProject?.name || <Skeleton className="h-8 w-48 inline-block align-middle" />}
         tabs={PROJECT_TABS}

@@ -7,6 +7,7 @@ import {
   FundLink,
   type TableUser
 } from '@/features/components/table-helpers';
+import { formatArabicDate } from '@/shared/lib/utils';
 import type { Expense } from '../types';
 
 type ExpenseRow = Expense & {
@@ -21,10 +22,11 @@ type ExpensesTableProps = {
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
   onInvoices?: (expense: Expense) => void;
+  hideTypeColumn?: boolean;
 };
 
-export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoices }: ExpensesTableProps) {
-  const columns: DataTableColumn<Expense>[] = [
+export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoices, hideTypeColumn }: ExpensesTableProps) {
+  const allColumns: DataTableColumn<Expense>[] = [
     { header: 'الوصف', cell: (row) => row.description },
     {
       header: 'المبلغ',
@@ -40,7 +42,7 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoi
       }
     },
     { header: 'المستخدم', cell: (row) => <UserLink user={(row as ExpenseRow).user} /> },
-    { header: 'نوع الصرف', cell: (row) => <FundLink type={row.expenseable_type} info={row.expenseable_info} /> },
+    { header: 'نوع الصرف', cell: (row) => <FundLink type={row.expenseable_type} info={row.expenseable_info} fundTab="expenses" fallbackUser={(row as ExpenseRow).user} /> },
     {
       header: 'تم الترحيل',
       cell: (row) => (
@@ -50,9 +52,11 @@ export function ExpensesTable({ data, loading, onView, onEdit, onDelete, onInvoi
       ),
     },
     { header: 'أنشئ بواسطة', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
-    { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
-    { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
+    // { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
+    { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
   ];
+
+  const columns = hideTypeColumn ? allColumns.filter((c) => c.header !== 'نوع الصرف') : allColumns;
 
   return (
     <DataTable

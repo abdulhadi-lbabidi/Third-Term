@@ -20,6 +20,15 @@ export const fundsApi = {
     return response.user?.funds ?? [];
   },
 
+  getFundById: async (id: number): Promise<Fund> => {
+    const response = await apiClient.get(`/funds/${id}`);
+    let data = response.data?.data ?? response.data;
+    while (Array.isArray(data)) {
+      data = data[0];
+    }
+    return data;
+  },
+
   createFund: async (payload: CreateFundPayload): Promise<Fund> => {
     const response = await apiClient.post('/funds', payload);
     return response.data;

@@ -18,10 +18,11 @@ type RevenuesTableProps = {
   loading?: boolean;
   onEdit?: (revenue: Revenue) => void;
   onDelete?: (revenue: Revenue) => void;
+  hideTypeColumn?: boolean;
 };
 
-export function RevenuesTable({ data, loading, onEdit, onDelete }: RevenuesTableProps) {
-  const columns: DataTableColumn<Revenue>[] = [
+export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn }: RevenuesTableProps) {
+  const allColumns: DataTableColumn<Revenue>[] = [
     { header: 'البيان', cell: (row) => row.statement },
     {
       header: 'المبلغ',
@@ -37,7 +38,7 @@ export function RevenuesTable({ data, loading, onEdit, onDelete }: RevenuesTable
       }
     },
     { header: 'المستخدم', cell: (row) => <UserLink user={(row as RevenueRow).user} /> },
-    { header: 'نوع الإيراد', cell: (row) => <FundLink type={row.revenueable_type} info={row.revenueable_info} /> },
+    { header: 'نوع الإيراد', cell: (row) => <FundLink type={row.revenueable_type} info={row.revenueable_info} fundTab="revenues" fallbackUser={(row as RevenueRow).user} /> },
     {
       header: 'تم الترحيل',
       cell: (row) => (
@@ -49,6 +50,8 @@ export function RevenuesTable({ data, loading, onEdit, onDelete }: RevenuesTable
     { header: 'مستلم بواسطة', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
     { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
   ];
+
+  const columns = hideTypeColumn ? allColumns.filter((col) => col.header !== 'نوع الإيراد') : allColumns;
 
   return (
     <DataTable

@@ -21,6 +21,7 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { expensesApi } from '../expenses.api';
+import { formatArabicDate } from '@/shared/lib/utils';
 import type {
   Expense,
   ExpenseCompanyFundCurrencyDetails,
@@ -175,7 +176,7 @@ function ExpenseDetailsContent({ expense }: { expense: Expense }) {
           </span>
           <span className="status-badge-neutral">
             <Calendar className="size-3.5" />
-            {expense.created_at ?? '-'}
+            {expense.created_at ? formatArabicDate(expense.created_at) : '-'}
           </span>
           <span className="status-badge-neutral">#{expense.id}</span>
         </div>
@@ -186,7 +187,7 @@ function ExpenseDetailsContent({ expense }: { expense: Expense }) {
           <DetailRow label="الوصف" value={expense.description || '-'} />
           <DetailRow label="المبلغ" value={<span className="finance-num">{Number(expense.amount || 0).toLocaleString()}</span>} />
           <DetailRow label="نوع الصندوق" value={source.label} />
-          <DetailRow label="تاريخ الإنشاء" value={expense.created_at ?? '-'} />
+          <DetailRow label="تاريخ الإنشاء" value={expense.created_at ? formatArabicDate(expense.created_at) : '-'} />
         </DetailSection>
 
         <DetailSection title="المستخدم المستفيد" icon={UserRound}>

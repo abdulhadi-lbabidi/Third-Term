@@ -18,7 +18,7 @@ export function FundsDashboardPage() {
   const activeTab = searchParams.get('tab') ?? 'company';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full">
       <PageHeader
         badge="الإدارة المالية"
         title="إدارة الصناديق"
@@ -27,15 +27,30 @@ export function FundsDashboardPage() {
       />
 
       <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })}>
-        <TabsContent value="company" className="mt-0 outline-none border-none">
+        <TabsContent value="company" className="mt-0 p-4 bg-white rounded-2xl h-full shadow outline-none border-none">
+          {/* add title & icon to this div */}
+          <div className="flex items-center space-x-2 mb-6">
+            <Building2 className="h-6 w-6" />
+            <h2 className="text-xl font-bold">صناديق الشركة</h2>
+          </div>
           <CompanyFundsPage isTab />
         </TabsContent>
 
-        <TabsContent value="project" className="mt-0 outline-none border-none">
+        <TabsContent value="project" className="mt-0 p-4 bg-white rounded-2xl shadow outline-none border-none">
+          {/* add title & icon to this div */}
+          <div className="flex items-center space-x-2 mb-6">
+            <FolderKanban className="h-6 w-6" />
+            <h2 className="text-xl font-bold">صناديق المشاريع</h2>
+          </div>
           <ProjectFundsPage isTab />
         </TabsContent>
 
-        <TabsContent value="users" className="mt-0 outline-none border-none">
+        <TabsContent value="users" className="mt-0 p-4 bg-white rounded-2xl shadow outline-none border-none">
+          {/* add title & icon to this div */}
+          <div className="flex items-center space-x-2 mb-6">
+            <Users className="h-6 w-6" />
+            <h2 className="text-xl font-bold">صناديق المستخدمين</h2>
+          </div>
           <FundsPage isTab />
         </TabsContent>
       </Tabs>

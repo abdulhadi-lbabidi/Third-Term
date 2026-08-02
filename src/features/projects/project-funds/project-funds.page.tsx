@@ -19,6 +19,7 @@ import { GenericFundDialog } from '@/features/funds-shared/components/generic-fu
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
+import { FolderKanban, CircleDollarSign, Activity } from 'lucide-react';
 
 const projectFundsQueryKeys = {
   all: ['project-funds'] as const,
@@ -36,6 +37,14 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   const queryClient = useQueryClient();
   const projectId = Number(params.projectId || '');
   const hasProjectId = Number.isFinite(projectId) && projectId > 0;
+
+  const statusLabels: Record<string, string> = {
+    pending: 'قيد الانتظار',
+    in_progress: 'قيد التنفيذ',
+    completed: 'مكتمل',
+    cancelled: 'ملغي',
+  };
+
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
@@ -225,7 +234,40 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
           )}
         </>
       ) : (
-        currentFund && (
+        projectFundsQuery.isLoading ? (
+          <div className="space-y-5 shadow-md rounded-xl p-5 bg-white">
+            <div className="flex items-start gap-4">
+              <div className="size-10 rounded-md border border-border bg-slate-100 animate-pulse shrink-0" />
+              <div className="space-y-3 flex-1">
+                <div className="h-6 w-1/3 rounded bg-slate-100 animate-pulse" />
+                <div className="h-4 w-1/4 rounded bg-slate-100 animate-pulse" />
+                <div className="flex gap-2 pt-2">
+                  <div className="h-8 w-24 rounded-md bg-slate-100 animate-pulse" />
+                  <div className="h-8 w-24 rounded-md bg-slate-100 animate-pulse" />
+                </div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <div className="h-9 w-28 rounded-md bg-slate-100 animate-pulse" />
+                <div className="h-9 w-24 rounded-md bg-slate-100 animate-pulse" />
+                <div className="h-9 w-24 rounded-md bg-slate-100 animate-pulse" />
+              </div>
+            </div>
+
+            <div className="flex gap-2 border-b border-border pb-2 mt-6">
+              <div className="h-9 w-28 rounded-md bg-slate-100 animate-pulse" />
+              <div className="h-9 w-28 rounded-md bg-slate-100 animate-pulse" />
+              <div className="h-9 w-28 rounded-md bg-slate-100 animate-pulse" />
+            </div>
+
+            <div className="space-y-4 mt-6">
+              <div className="flex justify-between items-center">
+                <div className="h-5 w-32 rounded bg-slate-100 animate-pulse" />
+                <div className="h-9 w-32 rounded-md bg-slate-100 animate-pulse" />
+              </div>
+              <div className="h-[300px] w-full rounded-xl border border-border bg-slate-50/50 animate-pulse" />
+            </div>
+          </div>
+        ) : currentFund && (
           <GenericFundDetails
             fundId={currentFund.id}
             fundName={currentFund.name}
@@ -264,21 +306,44 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
             }}
             extraDetails={
               currentFund.project ? (
-                <div className="flex flex-wrap gap-2 mb-4 mt-2">
-                  <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                    <span className="text-slate-500">المشروع:</span>
-                    <span>{currentFund.project.name}</span>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+                    <div className="rounded-md bg-indigo-100/50 p-2 text-indigo-600">
+                      <FolderKanban className="size-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-medium text-muted-foreground">المشروع</span>
+                      <span className="text-sm font-semibold text-foreground line-clamp-1" title={currentFund.project.name}>
+                        {currentFund.project.name}
+                      </span>
+                    </div>
                   </div>
+
                   {currentFund.project.expected_cost !== undefined && (
-                    <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm">
-                      <span className="text-emerald-600/80">التكلفة المتوقعة:</span>
-                      <span>{Number(currentFund.project.expected_cost).toLocaleString()}</span>
+                    <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+                      <div className="rounded-md bg-emerald-100/50 p-2 text-emerald-600">
+                        <CircleDollarSign className="size-5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-medium text-muted-foreground">التكلفة المتوقعة</span>
+                        <span className="text-sm font-semibold text-foreground finance-num">
+                          {Number(currentFund.project.expected_cost).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   )}
+
                   {currentFund.project.status && (
-                    <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 shadow-sm">
-                      <span className="text-blue-600/80">الحالة:</span>
-                      <span className="capitalize">{currentFund.project.status}</span>
+                    <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+                      <div className="rounded-md bg-blue-100/50 p-2 text-blue-600">
+                        <Activity className="size-5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-medium text-muted-foreground">الحالة</span>
+                        <span className="text-sm font-semibold capitalize text-foreground">
+                          {statusLabels[currentFund.project.status] || currentFund.project.status}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>

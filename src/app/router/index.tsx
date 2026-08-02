@@ -122,19 +122,19 @@ export const router = createBrowserRouter([
             element: <ProjectsPage />,
           },
           {
-            path: '/projects/:projectId/:projectName',
+            path: '/projects/:projectId',
             element: <ProjectDetailsPage />,
           },
           {
-            path: '/projects/:projectId/:projectName/funds',
+            path: '/projects/:projectId/funds',
             element: <ProjectFundsPage />,
           },
           {
-            path: '/projects/:projectId/:projectName/team',
+            path: '/projects/:projectId/team',
             element: <ProjectTeamPage />,
           },
           {
-            path: '/projects/:projectId/:projectName/stages',
+            path: '/projects/:projectId/stages',
             element: <ProjectStagesPage />,
           },
           {

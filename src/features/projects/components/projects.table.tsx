@@ -49,18 +49,16 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
   };
 
   const columns: DataTableColumn<Project>[] = [
-    { 
-      header: 'اسم المشروع', 
+    {
+      header: 'اسم المشروع',
       cell: (row) => (
-        <Link 
-          to={`/projects/${row.id}/${encodeURIComponent(row.name)}`}
-          className="font-medium text-blue-700 hover:underline hover:text-blue-900 transition-colors"
-        >
+        <Link to={`/projects/${row.id}`} className="font-medium text-blue-700 hover:underline hover:text-blue-900 transition-colors">
           {row.name}
         </Link>
-      ) 
+      )
     },
     { header: 'العميل', cell: (row) => row.client?.user?.name ?? '-' },
+    { header: 'القسم', cell: (row) => row.department?.name ?? '-' },
     { header: 'التكلفة المتوقعة', cell: (row) => String(row.expected_cost) },
     {
       header: 'الحالة',
