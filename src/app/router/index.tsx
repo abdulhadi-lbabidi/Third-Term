@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Layout } from '@/features/layouts/main.layout';
 import { LoginPage } from '@/features/Auth/pages/login.page';
 import { UsersPage } from '@/features/users/users.page';
@@ -46,8 +46,20 @@ function getUserRole(): string | null {
 }
 
 function ProtectedRoute() {
+  const location = useLocation();
   if (!getAuthToken()) {
     return <Navigate to="/auth/login" replace />;
+  }
+
+  const role = getUserRole();
+  const isClientPath = location.pathname.startsWith('/client');
+
+  if (role === 'client' && !isClientPath) {
+    return <Navigate to="/client/projects" replace />;
+  }
+
+  if (role !== 'client' && isClientPath) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

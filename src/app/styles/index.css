@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Tajawal:wght@400;500;700;800;900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -315,4 +315,12 @@
       linear-gradient(90deg, rgba(30, 58, 95, 0.035) 1px, transparent 1px);
     background-size: 28px 28px;
   }
+}
+
+.font-tajawal {
+  font-family: 'Tajawal', sans-serif !important;
+}
+
+.font-tajawal * {
+  font-family: 'Tajawal', sans-serif !important;
 }

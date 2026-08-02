@@ -379,7 +379,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   return (
     <Form {...form}>
       <form
-        className="space-y-6"
+        className="space-y-3"
         onSubmit={form.handleSubmit(
           async (values) => {
             await onSubmit({

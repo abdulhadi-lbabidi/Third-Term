@@ -68,4 +68,17 @@ export const publicProjectsApi = {
       return [];
     }
   },
+
+  getTransfers: async (): Promise<any[]> => {
+    try {
+      const response = await apiClient.get('/transactions', {
+        params: { paginate: false },
+      });
+      const result = response.data;
+      if (Array.isArray(result)) return result;
+      return result?.data ?? [];
+    } catch {
+      return [];
+    }
+  },
 };

@@ -49,8 +49,6 @@ const transferFormSchema = z.object({
   ]),
   morph_to_id: z.number({ message: 'الرجاء اختيار عملة الوجهة' }),
   company_fund_id: z.number().optional(),
-  user_role: z.string().optional(),
-  user_id: z.number().optional(),
   fund_user_role: z.string().optional(),
   fund_user_id: z.number().optional(),
   user_fund_id: z.number().optional(),
@@ -63,23 +61,9 @@ const transferFormSchema = z.object({
   from_user_fund_id: z.number().optional(),
   from_project_fund_id: z.number().optional(),
   from_project_id: z.number().optional(),
+  isGeneral: z.boolean().optional(),
 }).superRefine((values, ctx) => {
-  if (!values.user_role) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['user_role'],
-      message: 'الرجاء اختيار نوع المستخدم للتحويل',
-    });
-  }
-  if (!values.user_id) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['user_id'],
-      message: 'الرجاء اختيار المستخدم للتحويل',
-    });
-  }
-
-  if (values.morph_from_type) {
+  if (values.isGeneral && values.morph_from_type) {
     if (values.morph_from_type === 'App\\Models\\CompanyFundCurrency') {
       if (!values.from_company_fund_id) {
         ctx.addIssue({
@@ -400,6 +384,7 @@ export function TransfersForm({
   defaultValues,
   isGeneral = false,
 }: TransferFormProps) {
+ 
   const form = useForm<TransferFormValues>({
     resolver: zodResolver(transferFormSchema),
     defaultValues: {
@@ -412,8 +397,6 @@ export function TransfersForm({
       company_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CompanyFundCurrency'
         ? (defaultValues?.morph_to_info?.details?.company_fund_id ?? undefined)
         : undefined,
-      user_role: normalizeRole(defaultValues?.user?.role_type),
-      user_id: defaultValues?.user_id ?? defaultValues?.user?.id ?? undefined,
       fund_user_role: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
         ? normalizeRole(defaultValues?.morph_to_info?.user_info?.role_type)
         : '',
@@ -448,15 +431,18 @@ export function TransfersForm({
       from_project_id: defaultValues?.morph_from_type === 'App\\Models\\ProjectFundCurrency'
         ? (defaultValues?.morph_from_info?.details?.project_fund?.project_id ?? undefined)
         : undefined,
+      isGeneral: isGeneral,
     },
   });
 
+  useEffect(() => {
+    console.log('Validation Errors:', form.formState.errors);
+  }, [form.formState.errors]);
   const morphFromType = form.watch('morph_from_type');
   const morphToType = form.watch('morph_to_type');
   const companyFundId = form.watch('company_fund_id');
   const selectedMorphToId = form.watch('morph_to_id');
   const selectedMorphFromId = form.watch('morph_from_id');
-  const userRole = form.watch('user_role') as UserRole | '';
   const fundUserRole = form.watch('fund_user_role') as UserRole | '';
   const fundUserId = form.watch('fund_user_id');
   const userFundId = form.watch('user_fund_id');
@@ -469,17 +455,6 @@ export function TransfersForm({
   const fromProjectFundId = form.watch('from_project_fund_id');
   const selectedFromProjectId = form.watch('from_project_id');
   const fromCompanyFundId = form.watch('from_company_fund_id');
-
-  const { data: roleUsers = [] } = useQuery<RoleUser[]>({
-    queryKey: ['transfers', 'role-users', userRole] as const,
-    queryFn: async () => {
-      if (!userRole || !userRoles.includes(userRole as UserRole)) return [];
-      const res = await usersApi.getUsersByRole(userRole as UserRole);
-      const list = (res as any)?.data ?? res;
-      return list as RoleUser[];
-    },
-    enabled: Boolean(userRole) && userRoles.includes(userRole as UserRole),
-  });
 
   const { data: fromRoleUsers = [] } = useQuery<RoleUser[]>({
     queryKey: ['transfers', 'from-role-users', fromUserRole] as const,
@@ -819,7 +794,7 @@ export function TransfersForm({
   return (
     <Form {...form}>
       <form
-        className="space-y-6"
+        className="space-y-2"
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit({
             morph_from_type: isGeneral ? values.morph_from_type! : morph_from_type!,
@@ -836,7 +811,6 @@ export function TransfersForm({
               const num = Number(val);
               return Number.isNaN(num) ? 1 : num;
             })(),
-            user_id: values.user_id ?? 1,
           });
         })}
       >
@@ -917,61 +891,7 @@ export function TransfersForm({
           )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 border border-slate-100 rounded-lg p-4 bg-slate-50/50">
-          <FormField
-            control={form.control}
-            name="user_role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>نوع المستخدم المسؤول</FormLabel>
-                <Select
-                  value={field.value ?? ''}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    form.setValue('user_id', undefined);
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      {field.value ? getRoleLabel(field.value as UserRole) : <SelectValue placeholder="اختر نوع المستخدم" />}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {userRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {roleLabels[role]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-          <FormField
-            control={form.control}
-            name="user_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>المستخدم المسؤول</FormLabel>
-                <FormControl>
-                  <SearchableSelect
-                    value={field.value}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    disabled={!userRole}
-                    placeholder="اختر المستخدم"
-                    options={roleUsers.map((user) => ({
-                      value: user.user.id,
-                      label: user.user.name,
-                    }))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         {isGeneral && (
           <div className="space-y-4 rounded-lg border border-border bg-slate-50/40 p-4">
@@ -1679,9 +1599,11 @@ export function TransfersForm({
           )}
         </div>
 
-        <Button type="submit" className="w-full bg-slate-950 text-white" disabled={loading}>
-          {loading ? (defaultValues ? 'جاري التعديل...' : 'جاري التحويل...') : (defaultValues ? 'حفظ التعديلات' : 'تأكيد التحويل')}
-        </Button>
+        <div className="flex justify-end mt-4">
+          <Button type="submit" className="w-auto px-8 bg-slate-950 text-white" disabled={loading}>
+            {loading ? (defaultValues ? 'جاري التعديل...' : 'جاري التحويل...') : (defaultValues ? 'حفظ التعديلات' : 'تأكيد التحويل')}
+          </Button>
+        </div>
       </form>
     </Form>
   );

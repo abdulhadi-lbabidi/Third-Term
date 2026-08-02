@@ -193,7 +193,7 @@ export function InvoicesForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <div className="grid gap-4 md:grid-cols-2">
           {!fixedValues?.item_id && (
             <FormField
