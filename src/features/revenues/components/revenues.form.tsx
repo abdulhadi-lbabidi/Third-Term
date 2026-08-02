@@ -150,8 +150,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : sourceToRevenueableType.user_fund),
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
       company_fund_id: fixedValues?.company_fund_id ?? undefined,
-      user_role: defaultValues?.user_role ?? '',
+      user_role: defaultValues?.user_role ?? ((defaultValues as any)?.user?.role_type) ?? '',
       user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
+      received_by_role: typeof defaultValues?.received_by === 'object' ? (defaultValues.received_by as any).role_type ?? '' : '',
       received_by: (() => {
         if (!defaultValues?.received_by) return undefined;
         const val = typeof defaultValues.received_by === 'object'
@@ -160,8 +161,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         const num = Number(val);
         return Number.isNaN(num) ? undefined : num;
       })(),
-      fund_user_role: fixedValues?.fund_user_role ?? defaultValues?.revenueable_info?.user_info?.role ?? '',
-      fund_user_id: defaultValues?.revenueable_info?.user_info?.id ?? fixedValues?.user_id ?? undefined,
+      fund_user_role: fixedValues?.fund_user_role ?? (defaultValues?.revenueable_info?.user_info as any)?.role_type ?? (defaultValues?.revenueable_info?.user_info as any)?.role ?? '',
+      fund_user_id: (defaultValues?.revenueable_info?.user_info as any)?.user_id ?? (defaultValues?.revenueable_info?.user_info as any)?.id ?? fixedValues?.user_id ?? undefined,
       user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
       project_fund_id: fixedValues?.project_fund_id ?? undefined,
       project_id: fixedValues?.project_id ?? undefined,
@@ -181,6 +182,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const userFundId = form.watch('user_fund_id') as number | undefined;
   const projectFundId = form.watch('project_fund_id') as number | undefined;
   const selectedProjectId = form.watch('project_id') as number | undefined;
+  const receivedByRole = form.watch('received_by_role') as UserRole | '';
 
   const companyFundsQuery = useQuery({
     queryKey: ['revenues', 'company-funds'] as const,
@@ -247,6 +249,18 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'user_fund' && Boolean(fundUserRole),
   });
   const fundRoleUsers = fundRoleUsersQuery.data ?? [];
+
+  const receiverRoleUsersQuery = useQuery<RoleUser[]>({
+    queryKey: ['revenues', 'receiver-role-users', receivedByRole] as const,
+    queryFn: async () => {
+      if (!receivedByRole) return [];
+      const res = await usersApi.getUsersByRole(receivedByRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
+    },
+    enabled: Boolean(receivedByRole),
+  });
+  const receiverRoleUsers = receiverRoleUsersQuery.data ?? [];
 
   const fundUserRecordQuery = useQuery<FundUserRecord | null>({
     queryKey: ['revenues', 'fund-user-record', fundUserRole, fundUserId] as const,
@@ -331,13 +345,27 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
   // Mapped options for searchable select
   const userOptions = useMemo(() => {
-    const options = roleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
-    if (defaultValues?.user_id && !options.some(o => o.value === defaultValues.user_id)) {
-      const name = (defaultValues as any).user?.name ?? `مستخدم ${defaultValues.user_id}`;
-      options.push({ value: defaultValues.user_id, label: name });
+    const options = roleUsers.map((ru: RoleUser) => ({ value: ru.user.id, label: ru.user.name }));
+    // إذا كان هناك معرف مستخدم مسبق، أضفه إذا لم يكن موجوداً
+    if (defaultValues?.user_id && !options.some((o: any) => o.value === defaultValues.user_id)) {
+      const val = typeof (defaultValues as any).user === 'object' ? (defaultValues as any).user?.name : `مستخدم ${defaultValues.user_id}`;
+      if (defaultValues.user_id) options.push({ value: Number(defaultValues.user_id), label: val });
+    } else if (fixedValues?.user_id && !options.some((o: any) => o.value === fixedValues.user_id)) {
+      // إضافة قيمة ثابتة إذا كانت مفروضة
+      options.push({ value: fixedValues.user_id, label: `مستخدم ${fixedValues.user_id}` });
     }
     return options;
-  }, [roleUsers, defaultValues]);
+  }, [roleUsers, defaultValues, fixedValues]);
+
+  const receiverOptions = useMemo(() => {
+    const options = receiverRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
+    if (defaultValues?.received_by && !options.some(o => o.value === (typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).id : defaultValues.received_by))) {
+      const val = typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).name : `مستلم ${defaultValues.received_by}`;
+      const num = typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).id : defaultValues.received_by;
+      if (num) options.push({ value: num, label: val });
+    }
+    return options;
+  }, [receiverRoleUsers, defaultValues]);
 
   const fundUserOptions = fundRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
 
@@ -581,6 +609,65 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         )}
 
+        <div className="h-[1px] w-full my-6 bg-slate-200/60" />
+
+        {/* Receiver Fields (المستلم) */}
+        <div className="space-y-4 px-2">
+          <h3 className="font-semibold text-slate-800">تفاصيل المستلم</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="received_by_role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نوع المستلم</FormLabel>
+                  <Select
+                    onValueChange={(val) => {
+                      field.onChange(val);
+                      form.setValue('received_by', undefined);
+                    }}
+                    value={field.value ?? ''}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر نوع المستلم" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(roleLabels).map(([role, label]) => (
+                        <SelectItem key={role} value={role}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="received_by"
+              render={({ field }) => (
+                <FormItem className="flex flex-col mt-2.5">
+                  <FormLabel className="mb-1">المستلم</FormLabel>
+                  <SearchableSelect
+                    options={receiverOptions}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    placeholder="اختر المستلم..."
+                    disabled={!receivedByRole}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="h-[1px] w-full my-6 bg-slate-200/60" />
+
         {/* Auth User Fields */}
         {!fixedValues?.user_id && (
           <div className="space-y-4 px-2">
@@ -644,11 +731,11 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                         <Skeleton className="h-11 w-full" />
                       ) : (
                         <SearchableSelect
-                          disabled={!userRole && !defaultValues?.user_id}
                           options={userOptions}
                           value={field.value}
                           onValueChange={field.onChange}
                           placeholder="اختر المستخدم..."
+                          disabled={!userRole}
                         />
                       )}
                     </FormControl>

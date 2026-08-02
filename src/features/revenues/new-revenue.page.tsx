@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
@@ -121,14 +122,11 @@ export function NewRevenuePage() {
 
   const handleSubmit = async (payload: CreateRevenuePayload) => {
     await saveMutation.mutateAsync(payload);
-    // Note: The success toast is handled in the revenuesApi or here depending on how it's set up. We'll use sonner toast just in case.
-    // wait, revenuesApi already sets x-success-message so the interceptor might show it, but in hooks toast is also used.
-    // We will leave toast for simplicity, but in revenues hook it's done in onSuccess. In new-revenue.page, we call API directly.
-    // wait, I can just use the hook if I want, but I used useMutation with API directly.
+    toast.success(isEditMode ? 'تم تعديل الإيراد بنجاح' : 'تم إضافة الإيراد بنجاح');
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-6xl mx-auto">
       <PageHeader
         badge="الإيرادات"
         title={isEditMode ? 'تعديل إيراد' : 'إضافة إيراد'}
@@ -141,7 +139,15 @@ export function NewRevenuePage() {
       />
 
       <div className="surface-panel p-5 sm:p-6">
-        <RevenuesForm defaultValues={defaultValues} onSubmit={handleSubmit} loading={saveMutation.isPending} />
+        {isEditMode && revenueQuery.isLoading ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-10 bg-slate-200 rounded w-1/3"></div>
+            <div className="h-10 bg-slate-200 rounded w-1/2"></div>
+            <div className="h-20 bg-slate-200 rounded w-full"></div>
+          </div>
+        ) : (
+          <RevenuesForm defaultValues={defaultValues} onSubmit={handleSubmit} loading={saveMutation.isPending} />
+        )}
       </div>
     </div>
   );
