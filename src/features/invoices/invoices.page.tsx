@@ -8,10 +8,9 @@ export function InvoicesPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col flex-1 gap-4 w-full">
-      {/* Header */}
+    <div className="flex w-full flex-1 flex-col gap-5">
       <PageHeader
-        badge="INVOICES"
+        badge="الإدارة المالية"
         title="الفواتير"
         icon={FileText}
         action={
@@ -25,8 +24,15 @@ export function InvoicesPage() {
         }
       />
 
-      {/* Main Content (Table) */}
-      <InvoicesTable />
+      <section className="surface-panel min-w-0 space-y-4 p-4 sm:p-5">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">سجل الفواتير</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            إدارة الفواتير المرتبطة بالمصروفات والموردين، وعرض أصناف كل فاتورة وتفاصيلها المالية.
+          </p>
+        </div>
+        <InvoicesTable perPage={10} />
+      </section>
     </div>
   );
 }

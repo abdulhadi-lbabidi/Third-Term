@@ -10,17 +10,27 @@ import type { InvoiceItemFormValues } from './schemas/invoice-items.schema';
 import type { CreateInvoiceItemPayload, InvoiceItem, InvoiceItemResponse } from './types';
 import { FileSpreadsheet } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export function InvoiceItemsPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fixedInvoiceId = Number(searchParams.get('invoiceId') || 0) || undefined;
+  const isWizard = searchParams.get('wizard') === 'true' && !!fixedInvoiceId;
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const perPage = 10;
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(isWizard);
   const [selectedItem, setSelectedItem] = useState<InvoiceItem | null>(null);
 
   const invoiceItemsQuery = useQuery<InvoiceItemResponse>({
-    queryKey: ['invoice-items', page, perPage],
-    queryFn: () => invoiceItemsApi.getInvoiceItems(page, perPage),
+    queryKey: ['invoice-items', page, perPage, fixedInvoiceId],
+    queryFn: () => invoiceItemsApi.getInvoiceItems(
+      page,
+      perPage,
+      fixedInvoiceId ? { 'filter[invoice_id]': fixedInvoiceId } : undefined,
+    ),
   });
 
   const saveMutation = useMutation({
@@ -72,18 +82,32 @@ export function InvoiceItemsPage() {
     <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="الفواتير"
-        title="أصناف الفاتورة"
+        title={fixedInvoiceId ? `أصناف الفاتورة #${fixedInvoiceId}` : 'أصناف الفاتورة'}
         icon={FileSpreadsheet}
         action={
-          <Button
-            type="button"
-            onClick={() => {
-              setSelectedItem(null);
-              setDialogOpen(true);
-            }}
-          >
-            إضافة صنف جديد
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {isWizard && (
+              <Button type="button" variant="outline" onClick={() => navigate(`/invoices/new?invoiceId=${fixedInvoiceId}`)}>
+                <ArrowRight className="ml-2 size-4" />
+                تعديل بيانات الفاتورة
+              </Button>
+            )}
+            <Button
+              type="button"
+              onClick={() => {
+                setSelectedItem(null);
+                setDialogOpen(true);
+              }}
+            >
+              إضافة صنف جديد
+            </Button>
+            {isWizard && (
+              <Button type="button" variant="secondary" onClick={() => navigate('/invoices')}>
+                <CheckCircle2 className="ml-2 size-4" />
+                إنهاء
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -115,6 +139,7 @@ export function InvoiceItemsPage() {
           if (!open) setSelectedItem(null);
         }}
         invoiceItem={selectedItem}
+        fixedInvoiceId={fixedInvoiceId}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />

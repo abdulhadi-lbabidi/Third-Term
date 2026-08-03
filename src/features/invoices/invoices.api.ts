@@ -31,7 +31,7 @@ export const invoicesApi = {
         headers: { 'x-success-message': 'تم إضافة الفاتورة بنجاح' },
       }
     );
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   updateInvoice: async ({
@@ -48,7 +48,7 @@ export const invoicesApi = {
         headers: { 'x-success-message': 'تم تحديث الفاتورة بنجاح' },
       }
     );
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   deleteInvoice: async (id: number) => {

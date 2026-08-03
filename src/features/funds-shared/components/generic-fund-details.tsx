@@ -11,6 +11,8 @@ import {
   Banknote,
   PlusCircle,
   ArrowLeftRight,
+  ReceiptText,
+  X,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -32,7 +34,9 @@ import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } fro
 import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
 import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
-import { ExpenseInvoicesDialog } from '@/features/expenses/components/expense-invoices.dialog';
+import { InvoicesTable } from '@/features/invoices/components/invoices.table';
+import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
+import { useInvoices } from '@/features/invoices/invoices.hooks';
 
 import { useTransfers, useCreateTransfer, useUpdateTransfer, useDeleteTransfer } from '@/features/transfers/transfers.hooks';
 import { TransfersTable } from '@/features/transfers/components/transfers.table';
@@ -75,6 +79,7 @@ export function GenericFundDetails({
 }: GenericFundDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('fundTab') || 'revenues';
+  const expenseFilterId = Number(searchParams.get('expenseId') || 0) || null;
 
   const handleTabChange = (value: string) => {
     setSearchParams((prev) => {
@@ -90,8 +95,8 @@ export function GenericFundDetails({
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
   const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
-  const [expenseInvoicesOpen, setExpenseInvoicesOpen] = useState(false);
-  const [selectedExpenseForInvoices, setSelectedExpenseForInvoices] = useState<any | null>(null);
+  const [invoiceCreateOpen, setInvoiceCreateOpen] = useState(false);
+  const [selectedExpenseForInvoiceCreate, setSelectedExpenseForInvoiceCreate] = useState<any | null>(null);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<any | null>(null);
@@ -118,10 +123,28 @@ export function GenericFundDetails({
   const expensesQuery = useExpenses(1, 50, filters);
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
+  const filteredExpense = expenseFilterId
+    ? fundExpenses.find((expense) => expense.id === expenseFilterId) ?? null
+    : null;
 
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
+
+  const fundInvoicesQuery = useInvoices({
+    paginate: true,
+    per_page: 1000,
+    page: 1,
+    ...filters,
+  });
+  const invoiceCountsByExpenseId = useMemo(() => {
+    const result = new Map<number, number>();
+    for (const invoice of fundInvoicesQuery.data?.data ?? []) {
+      const expenseId = invoice.expense_id ?? invoice.expense?.id;
+      if (expenseId) result.set(expenseId, (result.get(expenseId) ?? 0) + 1);
+    }
+    return result;
+  }, [fundInvoicesQuery.data]);
 
   const handleExpenseSubmit = async (data: any) => {
     if (selectedExpense) {
@@ -222,7 +245,7 @@ export function GenericFundDetails({
       </div>
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-5 justify-start">
+        <TabsList className="mb-5 max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="revenues">
             <TrendingUp className="ml-2 size-4" />
             الإيرادات
@@ -230,6 +253,10 @@ export function GenericFundDetails({
           <TabsTrigger value="expenses">
             <ArrowDownToLine className="ml-2 size-4" />
             المصروفات
+          </TabsTrigger>
+          <TabsTrigger value="invoices">
+            <ReceiptText className="ml-2 size-4" />
+            الفواتير
           </TabsTrigger>
           <TabsTrigger value="transfers">
             <ArrowLeftRight className="ml-2 size-4" />
@@ -296,10 +323,64 @@ export function GenericFundDetails({
               await deleteExpenseMutation.mutateAsync(expense.id);
             }}
             onInvoices={(expense) => {
-              setSelectedExpenseForInvoices(expense);
-              setExpenseInvoicesOpen(true);
+              setSearchParams((previous) => {
+                previous.set('fundTab', 'invoices');
+                previous.set('expenseId', String(expense.id));
+                return previous;
+              });
             }}
+            onAddInvoice={(expense) => {
+              setSelectedExpenseForInvoiceCreate(expense);
+              setInvoiceCreateOpen(true);
+            }}
+            invoiceCountsByExpenseId={invoiceCountsByExpenseId}
+            invoicesLoading={fundInvoicesQuery.isLoading}
+            invoicesError={fundInvoicesQuery.isError}
           />
+        </TabsContent>
+
+        <TabsContent value="invoices" className="space-y-5">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">فواتير الصندوق</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              تُنشأ الفاتورة من إجراء الفاتورة داخل جدول المصروفات، وتظهر هنا بعد ربطها بالصندوق.
+            </p>
+          </div>
+          {expenseFilterId && (
+            <div className="flex flex-col gap-3 rounded-lg bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">المصروف الجاري عرض فواتيره</p>
+                <p className="font-medium text-foreground">
+                  {filteredExpense?.description ?? `المصروف #${expenseFilterId}`}
+                  {filteredExpense ? ` · ${Number(filteredExpense.amount).toLocaleString()}` : ''}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setSearchParams((previous) => {
+                    previous.delete('expenseId');
+                    return previous;
+                  });
+                }}
+              >
+                <X className="ml-2 size-4" />
+                إلغاء الفلتر
+              </Button>
+            </div>
+          )}
+          <div className="min-w-0 overflow-x-auto">
+            <InvoicesTable
+              filters={{
+                ...filters,
+                ...(expenseFilterId ? { 'filter[expense_id]': expenseFilterId } : {}),
+              }}
+              perPage={5}
+              editInDialog
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="transfers" className="space-y-5">
@@ -384,6 +465,18 @@ export function GenericFundDetails({
         />
       )}
 
+      <InvoicesDialog
+        isOpen={invoiceCreateOpen}
+        onClose={() => {
+          setInvoiceCreateOpen(false);
+          setSelectedExpenseForInvoiceCreate(null);
+        }}
+        fixedValues={selectedExpenseForInvoiceCreate ? {
+          expense_id: selectedExpenseForInvoiceCreate.id,
+        } : undefined}
+      />
+
+
       {transferDialogOpen && (
         <TransfersDialog
           open={transferDialogOpen}
@@ -405,16 +498,6 @@ export function GenericFundDetails({
         />
       )}
 
-      <ExpenseInvoicesDialog
-        open={expenseInvoicesOpen}
-        onOpenChange={setExpenseInvoicesOpen}
-        expense={selectedExpenseForInvoices}
-        fixedValues={{
-          source: sourceType,
-          [fundIdField]: fundId,
-          ...extraFixedValues,
-        }}
-      />
     </div>
   );
 }

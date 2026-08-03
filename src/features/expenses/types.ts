@@ -106,7 +106,7 @@ export type Expense = {
   user_role?: string;
   user?: ExpenseUser | string;
   description: string;
-  amount: string;
+  amount: string | number;
   is_posted?: boolean;
   user_id?: number;
   created_by_name?: string;

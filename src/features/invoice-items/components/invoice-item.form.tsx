@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { materialsApi } from '@/features/materials/materials.api';
 import type { Material } from '@/features/materials/types';
@@ -8,12 +9,18 @@ import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { NumberStepper } from '@/shared/components/ui/number-stepper';
+import { MaterialDialog } from '@/features/materials/components/material.dialog';
 import { invoiceItemsApi } from '../invoice-items.api';
 import { invoiceItemFormSchema, type InvoiceItemFormValues } from '../schemas/invoice-items.schema';
 import type { InvoiceItem, InvoiceOption } from '../types';
 
 type InvoiceItemFormProps = {
   defaultValues?: InvoiceItem | null;
+  fixedInvoiceId?: number;
+  currencyLabel?: string;
+  priceStep?: number;
   onSubmit: (data: InvoiceItemFormValues) => Promise<void>;
   loading?: boolean;
 };
@@ -26,7 +33,9 @@ function getMaterialId(item?: InvoiceItem | null) {
   return item?.material_id ?? item?.material?.id ?? 0;
 }
 
-export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceItemFormProps) {
+export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, priceStep = 1, onSubmit, loading }: InvoiceItemFormProps) {
+  const queryClient = useQueryClient();
+  const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const { data: invoices = [] } = useQuery<InvoiceOption[]>({
     queryKey: ['invoice-items', 'invoices'] as const,
     queryFn: () => invoiceItemsApi.getInvoices(),
@@ -43,7 +52,7 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
   const form = useForm<InvoiceItemFormValues>({
     resolver: zodResolver(invoiceItemFormSchema) as any,
     defaultValues: {
-      invoice_id: getInvoiceId(defaultValues),
+      invoice_id: fixedInvoiceId ?? getInvoiceId(defaultValues),
       material_id: getMaterialId(defaultValues),
       item_description: defaultValues?.item_description ?? '',
       unit: defaultValues?.unit ?? '',
@@ -54,14 +63,14 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
 
   useEffect(() => {
     form.reset({
-      invoice_id: getInvoiceId(defaultValues),
+      invoice_id: fixedInvoiceId ?? getInvoiceId(defaultValues),
       material_id: getMaterialId(defaultValues),
       item_description: defaultValues?.item_description ?? '',
       unit: defaultValues?.unit ?? '',
       quantity: defaultValues?.quantity ?? 0,
       unit_price: defaultValues?.unit_price ?? 0,
     });
-  }, [defaultValues, form]);
+  }, [defaultValues, fixedInvoiceId, form]);
 
   const quantity = form.watch('quantity');
   const unitPrice = form.watch('unit_price');
@@ -87,6 +96,17 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
       ? [defaultValues.material, ...materials]
       : materials;
 
+  const createMaterialMutation = useMutation({
+    mutationFn: materialsApi.createMaterial,
+    onSuccess: async (material) => {
+      await queryClient.invalidateQueries({ queryKey: ['invoice-items', 'materials'] });
+      form.setValue('material_id', material.id);
+      if (material.unit) form.setValue('unit', material.unit);
+      if (material.description) form.setValue('item_description', material.description);
+      setMaterialDialogOpen(false);
+    },
+  });
+
   return (
     <Form {...form}>
       <form
@@ -95,7 +115,7 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
           await onSubmit(values);
         })}
       >
-        <FormField
+        {!fixedInvoiceId && <FormField
           control={form.control}
           name="invoice_id"
           render={({ field }) => (
@@ -121,7 +141,7 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
               <FormMessage />
             </FormItem>
           )}
-        />
+        />}
 
         <FormField
           control={form.control}
@@ -130,34 +150,27 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
             <FormItem>
               <FormLabel>المادة</FormLabel>
               <FormControl>
-                <select
-                  value={field.value ? String(field.value) : ''}
-                  onChange={(event) => field.onChange(Number(event.target.value))}
-                  className="field-control"
-                >
-                  <option value="" disabled>
-                    اختر المادة
-                  </option>
-                  {materialOptions.map((material) => (
-                    <option key={material.id} value={String(material.id)}>
-                      {material.name}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="item_description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>وصف الصنف</FormLabel>
-              <FormControl>
-                <Textarea {...field} rows={3} />
+                <SearchableSelect
+                  value={field.value ? String(field.value) : undefined}
+                  onValueChange={(value) => {
+                    const materialId = Number(value);
+                    field.onChange(materialId);
+                    const material = materialOptions.find((option) => option.id === materialId);
+                    if (material?.unit) form.setValue('unit', material.unit);
+                    if (material?.description && !form.getValues('item_description')) {
+                      form.setValue('item_description', material.description);
+                    }
+                  }}
+                  options={materialOptions.map((material) => ({ value: String(material.id), label: material.name }))}
+                  placeholder="اختر المادة"
+                  searchPlaceholder="ابحث عن مادة..."
+                  emptyMessage="لا توجد مواد."
+                  bottomAction={
+                    <Button type="button" variant="ghost" size="sm" className="w-full justify-start" onClick={() => setMaterialDialogOpen(true)}>
+                      <Plus className="ml-2 size-4" />إضافة مادة جديدة
+                    </Button>
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -186,13 +199,7 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
               <FormItem>
                 <FormLabel>الكمية</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={field.value ?? ''}
-                    onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                  />
+                  <NumberStepper value={field.value ?? 0} onChange={field.onChange} step={1} min={0} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -204,15 +211,9 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
             name="unit_price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>سعر الوحدة</FormLabel>
+                <FormLabel>سعر الوحدة {currencyLabel ? `(${currencyLabel})` : ''}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={field.value ?? ''}
-                    onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                  />
+                  <NumberStepper value={field.value ?? 0} onChange={field.onChange} step={priceStep} min={0} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -220,15 +221,35 @@ export function InvoiceItemForm({ defaultValues, onSubmit, loading }: InvoiceIte
           />
         </div>
 
+        <FormField
+          control={form.control}
+          name="item_description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>الوصف</FormLabel>
+              <FormControl><Textarea {...field} rows={3} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
           <p className="text-xs text-muted-foreground">الإجمالي</p>
-          <p className="finance-num text-lg font-semibold text-primary">{totalPrice.toFixed(2)}</p>
+          <p className="finance-num text-lg font-semibold text-primary">
+            {totalPrice.toFixed(2)} {currencyLabel}
+          </p>
         </div>
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'جاري الحفظ...' : defaultValues ? 'حفظ التعديلات' : 'إضافة صنف'}
         </Button>
       </form>
+      <MaterialDialog
+        open={materialDialogOpen}
+        onOpenChange={setMaterialDialogOpen}
+        onSubmit={async (values) => { await createMaterialMutation.mutateAsync(values); }}
+        loading={createMaterialMutation.isPending}
+      />
     </Form>
   );
 }

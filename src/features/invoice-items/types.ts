@@ -26,6 +26,7 @@ export type InvoiceItemInvoice = {
 export type InvoiceItemMaterial = {
   id: number;
   name: string;
+  unit?: string;
   description?: string;
   created_at?: string;
 };

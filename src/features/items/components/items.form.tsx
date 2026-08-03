@@ -18,10 +18,11 @@ import { itemFormSchema, type ItemFormValues } from '../schemas/items.schema';
 type ItemsFormProps = {
   defaultValues?: Item | null;
   onSubmit: (data: ItemFormValues) => Promise<void>;
+  onCancel?: () => void;
   loading?: boolean;
 };
 
-export function ItemsForm({ defaultValues, onSubmit, loading }: ItemsFormProps) {
+export function ItemsForm({ defaultValues, onSubmit, onCancel, loading }: ItemsFormProps) {
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
     defaultValues: {
@@ -73,9 +74,16 @@ export function ItemsForm({ defaultValues, onSubmit, loading }: ItemsFormProps) 
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'جاري الحفظ...' : 'حفظ'}
-        </Button>
+        <div className="flex justify-end gap-2">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+              إلغاء
+            </Button>
+          )}
+          <Button type="submit" disabled={loading}>
+            {loading ? 'جاري الحفظ...' : 'حفظ'}
+          </Button>
+        </div>
       </form>
     </Form>
   );
