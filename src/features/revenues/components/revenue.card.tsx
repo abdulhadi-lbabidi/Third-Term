@@ -58,7 +58,6 @@ function getRevenueableTypeLabel(type?: Revenue['revenueable_type']) {
 
 export function RevenueCard({ revenue, onEdit, onDelete }: RevenueCardProps) {
   const isPosted = revenue.is_posted;
-  const userLabel = getTextLabel((revenue as RevenueRow).user);
   const receiverLabel = getTextLabel((revenue as RevenueRow).received_by);
 
   return (
