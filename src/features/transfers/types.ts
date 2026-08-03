@@ -61,8 +61,6 @@ export type Transfer = {
   morph_to_id: number;
   morph_to_info?: TransferFundInfo;
   created_by?: number | TransferUser;
-  user_id?: number;
-  user?: TransferUser;
   created_at?: string;
 };
 
@@ -74,5 +72,4 @@ export type CreateTransferPayload = {
   name: string;
   amount: number;
   created_by: number;
-  user_id: number;
 };

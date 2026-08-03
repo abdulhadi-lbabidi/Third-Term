@@ -90,7 +90,6 @@ export function TransfersTable({ data, loading, onEdit, onDelete, currentFund }:
     },
     ...(!currentFund ? [{ header: 'من صندوق', cell: (row: Transfer) => getFundDetailsLabel(row.morph_from_info) }] : []),
     { header: 'إلى صندوق', cell: (row) => getFundDetailsLabel(row.morph_to_info, currentFund) },
-    { header: 'المستخدم المسؤول', cell: (row) => getTextLabel(row.user) },
     { header: 'أنشئ بواسطة', cell: (row) => getTextLabel(row.created_by) },
     { header: 'تاريخ التحويل', cell: (row) => row.created_at ?? '-' },
   ];

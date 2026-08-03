@@ -28,7 +28,7 @@ export const companyFundsApi = {
 
   getCompanyFundById: async (id: number): Promise<CompanyFund> => {
     const response = await apiClient.get(`/company-funds/${id}`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   createCompanyFund: async (payload: CreateCompanyFundPayload): Promise<CompanyFund> => {

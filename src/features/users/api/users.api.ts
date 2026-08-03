@@ -56,7 +56,7 @@ export const usersApi = {
     if (!endpoint) {
       return Promise.resolve(null as any);
     }
-    return apiClient.get<any>(`${endpoint}/${id}`).then(({ data }: any) => data);
+    return apiClient.get<any>(`${endpoint}/${id}`).then(({ data }: any) => data?.data ?? data);
   },
 
   getUsersByRole: (

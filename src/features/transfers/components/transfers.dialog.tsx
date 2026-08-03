@@ -39,7 +39,7 @@ export function TransfersDialog({
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'تعديل عملية التحويل' : 'إجراء عملية تحويل مالي'}</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-3">
           {isEdit && isLoading ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

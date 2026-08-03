@@ -18,7 +18,7 @@ export function FundsDashboardPage() {
   const activeTab = searchParams.get('tab') ?? 'company';
 
   return (
-    <div className="space-y-6 h-full">
+    <div className="space-y-3">
       <PageHeader
         badge="الإدارة المالية"
         title="إدارة الصناديق"
