@@ -21,17 +21,6 @@ export const revenueFormSchema = z
     received_by: z.coerce.number().optional(),
   })
   .superRefine((values, ctx) => {
-    if (!values.user_role && !values.user_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_role'],
-        message: 'الرجاء اختيار نوع المستخدم',
-      });
-    }
-
-    if (!values.user_id) {
-      ctx.addIssue({ code: 'custom', path: ['user_id'], message: 'الرجاء اختيار المستخدم' });
-    }
 
     if (!values.received_by_role && !values.received_by) {
       ctx.addIssue({ code: 'custom', path: ['received_by_role'], message: 'الرجاء اختيار نوع المستلم' });
