@@ -30,10 +30,13 @@ export const publicProjectsApi = {
     return result?.data ?? result;
   },
 
-  getRevenues: async (): Promise<Revenue[]> => {
+  getRevenues: async (projectFundId?: number | null): Promise<Revenue[]> => {
     try {
       const response = await apiClient.get('/revenues', {
-        params: { paginate: false },
+        params: {
+          paginate: false,
+          'filter[project_fund_id]': projectFundId,
+        },
       });
       const result = response.data;
       if (Array.isArray(result)) return result;
@@ -43,10 +46,13 @@ export const publicProjectsApi = {
     }
   },
 
-  getExpenses: async (): Promise<Expense[]> => {
+  getExpenses: async (projectFundId?: number | null): Promise<Expense[]> => {
     try {
       const response = await apiClient.get('/expenses', {
-        params: { paginate: false },
+        params: {
+          paginate: false,
+          'filter[project_fund_id]': projectFundId,
+        },
       });
       const result = response.data;
       if (Array.isArray(result)) return result;
@@ -56,10 +62,13 @@ export const publicProjectsApi = {
     }
   },
 
-  getInvoices: async (): Promise<Invoice[]> => {
+  getInvoices: async (projectFundId?: number | null): Promise<Invoice[]> => {
     try {
       const response = await apiClient.get('/invoices', {
-        params: { paginate: false },
+        params: {
+          paginate: false,
+          'filter[project_fund_id]': projectFundId,
+        },
       });
       const result = response.data;
       if (Array.isArray(result)) return result;
@@ -69,10 +78,13 @@ export const publicProjectsApi = {
     }
   },
 
-  getTransfers: async (): Promise<any[]> => {
+  getTransfers: async (projectFundId?: number | null): Promise<any[]> => {
     try {
       const response = await apiClient.get('/transactions', {
-        params: { paginate: false },
+        params: {
+          paginate: false,
+          'filter[project_fund_id]': projectFundId,
+        },
       });
       const result = response.data;
       if (Array.isArray(result)) return result;

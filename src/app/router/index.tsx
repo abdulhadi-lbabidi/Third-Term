@@ -27,6 +27,7 @@ import { InvoicesPage } from '@/features/invoices/invoices.page';
 import { NewInvoicePage } from '@/features/invoices/new-invoice.page';
 import { AuditLogsPage } from '@/features/audit-logs/audit-logs.page';
 import { PublicProjectsPage } from '@/features/public-projects/public-projects.page';
+import { PublicProjectDetailsPage } from '@/features/public-projects/public-project-details.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -101,6 +102,10 @@ export const router = createBrowserRouter([
       {
         path: '/client/projects',
         element: <PublicProjectsPage />,
+      },
+      {
+        path: '/client/projects/:projectId',
+        element: <PublicProjectDetailsPage />,
       },
       {
         element: <Layout />,
@@ -212,6 +217,10 @@ export const router = createBrowserRouter([
   {
     path: '/public-projects',
     element: <PublicProjectsPage />,
+  },
+  {
+    path: '/public-projects/:projectId',
+    element: <PublicProjectDetailsPage />,
   },
   {
     path: '*',
