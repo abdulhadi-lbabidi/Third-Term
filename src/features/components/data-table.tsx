@@ -27,9 +27,10 @@ export type DataTableColumn<T> = {
 };
 
 type ExtraAction<T> = {
-  label: string;
-  icon: ReactNode;
+  label: string | ((row: T) => string);
+  icon: ReactNode | ((row: T) => ReactNode);
   onClick: (row: T) => void;
+  hidden?: (row: T) => boolean;
 };
 
 type DataTableActions<T> = {
@@ -153,17 +154,17 @@ export function DataTable<T>({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" className="w-48">
                             {actions?.extraActions?.length
-                              ? actions.extraActions.map((action) => (
+                              ? actions.extraActions.filter((action) => !action.hidden?.(row)).map((action, actionIndex) => (
                                 <DropdownMenuItem
-                                  key={action.label}
+                                  key={typeof action.label === 'string' ? action.label : actionIndex}
                                   onSelect={() => {
                                     setTimeout(() => {
                                       action.onClick(row);
                                     }, 0);
                                   }}
                                 >
-                                  {action.icon}
-                                  <span>{action.label}</span>
+                                  {typeof action.icon === 'function' ? action.icon(row) : action.icon}
+                                  <span>{typeof action.label === 'function' ? action.label(row) : action.label}</span>
                                 </DropdownMenuItem>
                               ))
                               : null}

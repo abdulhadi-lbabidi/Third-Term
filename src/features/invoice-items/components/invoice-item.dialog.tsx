@@ -7,6 +7,7 @@ type InvoiceItemDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoiceItem?: InvoiceItem | null;
+  fixedInvoiceId?: number;
   onSubmit: (data: InvoiceItemFormValues) => Promise<void>;
   loading?: boolean;
 };
@@ -15,6 +16,7 @@ export function InvoiceItemDialog({
   open,
   onOpenChange,
   invoiceItem,
+  fixedInvoiceId,
   onSubmit,
   loading,
 }: InvoiceItemDialogProps) {
@@ -24,7 +26,14 @@ export function InvoiceItemDialog({
         <DialogHeader>
           <DialogTitle>{invoiceItem ? 'تعديل صنف فاتورة' : 'إضافة صنف فاتورة'}</DialogTitle>
         </DialogHeader>
-        {open && <InvoiceItemForm defaultValues={invoiceItem} onSubmit={onSubmit} loading={loading} />}
+        {open && (
+          <InvoiceItemForm
+            defaultValues={invoiceItem}
+            fixedInvoiceId={fixedInvoiceId}
+            onSubmit={onSubmit}
+            loading={loading}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

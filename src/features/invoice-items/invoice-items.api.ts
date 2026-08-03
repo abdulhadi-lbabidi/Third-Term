@@ -16,9 +16,13 @@ export const invoiceItemsApi = {
     return Array.isArray(payload) ? payload : payload.data ?? [];
   },
 
-  getInvoiceItems: async (page = 1, perPage = 10): Promise<InvoiceItemResponse> => {
+  getInvoiceItems: async (
+    page = 1,
+    perPage = 10,
+    filters?: Record<string, string | number | boolean | undefined>,
+  ): Promise<InvoiceItemResponse> => {
     const response = await apiClient.get('/invoice-items', {
-      params: { paginate: true, per_page: perPage, page },
+      params: { paginate: true, per_page: perPage, page, ...filters },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

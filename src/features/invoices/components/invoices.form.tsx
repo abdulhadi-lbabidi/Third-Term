@@ -16,7 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/shared/components/ui/form';
-import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Calendar } from '@/shared/components/ui/calendar';
@@ -30,12 +29,12 @@ import { usersApi } from '@/features/users/api/users.api';
 import { expensesApi } from '@/features/expenses/expenses.api';
 import { ItemsDialog } from '@/features/items/components/items.dialog';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
-import { QuickSupplierDialog } from '@/features/users/components/quick-supplier.dialog';
+import { NumberStepper } from '@/shared/components/ui/number-stepper';
 
 const invoiceSchema = z.object({
   item_id: z.number().min(1, 'البند مطلوب'),
   expense_id: z.number().min(1, 'المصروف مطلوب'),
-  supplier_id: z.number().min(1, 'المورد مطلوب'),
+  supplier_id: z.number().optional(),
   date: z.date(),
   discount: z.number().min(0, 'الخصم يجب أن يكون 0 أو أكثر'),
   final_total: z.number().min(0, 'الإجمالي لا يمكن أن يكون سالباً'),
@@ -47,13 +46,15 @@ type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
 type InvoicesFormProps = {
   defaultValues?: Partial<Invoice>;
-  onSuccess?: () => void;
+  onSuccess?: (invoice?: Invoice) => void;
+  onCancel?: () => void;
   fixedValues?: Partial<CreateInvoicePayload>;
 };
 
 export function InvoicesForm({
   defaultValues,
   onSuccess,
+  onCancel,
   fixedValues,
 }: InvoicesFormProps) {
   const { mutateAsync: createInvoice, isPending: isCreating } = useCreateInvoice();
@@ -65,7 +66,9 @@ export function InvoicesForm({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       item_id: Number(fixedValues?.item_id ?? defaultValues?.item_id ?? 0),
-      expense_id: Number(fixedValues?.expense_id ?? defaultValues?.expense_id ?? 0),
+      expense_id: Number(
+        fixedValues?.expense_id ?? defaultValues?.expense_id ?? defaultValues?.expense?.id ?? 0
+      ),
       supplier_id: Number(fixedValues?.supplier_id ?? defaultValues?.supplier_id ?? 0),
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       discount: Number(defaultValues?.discount ?? 0),
@@ -78,7 +81,6 @@ export function InvoicesForm({
   const queryClient = useQueryClient();
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
-  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
 
   const createItemMutation = useMutation({
     mutationFn: itemsApi.createItem,
@@ -104,44 +106,17 @@ export function InvoicesForm({
     },
   });
 
-  const createSupplierMutation = useMutation({
-    mutationFn: usersApi.createUser,
-    onSuccess: (res: any) => {
-      queryClient.invalidateQueries({ queryKey: ['users', 'supplier'] });
-      if (res?.data?.id || res?.id) {
-        form.setValue('supplier_id', res.data?.id || res.id);
-      }
-      setIsSupplierDialogOpen(false);
-      toast.success('تم إضافة المورد بنجاح');
-    },
-  });
-
-  useEffect(() => {
-    if (defaultValues) {
-      form.reset({
-        item_id: Number(fixedValues?.item_id ?? defaultValues.item_id ?? 0),
-        expense_id: Number(fixedValues?.expense_id ?? defaultValues.expense_id ?? 0),
-        supplier_id: Number(fixedValues?.supplier_id ?? defaultValues.supplier_id ?? 0),
-        date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
-        discount: Number(defaultValues.discount ?? 0),
-        final_total: Number(defaultValues.final_total ?? 0),
-        is_posted: Boolean(defaultValues.is_posted ?? false),
-        is_visible_to_client: Boolean(defaultValues.is_visible_to_client ?? true),
-      });
-    }
-  }, [defaultValues, fixedValues, form]);
-
   // Fetch Items
   const { data: itemsRes } = useQuery({
     queryKey: ['items'],
-    queryFn: () => itemsApi.getItems(),
+    queryFn: () => itemsApi.getItems(1, 1000),
   });
   const items = itemsRes?.data ?? (Array.isArray(itemsRes) ? itemsRes : []);
 
   // Fetch Suppliers
   const { data: suppliersRes } = useQuery({
     queryKey: ['users', 'supplier'],
-    queryFn: () => usersApi.getUsersByRole('supplier'),
+    queryFn: () => usersApi.getUsersByRole('supplier', 1, 1000),
   });
   const suppliers = (suppliersRes as any)?.data ?? (Array.isArray(suppliersRes) ? suppliersRes : []);
 
@@ -151,6 +126,54 @@ export function InvoicesForm({
     queryFn: () => expensesApi.getExpenses(),
   });
   const expenses = expensesRes?.data ?? (Array.isArray(expensesRes) ? expensesRes : []);
+  const selectedExpenseId = form.watch('expense_id');
+  const selectedExpense = expenses.find((expense: any) => expense.id === selectedExpenseId)
+    ?? defaultValues?.expense;
+  const currencyCode = (selectedExpense as any)?.expenseable_info?.details?.currency?.currency;
+  const moneyStep = currencyCode === 'SYP' ? 100 : currencyCode === 'TRY' ? 20 : 1;
+
+  useEffect(() => {
+    if (!defaultValues) return;
+
+    const itemName = typeof defaultValues.item === 'string'
+      ? defaultValues.item
+      : defaultValues.item?.name;
+    const supplierName = typeof defaultValues.supplier === 'string'
+      ? defaultValues.supplier
+      : defaultValues.supplier?.name;
+
+    const matchedItem = itemName
+      ? items.find((item: any) => item.name?.trim() === itemName.trim())
+      : undefined;
+    const matchedSupplier = supplierName
+      ? suppliers.find((supplier: any) =>
+          (supplier.user?.name || supplier.name)?.trim() === supplierName.trim()
+        )
+      : undefined;
+    const supplierIdFromRelation = typeof defaultValues.supplier === 'object'
+      ? defaultValues.supplier?.id
+      : undefined;
+    const matchedSupplierId = matchedSupplier?.id;
+
+    form.reset({
+      item_id: Number(fixedValues?.item_id ?? defaultValues.item_id ?? matchedItem?.id ?? 0),
+      expense_id: Number(
+        fixedValues?.expense_id ?? defaultValues.expense_id ?? defaultValues.expense?.id ?? 0
+      ),
+      supplier_id: Number(
+        fixedValues?.supplier_id
+          ?? defaultValues.supplier_id
+          ?? matchedSupplierId
+          ?? supplierIdFromRelation
+          ?? 0
+      ),
+      date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
+      discount: Number(defaultValues.discount ?? 0),
+      final_total: Number(defaultValues.final_total ?? 0),
+      is_posted: Boolean(defaultValues.is_posted ?? false),
+      is_visible_to_client: Boolean(defaultValues.is_visible_to_client ?? true),
+    });
+  }, [defaultValues, fixedValues, form, items, suppliers]);
 
   const itemOptions = useMemo(() => {
     return items?.map((item: any) => ({
@@ -179,13 +202,15 @@ export function InvoicesForm({
         ...values,
         date: format(values.date, 'yyyy-MM-dd'),
       };
+      if (!payload.supplier_id) delete payload.supplier_id;
 
       if (isEdit && defaultValues.id) {
-        await updateInvoice({ id: defaultValues.id, payload });
+        const invoice = await updateInvoice({ id: defaultValues.id, payload });
+        onSuccess?.(invoice as Invoice);
       } else {
-        await createInvoice(payload);
+        const invoice = await createInvoice(payload);
+        onSuccess?.(invoice as Invoice);
       }
-      onSuccess?.();
     } catch (error) {
       console.error('Failed to save invoice', error);
     }
@@ -274,18 +299,6 @@ export function InvoicesForm({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="اختر المورد..."
-                      bottomAction={
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-primary"
-                          onClick={() => setIsSupplierDialogOpen(true)}
-                        >
-                          <Plus className="mr-2 size-4" />
-                          إضافة مورد جديد
-                        </Button>
-                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -342,12 +355,7 @@ export function InvoicesForm({
               <FormItem>
                 <FormLabel>الخصم</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="1"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+                  <NumberStepper value={field.value} onChange={field.onChange} step={moneyStep} min={0} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -361,12 +369,7 @@ export function InvoicesForm({
               <FormItem>
                 <FormLabel>الإجمالي النهائي</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="1"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+                  <NumberStepper value={field.value} onChange={field.onChange} step={moneyStep} min={0} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -427,6 +430,11 @@ export function InvoicesForm({
         </div>
 
         <div className="flex items-center justify-end gap-3">
+          {onCancel && (
+            <Button type="button" variant="outline" className="h-11 min-w-[100px]" onClick={onCancel} disabled={isPending}>
+              إلغاء
+            </Button>
+          )}
           <Button type="submit" className="h-11 bg-slate-950 text-white min-w-[140px]" disabled={isPending}>
             <CheckCircle2 className="size-4 ml-2" />
             {isPending ? (isEdit ? 'جاري التحديث...' : 'جاري الإضافة...') : (isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة')}
@@ -453,14 +461,6 @@ export function InvoicesForm({
         loading={createExpenseMutation.isPending}
       />
 
-      <QuickSupplierDialog
-        open={isSupplierDialogOpen}
-        onOpenChange={setIsSupplierDialogOpen}
-        onSubmit={async (data) => {
-          await createSupplierMutation.mutateAsync(data);
-        }}
-        loading={createSupplierMutation.isPending}
-      />
     </Form>
   );
 }

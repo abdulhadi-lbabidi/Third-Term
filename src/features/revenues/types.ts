@@ -24,7 +24,13 @@ export type Revenue = {
   amount: string;
   is_posted?: boolean;
   user_id?: number;
-  received_by?: number;
+  received_by?: number | {
+    id?: number;
+    name?: string;
+    role_type?: string;
+    role?: string;
+    user?: { id?: number; name?: string; role_type?: string; role?: string };
+  };
   created_at?: string;
 };
 

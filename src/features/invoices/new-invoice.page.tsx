@@ -32,7 +32,13 @@ export function NewInvoicePage() {
         ) : (
           <InvoicesForm
             defaultValues={isEditMode ? invoice : undefined}
-            onSuccess={() => navigate('/invoices', { replace: true })}
+            onSuccess={(savedInvoice) => {
+              if (!isEditMode && savedInvoice?.id) {
+                navigate(`/invoice-items?invoiceId=${savedInvoice.id}&wizard=true`, { replace: true });
+              } else {
+                navigate('/invoices', { replace: true });
+              }
+            }}
           />
         )}
       </div>

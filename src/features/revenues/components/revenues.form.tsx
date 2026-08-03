@@ -143,31 +143,36 @@ function getRoleLabel(role: UserRole | '') {
 }
 
 export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: RevenuesFormProps) {
+  const defaultReceiver = defaultValues?.received_by;
+  const defaultReceiverId = typeof defaultReceiver === 'object'
+    ? Number(defaultReceiver.user?.id ?? defaultReceiver.id ?? 0) || undefined
+    : Number(defaultReceiver ?? 0) || undefined;
+  const defaultReceiverRole = typeof defaultReceiver === 'object'
+    ? (defaultReceiver.user?.role_type
+      ?? defaultReceiver.user?.role
+      ?? defaultReceiver.role_type
+      ?? defaultReceiver.role
+      ?? '')
+    : '';
+
   const form = useForm<RevenueFormInput, any, RevenueFormValues>({
     resolver: zodResolver(revenueFormSchema),
     defaultValues: {
-      source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : 'user_fund'),
-      revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : sourceToRevenueableType.user_fund),
+      source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : undefined as any),
+      revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : undefined),
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
       company_fund_id: fixedValues?.company_fund_id ?? undefined,
       user_role: defaultValues?.user_role ?? ((defaultValues as any)?.user?.role_type) ?? '',
       user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
-      received_by_role: typeof defaultValues?.received_by === 'object' ? (defaultValues.received_by as any).role_type ?? '' : '',
-      received_by: (() => {
-        if (!defaultValues?.received_by) return undefined;
-        const val = typeof defaultValues.received_by === 'object'
-          ? (defaultValues.received_by as any).id
-          : defaultValues.received_by;
-        const num = Number(val);
-        return Number.isNaN(num) ? undefined : num;
-      })(),
+      received_by_role: defaultReceiverRole,
+      received_by: defaultReceiverId,
       fund_user_role: fixedValues?.fund_user_role ?? (defaultValues?.revenueable_info?.user_info as any)?.role_type ?? (defaultValues?.revenueable_info?.user_info as any)?.role ?? '',
       fund_user_id: (defaultValues?.revenueable_info?.user_info as any)?.user_id ?? (defaultValues?.revenueable_info?.user_info as any)?.id ?? fixedValues?.user_id ?? undefined,
       user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
       project_fund_id: fixedValues?.project_fund_id ?? undefined,
       project_id: fixedValues?.project_id ?? undefined,
       statement: defaultValues?.statement ?? '',
-      amount: Number(defaultValues?.amount ?? 0),
+      amount: defaultValues ? Number(defaultValues.amount ?? 0) : '' as any,
       is_posted: Boolean(defaultValues?.is_posted ?? true),
       // received_by: defaultValues?.received_by ? Number(defaultValues.received_by) : 1,
     },
@@ -249,11 +254,35 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   });
   const receiverRoleUsers = receiverRoleUsersQuery.data ?? [];
 
+  const receiverRoleDetectionQuery = useQuery<UserRole | ''>({
+    queryKey: ['revenues', 'detect-receiver-role', defaultReceiverId] as const,
+    queryFn: async () => {
+      if (!defaultReceiverId) return '';
+      const results = await Promise.all(
+        userRoles.map(async (role) => ({ role, response: await usersApi.getUsersByRole(role, 1, 1000) })),
+      );
+      return results.find(({ response }) =>
+        response.data.some((record: any) =>
+          Number(record.user?.id ?? record.id) === defaultReceiverId
+        )
+      )?.role ?? '';
+    },
+    enabled: Boolean(defaultReceiverId) && !Boolean(receivedByRole),
+  });
+
+  useEffect(() => {
+    if (!receivedByRole && receiverRoleDetectionQuery.data) {
+      form.setValue('received_by_role', receiverRoleDetectionQuery.data);
+      form.setValue('received_by', defaultReceiverId);
+    }
+  }, [defaultReceiverId, form, receivedByRole, receiverRoleDetectionQuery.data]);
+
   const fundUserRecordQuery = useQuery<FundUserRecord | null>({
     queryKey: ['revenues', 'fund-user-record', fundUserRole, fundUserId] as const,
     queryFn: async () => {
       if (!fundUserRole || !fundUserId) return null;
-      const user = await usersApi.getUserByRole(fundUserRole, fundUserId);
+      const roleRecordId = fundRoleUsers.find((record) => record.user.id === fundUserId)?.id ?? fundUserId;
+      const user = await usersApi.getUserByRole(fundUserRole, roleRecordId);
       return user as FundUserRecord;
     },
     enabled: source === 'user_fund' && Boolean(fundUserRole) && Boolean(fundUserId),
@@ -293,7 +322,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const { data: allUserFunds = [] } = useQuery<Fund[]>({
     queryKey: ['revenues', 'all-user-funds'] as const,
     queryFn: () => fundsApi.getFunds(),
-    enabled: source === 'user_fund',
+    enabled: source === 'user_fund' && Boolean(fundUserId || userFundId || defaultValues?.id),
   });
 
   const derivedUserFundId = useMemo(() => {
@@ -332,13 +361,14 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
   const receiverOptions = useMemo(() => {
     const options = receiverRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
-    if (defaultValues?.received_by && !options.some(o => o.value === (typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).id : defaultValues.received_by))) {
-      const val = typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).name : `مستلم ${defaultValues.received_by}`;
-      const num = typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).id : defaultValues.received_by;
-      if (num) options.push({ value: num, label: val });
+    if (defaultReceiverId && !options.some(o => o.value === defaultReceiverId)) {
+      const val = typeof defaultReceiver === 'object'
+        ? defaultReceiver.user?.name ?? defaultReceiver.name ?? `مستلم ${defaultReceiverId}`
+        : `مستلم ${defaultReceiverId}`;
+      options.push({ value: defaultReceiverId, label: val });
     }
     return options;
-  }, [receiverRoleUsers, defaultValues]);
+  }, [receiverRoleUsers, defaultReceiver, defaultReceiverId]);
 
   const fundUserOptions = fundRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
 
@@ -393,17 +423,24 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       >
         {!fixedValues?.source && (
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Fund Type as Select */}
             <FormField
               control={form.control}
               name="source"
               render={({ field }) => (
                 <FormItem className="col-span-full">
                   <FormLabel>نوع الصندوق</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      const nextSource = value as RevenueSource;
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => {
+                      const Icon = item === 'company_fund' ? Briefcase : item === 'user_fund' ? UserCircle : FileText;
+                      const selected = field.value === item;
+                      return (
+                        <Button
+                          key={item}
+                          type="button"
+                          variant={selected ? 'default' : 'outline'}
+                          className="h-16 justify-start gap-3"
+                          onClick={() => {
+                      const nextSource = item;
                       const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
                       field.onChange(nextSource);
                       form.setValue('revenueable_type', nextRevenueableType);
@@ -417,35 +454,14 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                       if (nextSource !== 'project_fund') {
                         form.setValue('project_id', undefined);
                       }
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="اختر نوع الصندوق">
-                          {field.value && (
-                            <div className="flex items-center gap-2">
-                              {field.value === 'company_fund' && <Briefcase className="size-4" />}
-                              {field.value === 'user_fund' && <UserCircle className="size-4" />}
-                              {field.value === 'project_fund' && <FileText className="size-4" />}
-                              <span>{revenueSourceLabels[field.value as RevenueSource]}</span>
-                            </div>
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => (
-                        <SelectItem key={item} value={item}>
-                          <div className="flex items-center gap-2">
-                            {item === 'company_fund' && <Briefcase className="size-4" />}
-                            {item === 'user_fund' && <UserCircle className="size-4" />}
-                            {item === 'project_fund' && <FileText className="size-4" />}
-                            <span>{revenueSourceLabels[item]}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          }}
+                        >
+                          <Icon className="size-5" />
+                          <span>{revenueSourceLabels[item]}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -708,7 +724,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             )}
 
             {source === 'project_fund' && (
-              <>
+              <div className="grid gap-4 md:grid-cols-2">
                 {!fixedValues?.project_id && (
                   <FormField
                     control={form.control}
@@ -791,7 +807,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                     )}
                   />
                 )}
-              </>
+              </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-2">

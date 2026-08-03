@@ -6,7 +6,7 @@ export type Invoice = {
   id: number;
   item_id: number;
   expense_id: number;
-  supplier_id: number;
+  supplier_id?: number;
   target_account_id?: number;
   invoice_number: string;
   date: string;
@@ -28,7 +28,7 @@ export type Invoice = {
 export type CreateInvoicePayload = {
   item_id: number;
   expense_id: number;
-  supplier_id: number;
+  supplier_id?: number;
   date: string;
   discount: number;
   final_total: number;

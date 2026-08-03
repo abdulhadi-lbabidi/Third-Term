@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
@@ -6,23 +6,44 @@ import { DataTable, type DataTableColumn } from '@/features/components/data-tabl
 import { Badge } from '@/shared/components/ui/badge';
 import { useInvoices, useDeleteInvoice } from '../invoices.hooks';
 import { InvoiceDetailsDialog } from './invoice-details.dialog';
+import { InvoicesDialog } from './invoices.dialog';
 import type { Invoice } from '../types';
 import { SimplePagination } from '@/components/ui/pagination';
 
 type InvoicesTableProps = {
   filters?: Record<string, any>;
   fixedValues?: Record<string, any>;
+  perPage?: number;
+  editInDialog?: boolean;
 };
 
-export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {}) {
+export function InvoicesTable({
+  filters,
+  fixedValues,
+  perPage = 10,
+  editInDialog = false,
+}: InvoicesTableProps = {}) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const perPage = 50;
+  const [limit, setLimit] = useState(perPage);
+  const filterKey = JSON.stringify({ filters, fixedValues, perPage });
 
-  const { data: response, isLoading } = useInvoices({ page, per_page: perPage, ...filters, ...fixedValues });
+  useEffect(() => {
+    setPage(1);
+    setLimit(perPage);
+  }, [filterKey]);
+
+  const { data: response, isLoading } = useInvoices({
+    paginate: true,
+    per_page: limit,
+    page,
+    ...filters,
+    ...fixedValues,
+  });
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);
+  const [invoiceToEditId, setInvoiceToEditId] = useState<number | null>(null);
 
   const invoices = response?.data || [];
   const meta = response?.meta;
@@ -63,6 +84,14 @@ export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {})
       ),
     },
     {
+      header: 'المصروف المرتبط',
+      cell: (row: Invoice) => (
+        <span className="text-sm text-slate-600">
+          {row.expense_description || row.expense?.description || `#${row.expense_id || '-'}`}
+        </span>
+      ),
+    },
+    {
       header: 'الإجمالي',
       cell: (row: Invoice) => (
         <span className="font-semibold text-emerald-600">
@@ -93,7 +122,11 @@ export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {})
         cancelLabel="إلغاء"
         deleteLabel="حذف"
         actions={{
-          onEdit: (row) => navigate(`/invoices/new?invoiceId=${row.id}`),
+          onEdit: (row) => {
+            if (editInDialog) setInvoiceToEditId(row.id);
+            else navigate(`/invoices/new?invoiceId=${row.id}`);
+          },
+          editLabel: 'تحديث الفاتورة',
           onDelete: async (invoice) => {
             await deleteInvoice(invoice.id);
           },
@@ -112,12 +145,22 @@ export function InvoicesTable({ filters, fixedValues }: InvoicesTableProps = {})
         totalPages={totalPages}
         onPageChange={setPage}
         meta={meta}
+        limit={limit}
+        limitOptions={[5, 10, 25, 50]}
+        onLimitChange={setLimit}
       />
 
       <InvoiceDetailsDialog
         isOpen={!!invoiceToViewId}
         onClose={() => setInvoiceToViewId(null)}
         invoiceId={invoiceToViewId}
+      />
+
+      <InvoicesDialog
+        isOpen={!!invoiceToEditId}
+        onClose={() => setInvoiceToEditId(null)}
+        invoiceId={invoiceToEditId ?? undefined}
+        fixedValues={fixedValues}
       />
     </div>
   );

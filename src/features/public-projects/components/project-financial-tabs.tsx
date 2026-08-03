@@ -1,4 +1,4 @@
-import { LayoutGrid, TrendingUp, TrendingDown, FileText, ArrowLeftRight, FolderOpen } from 'lucide-react';
+import { LayoutGrid, TrendingUp, TrendingDown, FileText, ArrowLeftRight } from 'lucide-react';
 
 type TabId = 'overview' | 'revenues' | 'expenses' | 'invoices' | 'transfers';
 
@@ -33,8 +33,8 @@ export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: Project
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-4 px-3 text-xs font-bold border-b-2 transition-all select-none ${isActive
-                  ? `border-b-2 ${tab.activeClass}`
-                  : 'border-transparent text-[#667085] hover:text-[#172033] hover:bg-slate-50/30'
+                ? `border-b-2 ${tab.activeClass}`
+                : 'border-transparent text-[#667085] hover:text-[#172033] hover:bg-slate-50/30'
                 }`}
             >
               <tab.icon className="size-4 shrink-0" />
