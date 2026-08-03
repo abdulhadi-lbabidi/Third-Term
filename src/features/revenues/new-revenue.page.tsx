@@ -140,10 +140,14 @@ export function NewRevenuePage() {
 
       <div className="surface-panel p-5 sm:p-6">
         {isEditMode && revenueQuery.isLoading ? (
-          <div className="animate-pulse space-y-4">
-            <div className="h-10 bg-slate-200 rounded w-1/3"></div>
-            <div className="h-10 bg-slate-200 rounded w-1/2"></div>
-            <div className="h-20 bg-slate-200 rounded w-full"></div>
+          <div className="animate-pulse space-y-5">
+            <div className="grid gap-2 sm:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-16 rounded-md bg-slate-200" />)}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-11 rounded-md bg-slate-200" />)}
+            </div>
+            <div className="h-24 rounded-md bg-slate-200" />
           </div>
         ) : (
           <RevenuesForm defaultValues={defaultValues} onSubmit={handleSubmit} loading={saveMutation.isPending} />

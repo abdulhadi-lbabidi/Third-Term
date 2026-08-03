@@ -34,7 +34,7 @@ import { NumberStepper } from '@/shared/components/ui/number-stepper';
 const invoiceSchema = z.object({
   item_id: z.number().min(1, 'البند مطلوب'),
   expense_id: z.number().min(1, 'المصروف مطلوب'),
-  supplier_id: z.number().min(1, 'المورد مطلوب'),
+  supplier_id: z.number().optional(),
   date: z.date(),
   discount: z.number().min(0, 'الخصم يجب أن يكون 0 أو أكثر'),
   final_total: z.number().min(0, 'الإجمالي لا يمكن أن يكون سالباً'),
@@ -150,6 +150,10 @@ export function InvoicesForm({
           (supplier.user?.name || supplier.name)?.trim() === supplierName.trim()
         )
       : undefined;
+    const supplierIdFromRelation = typeof defaultValues.supplier === 'object'
+      ? defaultValues.supplier?.id
+      : undefined;
+    const matchedSupplierId = matchedSupplier?.id;
 
     form.reset({
       item_id: Number(fixedValues?.item_id ?? defaultValues.item_id ?? matchedItem?.id ?? 0),
@@ -157,7 +161,11 @@ export function InvoicesForm({
         fixedValues?.expense_id ?? defaultValues.expense_id ?? defaultValues.expense?.id ?? 0
       ),
       supplier_id: Number(
-        fixedValues?.supplier_id ?? defaultValues.supplier_id ?? matchedSupplier?.id ?? 0
+        fixedValues?.supplier_id
+          ?? defaultValues.supplier_id
+          ?? matchedSupplierId
+          ?? supplierIdFromRelation
+          ?? 0
       ),
       date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
       discount: Number(defaultValues.discount ?? 0),
@@ -194,6 +202,7 @@ export function InvoicesForm({
         ...values,
         date: format(values.date, 'yyyy-MM-dd'),
       };
+      if (!payload.supplier_id) delete payload.supplier_id;
 
       if (isEdit && defaultValues.id) {
         const invoice = await updateInvoice({ id: defaultValues.id, payload });
