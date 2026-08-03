@@ -228,6 +228,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
             fundName={currentFund.name}
             fundCurrencies={(currentFund.currencies ?? []).map(c => ({
               id: c.id,
+              expenseable_id: c.expenseable_id,
               currency: c.currency,
               symbol: c.symbol,
               balance: c.balance

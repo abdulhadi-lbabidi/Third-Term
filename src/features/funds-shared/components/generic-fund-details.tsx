@@ -131,22 +131,22 @@ export function GenericFundDetails({
     }
   };
 
-  const transfersQuery = useTransfers();
+  const transfersFilters = useMemo(() => {
+    const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
+    return {
+      paginate: false,
+      [`filter[${apiFilterField}]`]: fundId,
+    };
+  }, [fundIdField, fundId]);
+
+  const transfersQuery = useTransfers(1, 50, transfersFilters);
   const createTransferMutation = useCreateTransfer();
   const updateTransferMutation = useUpdateTransfer();
   const deleteTransferMutation = useDeleteTransfer();
 
-  const fundCurrenciesIds = useMemo(() => fundCurrencies.map((c) => c.id), [fundCurrencies]);
-
-  const normalizedModelType = useMemo(() => {
-    return modelType.replace(/\\\\/g, '\\');
-  }, [modelType]);
-
   const fundTransfers = useMemo(() => {
-    return (transfersQuery.data?.data ?? []).filter((t) => {
-      return t.morph_from_type === normalizedModelType && fundCurrenciesIds.includes(t.morph_from_id);
-    });
-  }, [transfersQuery.data?.data, normalizedModelType, fundCurrenciesIds]);
+    return transfersQuery.data?.data ?? [];
+  }, [transfersQuery.data?.data]);
 
   return (
     <div className="flex flex-col space-y-6 bg-white p-4 rounded-2xl">

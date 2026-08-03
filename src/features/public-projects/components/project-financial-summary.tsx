@@ -1,10 +1,23 @@
 import type { Project, ProjectStatus } from '@/features/projects/types';
 
-type ProjectFinancialSummaryProps = {
-  project: Project;
+type ProjectFund = {
+  id: number;
+  name: string;
 };
 
-export function ProjectFinancialSummary({ project }: ProjectFinancialSummaryProps) {
+type ProjectFinancialSummaryProps = {
+  project: Project;
+  funds: ProjectFund[];
+  selectedFundId: number | null;
+  onSelectFund: (id: number) => void;
+};
+
+export function ProjectFinancialSummary({
+  project,
+  funds,
+  selectedFundId,
+  onSelectFund,
+}: ProjectFinancialSummaryProps) {
   const getStatusConfig = (status: ProjectStatus) => {
     switch (status) {
       case 'completed':
@@ -41,6 +54,28 @@ export function ProjectFinancialSummary({ project }: ProjectFinancialSummaryProp
             {statusConf.label}
           </span>
         </div>
+
+        {funds && funds.length > 1 && (
+          <div className="flex items-center gap-2 shrink-0 lg:mx-auto">
+            {funds.map((fund) => {
+              const isSelected = selectedFundId === fund.id || (selectedFundId === null && fund.id === funds[0]?.id);
+              return (
+                <button
+                  key={fund.id}
+                  type="button"
+                  onClick={() => onSelectFund(fund.id)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shrink-0 border ${
+                    isSelected
+                      ? 'bg-[#17182F] text-[#C9A84C] border-[#17182F]'
+                      : 'bg-white text-[#667085] border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {fund.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex items-center gap-6 text-xs shrink-0 bg-slate-50/50 px-4 py-2 rounded-lg border border-slate-100">
           <div className="text-center sm:text-start">

@@ -10,6 +10,7 @@ type TransfersDialogProps = {
   morph_from_type?: TransferableType;
   fixedFromCurrencies?: {
     id: number;
+    expenseable_id?: number;
     currency: string;
     symbol: string;
     balance: string;

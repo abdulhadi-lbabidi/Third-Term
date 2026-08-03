@@ -212,6 +212,7 @@ type TransferFormProps = {
   morph_from_type?: TransferableType;
   fixedFromCurrencies?: {
     id: number;
+    expenseable_id?: number;
     currency: string;
     symbol: string;
     balance: string;
@@ -796,9 +797,11 @@ export function TransfersForm({
       <form
         className="space-y-2"
         onSubmit={form.handleSubmit(async (values) => {
+          const selectedCur = fixedFromCurrencies.find((c) => c.id === values.morph_from_id);
+          const finalMorphFromId = selectedCur?.expenseable_id ?? getSourceExpenseableId(values.morph_from_id, morphFromType, companyFunds, projects, allFunds);
           await onSubmit({
             morph_from_type: isGeneral ? values.morph_from_type! : morph_from_type!,
-            morph_from_id: isGeneral ? values.morph_from_id : getSourceExpenseableId(values.morph_from_id, morphFromType, companyFunds, projects, allFunds),
+            morph_from_id: isGeneral ? values.morph_from_id : finalMorphFromId,
             morph_to_type: values.morph_to_type,
             morph_to_id: values.morph_to_id,
             name: values.name,

@@ -92,46 +92,22 @@ export function PublicProjectDetailsPage() {
 
   const filteredRevenues = useMemo(() => {
     if (!selectedFund) return [];
-    return revenues.filter((r) => {
-      const info = r.revenueable_info;
-      return (
-        r.revenueable_id === selectedFund.id ||
-        info?.id === selectedFund.id ||
-        info?.project_id === projectDetails?.id
-      );
-    });
-  }, [revenues, selectedFund, projectDetails]);
+    return revenues.filter((r) => r.is_posted === true);
+  }, [revenues, selectedFund]);
 
   const filteredExpenses = useMemo(() => {
     if (!selectedFund) return [];
-    return expenses.filter((e) => {
-      const info = e.expenseable_info;
-      return (
-        e.expenseable_id === selectedFund.id ||
-        info?.id === selectedFund.id ||
-        info?.project_id === projectDetails?.id
-      );
-    });
-  }, [expenses, selectedFund, projectDetails]);
+    return expenses.filter((e) => e.is_posted === true);
+  }, [expenses, selectedFund]);
 
   const filteredInvoices = useMemo(() => {
-    if (!selectedProjectId) return [];
-    return invoices.filter((inv) => {
-      if (typeof inv.expense === 'object' && inv.expense?.expenseable_info) {
-        return inv.expense.expenseable_info.project_id === selectedProjectId;
-      }
-      return true;
-    });
-  }, [invoices, selectedProjectId]);
+    if (!selectedFund) return [];
+    return invoices.filter((inv) => inv.is_posted === true && inv.is_visible_to_client === true);
+  }, [invoices, selectedFund]);
 
   const filteredTransfers = useMemo(() => {
-    if (!selectedFund || !selectedFund.currencies) return [];
-    const fundCurrenciesIds = selectedFund.currencies.map((c) => c.id);
-    return transfers.filter((t) => {
-      const fromMatch = t.morph_from_type === 'App\\Models\\ProjectFundCurrency' && fundCurrenciesIds.includes(t.morph_from_id);
-      const toMatch = t.morph_to_type === 'App\\Models\\ProjectFundCurrency' && fundCurrenciesIds.includes(t.morph_to_id);
-      return fromMatch || toMatch;
-    });
+    if (!selectedFund) return [];
+    return transfers;
   }, [transfers, selectedFund]);
 
   const totalRevenuesSum = useMemo(() => {
@@ -165,7 +141,12 @@ export function PublicProjectDetailsPage() {
               onBack={handleBackToProjects}
             />
 
-            <ProjectFinancialSummary project={projectDetails} />
+            <ProjectFinancialSummary
+              project={projectDetails}
+              funds={currentFunds}
+              selectedFundId={selectedFund?.id || null}
+              onSelectFund={setActiveFundTab}
+            />
 
             <ProjectFinancialSummaryCards
               expectedCost={projectDetails.expected_cost}
@@ -179,7 +160,6 @@ export function PublicProjectDetailsPage() {
                 <ProjectFundsSection
                   funds={currentFunds}
                   selectedFundId={selectedFund?.id || null}
-                  onSelectFund={setActiveFundTab}
                 />
 
                 <ProjectFinancialTabs
@@ -206,12 +186,18 @@ export function PublicProjectDetailsPage() {
                             {overviewRevenues.length === 0 ? (
                               <p className="text-xs text-[#667085] py-4 text-center">لا توجد إيرادات مسجلة.</p>
                             ) : (
-                              overviewRevenues.map((rev) => (
-                                <div key={rev.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
-                                  <span className="font-semibold text-slate-800">{rev.statement}</span>
-                                  <span className="font-extrabold text-emerald-600">+{new Intl.NumberFormat('ar-SA').format(Number(rev.amount) || 0)}</span>
-                                </div>
-                              ))
+                              overviewRevenues.map((rev) => {
+                                const info = rev.revenueable_info;
+                                const symbol = info?.details?.currency?.symbol || info?.details?.currency?.currency || '';
+                                return (
+                                  <div key={rev.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
+                                    <span className="font-semibold text-slate-800">{rev.statement}</span>
+                                    <span className="font-extrabold text-emerald-600">
+                                      +{new Intl.NumberFormat('ar-SA').format(Number(rev.amount) || 0)} <span className="text-xs sm:text-sm font-bold text-slate-500 mx-1">{symbol}</span>
+                                    </span>
+                                  </div>
+                                );
+                              })
                             )}
                           </div>
                         </div>
@@ -225,12 +211,18 @@ export function PublicProjectDetailsPage() {
                             {overviewExpenses.length === 0 ? (
                               <p className="text-xs text-[#667085] py-4 text-center">لا توجد مصروفات مسجلة.</p>
                             ) : (
-                              overviewExpenses.map((exp) => (
-                                <div key={exp.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
-                                  <span className="font-semibold text-slate-800">{exp.description}</span>
-                                  <span className="font-extrabold text-rose-600">-{new Intl.NumberFormat('ar-SA').format(Number(exp.amount) || 0)}</span>
-                                </div>
-                              ))
+                              overviewExpenses.map((exp) => {
+                                const info = exp.expenseable_info;
+                                const symbol = (info?.details as any)?.currency?.symbol || (info?.details as any)?.currency?.currency || '';
+                                return (
+                                  <div key={exp.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
+                                    <span className="font-semibold text-slate-800">{exp.description}</span>
+                                    <span className="font-extrabold text-rose-600">
+                                      -{new Intl.NumberFormat('ar-SA').format(Number(exp.amount) || 0)} <span className="text-xs sm:text-sm font-bold text-slate-500 mx-1">{symbol}</span>
+                                    </span>
+                                  </div>
+                                );
+                              })
                             )}
                           </div>
                         </div>
@@ -258,11 +250,11 @@ export function PublicProjectDetailsPage() {
                   )}
 
                   {activeSubTab === 'revenues' && (
-                    <TransactionsTable data={filteredRevenues} type="revenues" />
+                    <TransactionsTable data={filteredRevenues as any} type="revenues" />
                   )}
 
                   {activeSubTab === 'expenses' && (
-                    <TransactionsTable data={filteredExpenses} type="expenses" />
+                    <TransactionsTable data={filteredExpenses as any} type="expenses" invoices={filteredInvoices} />
                   )}
 
                   {activeSubTab === 'invoices' && (
