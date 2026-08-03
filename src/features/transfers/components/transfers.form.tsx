@@ -377,6 +377,11 @@ function getPivotIdFromExpenseableId(
   return undefined;
 }
 
+function cleanBackslashes(str?: string): any {
+  if (!str) return undefined;
+  return str.replace(/\\+/g, '\\');
+}
+
 export function TransfersForm({
   morph_from_type,
   fixedFromCurrencies = [],
@@ -386,50 +391,53 @@ export function TransfersForm({
   isGeneral = false,
 }: TransferFormProps) {
  
+  const initialFromType = cleanBackslashes(defaultValues?.morph_from_type ?? (isGeneral ? 'App\\Models\\CompanyFundCurrency' : morph_from_type));
+  const initialToType = cleanBackslashes(defaultValues?.morph_to_type ?? 'App\\Models\\CompanyFundCurrency');
+
   const form = useForm<TransferFormValues>({
     resolver: zodResolver(transferFormSchema),
     defaultValues: {
       name: defaultValues?.name ?? '',
       amount: defaultValues?.amount ? Number(defaultValues.amount) : 0,
-      morph_from_type: defaultValues?.morph_from_type ?? (isGeneral ? 'App\\Models\\CompanyFundCurrency' : morph_from_type),
+      morph_from_type: initialFromType,
       morph_from_id: defaultValues?.morph_from_id ?? fixedFromCurrencies[0]?.id,
-      morph_to_type: defaultValues?.morph_to_type ?? 'App\\Models\\CompanyFundCurrency',
+      morph_to_type: initialToType,
       morph_to_id: defaultValues?.morph_to_id ?? undefined,
-      company_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CompanyFundCurrency'
+      company_fund_id: initialToType === 'App\\Models\\CompanyFundCurrency'
         ? (defaultValues?.morph_to_info?.details?.company_fund_id ?? undefined)
         : undefined,
-      fund_user_role: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
+      fund_user_role: initialToType === 'App\\Models\\CurrencyFund'
         ? normalizeRole(defaultValues?.morph_to_info?.user_info?.role_type)
         : '',
-      fund_user_id: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
+      fund_user_id: initialToType === 'App\\Models\\CurrencyFund'
         ? (getRoleDetailsId(defaultValues?.morph_to_info?.user_info?.user) ?? getRoleDetailsId(defaultValues?.morph_to_info?.details?.fund?.user) ?? undefined)
         : undefined,
-      user_fund_id: defaultValues?.morph_to_type === 'App\\Models\\CurrencyFund'
+      user_fund_id: initialToType === 'App\\Models\\CurrencyFund'
         ? (defaultValues?.morph_to_info?.details?.fund_id ?? undefined)
         : undefined,
-      project_fund_id: defaultValues?.morph_to_type === 'App\\Models\\ProjectFundCurrency'
+      project_fund_id: initialToType === 'App\\Models\\ProjectFundCurrency'
         ? (defaultValues?.morph_to_info?.details?.project_fund_id ?? undefined)
         : undefined,
-      project_id: defaultValues?.morph_to_type === 'App\\Models\\ProjectFundCurrency'
+      project_id: initialToType === 'App\\Models\\ProjectFundCurrency'
         ? (defaultValues?.morph_to_info?.details?.project_fund?.project_id ?? undefined)
         : undefined,
 
-      from_company_fund_id: defaultValues?.morph_from_type === 'App\\Models\\CompanyFundCurrency'
+      from_company_fund_id: initialFromType === 'App\\Models\\CompanyFundCurrency'
         ? (defaultValues?.morph_from_info?.details?.company_fund_id ?? undefined)
         : undefined,
-      from_user_role: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
+      from_user_role: initialFromType === 'App\\Models\\CurrencyFund'
         ? normalizeRole(defaultValues?.morph_from_info?.user_info?.role_type)
         : '',
-      from_user_id: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
+      from_user_id: initialFromType === 'App\\Models\\CurrencyFund'
         ? (getRoleDetailsId(defaultValues?.morph_from_info?.user_info?.user) ?? getRoleDetailsId(defaultValues?.morph_from_info?.details?.fund?.user) ?? undefined)
         : undefined,
-      from_user_fund_id: defaultValues?.morph_from_type === 'App\\Models\\CurrencyFund'
+      from_user_fund_id: initialFromType === 'App\\Models\\CurrencyFund'
         ? (defaultValues?.morph_from_info?.details?.fund_id ?? undefined)
         : undefined,
-      from_project_fund_id: defaultValues?.morph_from_type === 'App\\Models\\ProjectFundCurrency'
+      from_project_fund_id: initialFromType === 'App\\Models\\ProjectFundCurrency'
         ? (defaultValues?.morph_from_info?.details?.project_fund_id ?? undefined)
         : undefined,
-      from_project_id: defaultValues?.morph_from_type === 'App\\Models\\ProjectFundCurrency'
+      from_project_id: initialFromType === 'App\\Models\\ProjectFundCurrency'
         ? (defaultValues?.morph_from_info?.details?.project_fund?.project_id ?? undefined)
         : undefined,
       isGeneral: isGeneral,
@@ -800,9 +808,9 @@ export function TransfersForm({
           const selectedCur = fixedFromCurrencies.find((c) => c.id === values.morph_from_id);
           const finalMorphFromId = selectedCur?.expenseable_id ?? getSourceExpenseableId(values.morph_from_id, morphFromType, companyFunds, projects, allFunds);
           await onSubmit({
-            morph_from_type: isGeneral ? values.morph_from_type! : morph_from_type!,
+            morph_from_type: cleanBackslashes(isGeneral ? values.morph_from_type! : morph_from_type!),
             morph_from_id: isGeneral ? values.morph_from_id : finalMorphFromId,
-            morph_to_type: values.morph_to_type,
+            morph_to_type: cleanBackslashes(values.morph_to_type),
             morph_to_id: values.morph_to_id,
             name: values.name,
             amount: values.amount,

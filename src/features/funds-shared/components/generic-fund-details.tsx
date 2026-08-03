@@ -484,7 +484,7 @@ export function GenericFundDetails({
             setTransferDialogOpen(open);
             if (!open) setSelectedTransfer(null);
           }}
-          morph_from_type={normalizedModelType as any}
+          morph_from_type={modelType as any}
           fixedFromCurrencies={fundCurrencies}
           defaultValues={selectedTransfer}
           onSubmit={async (data) => {
