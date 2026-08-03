@@ -123,12 +123,12 @@ function getCompanyFundLabel(item: CompanyFund) {
   return item.name;
 }
 
-function getCurrencyRevenueableId(currency: { id: number; revenueable_id?: number; pivot?: { id: number } }) {
-  return currency.revenueable_id ?? currency.pivot?.id ?? currency.id;
+function getCurrencyRevenueableId(currency: { id: number; revenueable_id?: number; expenseable_id?: number; pivot?: { id: number } }) {
+  return currency.revenueable_id ?? currency.expenseable_id ?? currency.pivot?.id ?? currency.id;
 }
 
 function currencyMatchesRevenueableId(
-  currency: { id: number; revenueable_id?: number; pivot?: { id: number } },
+  currency: { id: number; revenueable_id?: number; expenseable_id?: number; pivot?: { id: number } },
   revenueableId: number,
 ) {
   return getCurrencyRevenueableId(currency) === revenueableId;
@@ -150,8 +150,9 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : sourceToRevenueableType.user_fund),
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
       company_fund_id: fixedValues?.company_fund_id ?? undefined,
-      user_role: defaultValues?.user_role ?? '',
+      user_role: defaultValues?.user_role ?? ((defaultValues as any)?.user?.role_type) ?? '',
       user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
+      received_by_role: typeof defaultValues?.received_by === 'object' ? (defaultValues.received_by as any).role_type ?? '' : '',
       received_by: (() => {
         if (!defaultValues?.received_by) return undefined;
         const val = typeof defaultValues.received_by === 'object'
@@ -160,8 +161,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         const num = Number(val);
         return Number.isNaN(num) ? undefined : num;
       })(),
-      fund_user_role: fixedValues?.fund_user_role ?? defaultValues?.revenueable_info?.user_info?.role ?? '',
-      fund_user_id: defaultValues?.revenueable_info?.user_info?.id ?? fixedValues?.user_id ?? undefined,
+      fund_user_role: fixedValues?.fund_user_role ?? (defaultValues?.revenueable_info?.user_info as any)?.role_type ?? (defaultValues?.revenueable_info?.user_info as any)?.role ?? '',
+      fund_user_id: (defaultValues?.revenueable_info?.user_info as any)?.user_id ?? (defaultValues?.revenueable_info?.user_info as any)?.id ?? fixedValues?.user_id ?? undefined,
       user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
       project_fund_id: fixedValues?.project_fund_id ?? undefined,
       project_id: fixedValues?.project_id ?? undefined,
@@ -175,12 +176,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const source = form.watch('source') as RevenueSource;
   const companyFundId = form.watch('company_fund_id') as number | undefined;
   const selectedRevenueableId = form.watch('revenueable_id') as number | undefined;
-  const userRole = form.watch('user_role') as UserRole | '';
   const fundUserRole = form.watch('fund_user_role') as UserRole | '';
   const fundUserId = form.watch('fund_user_id') as number | undefined;
   const userFundId = form.watch('user_fund_id') as number | undefined;
   const projectFundId = form.watch('project_fund_id') as number | undefined;
   const selectedProjectId = form.watch('project_id') as number | undefined;
+  const receivedByRole = form.watch('received_by_role') as UserRole | '';
 
   const companyFundsQuery = useQuery({
     queryKey: ['revenues', 'company-funds'] as const,
@@ -224,18 +225,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   });
   const allProjectFunds = allProjectFundsQuery.data ?? [];
 
-  const roleUsersQuery = useQuery<RoleUser[]>({
-    queryKey: ['revenues', 'role-users', userRole] as const,
-    queryFn: async () => {
-      if (!userRole) return [];
-      const res = await usersApi.getUsersByRole(userRole);
-      const list = (res as any)?.data ?? res;
-      return list as RoleUser[];
-    },
-    enabled: Boolean(userRole),
-  });
-  const roleUsers = roleUsersQuery.data ?? [];
-
   const fundRoleUsersQuery = useQuery<RoleUser[]>({
     queryKey: ['revenues', 'fund-role-users', fundUserRole] as const,
     queryFn: async () => {
@@ -247,6 +236,18 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'user_fund' && Boolean(fundUserRole),
   });
   const fundRoleUsers = fundRoleUsersQuery.data ?? [];
+
+  const receiverRoleUsersQuery = useQuery<RoleUser[]>({
+    queryKey: ['revenues', 'receiver-role-users', receivedByRole] as const,
+    queryFn: async () => {
+      if (!receivedByRole) return [];
+      const res = await usersApi.getUsersByRole(receivedByRole);
+      const list = (res as any)?.data ?? res;
+      return list as RoleUser[];
+    },
+    enabled: Boolean(receivedByRole),
+  });
+  const receiverRoleUsers = receiverRoleUsersQuery.data ?? [];
 
   const fundUserRecordQuery = useQuery<FundUserRecord | null>({
     queryKey: ['revenues', 'fund-user-record', fundUserRole, fundUserId] as const,
@@ -329,21 +330,21 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'project_fund' && Boolean(derivedProjectFundId),
   });
 
-  // Mapped options for searchable select
-  const userOptions = useMemo(() => {
-    const options = roleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
-    if (defaultValues?.user_id && !options.some(o => o.value === defaultValues.user_id)) {
-      const name = (defaultValues as any).user?.name ?? `مستخدم ${defaultValues.user_id}`;
-      options.push({ value: defaultValues.user_id, label: name });
+  const receiverOptions = useMemo(() => {
+    const options = receiverRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
+    if (defaultValues?.received_by && !options.some(o => o.value === (typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).id : defaultValues.received_by))) {
+      const val = typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).name : `مستلم ${defaultValues.received_by}`;
+      const num = typeof defaultValues.received_by === 'object' ? (defaultValues.received_by as any).id : defaultValues.received_by;
+      if (num) options.push({ value: num, label: val });
     }
     return options;
-  }, [roleUsers, defaultValues]);
+  }, [receiverRoleUsers, defaultValues]);
 
   const fundUserOptions = fundRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
 
   // Options for currencies
-  const companyCurrencyOptions = selectedCompanyFund?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
-  const projectCurrencyOptions = selectedProjectFund?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+  const companyCurrencyOptions = (companyFunds.find(f => f.id === derivedCompanyFundId)?.currencies || selectedCompanyFund?.currencies)?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+  const projectCurrencyOptions = (allProjectFunds.find(f => f.id === derivedProjectFundId)?.currencies || selectedProjectFund?.currencies)?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
   const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
 
   useEffect(() => {
@@ -581,84 +582,79 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         )}
 
-        {/* Auth User Fields */}
-        {!fixedValues?.user_id && (
-          <div className="space-y-4 px-2">
-            <h3 className="font-semibold text-slate-800">تفاصيل المستلم (آمر التأكيد)</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="user_role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نوع المستخدم</FormLabel>
-                    <Select
-                      value={field.value ?? ''}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue('user_id', undefined);
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="اختر نوع المستخدم">
-                            {field.value ? (
-                              <div className="flex items-center gap-2">
-                                {(() => {
-                                  const Icon = roleIcons[field.value as UserRole] || User;
-                                  return <Icon className="size-4 text-slate-500" />;
-                                })()}
-                                <span>{getRoleLabel(field.value as UserRole)}</span>
-                              </div>
-                            ) : null}
-                          </SelectValue>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {userRoles.map((role) => {
-                          const Icon = roleIcons[role] || User;
-                          return (
-                            <SelectItem key={role} value={role}>
-                              <div className="flex items-center gap-2">
-                                <Icon className="size-4 text-slate-500" />
-                                <span>{roleLabels[role]}</span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <FormField
-                control={form.control}
-                name="user_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>المستخدم</FormLabel>
+        {/* Receiver Fields (المستلم) */}
+        <div className="space-y-4 px-2">
+          <h3 className="font-semibold text-slate-800">تفاصيل المستلم</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="received_by_role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نوع المستلم</FormLabel>
+                  <Select
+                    onValueChange={(val) => {
+                      field.onChange(val);
+                      form.setValue('received_by', undefined);
+                    }}
+                    value={field.value ?? ''}
+                  >
                     <FormControl>
-                      {roleUsersQuery.isLoading ? (
-                        <Skeleton className="h-11 w-full" />
-                      ) : (
-                        <SearchableSelect
-                          disabled={!userRole && !defaultValues?.user_id}
-                          options={userOptions}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          placeholder="اختر المستخدم..."
-                        />
-                      )}
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="اختر نوع المستلم">
+                          {field.value ? (
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const Icon = roleIcons[field.value as UserRole] || User;
+                                return <Icon className="size-4 text-slate-500" />;
+                              })()}
+                              <span>{getRoleLabel(field.value as UserRole)}</span>
+                            </div>
+                          ) : null}
+                        </SelectValue>
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent>
+                      {userRoles.map((role) => {
+                        const Icon = roleIcons[role] || User;
+                        return (
+                          <SelectItem key={role} value={role}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="size-4 text-slate-500" />
+                              <span>{roleLabels[role]}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="received_by"
+              render={({ field }) => (
+                <FormItem className="flex flex-col mt-2.5">
+                  <FormLabel className="mb-1">المستلم</FormLabel>
+                  <SearchableSelect
+                    options={receiverOptions}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    placeholder="اختر المستلم..."
+                    disabled={!receivedByRole}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-        )}
+        </div>
+
+
 
         {/* Fund Selection and Money Fields */}
         <div className="space-y-4 px-2">

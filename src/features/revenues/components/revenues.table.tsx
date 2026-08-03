@@ -37,7 +37,6 @@ export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn 
         );
       }
     },
-    { header: 'المستخدم', cell: (row) => <UserLink user={(row as RevenueRow).user} /> },
     { header: 'نوع الإيراد', cell: (row) => <FundLink type={row.revenueable_type} info={row.revenueable_info} fundTab="revenues" fallbackUser={(row as RevenueRow).user} /> },
     {
       header: 'تم الترحيل',
@@ -47,6 +46,7 @@ export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn 
         </span>
       ),
     },
+    { header: 'المستخدم', cell: (row) => <UserLink user={(row as RevenueRow).user} /> },
     { header: 'مستلم بواسطة', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
     { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
   ];

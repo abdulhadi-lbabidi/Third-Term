@@ -58,7 +58,6 @@ function getRevenueableTypeLabel(type?: Revenue['revenueable_type']) {
 
 export function RevenueCard({ revenue, onEdit, onDelete }: RevenueCardProps) {
   const isPosted = revenue.is_posted;
-  const userLabel = getTextLabel((revenue as RevenueRow).user);
   const receiverLabel = getTextLabel((revenue as RevenueRow).received_by);
 
   return (
@@ -113,12 +112,7 @@ export function RevenueCard({ revenue, onEdit, onDelete }: RevenueCardProps) {
       </div>
 
       <div className="mt-auto grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <User className="size-3.5" />
-          <span className="truncate" title={userLabel}>
-            بواسطة: {userLabel}
-          </span>
-        </div>
+
         {receiverLabel !== '-' && (
           <div className="flex items-center gap-1.5">
             <User className="size-3.5" />

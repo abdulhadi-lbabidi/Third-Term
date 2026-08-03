@@ -90,7 +90,9 @@ export function FundLink({ type, info, fundTab, fallbackUser }: { type?: string;
   const qString = qs ? `?${qs}` : '';
 
   if (isCompanyFund) {
-    to = `/company-funds${qString}`;
+    const companyParams = new URLSearchParams(qs);
+    companyParams.set('tab', 'company');
+    to = `/funds?${companyParams.toString()}`;
     label = 'الشركة';
   } else if (isProjectFund) {
     const pId = info?.project_info?.project_id || info?.details?.project_fund?.project_id || info?.project?.id || info?.project_id;

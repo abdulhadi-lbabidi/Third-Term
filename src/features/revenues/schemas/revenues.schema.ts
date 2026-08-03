@@ -17,47 +17,33 @@ export const revenueFormSchema = z
     statement: z.string().min(1, 'الرجاء إدخال البيان'),
     amount: z.coerce.number().min(0.01, 'الرجاء إدخال مبلغ صحيح أكبر من الصفر'),
     is_posted: z.boolean(),
+    received_by_role: z.string().optional(),
     received_by: z.coerce.number().optional(),
   })
   .superRefine((values, ctx) => {
-    if (!values.user_role && !values.user_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_role'],
-        message: 'الرجاء اختيار نوع المستخدم',
-      });
+
+    if (!values.received_by_role && !values.received_by) {
+      ctx.addIssue({ code: 'custom', path: ['received_by_role'], message: 'الرجاء اختيار نوع المستلم' });
     }
 
-    if (!values.user_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_id'],
-        message: 'الرجاء اختيار المستخدم',
-      });
+    if (!values.received_by) {
+      ctx.addIssue({ code: 'custom', path: ['received_by'], message: 'الرجاء اختيار المستلم' });
     }
 
     if (values.source === 'company_fund' && !values.company_fund_id && !values.revenueable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['company_fund_id'],
-        message: 'الرجاء اختيار صندوق الشركة',
-      });
+      ctx.addIssue({ code: 'custom', path: ['company_fund_id'], message: 'الرجاء اختيار صندوق الشركة' });
     }
 
     if (values.source === 'company_fund' && !values.revenueable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['revenueable_id'],
-        message: 'الرجاء اختيار عملة صندوق الشركة',
-      });
+      ctx.addIssue({ code: 'custom', path: ['revenueable_id'], message: 'الرجاء اختيار عملة صندوق الشركة' });
     }
 
     if (values.source === 'user_fund' && !values.fund_user_role && !values.revenueable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['fund_user_role'],
-        message: 'الرجاء اختيار نوع المستخدم لصندوق المستخدم',
-      });
+      ctx.addIssue({ code: 'custom', path: ['fund_user_role'], message: 'الرجاء اختيار نوع المستخدم لصندوق المستخدم' });
+    }
+
+    if (values.source === 'user_fund' && !values.fund_user_id && !values.revenueable_id) {
+      ctx.addIssue({ code: 'custom', path: ['fund_user_id'], message: 'الرجاء اختيار مستخدم لصندوق المستخدم' });
     }
 
     if (values.source === 'user_fund' && !values.fund_user_id && !values.revenueable_id) {
