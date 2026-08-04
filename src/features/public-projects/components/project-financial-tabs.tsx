@@ -23,22 +23,22 @@ export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: Project
   ];
 
   return (
-    <div className="bg-card border w-fit border-border rounded-lg overflow-hidden shadow-finance">
+    <div className="bg-card border w-full sm:w-fit border-border rounded-lg overflow-hidden shadow-finance">
       <div className="flex border-b border-border bg-card overflow-x-auto scrollbar-none">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
-            <button
+             <button
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`relative flex items-center justify-center gap-2 py-3.5 px-5 text-xs font-semibold transition-all select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 ${
+              className={`relative flex items-center justify-center gap-1.5 py-2.5 px-3 text-[10px] sm:text-xs font-semibold transition-all select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 ${
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <tab.icon className="size-4 shrink-0" />
+              <tab.icon className="size-3.5 shrink-0" />
               <span className="whitespace-nowrap">{tab.label}</span>
               {tab.count !== null && (
                 <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${
@@ -50,7 +50,7 @@ export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: Project
                 </span>
               )}
               <span
-                className={`absolute inset-x-4 bottom-0 h-0.5 rounded-full transition-colors ${
+                className={`absolute inset-x-2.5 bottom-0 h-0.5 rounded-full transition-colors ${
                   isActive ? 'bg-primary' : 'bg-transparent'
                 }`}
               />

@@ -55,7 +55,7 @@ export function ProjectsToolbar({
                   : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
               }`}
             >
-              {statusFilter === tab.id && <span className="size-1.5 rounded-full bg-accent-gold" />}
+           
               {tab.label}
             </button>
           ))}

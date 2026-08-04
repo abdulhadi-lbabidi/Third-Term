@@ -1,7 +1,5 @@
-import { useState } from 'react';
-import { TrendingUp, TrendingDown, Receipt, FileText } from 'lucide-react';
+import { TrendingUp, TrendingDown, Receipt } from 'lucide-react';
 import { FinancialEmptyState } from './financial-empty-state';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import type { Invoice } from '@/features/invoices/types';
 
 type Transaction = {
@@ -18,12 +16,10 @@ type TransactionsTableProps = {
   data: Transaction[];
   type: 'revenues' | 'expenses';
   invoices?: Invoice[];
+  onViewDetails: (id: number) => void;
 };
 
-export function TransactionsTable({ data, type, invoices = [] }: TransactionsTableProps) {
-  const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+export function TransactionsTable({ data, type, invoices = [], onViewDetails }: TransactionsTableProps) {
   const formatNumber = (val: string | number) => {
     const num = Number(val) || 0;
     return new Intl.NumberFormat('en-US').format(num);
@@ -62,7 +58,11 @@ export function TransactionsTable({ data, type, invoices = [] }: TransactionsTab
             : [];
 
           return (
-            <div key={item.id} className="bg-card border border-border rounded-lg p-4 shadow-finance flex flex-col justify-between hover:border-accent-gold/30 transition-all duration-200">
+            <div
+              key={item.id}
+              onClick={() => onViewDetails(item.id)}
+              className="bg-card border border-border rounded-lg p-4 shadow-finance flex flex-col justify-between hover:border-accent-gold/40 cursor-pointer transition-all duration-200"
+            >
               <div>
                 <div className="flex justify-between items-start gap-2.5">
                   <h4 className="text-xs font-semibold text-foreground line-clamp-2 leading-normal">
@@ -74,19 +74,13 @@ export function TransactionsTable({ data, type, invoices = [] }: TransactionsTab
                 </div>
 
                 {type === 'expenses' && expenseInvoices.length > 0 && (
-                  <button
-                    onClick={() => {
-                      setSelectedExpense(item);
-                      setIsDialogOpen(true);
-                    }}
-                    className="w-full mt-3 flex items-center justify-between text-[10px] text-primary bg-primary/10 hover:bg-primary/15 py-1.5 px-2.5 rounded-md border border-primary/20 transition-all font-semibold"
-                  >
+                  <div className="w-full mt-3 flex items-center justify-between text-[10px] text-primary bg-primary/10 py-1.5 px-2.5 rounded-md border border-primary/20 font-semibold">
                     <span className="flex items-center gap-1">
                       <Receipt className="size-3 text-primary" />
-                      <span>استعراض الفواتير ({expenseInvoices.length})</span>
+                      <span>الفواتير المرتبطة ({expenseInvoices.length})</span>
                     </span>
-                    <span className="text-[9px] text-primary hover:underline">عرض التفاصيل ←</span>
-                  </button>
+                    <span className="text-[9px] text-primary">عرض التفاصيل ←</span>
+                  </div>
                 )}
               </div>
 
@@ -106,59 +100,6 @@ export function TransactionsTable({ data, type, invoices = [] }: TransactionsTab
           );
         })}
       </div>
-
-      {isDialogOpen && selectedExpense && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto font-sans" dir="rtl">
-            <DialogHeader className="border-b border-border pb-3">
-              <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Receipt className="size-5 text-primary" />
-                <span>فواتير المصروف: {selectedExpense.description}</span>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="py-4 space-y-3">
-              {invoices
-                .filter((inv) => inv.expense_id === selectedExpense.id || inv.expense?.id === selectedExpense.id)
-                .map((invoice) => {
-                  const supplierName = typeof invoice.supplier === 'string'
-                    ? invoice.supplier
-                    : invoice.supplier?.name;
-                  const itemName = typeof invoice.item === 'string'
-                    ? invoice.item
-                    : invoice.item?.name;
-
-                  return (
-                    <div key={invoice.id} className="bg-muted border border-border rounded-lg p-4 flex justify-between items-center">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <FileText className="size-4 text-primary" />
-                          <span className="text-xs font-semibold text-foreground">
-                            فاتورة #{invoice.invoice_number}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground flex items-center gap-4">
-                          <span>المورد: <span className="font-semibold text-foreground">{supplierName || '-'}</span></span>
-                          <span>البند: <span className="font-semibold text-foreground">{itemName || '-'}</span></span>
-                          <span>التاريخ: <span className="font-semibold">{invoice.date}</span></span>
-                        </div>
-                      </div>
-                      <div className="text-left space-y-1">
-                        <span className="block text-xs font-bold text-primary font-mono">
-                          {formatNumber(invoice.final_total)}
-                        </span>
-                        {Number(invoice.discount) > 0 && (
-                          <span className="block text-[9px] text-destructive font-semibold">
-                            خصم: -{formatNumber(invoice.discount)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

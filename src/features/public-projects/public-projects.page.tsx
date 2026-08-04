@@ -77,16 +77,7 @@ export function PublicProjectsPage() {
       />
 
       <main className="px-4 py-4 space-y-3 sm:px-3 lg:px-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
-              مرحباً، {currentUser?.name || 'العميل العزيز'}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
-              تابع أداء وتفاصيل مشاريعك المالية وتكاليفها التشغيلية من واجهة موحدة.
-            </p>
-          </div>
-        </div>
+     
 
         <ProjectsSummary
           total={stats.total}

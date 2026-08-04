@@ -103,19 +103,25 @@ export function ProjectFinancialSummary({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="grid grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-2 w-full lg:w-auto shrink-0">
           {cards.map((card, idx) => (
             <div
               key={idx}
-              className="bg-muted border border-border rounded-lg px-2.5 py-1.5 shadow-finance flex items-center gap-2 min-w-0"
+              className="bg-white border border-border rounded-lg p-2.5 shadow-finance flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0 last:col-span-2 sm:last:col-span-1"
             >
-              <div className={`p-1 rounded shrink-0 ${card.bgClass}`}>
-                <card.icon className="size-3 text-current" />
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className={`p-1 rounded shrink-0 ${card.bgClass}`}>
+                  <card.icon className="size-3.5 text-current" />
+                </div>
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground font-semibold whitespace-nowrap" title={card.label}>
+                  {card.label}
+                </span>
               </div>
-              <span className="text-[10px] text-muted-foreground font-semibold shrink-0">{card.label}</span>
-              <Badge variant={card.badgeVariant as any} className="text-[10px] font-mono font-bold px-1.5 py-0">
-                {card.value}
-              </Badge>
+              <div className="flex justify-end shrink-0">
+                <Badge variant={card.badgeVariant as any} className="text-[10px] sm:text-xs font-mono font-bold px-2 py-0.5 truncate">
+                  {card.value}
+                </Badge>
+              </div>
             </div>
           ))}
         </div>

@@ -1,4 +1,5 @@
-import { LogOut, RefreshCw, ArrowRight, ArrowLeft } from 'lucide-react';
+import { LogOut, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
 
 type PublicProjectsHeaderProps = {
   currentUser: { name: string } | null;
@@ -20,9 +21,9 @@ export function PublicProjectsHeader({
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-3">
-            <div className="size-9 rounded-lg bg-primary flex items-center justify-center text-accent-gold font-bold text-lg shadow-sm">
+           <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/15 text-xs font-bold text-sidebar-primary`}>
               ن
-            </div>
+            </span>
             <div>
               <h1 className="text-sm sm:text-base font-semibold text-foreground leading-tight">نوح المالية</h1>
               <p className="text-[10px] text-muted-foreground font-medium mt-0.5">بوابة مشاريع العميل</p>
@@ -49,25 +50,26 @@ export function PublicProjectsHeader({
               </div>
             )}
 
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onRefresh}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-accent-gold/30 text-xs text-accent-gold hover:bg-accent-gold/10 transition-all font-semibold"
+              className=""
             >
               <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">تحديث</span>
-            </button>
-             {onBack && (
-              <button
-                type="button"
+            </Button>
+            
+            {onBack && (
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={onBack}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-xs text-foreground hover:bg-muted transition-all font-semibold"
                 title="العودة للمشاريع"
               >
-               
                 <span className="hidden sm:inline">العودة للمشاريع</span>
-                 <ArrowLeft className="size-3.5" />
-              </button>
+                <ArrowLeft className="size-3.5" />
+              </Button>
             )}
           </div>
         </div>
