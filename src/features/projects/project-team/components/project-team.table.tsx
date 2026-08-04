@@ -34,7 +34,7 @@ export function ProjectTeamTable({ data, loading, onEdit, onDelete }: ProjectTea
         m.user?.email ? (
           <a
             href={`mailto:${m.user.email}`}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-primary hover:text-primary/80 hover:underline"
           >
             {m.user.email}
           </a>

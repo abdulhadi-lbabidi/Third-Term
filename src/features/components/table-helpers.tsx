@@ -52,7 +52,7 @@ export function UserLink({ user }: { user?: TableUser }) {
     return (
       <Link
         to={`/users/view/${role}/${user.id}`}
-        className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 hover:underline"
       >
         {user.name}
       </Link>
@@ -130,7 +130,7 @@ export function FundLink({ type, info, fundTab, fallbackUser }: { type?: string;
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 hover:underline"
     >
       {Icon && <Icon className="size-4 shrink-0" />}
       <span>{label}</span>

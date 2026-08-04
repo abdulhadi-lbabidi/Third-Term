@@ -435,7 +435,7 @@ export function InvoicesForm({
               إلغاء
             </Button>
           )}
-          <Button type="submit" className="h-11 bg-slate-950 text-white min-w-[140px]" disabled={isPending}>
+          <Button type="submit" className="h-11 min-w-[140px]" disabled={isPending}>
             <CheckCircle2 className="size-4 ml-2" />
             {isPending ? (isEdit ? 'جاري التحديث...' : 'جاري الإضافة...') : (isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة')}
           </Button>

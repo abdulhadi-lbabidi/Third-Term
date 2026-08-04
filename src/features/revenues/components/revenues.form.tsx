@@ -911,7 +911,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             )}
           />
 
-          <Button type="submit" className="h-11 flex bg-slate-950 text-white min-w-[140px] shadow-md hover:bg-slate-800" disabled={loading}>
+          <Button type="submit" className="h-11 flex min-w-[140px] shadow-md" disabled={loading}>
             <CheckCircle2 className="size-4 ml-2" />
             {loading
               ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')

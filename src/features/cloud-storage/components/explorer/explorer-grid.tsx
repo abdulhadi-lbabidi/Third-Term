@@ -49,9 +49,10 @@ function useDebounce<T>(value: T, delay: number): T {
 
 interface CloudStorageExplorerProps {
   projectId?: number | null;
+  rootDirectoryId?: number | null;
 }
 
-export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
+export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: CloudStorageExplorerProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const dirIdParam = searchParams.get('dirId');
   const currentDirId = dirIdParam ? Number(dirIdParam) : null;
@@ -164,10 +165,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   // ── Handlers ──
   const handleDropItem = useCallback(
     (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: any }) => {
-      if (item.type === 'folder' && item.id === targetFolderId) return;
-      moveItems({ targetDirId: targetFolderId, itemIds: [item] });
+      const resolvedTargetFolderId = targetFolderId ?? rootDirectoryId;
+
+      if (item.type === 'folder' && item.id === resolvedTargetFolderId) return;
+      moveItems({ targetDirId: resolvedTargetFolderId, itemIds: [item] });
     },
-    [moveItems]
+    [moveItems, rootDirectoryId]
   );
 
   const handleNavigate = useCallback(

@@ -32,14 +32,14 @@ export function GenericFundCard({
       role="button"
       tabIndex={0}
       onClick={() => onClick(fundId)}
-      className="group relative flex cursor-pointer flex-col overflow-hidden transition-all hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative flex cursor-pointer flex-col overflow-hidden transition-all hover:border-primary hover:shadow-md focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
     >
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-200 to-slate-100 transition-colors group-hover:from-sky-400 group-hover:to-blue-500" />
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-200 to-slate-100 transition-colors group-hover:from-primary/70 group-hover:to-primary" />
       <CardContent className="flex flex-1 flex-col justify-between p-5 !py-0">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                 <Wallet className="size-5" />
               </div>
               <div>

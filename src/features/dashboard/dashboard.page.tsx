@@ -74,7 +74,7 @@ export function DashboardPage() {
             <Plus className="mr-2 size-4" />
             فاتورة جديدة
           </Button>
-          <Button className="bg-slate-950 text-white hover:bg-slate-800">
+          <Button>
             <Plus className="mr-2 size-4" />
             تسجيل حركة مالية
           </Button>
@@ -82,7 +82,7 @@ export function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-slate-50 p-6">
+      <main className="flex-1 overflow-auto bg-background p-6">
         <div className="mx-auto max-w-7xl space-y-8">
           
           {/* Executive Overview - Stat Cards */}
