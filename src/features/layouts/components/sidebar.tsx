@@ -326,6 +326,8 @@ export function Sidebar({ onLogout }: SidebarProps) {
           <Button
             type="button"
             onClick={toggleSidebar}
+            variant="outline"
+            size="sm"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             aria-label={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
             title={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}

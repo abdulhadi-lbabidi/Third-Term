@@ -15,6 +15,7 @@ type InvoicesTableProps = {
   fixedValues?: Record<string, any>;
   perPage?: number;
   editInDialog?: boolean;
+  enabled?: boolean;
 };
 
 export function InvoicesTable({
@@ -22,6 +23,7 @@ export function InvoicesTable({
   fixedValues,
   perPage = 10,
   editInDialog = false,
+  enabled = true,
 }: InvoicesTableProps = {}) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -39,7 +41,7 @@ export function InvoicesTable({
     page,
     ...filters,
     ...fixedValues,
-  });
+  }, enabled);
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);

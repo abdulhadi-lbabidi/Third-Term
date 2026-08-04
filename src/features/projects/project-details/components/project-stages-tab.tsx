@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Plus } from 'lucide-react';
@@ -38,6 +38,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
 
   // Timelines state
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
+  const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
   const [selectedTimeline, setSelectedTimeline] = useState<StageTimeline | null>(null);
   const [parentStageForTimeline, setParentStageForTimeline] = useState<ProjectStage | null>(null);
 
@@ -57,13 +58,28 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
   });
 
   const timelinesQuery = useQuery<StageTimeline[]>({
-    queryKey: ['stage-timelines', projectId],
-    queryFn: () => stageTimelinesApi.getAll(),
+    queryKey: ['stage-timelines', selectedStageId],
+    queryFn: () => stageTimelinesApi.getAll({ project_stage_id: selectedStageId }),
+    enabled: selectedStageId !== null,
   });
 
   // Combine data
   const rawStages = (stagesQuery.data ?? []).filter((s) => s.project?.id === projectId);
   const rawTimelines = timelinesQuery.data ?? [];
+
+  useEffect(() => {
+    if (!rawStages.length) {
+      setSelectedStageId(null);
+      return;
+    }
+
+    if (rawStages.some((stage) => stage.id === selectedStageId)) return;
+
+    const preferredStage = rawStages.find(
+      (stage) => stage.status !== 'completed' && stage.status !== 'cancelled'
+    );
+    setSelectedStageId((preferredStage ?? rawStages[0]).id);
+  }, [stagesQuery.data, projectId, selectedStageId]);
 
   const stagesWithTimelines: ProjectStage[] = rawStages.map((stage) => ({
     ...stage,
@@ -113,7 +129,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
       return stageTimelinesApi.create(payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['stage-timelines', projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['stage-timelines'] });
       setTimelineDialogOpen(false);
       setSelectedTimeline(null);
       setParentStageForTimeline(null);
@@ -127,7 +143,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
   const deleteTimelineMutation = useMutation({
     mutationFn: (timeline: StageTimeline) => stageTimelinesApi.delete(timeline.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['stage-timelines', projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['stage-timelines'] });
       setTimelineToDelete(null);
       toast.success('تم حذف التفصيل الزمني بنجاح');
     },
@@ -192,6 +208,8 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
       <div className="bg-white min-h-[400px]">
         <ProjectStagesTimeline
           stages={stagesWithTimelines}
+          selectedStageId={selectedStageId}
+          onSelectStage={setSelectedStageId}
           onAddTimeline={handleAddTimeline}
           onEditTimeline={handleEditTimeline}
           onDeleteTimeline={handleDeleteTimeline}

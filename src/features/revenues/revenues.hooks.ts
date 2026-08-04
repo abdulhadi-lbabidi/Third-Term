@@ -9,10 +9,11 @@ export const revenuesQueryKeys = {
   detail: (id: number) => [...revenuesQueryKeys.all, id] as const,
 };
 
-export function useRevenues(page = 1, perPage = 50, filters?: Record<string, any>) {
+export function useRevenues(page = 1, perPage = 50, filters?: Record<string, any>, enabled = true) {
   return useQuery({
     queryKey: revenuesQueryKeys.list(page, perPage, filters),
     queryFn: () => revenuesApi.getRevenues(page, perPage, filters),
+    enabled,
   });
 }
 

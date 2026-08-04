@@ -30,7 +30,7 @@ const USER_TABS = [
   { value: 'employee', label: 'الموظفون', icon: <BadgeCheck className="h-4 w-4" /> },
   { value: 'engineer', label: 'المهندسون', icon: <HardHat className="h-4 w-4" /> },
   { value: 'supplier', label: 'الموردون', icon: <Truck className="h-4 w-4" /> },
-  { value: 'trustee', label: 'الأوصياء', icon: <Lock className="h-4 w-4" /> },
+  { value: 'trustee', label: 'الأمنات', icon: <Lock className="h-4 w-4" /> },
 ];
 
 type UsersTabRecord =

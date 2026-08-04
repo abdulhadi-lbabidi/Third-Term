@@ -8,12 +8,19 @@ export interface PageTab {
   icon?: ReactNode;
 }
 
+export interface PageHeaderStat {
+  label: string;
+  value: ReactNode;
+  icon?: ReactNode;
+}
+
 interface PageHeaderProps {
   title: string | ReactNode;
   badge?: string;
   icon?: React.ComponentType<{ className?: string }>;
   description?: ReactNode;
   action?: ReactNode;
+  stats?: PageHeaderStat[];
   tabs?: PageTab[];
   defaultTab?: string;
   tabParam?: string;
@@ -27,6 +34,7 @@ export function PageHeader({
   icon: Icon,
   description,
   action,
+  stats,
   className,
   tabs,
   defaultTab,
@@ -83,9 +91,22 @@ export function PageHeader({
             ) : null}
           </div>
         </div>
-        {action ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>
-        ) : null}
+        <div className="flex shrink-0 flex-wrap items-center gap-4">
+          {stats?.length ? (
+            <div className="flex flex-wrap items-center divide-x divide-border">
+              {stats.map((stat) => (
+                <div key={stat.label} className="flex items-center gap-2 px-3 first:pr-0 last:pl-0">
+                  {stat.icon ? <span className="text-muted-foreground">{stat.icon}</span> : null}
+                  <div className="leading-tight">
+                    <div className="text-[11px] text-muted-foreground">{stat.label}</div>
+                    <div className="mt-0.5 text-sm font-semibold text-foreground">{stat.value}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : null}
+        </div>
       </div>
 
       {hasTabs && activeTab ? (
@@ -98,11 +119,11 @@ export function PageHeader({
                 type="button"
                 onClick={() => handleTabChange(tab.value)}
                 className={cn(
-                  "relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-colors",
+                  "relative my-1 flex shrink-0 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
                   isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                 )}
               >
                 {tab.icon}

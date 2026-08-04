@@ -12,6 +12,7 @@ import { currenciesApi } from '@/features/currencies/currencies.api';
 import { projectsApi } from '../projects.api';
 import { projectFundsApi } from './project-funds.api';
 import type { CreateProjectFundPayload, ProjectFund, ProjectFundCurrency } from './project-funds.types';
+import type { Project } from '../types';
 
 import { GenericFundDetails } from '@/features/funds-shared/components/generic-fund-details';
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
@@ -19,7 +20,6 @@ import { GenericFundDialog } from '@/features/funds-shared/components/generic-fu
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
-import { FolderKanban, CircleDollarSign, Activity } from 'lucide-react';
 
 const projectFundsQueryKeys = {
   all: ['project-funds'] as const,
@@ -29,7 +29,7 @@ const projectFundsQueryKeys = {
   detail: (id: number) => [...projectFundsQueryKeys.details(), id] as const,
 };
 
-export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
+export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boolean; projectData?: Project | null }) {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedFundId = searchParams.get('fundId') ? Number(searchParams.get('fundId')) : null;
@@ -37,13 +37,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   const queryClient = useQueryClient();
   const projectId = Number(params.projectId || '');
   const hasProjectId = Number.isFinite(projectId) && projectId > 0;
-
-  const statusLabels: Record<string, string> = {
-    pending: 'قيد الانتظار',
-    in_progress: 'قيد التنفيذ',
-    completed: 'مكتمل',
-    cancelled: 'ملغي',
-  };
+  const hasEmbeddedProjectData = projectData !== undefined;
 
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -58,29 +52,43 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
   const projectQuery = useQuery({
     queryKey: ['projects'] as const,
     queryFn: () => projectsApi.getProjects(),
+    enabled: !hasProjectId,
   });
 
   const projectFundsQuery = useQuery<ProjectFund[]>({
     queryKey: projectFundsQueryKeys.list(hasProjectId ? projectId : undefined),
     queryFn: () => projectFundsApi.getProjectFunds(hasProjectId ? projectId : undefined),
+    enabled: !hasEmbeddedProjectData,
   });
 
   const currenciesQuery = useQuery({
     queryKey: ['currencies'] as const,
     queryFn: () => currenciesApi.getAll(),
+    enabled: attachDialogOpen,
   });
 
   const fundDetailsQuery = useQuery({
     queryKey: projectFundsQueryKeys.detail(selectedFundId!),
     queryFn: () => projectFundsApi.getProjectFundById(selectedFundId!),
-    enabled: !!selectedFundId,
+    enabled: !!selectedFundId && !hasEmbeddedProjectData,
   });
 
-  const currentFund = fundDetailsQuery.data || projectFundsQuery.data?.find((f) => f.id === selectedFundId) || null;
+  const embeddedFunds: ProjectFund[] = (projectData?.funds ?? []).map((fund) => ({
+    ...fund,
+    project: {
+      id: projectData!.id,
+      name: projectData!.name,
+      expected_cost: projectData!.expected_cost,
+      status: projectData!.status,
+      created_at: projectData!.created_at,
+    },
+  }));
+  const availableFunds = hasEmbeddedProjectData ? embeddedFunds : (projectFundsQuery.data ?? []);
+  const currentFund = fundDetailsQuery.data || availableFunds.find((f) => f.id === selectedFundId) || null;
 
   const visibleProjectFunds = hasProjectId
-    ? (projectFundsQuery.data ?? []).filter((fund) => fund.project?.id === projectId)
-    : (projectFundsQuery.data ?? []);
+    ? availableFunds.filter((fund) => fund.project?.id === projectId)
+    : availableFunds;
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { name: string; project_id?: number }) => {
@@ -178,7 +186,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
             />
           )}
 
-          {projectFundsQuery.isLoading ? (
+          {!hasEmbeddedProjectData && projectFundsQuery.isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
@@ -234,7 +242,7 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
           )}
         </>
       ) : (
-        projectFundsQuery.isLoading ? (
+        !hasEmbeddedProjectData && projectFundsQuery.isLoading ? (
           <div className="space-y-5 shadow-md rounded-xl p-5 bg-white">
             <div className="flex items-start gap-4">
               <div className="size-10 rounded-md border border-border bg-slate-100 animate-pulse shrink-0" />
@@ -304,51 +312,6 @@ export function ProjectFundsPage({ isTab = false }: { isTab?: boolean }) {
             extraFixedValues={{
               project_id: currentFund.project?.id,
             }}
-            extraDetails={
-              currentFund.project ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                    <div className="rounded-md bg-indigo-100/50 p-2 text-indigo-600">
-                      <FolderKanban className="size-5" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-medium text-muted-foreground">المشروع</span>
-                      <span className="text-sm font-semibold text-foreground line-clamp-1" title={currentFund.project.name}>
-                        {currentFund.project.name}
-                      </span>
-                    </div>
-                  </div>
-
-                  {currentFund.project.expected_cost !== undefined && (
-                    <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                      <div className="rounded-md bg-emerald-100/50 p-2 text-emerald-600">
-                        <CircleDollarSign className="size-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-medium text-muted-foreground">التكلفة المتوقعة</span>
-                        <span className="text-sm font-semibold text-foreground finance-num">
-                          {Number(currentFund.project.expected_cost).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentFund.project.status && (
-                    <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                      <div className="rounded-md bg-blue-100/50 p-2 text-blue-600">
-                        <Activity className="size-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-medium text-muted-foreground">الحالة</span>
-                        <span className="text-sm font-semibold capitalize text-foreground">
-                          {statusLabels[currentFund.project.status] || currentFund.project.status}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : null
-            }
           />
         )
       )}

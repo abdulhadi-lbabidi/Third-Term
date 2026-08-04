@@ -35,8 +35,9 @@ export function ProjectTeamPage() {
   });
 
   const teamQuery = useQuery<ProjectTeamMember[]>({
-    queryKey: QUERY_KEY,
-    queryFn: () => projectTeamApi.getAll(),
+    queryKey: [...QUERY_KEY, projectId],
+    queryFn: () => projectTeamApi.getAll({ project_id: projectId }),
+    enabled: Number.isFinite(projectId) && projectId > 0,
   });
 
   const employeesQuery = useQuery({
@@ -45,6 +46,7 @@ export function ProjectTeamPage() {
       const res = await usersApi.getUsersByRole('employee');
       return (res as any)?.data ?? res;
     },
+    enabled: dialogOpen,
   });
 
   const members = (teamQuery.data ?? []).filter((m) => m.project?.id === projectId);

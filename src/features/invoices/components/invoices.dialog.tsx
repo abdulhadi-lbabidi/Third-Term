@@ -95,7 +95,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className={`max-h-[90vh] overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
         <DialogHeader>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/40 p-1">
             <button type="button" onClick={() => setStep('invoice')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm ${step === 'invoice' ? 'bg-background font-semibold text-primary shadow-sm' : 'text-muted-foreground'}`}>
@@ -128,14 +128,14 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
               />
             )
           ) : activeInvoiceId ? (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-3">
               {invoiceItems.length > 0 && (
-                <div className="divide-y rounded-lg bg-muted/30 px-3">
+                <div className="order-1 divide-y rounded-lg bg-muted/30 px-3">
                   {invoiceItems.map((item) => {
                     const total = Number(item.total_price ?? Number(item.quantity) * Number(item.unit_price));
                     return (
                       <details key={item.id} className="group">
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 [&::-webkit-details-marker]:hidden">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
                           <div className="min-w-0">
                             <p className="truncate font-medium">{item.material?.name ?? `مادة #${item.material_id}`}</p>
                             <p className="text-xs text-muted-foreground">{item.quantity} {item.unit} × {Number(item.unit_price).toLocaleString()}</p>
@@ -145,11 +145,11 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
                             <ChevronLeft className="size-4 transition-transform group-open:-rotate-90" />
                           </div>
                         </summary>
-                        <div className="flex items-end justify-between gap-3 pb-3">
+                        <div className="flex items-end justify-between gap-3 pb-2.5">
                           <p className="text-sm text-muted-foreground">{item.item_description || 'بدون وصف'}</p>
                           <div className="flex gap-1">
-                            <Button type="button" size="icon" variant="ghost" onClick={() => { setEditingItem(item); setItemFormKey((value) => value + 1); }}><Pencil className="size-4" /></Button>
-                            <Button type="button" size="icon" variant="ghost" className="text-destructive" onClick={() => deleteItemMutation.mutate(item.id)}><Trash2 className="size-4" /></Button>
+                            <Button type="button" size="icon-sm" variant="ghost" onClick={() => { setEditingItem(item); setItemFormKey((value) => value + 1); }}><Pencil className="size-4" /></Button>
+                            <Button type="button" size="icon-sm" variant="ghost" className="text-destructive" onClick={() => deleteItemMutation.mutate(item.id)}><Trash2 className="size-4" /></Button>
                           </div>
                         </div>
                       </details>
@@ -168,7 +168,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
                 }}
                 loading={createItemMutation.isPending}
               />
-              <div className="flex items-center justify-between gap-3 pt-2">
+              <div className="order-2 flex items-center justify-between gap-3 pt-1">
                 <Button type="button" variant="outline" onClick={() => setStep('invoice')}>
                   <ArrowRight className="ml-2 size-4" />
                   تعديل بيانات الفاتورة

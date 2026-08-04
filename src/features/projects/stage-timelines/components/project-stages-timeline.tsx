@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { CheckCircle2, Clock, PlayCircle, XCircle, Plus, Calendar, Edit, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
 import type { ProjectStage } from '../../project-stages/project-stages.types';
@@ -8,6 +8,8 @@ import { cn, formatArabicDate } from '@/shared/lib/utils';
 
 type ProjectStagesTimelineProps = {
   stages: ProjectStage[];
+  selectedStageId: number | null;
+  onSelectStage: (stageId: number) => void;
   onAddTimeline: (stage: ProjectStage) => void;
   onEditTimeline: (timeline: StageTimeline, stage: ProjectStage) => void;
   onDeleteTimeline?: (timeline: StageTimeline) => void;
@@ -42,8 +44,7 @@ function formatDateRange(start: string, end: string) {
   return `${formatArabicDate(startDate)} - ${formatArabicDate(endDate)}`;
 }
 
-export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, onEditStage, onDeleteStage }: ProjectStagesTimelineProps) {
-  const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
+export function ProjectStagesTimeline({ stages, selectedStageId, onSelectStage, onAddTimeline, onEditTimeline, onEditStage, onDeleteStage }: ProjectStagesTimelineProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -57,12 +58,6 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
     }
   };
 
-  useEffect(() => {
-    if (stages.length > 0 && !selectedStageId) {
-      setSelectedStageId(stages[0].id);
-    }
-  }, [stages, selectedStageId]);
-
   if (!stages.length) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -72,7 +67,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
     );
   }
 
-  const selectedStage = stages.find((s) => s.id === selectedStageId) || stages[0];
+  const selectedStage = stages.find((s) => s.id === selectedStageId);
 
   return (
     <div className="flex flex-col space-y-6 p-6">
@@ -111,7 +106,7 @@ export function ProjectStagesTimeline({ stages, onAddTimeline, onEditTimeline, o
                         ? "bg-card shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-blue-200"
                         : "hover:bg-card/50"
                     )}
-                    onClick={() => setSelectedStageId(stage.id)}
+                    onClick={() => onSelectStage(stage.id)}
                   >
                     <div className={cn(
                       'size-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-300 ring-2',

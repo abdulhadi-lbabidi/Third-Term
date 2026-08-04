@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Wallet, User, Cloud, Pencil, Users, Layers, FolderKanban } from 'lucide-react';
+import { Wallet, User, Cloud, Pencil, Users, Layers, FolderKanban, CircleDollarSign, Clock, PlayCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -23,6 +23,13 @@ const PROJECT_TABS = [
   { value: 'team', label: 'فريق العمل', icon: <Users className="h-4 w-4" /> },
 ];
 
+const PROJECT_STATUS = {
+  pending: { label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
+  in_progress: { label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-info' },
+  completed: { label: 'مكتمل', icon: CheckCircle2, color: 'text-success' },
+  cancelled: { label: 'ملغى', icon: XCircle, color: 'text-destructive' },
+} as const;
+
 export function ProjectDetailsPage() {
   const params = useParams();
   const queryClient = useQueryClient();
@@ -44,6 +51,7 @@ export function ProjectDetailsPage() {
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
     queryKey: ['departments'] as const,
     queryFn: () => projectsApi.getDepartments(),
+    enabled: dialogOpen,
   });
 
   const saveMutation = useMutation({
@@ -62,6 +70,7 @@ export function ProjectDetailsPage() {
   });
 
   const currentProject = projectsQuery.data ?? null;
+  const status = currentProject ? PROJECT_STATUS[currentProject.status] : null;
 
   return (
     <div className="space-y-5">
@@ -71,6 +80,18 @@ export function ProjectDetailsPage() {
         title={projectName || currentProject?.name || <Skeleton className="h-8 w-48 inline-block align-middle" />}
         tabs={PROJECT_TABS}
         defaultTab={searchParams.has('dirId') ? 'cloud' : 'funds'}
+        stats={currentProject ? [
+          {
+            label: 'التكلفة المتوقعة',
+            value: currentProject.expected_cost.toLocaleString(),
+            icon: <CircleDollarSign className="size-4" />,
+          },
+          {
+            label: 'الحالة',
+            value: status?.label,
+            icon: status ? <status.icon className={`size-4 ${status.color}`} /> : undefined,
+          },
+        ] : undefined}
         action={
           <div className="flex gap-3">
             <Button type="button" variant="default" onClick={() => setDialogOpen(true)}>
@@ -82,7 +103,7 @@ export function ProjectDetailsPage() {
       />
 
       <div className="surface-panel p-4 sm:p-5">
-        {activeTab === 'funds' && <ProjectFundsPage />}
+        {activeTab === 'funds' && <ProjectFundsPage isTab projectData={currentProject} />}
         {activeTab === 'cloud' && <ProjectCloudStorageTab project={currentProject} />}
         {activeTab === 'stages' && <ProjectStagesTab projectId={projectId} />}
         {activeTab === 'client' && <ProjectClientTab project={currentProject} />}

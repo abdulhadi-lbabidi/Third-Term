@@ -22,7 +22,7 @@ export function InvoiceItemDialog({
 }: InvoiceItemDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="!max-w-2xl">
         <DialogHeader>
           <DialogTitle>{invoiceItem ? 'تعديل صنف فاتورة' : 'إضافة صنف فاتورة'}</DialogTitle>
         </DialogHeader>
