@@ -98,11 +98,11 @@ export function PageHeader({
                 type="button"
                 onClick={() => handleTabChange(tab.value)}
                 className={cn(
-                  "relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-colors",
+                  "relative my-1 flex shrink-0 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
                   isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                 )}
               >
                 {tab.icon}
