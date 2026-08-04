@@ -40,8 +40,8 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
         aria-checked={checked}
         onClick={() => context.onValueChange(value)}
         className={cn(
-          'flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition-colors hover:border-slate-300',
-          checked && 'border-slate-950 bg-slate-50 text-slate-950',
+          'flex items-center gap-2 rounded-lg border border-input bg-white px-4 py-3 text-sm text-slate-700 transition-colors hover:border-primary focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25',
+          checked && 'border-primary bg-primary/5 text-primary',
           className
         )}
         {...props}

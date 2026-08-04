@@ -57,7 +57,7 @@ export function TransfersPage() {
           <Button
             type="button"
             onClick={handleAddClick}
-            className="h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold shadow-sm hover:bg-slate-800"
+            className="h-11 rounded-lg px-5 text-sm font-semibold shadow-sm"
           >
             إضافة تحويل
           </Button>

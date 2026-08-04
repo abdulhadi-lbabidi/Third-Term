@@ -16,7 +16,7 @@ export function InvoicesPage() {
         action={
           <Button
             onClick={() => navigate('/invoices/new')}
-            className="h-11 bg-slate-950 px-6 text-white shadow-md hover:bg-slate-800 focus:ring-slate-950 sm:w-auto w-full"
+            className="h-11 px-6 shadow-md sm:w-auto w-full"
           >
             <Plus className="mr-2 size-4" />
             إضافة فاتورة

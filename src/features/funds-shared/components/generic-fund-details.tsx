@@ -220,11 +220,17 @@ export function GenericFundDetails({
             تعديل
           </Button>
           <AlertDialog>
-            <AlertDialogTrigger>
-              <Button variant="secondary" size="sm" className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700">
-                <Trash2 className="ml-2 size-4" />
-                حذف
-              </Button>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
+                />
+              }
+            >
+              <Trash2 className="ml-2 size-4" />
+              حذف
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -300,7 +306,7 @@ export function GenericFundDetails({
                 setSelectedExpense(null);
                 setExpenseDialogOpen(true);
               }}
-              className="bg-slate-950 text-white"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <PlusCircle className="mr-2 size-4" />
               إضافة مصروف
@@ -391,7 +397,7 @@ export function GenericFundDetails({
                 setSelectedTransfer(null);
                 setTransferDialogOpen(true);
               }}
-              className="bg-slate-950 text-white"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <PlusCircle className="mr-2 size-4" />
               إضافة تحويل

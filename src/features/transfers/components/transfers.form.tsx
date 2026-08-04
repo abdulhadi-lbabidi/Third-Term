@@ -1611,7 +1611,7 @@ export function TransfersForm({
         </div>
 
         <div className="flex justify-end mt-4">
-          <Button type="submit" className="w-auto px-8 bg-slate-950 text-white" disabled={loading}>
+          <Button type="submit" className="w-auto px-8" disabled={loading}>
             {loading ? (defaultValues ? 'جاري التعديل...' : 'جاري التحويل...') : (defaultValues ? 'حفظ التعديلات' : 'تأكيد التحويل')}
           </Button>
         </div>

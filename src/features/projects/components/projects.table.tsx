@@ -52,7 +52,7 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
     {
       header: 'اسم المشروع',
       cell: (row) => (
-        <Link to={`/projects/${row.id}`} className="font-medium text-blue-700 hover:underline hover:text-blue-900 transition-colors">
+        <Link to={`/projects/${row.id}`} className="font-medium text-primary hover:underline hover:text-primary/80 transition-colors">
           {row.name}
         </Link>
       )

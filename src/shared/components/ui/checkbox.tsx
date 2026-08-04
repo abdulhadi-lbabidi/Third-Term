@@ -17,8 +17,8 @@ export const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
         aria-checked={checked}
         onClick={() => onCheckedChange?.(!checked)}
         className={cn(
-          'inline-flex size-4 items-center justify-center rounded border border-slate-300 bg-white text-slate-950 transition-colors',
-          checked ? 'border-slate-950 bg-slate-950 text-white' : 'hover:border-slate-400',
+          'inline-flex size-4 items-center justify-center rounded border border-input bg-white text-primary transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25',
+          checked ? 'border-primary bg-primary text-primary-foreground' : 'hover:border-primary',
           className
         )}
         {...props}
