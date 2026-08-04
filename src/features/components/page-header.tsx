@@ -93,7 +93,7 @@ export function PageHeader({
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-4">
           {stats?.length ? (
-            <div className="flex flex-wrap items-center divide-x divide-x-reverse divide-border">
+            <div className="flex flex-wrap items-center divide-x divide-border">
               {stats.map((stat) => (
                 <div key={stat.label} className="flex items-center gap-2 px-3 first:pr-0 last:pl-0">
                   {stat.icon ? <span className="text-muted-foreground">{stat.icon}</span> : null}
