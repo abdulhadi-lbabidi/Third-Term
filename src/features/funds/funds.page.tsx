@@ -64,6 +64,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const currenciesQuery = useQuery({
     queryKey: ['currencies'] as const,
     queryFn: () => currenciesApi.getAll(),
+    enabled: attachDialogOpen,
   });
 
   const resolvedUserId = userRecordQuery.data?.user.id ?? userId;
@@ -164,7 +165,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
           )}
 
           {(hasUserContext ? userRecordQuery.isLoading : fundsQuery.isLoading) ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
               ))}
@@ -191,7 +192,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               )}
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {visibleFunds.map((fund) => (
                 <GenericFundCard
                   key={fund.id}
@@ -282,6 +283,8 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
 
       <AttachCurrencyDialog
         open={attachDialogOpen}
+        title="إضافة عملة لصندوق المستخدم"
+        currenciesLoading={currenciesQuery.isLoading}
         onOpenChange={(open) => {
           setAttachDialogOpen(open);
           if (!open) {

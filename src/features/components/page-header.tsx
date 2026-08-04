@@ -24,6 +24,7 @@ interface PageHeaderProps {
   tabs?: PageTab[];
   defaultTab?: string;
   tabParam?: string;
+  resetSearchOnTabChange?: boolean;
   boxed?: boolean;
   className?: string;
 }
@@ -39,6 +40,7 @@ export function PageHeader({
   tabs,
   defaultTab,
   tabParam = "tab",
+  resetSearchOnTabChange = false,
   boxed = true,
 }: PageHeaderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,6 +51,9 @@ export function PageHeader({
 
   function handleTabChange(value: string) {
     setSearchParams((prev) => {
+      if (resetSearchOnTabChange) {
+        return new URLSearchParams([[tabParam, value]]);
+      }
       const next = new URLSearchParams(prev);
       next.set(tabParam, value);
       return next;

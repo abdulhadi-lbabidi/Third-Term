@@ -9,7 +9,6 @@ import { cn } from '@/shared/lib/utils';
 import { PageHeader } from '../../components/page-header';
 
 import { currenciesApi } from '@/features/currencies/currencies.api';
-import { projectsApi } from '../projects.api';
 import { projectFundsApi } from './project-funds.api';
 import type { CreateProjectFundPayload, ProjectFund, ProjectFundCurrency } from './project-funds.types';
 import type { Project } from '../types';
@@ -48,12 +47,6 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
   const [selectedProjectFund, setSelectedProjectFund] = useState<ProjectFund | null>(null);
   const [selectedProjectFundForView, setSelectedProjectFundForView] = useState<ProjectFund | null>(null);
   const [selectedProjectFundCurrency, setSelectedProjectFundCurrency] = useState<ProjectFundCurrency | null>(null);
-
-  const projectQuery = useQuery({
-    queryKey: ['projects'] as const,
-    queryFn: () => projectsApi.getProjects(),
-    enabled: !hasProjectId,
-  });
 
   const projectFundsQuery = useQuery<ProjectFund[]>({
     queryKey: projectFundsQueryKeys.list(hasProjectId ? projectId : undefined),
@@ -160,8 +153,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
     },
   });
 
-  const projectsList = Array.isArray(projectQuery.data) ? projectQuery.data : [];
-  const currentProject = projectsList.find((item) => item.id === projectId) ?? null;
+  const currentProject = projectData ?? availableFunds.find((fund) => fund.project?.id === projectId)?.project ?? null;
 
   return (
     <div className={cn("space-y-5", isTab && "space-y-0")}>
@@ -187,7 +179,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
           )}
 
           {!hasEmbeddedProjectData && projectFundsQuery.isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
               ))}
@@ -211,7 +203,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {visibleProjectFunds.map((fund) => (
                 <GenericFundCard
                   key={fund.id}
@@ -332,6 +324,8 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
 
       <AttachCurrencyDialog
         open={attachDialogOpen}
+        title="إضافة عملة لصندوق المشروع"
+        currenciesLoading={currenciesQuery.isLoading}
         onOpenChange={(open) => {
           setAttachDialogOpen(open);
           if (!open) {

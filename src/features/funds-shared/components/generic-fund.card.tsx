@@ -1,5 +1,6 @@
 import { Banknote, Wallet } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export type GenericFundCurrency = {
   id: number;
@@ -19,6 +20,32 @@ type GenericFundCardProps = {
   onMoreCurrenciesClick?: (fundId: number) => void;
 };
 
+export function GenericFundCardSkeleton() {
+  return (
+    <Card className="relative flex flex-col overflow-hidden">
+      <Skeleton className="absolute inset-x-0 top-0 h-1 rounded-none" />
+      <CardContent className="flex flex-1 flex-col justify-between p-5 !py-0">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-10 shrink-0 rounded-lg" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <div className="flex gap-2">
+              <Skeleton className="h-7 w-24 rounded-md" />
+              <Skeleton className="h-7 w-20 rounded-md" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function GenericFundCard({
   fundId,
   name,
@@ -32,19 +59,19 @@ export function GenericFundCard({
       role="button"
       tabIndex={0}
       onClick={() => onClick(fundId)}
-      className="group relative flex cursor-pointer flex-col overflow-hidden transition-all hover:border-primary hover:shadow-md focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+      className="group relative flex min-w-0 w-full cursor-pointer flex-col overflow-hidden transition-all hover:border-primary hover:shadow-md focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-200 to-slate-100 transition-colors group-hover:from-primary/70 group-hover:to-primary" />
       <CardContent className="flex flex-1 flex-col justify-between p-5 !py-0">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                 <Wallet className="size-5" />
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">{name}</h3>
-                <p className="text-xs text-muted-foreground">{subtitle}</p>
+              <div className="min-w-0">
+                <h3 className="truncate font-semibold text-foreground" title={name}>{name}</h3>
+                <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
               </div>
             </div>
           </div>

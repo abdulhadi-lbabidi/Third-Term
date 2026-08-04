@@ -111,7 +111,7 @@ export function InlineSearchableSelect({
               disabled={disabled}
               onClick={() => handleSelect(option)}
               className={cn(
-                'flex w-full items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-sm outline-none',
+                'flex min-w-0 w-full items-center justify-start gap-2 overflow-hidden rounded-sm px-2 py-1.5 text-sm outline-none',
                 'cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors',
                 isSelected && 'bg-accent text-accent-foreground font-medium'
               )}
@@ -122,7 +122,7 @@ export function InlineSearchableSelect({
                   isSelected ? 'opacity-100' : 'opacity-0'
                 )}
               />
-              <span className="truncate">{option.label}</span>
+              <span className="min-w-0 flex-1 truncate text-start">{option.label}</span>
             </Button>
           );
         })}

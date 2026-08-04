@@ -8,7 +8,7 @@ import { Button } from '@/shared/components/ui/button';
 import { currenciesApi } from '@/features/currencies/currencies.api';
 import { companyFundsApi } from './company-funds.api';
 import { GenericFundDetails } from '@/features/funds-shared/components/generic-fund-details';
-import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
+import { GenericFundCard, GenericFundCardSkeleton } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
@@ -49,6 +49,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const currenciesQuery = useQuery({
     queryKey: ['currencies'] as const,
     queryFn: () => currenciesApi.getAll(),
+    enabled: attachDialogOpen,
   });
 
   const fundDetailsQuery = useQuery({
@@ -156,9 +157,9 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
           )}
           <div className='flex bg-white '>
             {companyFundsQuery.isLoading ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-[200px] rounded-lg border border-border bg-card animate-pulse" />
+                  <GenericFundCardSkeleton key={i} />
                 ))}
               </div>
             ) : (companyFundsQuery.data ?? []).length === 0 ? (
@@ -180,7 +181,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                 </Button>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {(companyFundsQuery.data ?? []).map((fund) => (
                   <GenericFundCard
                     key={fund.id}
@@ -261,6 +262,8 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
 
       <AttachCurrencyDialog
         open={attachDialogOpen}
+        title="إضافة عملة لصندوق الشركة"
+        currenciesLoading={currenciesQuery.isLoading}
         onOpenChange={(open) => {
           setAttachDialogOpen(open);
           if (!open) {

@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import {
   Form,
   FormControl,
@@ -21,6 +22,8 @@ type AttachCurrencyDialogProps = {
   currencies: Currency[];
   onSubmit: (values: { currency_id: number; balance: number }) => Promise<void>;
   loading?: boolean;
+  currenciesLoading?: boolean;
+  title?: string;
 };
 
 export function AttachCurrencyDialog({
@@ -29,6 +32,8 @@ export function AttachCurrencyDialog({
   currencies,
   onSubmit,
   loading,
+  currenciesLoading = false,
+  title = 'إضافة عملة للصندوق',
 }: AttachCurrencyDialogProps) {
   const form = useForm<AttachFundCurrencyValues>({
     resolver: zodResolver(attachFundCurrencySchema),
@@ -45,7 +50,7 @@ export function AttachCurrencyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>إضافة عملة لصندوق الشركة</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -66,7 +71,13 @@ export function AttachCurrencyDialog({
                   <FormLabel>العملة</FormLabel>
                   <FormControl>
                     <div className="flex flex-wrap gap-2">
-                      {currencies.length === 0 ? (
+                      {currenciesLoading ? (
+                        <div className="flex w-full flex-wrap gap-2">
+                          <Skeleton className="h-8 w-20 rounded-md" />
+                          <Skeleton className="h-8 w-24 rounded-md" />
+                          <Skeleton className="h-8 w-16 rounded-md" />
+                        </div>
+                      ) : currencies.length === 0 ? (
                         <p className="w-full py-2 text-center text-sm text-muted-foreground">
                           لا يوجد عملات متاحة للإرفاق
                         </p>
@@ -101,7 +112,7 @@ export function AttachCurrencyDialog({
             />
 
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || currenciesLoading}>
               {loading ? 'جاري الحفظ...' : 'حفظ'}
             </Button>
           </form>

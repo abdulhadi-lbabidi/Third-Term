@@ -11,6 +11,7 @@ import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
 import { PageHeader } from '../components/page-header';
 import { SimplePagination } from '@/components/ui/pagination';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 
 
 export function EmployeePaymentsPage() {
@@ -28,6 +29,7 @@ export function EmployeePaymentsPage() {
       ? Number(params.id)
       : null;
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(resolvedEmployeeId);
+  const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
 
   const paymentsQuery = useQuery<EmployeePaymentResponse>({
     queryKey: ['employee-payments', page, perPage],
@@ -37,6 +39,7 @@ export function EmployeePaymentsPage() {
   const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
     queryFn: () => usersApi.getUsersByRole('employee'),
+    enabled: employeeSelectOpen,
   });
 
   const employeesList = useMemo(() => {
@@ -105,18 +108,21 @@ export function EmployeePaymentsPage() {
           <div className="flex shrink-0 items-center gap-3">
             {!params.employeeId ? (
               <div className="flex shrink-0 items-center gap-3">
-                <select
-                  className="field-control h-10 w-[210px] shrink-0"
-                  value={selectedEmployeeId ? String(selectedEmployeeId) : ''}
-                  onChange={(event) => setSelectedEmployeeId(event.target.value ? Number(event.target.value) : null)}
-                >
-                  <option value="">كل الموظفين</option>
-                  {employeesList.map((employee: any) => (
-                    <option key={employee.id} value={String(employee.id)}>
-                      {employee.user.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-[210px] shrink-0">
+                  <SearchableSelect
+                    value={selectedEmployeeId}
+                    onValueChange={(value) => setSelectedEmployeeId(value ? Number(value) : null)}
+                    onOpenChange={setEmployeeSelectOpen}
+                    loading={employeesQuery.isLoading}
+                    options={employeesList.map((employee: any) => ({
+                      value: employee.id,
+                      label: employee.user.name,
+                    }))}
+                    placeholder="كل الموظفين"
+                    searchPlaceholder="ابحث عن موظف..."
+                    emptyMessage="لا يوجد موظفون."
+                  />
+                </div>
                 {selectedEmployeeId ? (
                   <Button
                     type="button"

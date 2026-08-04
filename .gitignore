@@ -28,3 +28,4 @@ dist-ssr
 docx
 *.pem
 *.env
+.codex/*
