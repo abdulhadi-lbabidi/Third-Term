@@ -9,7 +9,7 @@ type InvoicesListProps = {
 export function InvoicesList({ data }: InvoicesListProps) {
   const formatNumber = (val: string | number) => {
     const num = Number(val) || 0;
-    return new Intl.NumberFormat('ar-SA').format(num);
+    return new Intl.NumberFormat('en-US').format(num);
   };
 
   if (data.length === 0) {
@@ -33,59 +33,59 @@ export function InvoicesList({ data }: InvoicesListProps) {
           : invoice.item?.name;
 
         return (
-          <div key={invoice.id} className="bg-white border border-[#E7E9EF] rounded-xl p-4 shadow-sm flex flex-col justify-between hover:border-[#C9A84C]/35 transition-all duration-200">
+          <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 shadow-finance flex flex-col justify-between hover:border-accent-gold/40 transition-all duration-200">
             <div>
               <div className="flex justify-between items-start gap-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                  <div className="p-1.5 bg-info/10 text-info rounded-md">
                     <FileText className="size-4 text-current" />
                   </div>
-                  <h4 className="text-xs font-bold text-[#172033]">
+                  <h4 className="text-xs font-semibold text-foreground">
                     فاتورة #{invoice.invoice_number}
                   </h4>
                 </div>
-                <span className="shrink-0 text-xs sm:text-sm font-extrabold text-blue-700">
+                <span className="shrink-0 text-xs sm:text-sm font-bold font-mono text-primary">
                   {formatNumber(invoice.final_total)}
                 </span>
               </div>
 
               {(itemName || supplierName) && (
-                <div className="mt-2.5 space-y-1 text-[10px] text-slate-500 border-t border-slate-50 pt-2">
+                <div className="mt-2.5 space-y-1 text-[10px] text-muted-foreground border-t border-border/40 pt-2">
                   {itemName && (
                     <div className="flex justify-between">
                       <span>البند:</span>
-                      <span className="font-semibold text-slate-700 text-right">{itemName}</span>
+                      <span className="font-semibold text-foreground text-right">{itemName}</span>
                     </div>
                   )}
                   {supplierName && (
                     <div className="flex justify-between">
                       <span>المورد:</span>
-                      <span className="font-semibold text-slate-700 text-right">{supplierName}</span>
+                      <span className="font-semibold text-foreground text-right">{supplierName}</span>
                     </div>
                   )}
                 </div>
               )}
 
               {invoice.expense && (
-                <div className="mt-3 bg-rose-50/40 border border-rose-100/50 rounded-lg p-2 flex items-center justify-between text-[10px]">
+                <div className="mt-3 bg-destructive/5 border border-destructive/10 rounded-md p-2 flex items-center justify-between text-[10px]">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                    <span className="text-slate-500 shrink-0">المصروف:</span>
-                    <span className="font-medium text-slate-700 truncate" title={invoice.expense.description}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
+                    <span className="text-muted-foreground shrink-0">المصروف:</span>
+                    <span className="font-semibold text-foreground truncate" title={invoice.expense.description}>
                       {invoice.expense.description}
                     </span>
                   </div>
-                  <span className="font-extrabold text-rose-600 shrink-0 mr-2">
+                  <span className="font-bold font-mono text-destructive shrink-0 mr-2">
                     {formatNumber(invoice.expense.amount)}
                   </span>
                 </div>
               )}
             </div>
             
-            <div className="pt-2.5 border-t border-slate-100 mt-4 flex items-center justify-between text-[9px] text-[#667085]">
+            <div className="pt-2.5 border-t border-border mt-4 flex items-center justify-between text-[9px] text-muted-foreground">
               <div>
                 <span>الخصم: </span>
-                <span className="text-rose-600 font-semibold">{formatNumber(invoice.discount) !== '٠' ? `-${formatNumber(invoice.discount)}` : '0'}</span>
+                <span className="text-destructive font-semibold font-mono">{formatNumber(invoice.discount) !== '٠' ? `-${formatNumber(invoice.discount)}` : '0'}</span>
               </div>
               <span className="font-semibold">{invoice.date}</span>
             </div>

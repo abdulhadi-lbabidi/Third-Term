@@ -68,7 +68,7 @@ export function PublicProjectsPage() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F6F7FB] text-[#172033] font-tajawal">
+    <div dir="rtl" className="min-h-screen bg-background text-foreground">
       <PublicProjectsHeader
         currentUser={currentUser}
         onLogout={handleLogout}
@@ -76,13 +76,13 @@ export function PublicProjectsPage() {
         isRefreshing={isRefetching}
       />
 
-      <main className=" px-4 py-4 space-y-3 sm:px-3 lg:px-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200/50">
+      <main className="px-4 py-4 space-y-3 sm:px-3 lg:px-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border">
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#17182F]">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
               مرحباً، {currentUser?.name || 'العميل العزيز'}
             </h2>
-            <p className="text-xs sm:text-sm text-[#667085] mt-1.5">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
               تابع أداء وتفاصيل مشاريعك المالية وتكاليفها التشغيلية من واجهة موحدة.
             </p>
           </div>
@@ -106,14 +106,14 @@ export function PublicProjectsPage() {
         {isLoadingProjects ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-44 bg-white border border-[#E7E9EF] rounded-xl animate-pulse" />
+              <div key={i} className="h-44 bg-card border border-border rounded-lg shadow-finance animate-pulse" />
             ))}
           </div>
         ) : filteredProjects.length === 0 ? (
-          <div className="py-16 text-center bg-white border border-[#E7E9EF] rounded-xl shadow-xs">
-            <Building2 className="size-12 mx-auto text-slate-350 mb-3" />
-            <h3 className="text-sm font-bold text-slate-700">لا توجد مشاريع متاحة</h3>
-            <p className="text-xs text-[#667085] mt-1.5">لا توجد مشاريع تطابق محددات البحث والفلاتر الحالية.</p>
+          <div className="py-16 text-center bg-card border border-border rounded-lg shadow-finance">
+            <Building2 className="size-12 mx-auto text-muted-foreground mb-3" />
+            <h3 className="text-sm font-semibold text-foreground">لا توجد مشاريع متاحة</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">لا توجد مشاريع تطابق محددات البحث والفلاتر الحالية.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

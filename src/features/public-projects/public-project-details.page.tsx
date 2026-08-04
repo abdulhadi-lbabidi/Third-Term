@@ -10,16 +10,13 @@ import type { Expense } from '@/features/expenses/types';
 import type { Invoice } from '@/features/invoices/types';
 
 import { PublicProjectsHeader } from './components/public-projects-header';
-import { ProjectDetailsHeader } from './components/project-details-header';
 import { ProjectFinancialSummary } from './components/project-financial-summary';
-import { ProjectFinancialSummaryCards } from './components/project-financial-summary-cards';
 import { ProjectFundsSection } from './components/project-funds-section';
 import { ProjectFinancialTabs } from './components/project-financial-tabs';
 import { TransactionsTable } from './components/transactions-table';
 import { InvoicesList } from './components/invoices-list';
 import { TransfersList } from './components/transfers-list';
 import { ProjectDetailsSkeleton } from './components/project-details-skeleton';
-import { ProjectMetadataSidebar } from './components/project-metadata-sidebar';
 
 type TabId = 'overview' | 'revenues' | 'expenses' | 'invoices' | 'transfers';
 
@@ -123,12 +120,13 @@ export function PublicProjectDetailsPage() {
   const overviewInvoices = useMemo(() => filteredInvoices.slice(0, 3), [filteredInvoices]);
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F6F7FB] text-[#172033] font-tajawal">
+    <div dir="rtl" className="min-h-screen bg-background text-foreground">
       <PublicProjectsHeader
         currentUser={currentUser}
         onLogout={handleLogout}
         onRefresh={refetchDetails}
         isRefreshing={isRefetching}
+        onBack={handleBackToProjects}
       />
 
       <main className="px-4 py-2 space-y-3 sm:px-3 lg:px-4">
@@ -136,150 +134,133 @@ export function PublicProjectDetailsPage() {
           <ProjectDetailsSkeleton />
         ) : projectDetails ? (
           <div className="space-y-3">
-            <ProjectDetailsHeader
-              projectName={projectDetails.name}
-              onBack={handleBackToProjects}
-            />
 
             <ProjectFinancialSummary
               project={projectDetails}
               funds={currentFunds}
               selectedFundId={selectedFund?.id || null}
               onSelectFund={setActiveFundTab}
-            />
-
-            <ProjectFinancialSummaryCards
-              expectedCost={projectDetails.expected_cost}
               totalRevenues={totalRevenuesSum}
               totalExpenses={totalExpensesSum}
               invoicesCount={filteredInvoices.length}
             />
 
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
-              <div className="space-y-3">
-                <ProjectFundsSection
-                  funds={currentFunds}
-                  selectedFundId={selectedFund?.id || null}
-                />
+            <div className="space-y-3">
+              <ProjectFundsSection
+                funds={currentFunds}
+                selectedFundId={selectedFund?.id || null}
+                onSelectFund={setActiveFundTab}
+              />
 
-                <ProjectFinancialTabs
-                  activeTab={activeSubTab}
-                  onTabChange={setActiveSubTab}
-                  counts={{
-                    revenues: filteredRevenues.length,
-                    expenses: filteredExpenses.length,
-                    invoices: filteredInvoices.length,
-                    transfers: filteredTransfers.length,
-                  }}
-                />
+              <ProjectFinancialTabs
+                activeTab={activeSubTab}
+                onTabChange={setActiveSubTab}
+                counts={{
+                  revenues: filteredRevenues.length,
+                  expenses: filteredExpenses.length,
+                  invoices: filteredInvoices.length,
+                  transfers: filteredTransfers.length,
+                }}
+              />
 
-                <div className="space-y-4">
-                  {activeSubTab === 'overview' && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3 bg-white border border-[#E7E9EF] rounded-xl p-5 shadow-xs">
-                          <h4 className="text-xs font-extrabold text-[#17182F] border-b border-slate-100 pb-3 flex justify-between items-center">
-                            <span>آخر الإيرادات</span>
-                            <button onClick={() => setActiveSubTab('revenues')} className="text-[10px] text-[#C9A84C] hover:underline font-bold">عرض الكل</button>
-                          </h4>
-                          <div className="space-y-2">
-                            {overviewRevenues.length === 0 ? (
-                              <p className="text-xs text-[#667085] py-4 text-center">لا توجد إيرادات مسجلة.</p>
-                            ) : (
-                              overviewRevenues.map((rev) => {
-                                const info = rev.revenueable_info;
-                                const symbol = info?.details?.currency?.symbol || info?.details?.currency?.currency || '';
-                                return (
-                                  <div key={rev.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
-                                    <span className="font-semibold text-slate-800">{rev.statement}</span>
-                                    <span className="font-extrabold text-emerald-600">
-                                      +{new Intl.NumberFormat('ar-SA').format(Number(rev.amount) || 0)} <span className="text-xs sm:text-sm font-bold text-slate-500 mx-1">{symbol}</span>
-                                    </span>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="space-y-3 bg-white border border-[#E7E9EF] rounded-xl p-5 shadow-xs">
-                          <h4 className="text-xs font-extrabold text-[#17182F] border-b border-slate-100 pb-3 flex justify-between items-center">
-                            <span>آخر المصروفات</span>
-                            <button onClick={() => setActiveSubTab('expenses')} className="text-[10px] text-[#C9A84C] hover:underline font-bold">عرض الكل</button>
-                          </h4>
-                          <div className="space-y-2">
-                            {overviewExpenses.length === 0 ? (
-                              <p className="text-xs text-[#667085] py-4 text-center">لا توجد مصروفات مسجلة.</p>
-                            ) : (
-                              overviewExpenses.map((exp) => {
-                                const info = exp.expenseable_info;
-                                const symbol = (info?.details as any)?.currency?.symbol || (info?.details as any)?.currency?.currency || '';
-                                return (
-                                  <div key={exp.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
-                                    <span className="font-semibold text-slate-800">{exp.description}</span>
-                                    <span className="font-extrabold text-rose-600">
-                                      -{new Intl.NumberFormat('ar-SA').format(Number(exp.amount) || 0)} <span className="text-xs sm:text-sm font-bold text-slate-500 mx-1">{symbol}</span>
-                                    </span>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
+              <div className="space-y-4">
+                {activeSubTab === 'overview' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-3 bg-card border border-border rounded-lg p-5 shadow-finance">
+                        <h4 className="text-xs font-semibold text-foreground border-b border-border pb-3 flex justify-between items-center">
+                          <span>آخر الإيرادات</span>
+                          <button onClick={() => setActiveSubTab('revenues')} className="text-[10px] text-accent-gold hover:underline font-semibold">عرض الكل</button>
+                        </h4>
+                        <div className="space-y-2">
+                          {overviewRevenues.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-4 text-center">لا توجد إيرادات مسجلة.</p>
+                          ) : (
+                            overviewRevenues.map((rev) => {
+                              const info = rev.revenueable_info;
+                              const symbol = info?.details?.currency?.symbol || info?.details?.currency?.currency || '';
+                              return (
+                                <div key={rev.id} className="flex justify-between items-center text-xs p-2.5 bg-muted rounded-md">
+                                  <span className="font-semibold text-foreground">{rev.statement}</span>
+                                  <span className="font-bold text-success">
+                                    +{new Intl.NumberFormat('en-US').format(Number(rev.amount) || 0)} <span className="text-xs sm:text-sm font-semibold text-muted-foreground mx-1">{symbol}</span>
+                                  </span>
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
 
-                      <div className="bg-white border border-[#E7E9EF] rounded-xl p-5 shadow-xs space-y-3">
-                        <h4 className="text-xs font-extrabold text-[#17182F] border-b border-slate-100 pb-3 flex justify-between items-center">
+                      <div className="space-y-3 bg-card border border-border rounded-lg p-5 shadow-finance">
+                        <h4 className="text-xs font-semibold text-foreground border-b border-border pb-3 flex justify-between items-center">
+                          <span>آخر المصروفات</span>
+                          <button onClick={() => setActiveSubTab('expenses')} className="text-[10px] text-accent-gold hover:underline font-semibold">عرض الكل</button>
+                        </h4>
+                        <div className="space-y-2">
+                          {overviewExpenses.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-4 text-center">لا توجد مصروفات مسجلة.</p>
+                          ) : (
+                            overviewExpenses.map((exp) => {
+                              const info = exp.expenseable_info;
+                              const symbol = (info?.details as any)?.currency?.symbol || (info?.details as any)?.currency?.currency || '';
+                              return (
+                                <div key={exp.id} className="flex justify-between items-center text-xs p-2.5 bg-muted rounded-md">
+                                  <span className="font-semibold text-foreground">{exp.description}</span>
+                                  <span className="font-bold text-destructive">
+                                    -{new Intl.NumberFormat('en-US').format(Number(exp.amount) || 0)} <span className="text-xs sm:text-sm font-semibold text-muted-foreground mx-1">{symbol}</span>
+                                  </span>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 bg-card border border-border rounded-lg p-5 shadow-finance">
+                        <h4 className="text-xs font-semibold text-foreground border-b border-border pb-3 flex justify-between items-center">
                           <span>آخر الفواتير</span>
-                          <button onClick={() => setActiveSubTab('invoices')} className="text-[10px] text-[#C9A84C] hover:underline font-bold">عرض الكل</button>
+                          <button onClick={() => setActiveSubTab('invoices')} className="text-[10px] text-accent-gold hover:underline font-semibold">عرض الكل</button>
                         </h4>
                         <div className="space-y-2">
                           {overviewInvoices.length === 0 ? (
-                            <p className="text-xs text-[#667085] py-4 text-center">لا توجد فواتير مسجلة.</p>
+                            <p className="text-xs text-muted-foreground py-4 text-center">لا توجد فواتير مسجلة.</p>
                           ) : (
                             overviewInvoices.map((inv) => (
-                              <div key={inv.id} className="flex justify-between items-center text-xs p-2.5 bg-slate-50 rounded-lg">
-                                <span className="font-bold text-slate-800">فاتورة #{inv.invoice_number}</span>
-                                <span className="font-extrabold text-blue-700">{new Intl.NumberFormat('ar-SA').format(Number(inv.final_total) || 0)}</span>
+                              <div key={inv.id} className="flex justify-between items-center text-xs p-2.5 bg-muted rounded-md">
+                                <span className="font-semibold text-foreground">فاتورة #{inv.invoice_number}</span>
+                                <span className="font-bold text-primary">{new Intl.NumberFormat('en-US').format(Number(inv.final_total) || 0)}</span>
                               </div>
                             ))
                           )}
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {activeSubTab === 'revenues' && (
-                    <TransactionsTable data={filteredRevenues as any} type="revenues" />
-                  )}
+                {activeSubTab === 'revenues' && (
+                  <TransactionsTable data={filteredRevenues as any} type="revenues" />
+                )}
 
-                  {activeSubTab === 'expenses' && (
-                    <TransactionsTable data={filteredExpenses as any} type="expenses" invoices={filteredInvoices} />
-                  )}
+                {activeSubTab === 'expenses' && (
+                  <TransactionsTable data={filteredExpenses as any} type="expenses" invoices={filteredInvoices} />
+                )}
 
-                  {activeSubTab === 'invoices' && (
-                    <InvoicesList data={filteredInvoices} />
-                  )}
+                {activeSubTab === 'invoices' && (
+                  <InvoicesList data={filteredInvoices} />
+                )}
 
-                  {activeSubTab === 'transfers' && (
-                    <TransfersList data={filteredTransfers} />
-                  )}
-                </div>
+                {activeSubTab === 'transfers' && (
+                  <TransfersList data={filteredTransfers} />
+                )}
               </div>
-
-              <ProjectMetadataSidebar
-                project={projectDetails}
-                fundsCount={currentFunds.length}
-                invoicesCount={filteredInvoices.length}
-                revenuesCount={filteredRevenues.length}
-                expensesCount={filteredExpenses.length}
-              />
             </div>
           </div>
         ) : (
-          <div className="py-16 text-center bg-white border border-[#E7E9EF] rounded-xl shadow-xs">
-            <FolderKanban className="size-12 mx-auto text-slate-350 mb-3" />
-            <p className="text-xs text-[#667085]">حدث خطأ أثناء تحميل تفاصيل ومستندات المشروع المالية.</p>
+          <div className="py-16 text-center bg-card border border-border rounded-lg shadow-finance">
+            <FolderKanban className="size-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-xs text-muted-foreground">حدث خطأ أثناء تحميل تفاصيل ومستندات المشروع المالية.</p>
           </div>
         )}
       </main>
