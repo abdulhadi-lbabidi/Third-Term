@@ -23,7 +23,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   const teamQuery = useQuery<ProjectTeamMember[]>({
     queryKey: ['project-team', projectId],
     queryFn: () => projectTeamApi.getAll({
-      'filter[project_id]': projectId,
+      project_id: projectId,
       paginate: true,
       per_page: 50,
       page: 1,
@@ -36,6 +36,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
       const res = await usersApi.getUsersByRole('employee');
       return (res as any)?.data ?? res;
     },
+    enabled: dialogOpen,
   });
 
   // Filter by current project

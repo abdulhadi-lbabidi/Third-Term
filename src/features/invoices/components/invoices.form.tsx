@@ -138,21 +138,24 @@ export function InvoicesForm({
     const itemName = typeof defaultValues.item === 'string'
       ? defaultValues.item
       : defaultValues.item?.name;
+    const supplierRelation = typeof defaultValues.supplier === 'object'
+      ? defaultValues.supplier as any
+      : undefined;
     const supplierName = typeof defaultValues.supplier === 'string'
       ? defaultValues.supplier
-      : defaultValues.supplier?.name;
+      : supplierRelation?.user?.name ?? supplierRelation?.name;
+    const supplierRelationId = Number(supplierRelation?.id ?? 0) || undefined;
+    const supplierUserId = Number(supplierRelation?.user?.id ?? supplierRelation?.id ?? 0) || undefined;
 
     const matchedItem = itemName
       ? items.find((item: any) => item.name?.trim() === itemName.trim())
       : undefined;
-    const matchedSupplier = supplierName
-      ? suppliers.find((supplier: any) =>
-          (supplier.user?.name || supplier.name)?.trim() === supplierName.trim()
-        )
-      : undefined;
-    const supplierIdFromRelation = typeof defaultValues.supplier === 'object'
-      ? defaultValues.supplier?.id
-      : undefined;
+    const matchedSupplier = suppliers.find((supplier: any) =>
+      (defaultValues.supplier_id && Number(supplier.id) === Number(defaultValues.supplier_id))
+      || (supplierRelationId && Number(supplier.id) === supplierRelationId)
+      || (supplierUserId && Number(supplier.user?.id) === supplierUserId)
+      || (supplierName && (supplier.user?.name || supplier.name)?.trim() === supplierName.trim())
+    );
     const matchedSupplierId = matchedSupplier?.id;
 
     form.reset({
@@ -162,10 +165,10 @@ export function InvoicesForm({
       ),
       supplier_id: Number(
         fixedValues?.supplier_id
-          ?? defaultValues.supplier_id
-          ?? matchedSupplierId
-          ?? supplierIdFromRelation
-          ?? 0
+        ?? matchedSupplierId
+        ?? defaultValues.supplier_id
+        ?? supplierRelationId
+        ?? 0
       ),
       date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
       discount: Number(defaultValues.discount ?? 0),
@@ -309,47 +312,6 @@ export function InvoicesForm({
 
           <FormField
             control={form.control as any}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col pt-2">
-                <FormLabel>تاريخ الفاتورة</FormLabel>
-                <Popover>
-                  <PopoverTrigger>
-                    <FormControl>
-                      <Button
-                        variant={'outline'}
-                        className={cn(
-                          'w-full pl-3 text-left font-normal h-11',
-                          !field.value && 'text-muted-foreground'
-                        )}
-                      >
-                        {field.value ? (
-                          formatArabicDate(field.value)
-                        ) : (
-                          <span>اختر التاريخ</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date('1900-01-01')
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control as any}
             name="discount"
             render={({ field }) => (
               <FormItem>
@@ -377,56 +339,90 @@ export function InvoicesForm({
           />
         </div>
 
-        <div className="flex flex-col gap-4 py-4">
+        <div className="grid items-end gap-3 pt-1 md:grid-cols-2 grid-cols-1">
           <FormField
             control={form.control as any}
-            name="is_posted"
+            name="date"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rtl:space-x-reverse">
-                <FormControl>
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
+              <FormItem className="flex flex-col">
+                <FormLabel>تاريخ الفاتورة</FormLabel>
+                <Popover>
+                  <PopoverTrigger>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn('h-10 w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                      >
+                        {field.value ? formatArabicDate(field.value) : <span>اختر التاريخ</span>}
+                        <CalendarIcon className="ml-auto size-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                     />
-                    <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-                  </label>
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
-                    مرحل (Posted)
-                  </FormLabel>
-                </div>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
               </FormItem>
             )}
           />
+          <div className='grid grid-cols-2'>
+            <FormField
+              control={form.control as any}
+              name="is_posted"
+              render={({ field }) => (
+                <FormItem className="flex h-10 flex-row items-center gap-2 rounded-md px-3">
+                  <FormControl>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
+                    </label>
+                  </FormControl>
+                  <div className="leading-none">
+                    <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
+                      مرحل
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control as any}
-            name="is_visible_to_client"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rtl:space-x-reverse">
-                <FormControl>
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                    />
-                    <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-                  </label>
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
-                    مرئي للعميل
-                  </FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control as any}
+              name="is_visible_to_client"
+              render={({ field }) => (
+                <FormItem className="flex h-10 flex-row items-center gap-2 rounded-md px-3">
+                  <FormControl>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
+                    </label>
+                  </FormControl>
+                  <div className="leading-none">
+                    <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
+                      مرئي للعميل
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+
         </div>
 
         <div className="flex items-center justify-end gap-3">

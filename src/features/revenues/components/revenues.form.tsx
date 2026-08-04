@@ -147,13 +147,16 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const defaultReceiverId = typeof defaultReceiver === 'object'
     ? Number(defaultReceiver.user?.id ?? defaultReceiver.id ?? 0) || undefined
     : Number(defaultReceiver ?? 0) || undefined;
-  const defaultReceiverRole = typeof defaultReceiver === 'object'
-    ? (defaultReceiver.user?.role_type
-      ?? defaultReceiver.user?.role
-      ?? defaultReceiver.role_type
-      ?? defaultReceiver.role
-      ?? '')
-    : '';
+  const receiverRoleCandidates = [
+    defaultValues?.received_by_role,
+    typeof defaultReceiver === 'object' ? defaultReceiver.user?.role : undefined,
+    typeof defaultReceiver === 'object' ? defaultReceiver.user?.role_type : undefined,
+    typeof defaultReceiver === 'object' ? defaultReceiver.role : undefined,
+    typeof defaultReceiver === 'object' ? defaultReceiver.role_type : undefined,
+  ];
+  const defaultReceiverRole = receiverRoleCandidates.find(
+    (role): role is UserRole => userRoles.includes(role as UserRole)
+  ) ?? '';
 
   const form = useForm<RevenueFormInput, any, RevenueFormValues>({
     resolver: zodResolver(revenueFormSchema),

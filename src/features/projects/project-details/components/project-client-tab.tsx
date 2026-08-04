@@ -20,6 +20,7 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
     queryKey: ['departments'] as const,
     queryFn: () => projectsApi.getDepartments(),
+    enabled: dialogOpen,
   });
 
   const saveMutation = useMutation({

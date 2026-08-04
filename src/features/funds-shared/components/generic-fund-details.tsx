@@ -104,7 +104,7 @@ export function GenericFundDetails({
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
 
-  const revenuesQuery = useRevenues(1, 50, filters);
+  const revenuesQuery = useRevenues(1, 50, filters, currentTab === 'revenues');
   const fundRevenues = revenuesQuery.data?.data ?? [];
   const isLoadingRevenues = revenuesQuery.isLoading;
 
@@ -120,7 +120,7 @@ export function GenericFundDetails({
     }
   };
 
-  const expensesQuery = useExpenses(1, 50, filters);
+  const expensesQuery = useExpenses(1, 50, filters, currentTab === 'expenses');
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
   const filteredExpense = expenseFilterId
@@ -136,7 +136,7 @@ export function GenericFundDetails({
     per_page: 1000,
     page: 1,
     ...filters,
-  });
+  }, currentTab === 'invoices');
   const invoiceCountsByExpenseId = useMemo(() => {
     const result = new Map<number, number>();
     for (const invoice of fundInvoicesQuery.data?.data ?? []) {
@@ -162,7 +162,7 @@ export function GenericFundDetails({
     };
   }, [fundIdField, fundId]);
 
-  const transfersQuery = useTransfers(1, 50, transfersFilters);
+  const transfersQuery = useTransfers(1, 50, transfersFilters, currentTab === 'transfers');
   const createTransferMutation = useCreateTransfer();
   const updateTransferMutation = useUpdateTransfer();
   const deleteTransferMutation = useDeleteTransfer();
@@ -385,6 +385,7 @@ export function GenericFundDetails({
               }}
               perPage={5}
               editInDialog
+              enabled={currentTab === 'invoices'}
             />
           </div>
         </TabsContent>

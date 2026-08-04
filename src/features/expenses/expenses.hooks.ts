@@ -8,10 +8,11 @@ const expensesQueryKeys = {
   list: (page: number, perPage: number, filters?: Record<string, any>) => ['expenses', page, perPage, filters] as const,
 };
 
-export function useExpenses(page = 1, perPage = 50, filters?: Record<string, any>) {
+export function useExpenses(page = 1, perPage = 50, filters?: Record<string, any>, enabled = true) {
   return useQuery<ExpenseResponse>({
     queryKey: expensesQueryKeys.list(page, perPage, filters),
     queryFn: () => expensesApi.getExpenses(page, perPage, filters),
+    enabled,
   });
 }
 

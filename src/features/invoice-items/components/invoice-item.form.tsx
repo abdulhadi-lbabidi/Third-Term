@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Calculator, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { materialsApi } from '@/features/materials/materials.api';
 import type { Material } from '@/features/materials/types';
@@ -110,7 +110,7 @@ export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, 
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="space-y-3"
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit(values);
         })}
@@ -143,6 +143,7 @@ export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, 
           )}
         />}
 
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(140px,1fr)]">
         <FormField
           control={form.control}
           name="material_id"
@@ -190,8 +191,9 @@ export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, 
             </FormItem>
           )}
         />
+        </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <FormField
             control={form.control}
             name="quantity"
@@ -219,6 +221,15 @@ export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, 
               </FormItem>
             )}
           />
+          <div className="flex min-h-16 items-center gap-2.5 rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+            <Calculator className="size-4 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">الإجمالي</p>
+              <p className="finance-num truncate text-base font-semibold text-foreground">
+                {totalPrice.toFixed(2)} {currencyLabel}
+              </p>
+            </div>
+          </div>
         </div>
 
         <FormField
@@ -227,20 +238,13 @@ export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, 
           render={({ field }) => (
             <FormItem>
               <FormLabel>الوصف</FormLabel>
-              <FormControl><Textarea {...field} rows={3} /></FormControl>
+              <FormControl><Textarea {...field} rows={2} className="min-h-16 resize-none" /></FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-          <p className="text-xs text-muted-foreground">الإجمالي</p>
-          <p className="finance-num text-lg font-semibold text-primary">
-            {totalPrice.toFixed(2)} {currencyLabel}
-          </p>
-        </div>
-
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" size="sm" className="min-w-28" disabled={loading}>
           {loading ? 'جاري الحفظ...' : defaultValues ? 'حفظ التعديلات' : 'إضافة صنف'}
         </Button>
       </form>

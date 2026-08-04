@@ -8,12 +8,19 @@ export interface PageTab {
   icon?: ReactNode;
 }
 
+export interface PageHeaderStat {
+  label: string;
+  value: ReactNode;
+  icon?: ReactNode;
+}
+
 interface PageHeaderProps {
   title: string | ReactNode;
   badge?: string;
   icon?: React.ComponentType<{ className?: string }>;
   description?: ReactNode;
   action?: ReactNode;
+  stats?: PageHeaderStat[];
   tabs?: PageTab[];
   defaultTab?: string;
   tabParam?: string;
@@ -27,6 +34,7 @@ export function PageHeader({
   icon: Icon,
   description,
   action,
+  stats,
   className,
   tabs,
   defaultTab,
@@ -83,9 +91,22 @@ export function PageHeader({
             ) : null}
           </div>
         </div>
-        {action ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>
-        ) : null}
+        <div className="flex shrink-0 flex-wrap items-center gap-4">
+          {stats?.length ? (
+            <div className="flex flex-wrap items-center divide-x divide-x-reverse divide-border">
+              {stats.map((stat) => (
+                <div key={stat.label} className="flex items-center gap-2 px-3 first:pr-0 last:pl-0">
+                  {stat.icon ? <span className="text-muted-foreground">{stat.icon}</span> : null}
+                  <div className="leading-tight">
+                    <div className="text-[11px] text-muted-foreground">{stat.label}</div>
+                    <div className="mt-0.5 text-sm font-semibold text-foreground">{stat.value}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : null}
+        </div>
       </div>
 
       {hasTabs && activeTab ? (

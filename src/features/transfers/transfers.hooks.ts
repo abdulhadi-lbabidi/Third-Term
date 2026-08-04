@@ -3,10 +3,11 @@ import toast from 'react-hot-toast';
 import { transfersApi } from './transfers.api';
 import type { CreateTransferPayload } from './types';
 
-export function useTransfers(page = 1, perPage = 50, filters?: Record<string, any>) {
+export function useTransfers(page = 1, perPage = 50, filters?: Record<string, any>, enabled = true) {
   return useQuery({
     queryKey: ['transfers', page, perPage, filters],
     queryFn: () => transfersApi.getTransfers(page, perPage, filters),
+    enabled,
   });
 }
 

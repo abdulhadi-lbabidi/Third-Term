@@ -23,7 +23,7 @@ import { Slider } from '@/shared/components/ui/slider';
 import { Calendar } from '@/shared/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, Clock, PlayCircle, XCircle } from 'lucide-react';
 import { cn, formatArabicDate } from '@/shared/lib/utils';
 import type { ProjectStage, CreateProjectStagePayload } from '../project-stages.types';
 
@@ -43,6 +43,13 @@ type ProjectStagesFormProps = {
   onSubmit: (data: CreateProjectStagePayload) => Promise<void>;
   loading?: boolean;
 };
+
+const statusOptions = [
+  { value: 'pending', label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
+  { value: 'in_progress', label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-info' },
+  { value: 'completed', label: 'مكتمل', icon: CheckCircle2, color: 'text-success' },
+  { value: 'cancelled', label: 'ملغى', icon: XCircle, color: 'text-destructive' },
+] as const;
 
 export function ProjectStagesForm({ projectId, stage, onSubmit, loading }: ProjectStagesFormProps) {
   const form = useForm<FormValues>({
@@ -172,12 +179,7 @@ export function ProjectStagesForm({ projectId, stage, onSubmit, loading }: Proje
             control={form.control}
             name="status"
             render={({ field }) => {
-              const statusLabels: Record<string, string> = {
-                pending: 'قيد الانتظار',
-                in_progress: 'قيد التنفيذ',
-                completed: 'مكتمل',
-                cancelled: 'ملغى',
-              };
+              const selectedStatus = statusOptions.find((option) => option.value === field.value);
               return (
               <FormItem>
                 <FormLabel>حالة المرحلة</FormLabel>
@@ -185,15 +187,24 @@ export function ProjectStagesForm({ projectId, stage, onSubmit, loading }: Proje
                   <FormControl>
                     <SelectTrigger className="h-10">
                       <SelectValue placeholder="اختر الحالة">
-                        {field.value ? statusLabels[field.value] : null}
+                        {selectedStatus && (
+                          <span className="flex items-center gap-2">
+                            <selectedStatus.icon className={`size-4 ${selectedStatus.color}`} />
+                            {selectedStatus.label}
+                          </span>
+                        )}
                       </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="pending">قيد الانتظار</SelectItem>
-                    <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
-                    <SelectItem value="completed">مكتمل</SelectItem>
-                    <SelectItem value="cancelled">ملغى</SelectItem>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <span className="flex items-center gap-2">
+                          <option.icon className={`size-4 ${option.color}`} />
+                          {option.label}
+                        </span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
