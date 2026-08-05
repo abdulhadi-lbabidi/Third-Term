@@ -123,10 +123,6 @@ function getCompanyFundLabel(item: CompanyFund) {
   return item.name;
 }
 
-function getCurrencyLabel(currency: { currency: string; balance: string }) {
-  return `${currency.currency} - ${currency.balance}`;
-}
-
 function renderCurrencyValue(currency: { currency: string; balance: string }) {
   const bal = Number(currency.balance) || 0;
   const isPositive = bal > 0;
@@ -620,37 +616,10 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     return '';
   }, [defaultValues, derivedProjectFundId, projectFunds]);
 
-  const selectedProjectCurrencyName = useMemo(() => {
-    if (!selectedExpenseableId) return '';
-
-    const currency = selectedProjectFundCurrencies.find((item) =>
-      currencyMatchesExpenseableId(item, selectedExpenseableId),
-    );
-    if (currency) return getCurrencyLabel(currency);
-
-    const details = getExpenseProjectFundDetails(defaultValues);
-    if (details?.id === selectedExpenseableId && details.currency) {
-      return getCurrencyLabel({
-        currency: details.currency.currency,
-        balance: details.balance ?? '0',
-      });
-    }
-
-    return '';
-  }, [defaultValues, selectedExpenseableId, selectedProjectFundCurrencies]);
-
   const selectedCompanyFundName = useMemo(() => {
     if (!derivedCompanyFundId) return '';
     return companyFunds.find((fund) => fund.id === derivedCompanyFundId)?.name ?? '';
   }, [companyFunds, derivedCompanyFundId]);
-
-  const selectedCompanyCurrencyName = useMemo(() => {
-    if (!selectedExpenseableId || !selectedCompanyFund) return '';
-    const currency = selectedCompanyFund.currencies?.find((item) =>
-      currencyMatchesExpenseableId(item, selectedExpenseableId),
-    );
-    return currency ? getCurrencyLabel(currency) : '';
-  }, [selectedCompanyFund, selectedExpenseableId]);
 
   const selectedUserFund = useMemo(() => {
     if (!derivedUserFundId) return undefined;
@@ -670,27 +639,6 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
 
     return '';
   }, [defaultValues, derivedUserFundId, selectedFundUserRecord]);
-
-  const selectedUserCurrencyName = useMemo(() => {
-    if (!selectedExpenseableId) return '';
-
-    if (selectedUserFund) {
-      const currency = selectedUserFund.currencies?.find((item) =>
-        currencyMatchesExpenseableId(item, selectedExpenseableId),
-      );
-      if (currency) return getCurrencyLabel(currency);
-    }
-
-    const details = getExpenseUserFundDetails(defaultValues);
-    if (details?.id === selectedExpenseableId && details.currency) {
-      return getCurrencyLabel({
-        currency: details.currency.currency,
-        balance: details.balance ?? '0',
-      });
-    }
-
-    return '';
-  }, [defaultValues, selectedExpenseableId, selectedUserFund]);
 
   const userFundCurrencies = useMemo(() => {
     if (fixedFundCurrencies) {
