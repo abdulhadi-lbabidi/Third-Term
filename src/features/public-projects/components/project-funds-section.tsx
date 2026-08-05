@@ -47,11 +47,10 @@ export function ProjectFundsSection({ funds, selectedFundId, onSelectFund }: Pro
           <div
             key={fund.id}
             onClick={() => onSelectFund(fund.id)}
-            className={`p-2.5 rounded-lg border cursor-pointer transition-all flex flex-col gap-2 shadow-finance w-full sm:w-[320px] ${
-              isSelected
+            className={`p-2.5 rounded-lg border cursor-pointer transition-all flex flex-col gap-2 shadow-finance w-full sm:w-[320px] ${isSelected
                 ? 'border-accent-gold bg-accent-gold/5'
                 : 'border-border bg-card hover:bg-muted/40 hover:border-border'
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">

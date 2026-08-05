@@ -96,12 +96,12 @@ export function TransfersList({ data, onViewDetails }: TransfersListProps) {
             >
               <div>
                 <div className="flex justify-between items-center gap-3">
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                    <span className="text-xs text-foreground truncate" title={fromDetails.label}>
+                  <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
+                    <span className="text-xs text-foreground" title={fromDetails.label}>
                       {fromDetails.label}
                     </span>
                     <ArrowLeftRight className="size-3 text-warning shrink-0 mx-1" />
-                    <span className="text-xs font-semibold text-foreground truncate" title={toDetails.label}>
+                    <span className="text-xs font-semibold text-foreground" title={toDetails.label}>
                       {toDetails.label}
                     </span>
                   </div>
@@ -112,9 +112,9 @@ export function TransfersList({ data, onViewDetails }: TransfersListProps) {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-2.5 border-t border-border mt-3 text-[9px] text-muted-foreground">
-                <span className="truncate max-w-[150px] font-medium text-foreground">{transfer.name}</span>
-                <span>{formatDate(transfer.created_at)}</span>
+              <div className="flex justify-between items-start pt-2.5 border-t border-border mt-3 text-[9px] text-muted-foreground">
+                <span className="font-medium text-foreground leading-normal flex-1 pl-2">{transfer.name}</span>
+                <span className="shrink-0">{formatDate(transfer.created_at)}</span>
               </div>
             </div>
           );
