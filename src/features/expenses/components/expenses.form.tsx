@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { useNavigate, } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -34,7 +34,6 @@ import type { UserRole } from '@/features/users/types';
 import { expenseFormSchema, expenseSourceLabels, type ExpenseFormValues } from '../schemas/expenses.schema';
 import { toExpenseApiPayload } from '../expenses.payload';
 import type { CreateExpensePayload, Expense, ExpenseProjectFundCurrencyDetails, ExpenseSource, ExpenseUserFundCurrencyDetails, ExpenseableType } from '../types';
-import { deobfuscate } from '@/shared/lib/react-router-dom-wrapper';
 
 type ExpensesFormProps = {
   defaultValues?: Expense | null;
@@ -723,19 +722,9 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         className="space-y-4"
         onSubmit={form.handleSubmit(
           async (values) => {
-            const bal = selectedCurrency ? Number(selectedCurrency.balance) || 0 : null;
-            if (bal !== null && bal <= 0) {
-              form.setError('expenseable_id', {
-                type: 'custom',
-                message: 'رصيد الصندوق 0 أو أقل، غير مسموح بإضافة المصروف',
-              });
-              return;
-            }
             const urlUserId = (() => {
-              const match = window.location.pathname.match(/\/users\/view\/[^/]+\/([^/]+)/);
-              if (!match) return undefined;
-              const decoded = deobfuscate(match[1]);
-              return /^\d+$/.test(decoded) ? Number(decoded) : undefined;
+              const match = window.location.pathname.match(/\/users\/view\/[^/]+\/(\d+)/);
+              return match ? Number(match[1]) : undefined;
             })();
             const finalUserId = values.user_id || fixedValues?.user_id || urlUserId || 0;
 
@@ -802,7 +791,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         )}
 
         {source === 'company_fund' ? (
-          <div className="grid gap-4 md:grid-cols-2 items-start">
+          <div className={`grid items-start gap-4 ${fixedValues?.company_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             {!fixedValues?.company_fund_id && (
               <FormField
                 control={form.control}
@@ -883,13 +872,13 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         ) : null}
 
         {source === 'project_fund' ? (
-          <div className="grid gap-4 md:grid-cols-2 items-start items-start">
+          <div className={`grid items-start gap-4 ${fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             {!fixedValues?.project_id && (
               <FormField
                 control={form.control}
                 name="project_id"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-3">
                     <FormLabel>المشروع</FormLabel>
                     {projectsQuery.isLoading ? (
                       <Skeleton className="h-10 w-full" />
@@ -966,7 +955,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               control={form.control}
               name="amount"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="md:order-3">
                   <FormLabel>المبلغ</FormLabel>
                   <FormControl>
                     <Input
@@ -988,7 +977,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               control={form.control}
               name="expenseable_id"
               render={({ field }) => (
-                <FormItem className="">
+                <FormItem className="md:order-2">
                   <FormLabel>عملة الصندوق</FormLabel>
                   <Select
                     value={field.value ? String(field.value) : ''}
@@ -1031,7 +1020,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
             </div>
 
-            <div className="flex flex-wrap gap-4 [&>*]:flex-[1_1_200px]">
+            <div className="grid items-start gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="fund_user_role"
@@ -1174,7 +1163,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
             </div>
           </div>
         ) : source === 'user_fund' ? (
-          <div className="grid gap-4 md:grid-cols-2 items-start">
+          <div className={`grid items-start gap-4 ${fixedValues?.user_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             <FormField
               control={form.control}
               name="expenseable_id"
