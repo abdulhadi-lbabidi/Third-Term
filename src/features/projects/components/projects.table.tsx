@@ -59,7 +59,10 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
     },
     { header: 'العميل', cell: (row) => row.client?.user?.name ?? '-' },
     { header: 'القسم', cell: (row) => row.department?.name ?? '-' },
-    { header: 'التكلفة المتوقعة', cell: (row) => String(row.expected_cost) },
+    {
+      header: 'التكلفة المتوقعة',
+      cell: (row) => Number(row.expected_cost || 0).toLocaleString('en-US'),
+    },
     {
       header: 'الحالة',
       cell: (row) => {

@@ -376,9 +376,14 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const fundUserOptions = fundRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
 
   // Options for currencies
-  const companyCurrencyOptions = (companyFunds.find(f => f.id === derivedCompanyFundId)?.currencies || selectedCompanyFund?.currencies)?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
-  const projectCurrencyOptions = (allProjectFunds.find(f => f.id === derivedProjectFundId)?.currencies || selectedProjectFund?.currencies)?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
-  const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(c => ({ value: getCurrencyRevenueableId(c), label: getCurrencyLabel(c) })) || [];
+  const toCurrencyOption = (currency: { id: number; currency: string; balance: string; revenueable_id?: number; expenseable_id?: number; pivot?: { id: number } }) => ({
+    value: getCurrencyRevenueableId(currency),
+    label: getCurrencyLabel(currency),
+    className: Number(currency.balance) > 0 ? 'font-semibold text-success' : 'font-semibold text-destructive',
+  });
+  const companyCurrencyOptions = (companyFunds.find(f => f.id === derivedCompanyFundId)?.currencies || selectedCompanyFund?.currencies)?.map(toCurrencyOption) || [];
+  const projectCurrencyOptions = (allProjectFunds.find(f => f.id === derivedProjectFundId)?.currencies || selectedProjectFund?.currencies)?.map(toCurrencyOption) || [];
+  const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(toCurrencyOption) || [];
 
   useEffect(() => {
     if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
@@ -425,7 +430,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         )}
       >
         {!fixedValues?.source && (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 items-start">
             <FormField
               control={form.control}
               name="source"
@@ -443,20 +448,20 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                           variant={selected ? 'default' : 'outline'}
                           className="h-16 justify-start gap-3"
                           onClick={() => {
-                      const nextSource = item;
-                      const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
-                      field.onChange(nextSource);
-                      form.setValue('revenueable_type', nextRevenueableType);
-                      form.setValue('revenueable_id', undefined);
-                      form.setValue('company_fund_id', undefined);
-                      form.setValue('fund_user_role', '');
-                      form.setValue('fund_user_id', undefined);
-                      form.setValue('user_fund_id', undefined);
-                      form.setValue('project_fund_id', undefined);
+                            const nextSource = item;
+                            const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
+                            field.onChange(nextSource);
+                            form.setValue('revenueable_type', nextRevenueableType);
+                            form.setValue('revenueable_id', undefined);
+                            form.setValue('company_fund_id', undefined);
+                            form.setValue('fund_user_role', '');
+                            form.setValue('fund_user_id', undefined);
+                            form.setValue('user_fund_id', undefined);
+                            form.setValue('project_fund_id', undefined);
 
-                      if (nextSource !== 'project_fund') {
-                        form.setValue('project_id', undefined);
-                      }
+                            if (nextSource !== 'project_fund') {
+                              form.setValue('project_id', undefined);
+                            }
                           }}
                         >
                           <Icon className="size-5" />
@@ -477,7 +482,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           <div className="space-y-4 px-5">
             <h3 className="font-semibold text-slate-800">صندوق المستخدم</h3>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 ">
               <FormField
                 control={form.control}
                 name="fund_user_role"
@@ -605,7 +610,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         {/* Receiver Fields (المستلم) */}
         <div className="space-y-4 px-2">
           <h3 className="font-semibold text-slate-800">تفاصيل المستلم</h3>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 items-start">
             <FormField
               control={form.control}
               name="received_by_role"
@@ -657,7 +662,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               control={form.control}
               name="received_by"
               render={({ field }) => (
-                <FormItem className="flex flex-col mt-2.5">
+                <FormItem className="flex flex-col">
                   <FormLabel className="mb-1">المستلم</FormLabel>
                   <SearchableSelect
                     options={receiverOptions}
@@ -727,7 +732,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             )}
 
             {source === 'project_fund' && (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2 items-start">
                 {!fixedValues?.project_id && (
                   <FormField
                     control={form.control}
@@ -813,7 +818,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 items-start">
               <FormField
                 control={form.control}
                 name="amount"
@@ -888,7 +893,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         </div>
 
         {/* Switch and Submit at the bottom */}
-        <div className="flex items-center justify-between pt-4 mt-4">
+        <div className="flex items-center justify-between pt-4">
           <FormField
             control={form.control}
             name="is_posted"

@@ -11,6 +11,7 @@ import { Skeleton } from './skeleton';
 export type SearchableSelectOption = {
   value: number | string;
   label: string;
+  className?: string;
 };
 
 type SearchableSelectProps = {
@@ -119,8 +120,8 @@ export function SearchableSelect({
         variant="ghost"
         onClick={handleToggle}
         className={cn(
-          'flex min-w-0 w-full items-center justify-between gap-2 h-auto min-h-9 overflow-hidden px-3 py-2',
-          'rounded-md border border-input bg-transparent text-sm font-normal shadow-sm',
+          'flex h-10 min-h-10 min-w-0 w-full items-center justify-between gap-2 overflow-hidden px-3 py-2',
+          'rounded-md border border-input bg-card text-sm font-normal',
           'transition-colors hover:bg-accent/50 focus:outline-none focus:ring-1 focus:ring-ring',
           'disabled:cursor-not-allowed disabled:opacity-50',
           (!multiple && !value) || (multiple && selectedArray.length === 0) ? 'text-muted-foreground' : '',
@@ -144,7 +145,7 @@ export function SearchableSelect({
                 </span>
               ))
           ) : (
-            <span className="block min-w-0 flex-1 truncate">{selectedLabel ?? placeholder}</span>
+            <span className={cn('block min-w-0 flex-1 truncate', options.find((option) => option.value === value)?.className)}>{selectedLabel ?? placeholder}</span>
           )}
         </div>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
@@ -203,7 +204,7 @@ export function SearchableSelect({
                       isSelected ? 'opacity-100' : 'opacity-0'
                     )}
                   />
-                  <span className="min-w-0 flex-1 truncate text-start">{option.label}</span>
+                  <span className={cn('min-w-0 flex-1 truncate text-start', option.className)}>{option.label}</span>
                 </Button>
               );
             })}

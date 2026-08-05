@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import {
   TrendingUp,
   ArrowDownToLine,
@@ -13,6 +15,7 @@ import {
   ArrowLeftRight,
   ReceiptText,
   X,
+  Lock,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -41,6 +44,7 @@ import { useInvoices } from '@/features/invoices/invoices.hooks';
 import { useTransfers, useCreateTransfer, useUpdateTransfer, useDeleteTransfer } from '@/features/transfers/transfers.hooks';
 import { TransfersTable } from '@/features/transfers/components/transfers.table';
 import { TransfersDialog } from '@/features/transfers/components/transfers.dialog';
+import { FundCurrencyEmptyState } from './fund-currency-empty-state';
 
 type GenericFundDetailsProps = {
   fundId: number;
@@ -77,9 +81,12 @@ export function GenericFundDetails({
   extraDetails,
   extraFixedValues,
 }: GenericFundDetailsProps) {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('fundTab') || 'revenues';
   const expenseFilterId = Number(searchParams.get('expenseId') || 0) || null;
+  const hasCurrencies = fundCurrencies.length > 0;
+  const canTransfer = fundCurrencies.some((currency) => Number(currency.balance) > 0);
 
   const handleTabChange = (value: string) => {
     setSearchParams((prev) => {
@@ -104,7 +111,7 @@ export function GenericFundDetails({
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
 
-  const revenuesQuery = useRevenues(1, 50, filters, currentTab === 'revenues');
+  const revenuesQuery = useRevenues(1, 50, filters, hasCurrencies && currentTab === 'revenues');
   const fundRevenues = revenuesQuery.data?.data ?? [];
   const isLoadingRevenues = revenuesQuery.isLoading;
 
@@ -117,12 +124,21 @@ export function GenericFundDetails({
       await updateRevenueMutation.mutateAsync({ id: selectedRevenue.id, payload: data });
     } else {
       await createRevenueMutation.mutateAsync(data);
+      const projectId = Number(extraFixedValues?.project_id);
+      if (Number.isFinite(projectId) && projectId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: ['projects', projectId],
+          exact: true,
+          refetchType: 'all',
+        });
+      }
     }
   };
 
-  const expensesQuery = useExpenses(1, 50, filters, currentTab === 'expenses');
+  const expensesQuery = useExpenses(1, 50, filters, hasCurrencies && currentTab === 'expenses');
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
+  const invoicesLocked = expensesQuery.isSuccess && fundExpenses.length === 0;
   const filteredExpense = expenseFilterId
     ? fundExpenses.find((expense) => expense.id === expenseFilterId) ?? null
     : null;
@@ -136,7 +152,7 @@ export function GenericFundDetails({
     per_page: 1000,
     page: 1,
     ...filters,
-  }, currentTab === 'invoices');
+  }, hasCurrencies && currentTab === 'invoices');
   const invoiceCountsByExpenseId = useMemo(() => {
     const result = new Map<number, number>();
     for (const invoice of fundInvoicesQuery.data?.data ?? []) {
@@ -151,6 +167,14 @@ export function GenericFundDetails({
       await updateExpenseMutation.mutateAsync({ id: selectedExpense.id, payload: data });
     } else {
       await createExpenseMutation.mutateAsync(data);
+      const projectId = Number(extraFixedValues?.project_id);
+      if (Number.isFinite(projectId) && projectId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: ['projects', projectId],
+          exact: true,
+          refetchType: 'all',
+        });
+      }
     }
   };
 
@@ -162,7 +186,7 @@ export function GenericFundDetails({
     };
   }, [fundIdField, fundId]);
 
-  const transfersQuery = useTransfers(1, 50, transfersFilters, currentTab === 'transfers');
+  const transfersQuery = useTransfers(1, 50, transfersFilters, hasCurrencies && currentTab === 'transfers');
   const createTransferMutation = useCreateTransfer();
   const updateTransferMutation = useUpdateTransfer();
   const deleteTransferMutation = useDeleteTransfer();
@@ -251,26 +275,42 @@ export function GenericFundDetails({
       </div>
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-5 max-w-full justify-start overflow-x-auto">
-          <TabsTrigger value="revenues">
+        <TabsList className="mb-5 max-w-full justify-start">
+          <TabsTrigger value="revenues" disabled={!hasCurrencies}>
             <TrendingUp className="ml-2 size-4" />
             الإيرادات
           </TabsTrigger>
-          <TabsTrigger value="expenses">
+          <TabsTrigger value="expenses" disabled={!hasCurrencies}>
             <ArrowDownToLine className="ml-2 size-4" />
             المصروفات
           </TabsTrigger>
-          <TabsTrigger value="invoices">
-            <ReceiptText className="ml-2 size-4" />
-            الفواتير
-          </TabsTrigger>
-          <TabsTrigger value="transfers">
-            <ArrowLeftRight className="ml-2 size-4" />
-            التحويلات
-          </TabsTrigger>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger render={<span className="inline-flex" />}>
+                <TabsTrigger value="invoices" disabled={!hasCurrencies || invoicesLocked}>
+                  {invoicesLocked ? <Lock className="ml-2 size-4" /> : <ReceiptText className="ml-2 size-4" />}
+                  الفواتير
+                </TabsTrigger>
+              </TooltipTrigger>
+              {invoicesLocked && <TooltipContent>لا يمكن إضافة فاتورة قبل إضافة مصروف للصندوق</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger render={<span className="inline-flex" />}>
+                <TabsTrigger value="transfers" disabled={!canTransfer}>
+                  {canTransfer ? <ArrowLeftRight className="ml-2 size-4" /> : <Lock className="ml-2 size-4" />}
+                  التحويلات
+                </TabsTrigger>
+              </TooltipTrigger>
+              {!canTransfer && <TooltipContent>لا يمكن إجراء تحويل لأن رصيد الصندوق غير كافٍ</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
         </TabsList>
 
-        <TabsContent value="revenues" className="space-y-5">
+        {!hasCurrencies && <FundCurrencyEmptyState onAddCurrency={onAttachCurrency} />}
+
+        {hasCurrencies && <TabsContent value="revenues" className="space-y-5">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-foreground">جدول الإيرادات</h4>
             <Button
@@ -296,9 +336,9 @@ export function GenericFundDetails({
               await deleteRevenueMutation.mutateAsync(revenue.id);
             }}
           />
-        </TabsContent>
+        </TabsContent>}
 
-        <TabsContent value="expenses" className="space-y-5">
+        {hasCurrencies && <TabsContent value="expenses" className="space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">مصروفات الصندوق</h3>
             <Button
@@ -343,9 +383,9 @@ export function GenericFundDetails({
             invoicesLoading={fundInvoicesQuery.isLoading}
             invoicesError={fundInvoicesQuery.isError}
           />
-        </TabsContent>
+        </TabsContent>}
 
-        <TabsContent value="invoices" className="space-y-5">
+        {hasCurrencies && <TabsContent value="invoices" className="space-y-5">
           <div>
             <h3 className="text-lg font-semibold text-foreground">فواتير الصندوق</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -388,9 +428,9 @@ export function GenericFundDetails({
               enabled={currentTab === 'invoices'}
             />
           </div>
-        </TabsContent>
+        </TabsContent>}
 
-        <TabsContent value="transfers" className="space-y-5">
+        {hasCurrencies && <TabsContent value="transfers" className="space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
             <Button
@@ -422,7 +462,7 @@ export function GenericFundDetails({
               currencies: fundCurrencies,
             }}
           />
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
 
       {revenueDialogOpen && (

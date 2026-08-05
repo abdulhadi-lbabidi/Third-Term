@@ -95,9 +95,18 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
       }
       return projectFundsApi.createProjectFund(apiPayload);
     },
-    onSuccess: async () => {
+    onSuccess: async (_fund, variables) => {
+      const affectedProjectId = variables.project_id || projectData?.id || projectId;
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
+      if (Number.isFinite(affectedProjectId) && affectedProjectId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: ['projects', affectedProjectId],
+          exact: true,
+          refetchType: 'all',
+        });
+      }
+      await queryClient.invalidateQueries({ queryKey: ['projects'], exact: true });
       setDialogOpen(false);
       setSelectedProjectFund(null);
     },
@@ -108,8 +117,13 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
 
   const deleteMutation = useMutation({
     mutationFn: (fund: ProjectFund) => projectFundsApi.deleteProjectFund(fund.id),
-    onSuccess: async () => {
+    onSuccess: async (_data, deletedFund) => {
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['projects'], exact: true, refetchType: 'all' });
+      const deletedProjectId = deletedFund.project?.id || projectData?.id || projectId;
+      if (Number.isFinite(deletedProjectId) && deletedProjectId > 0) {
+        await queryClient.invalidateQueries({ queryKey: ['projects', deletedProjectId], exact: true, refetchType: 'all' });
+      }
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف الصندوق');
@@ -128,6 +142,14 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
+      const affectedProjectId = projectData?.id || selectedProjectFund?.project?.id || projectId;
+      if (Number.isFinite(affectedProjectId) && affectedProjectId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: ['projects', affectedProjectId],
+          exact: true,
+          refetchType: 'all',
+        });
+      }
       setAttachDialogOpen(false);
       setSelectedProjectFund(null);
     },

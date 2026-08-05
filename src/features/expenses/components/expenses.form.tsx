@@ -385,10 +385,6 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
   const projectFundId = form.watch('project_fund_id');
   const selectedProjectId = form.watch('project_id');
 
-  useEffect(() => {
-    form.clearErrors('expenseable_id');
-  }, [selectedExpenseableId, source, form]);
-
   const companyFundsQuery = useQuery({
     queryKey: ['expenses', 'company-funds'] as const,
     queryFn: () => companyFundsApi.getCompanyFunds(),
@@ -713,7 +709,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     } else if (source === 'user_fund') {
       currencies = selectedUserFund?.currencies ?? [];
     }
-    
+
     if (currencies.length === 1 && !selectedExpenseableId) {
       const val = getCurrencyExpenseableId(currencies[0]);
       if (val) form.setValue('expenseable_id', val);
@@ -803,43 +799,43 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         )}
 
         {source === 'company_fund' ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 items-start">
             {!fixedValues?.company_fund_id && (
               <FormField
                 control={form.control}
-              name="company_fund_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>صناديق الشركة</FormLabel>
-                  {companyFundsQuery.isLoading ? (
-                    <Skeleton className="h-10 w-full" />
-                  ) : (
-                    <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => {
-                        field.onChange(Number(value));
-                        form.setValue('expenseable_id', undefined);
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          {field.value
-                            ? (selectedCompanyFundName || 'اختر صندوق الشركة')
-                            : <SelectValue placeholder="اختر صندوق الشركة" />}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {companyFunds.map((fund) => (
-                          <SelectItem key={fund.id} value={String(fund.id)}>
-                            {getCompanyFundLabel(fund)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </FormItem>
-              )}
-            />
+                name="company_fund_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>صناديق الشركة</FormLabel>
+                    {companyFundsQuery.isLoading ? (
+                      <Skeleton className="h-10 w-full" />
+                    ) : (
+                      <Select
+                        value={field.value ? String(field.value) : ''}
+                        onValueChange={(value) => {
+                          field.onChange(Number(value));
+                          form.setValue('expenseable_id', undefined);
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            {field.value
+                              ? (selectedCompanyFundName || 'اختر صندوق الشركة')
+                              : <SelectValue placeholder="اختر صندوق الشركة" />}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companyFunds.map((fund) => (
+                            <SelectItem key={fund.id} value={String(fund.id)}>
+                              {getCompanyFundLabel(fund)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </FormItem>
+                )}
+              />
             )}
 
             <FormField
@@ -884,7 +880,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         ) : null}
 
         {source === 'project_fund' ? (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 items-start items-start">
             {!fixedValues?.project_id && (
               <FormField
                 control={form.control}
@@ -965,6 +961,28 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
 
             <FormField
               control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>المبلغ</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={formatNumberWithCommas(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        if (/^\d*\.?\d*$/.test(raw)) field.onChange(raw === '' ? '' : Number(raw));
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="expenseable_id"
               render={({ field }) => (
                 <FormItem className="">
@@ -1010,7 +1028,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
             </div>
 
-            <div className="flex flex-wrap gap-4 [&>*]:flex-[1_1_200px] items-start">
+            <div className="flex flex-wrap gap-4 [&>*]:flex-[1_1_200px]">
               <FormField
                 control={form.control}
                 name="fund_user_role"
@@ -1153,7 +1171,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
             </div>
           </div>
         ) : source === 'user_fund' ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 items-start">
             <FormField
               control={form.control}
               name="expenseable_id"
@@ -1222,13 +1240,13 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         ) : null}
 
         {!fixedValues?.user_id ? (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 items-start">
             <FormField
               control={form.control}
               name="user_role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>نوع المستلم</FormLabel>
+                  <FormLabel>نوع المستخدم</FormLabel>
                   <Select
                     value={field.value ?? ''}
                     onValueChange={(value) => {
@@ -1259,7 +1277,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               name="user_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>المستلم</FormLabel>
+                  <FormLabel>المستخدم</FormLabel>
                   <FormControl>
                     {roleUsersQuery.isLoading ? (
                       <Skeleton className="h-10 w-full" />
@@ -1281,7 +1299,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               )}
             />
 
-            <FormField
+            {source !== 'project_fund' && <FormField
               control={form.control}
               name="amount"
               render={({ field }) => (
@@ -1303,9 +1321,9 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            />}
           </div>
-        ) : !isUserFundFixed ? (
+        ) : !isUserFundFixed && source !== 'project_fund' ? (
           <FormField
             control={form.control}
             name="amount"
@@ -1348,7 +1366,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
           control={form.control}
           name="is_posted"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-border p-4 shadow-sm rtl:space-x-reverse bg-muted/10">
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md  rtl:space-x-reverse bg-muted/10">
               <FormControl>
                 <label className="relative inline-flex cursor-pointer items-center">
                   <input
