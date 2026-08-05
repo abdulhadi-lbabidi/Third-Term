@@ -23,11 +23,11 @@ export function EmployeePaymentsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<EmployeePayment | null>(null);
+  const isProfileView = params.role === 'employee' && Boolean(params.id);
+
   const resolvedEmployeeId = params.employeeId
     ? Number(params.employeeId)
-    : params.role === 'employee' && params.id
-      ? Number(params.id)
-      : null;
+    : null;
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(resolvedEmployeeId);
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
 
@@ -39,7 +39,7 @@ export function EmployeePaymentsPage() {
   const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
     queryFn: () => usersApi.getUsersByRole('employee'),
-    enabled: employeeSelectOpen,
+    enabled: employeeSelectOpen || dialogOpen || isProfileView,
   });
 
   const employeesList = useMemo(() => {
@@ -48,6 +48,18 @@ export function EmployeePaymentsPage() {
     if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) return (raw as any).data;
     return [];
   }, [employeesQuery.data]);
+
+  const profileEmployee = useMemo(() => {
+    if (!isProfileView) return null;
+    const targetEmployeeId = Number(params.id);
+    return employeesList.find((emp: any) => emp.id === targetEmployeeId) ?? null;
+  }, [employeesList, isProfileView, params.id]);
+
+  const effectiveEmployeeId = useMemo(() => {
+    if (params.employeeId) return Number(params.employeeId);
+    if (isProfileView) return Number(params.id);
+    return null;
+  }, [params.employeeId, isProfileView, params.id]);
 
   useEffect(() => {
     if (resolvedEmployeeId !== null) {
@@ -63,9 +75,13 @@ export function EmployeePaymentsPage() {
   const currentPage = meta?.current_page ?? page;
 
   const visiblePayments = useMemo(() => {
+    if (isProfileView) {
+      const targetEmployeeId = Number(params.id);
+      return payments.filter((payment) => payment.employee?.id === targetEmployeeId);
+    }
     if (!selectedEmployeeId) return payments;
-    return payments.filter((payment) => payment.employee_id === selectedEmployeeId);
-  }, [payments, selectedEmployeeId]);
+    return payments.filter((payment) => payment.employee?.id === selectedEmployeeId);
+  }, [payments, selectedEmployeeId, isProfileView, params.id]);
 
   const saveMutation = useMutation({
     mutationFn: async (payload: CreateEmployeePaymentPayload) => {
@@ -102,11 +118,11 @@ export function EmployeePaymentsPage() {
     <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
         badge="الموظفون"
-        title={selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : 'رواتب الموظفين'}
+        title={selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : (profileEmployee ? `رواتب ${profileEmployee.user?.name ?? profileEmployee.name}` : 'رواتب الموظفين')}
         icon={BadgeDollarSign}
         action={
           <div className="flex shrink-0 items-center gap-3">
-            {!params.employeeId ? (
+            {!params.employeeId && !isProfileView ? (
               <div className="flex shrink-0 items-center gap-3">
                 <div className="w-[210px] shrink-0">
                   <SearchableSelect
@@ -183,7 +199,7 @@ export function EmployeePaymentsPage() {
         }}
         employees={employeesList}
         employeePayment={selectedPayment}
-        lockedEmployeeId={params.employeeId ? Number(params.employeeId) : null}
+        lockedEmployeeId={effectiveEmployeeId}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />

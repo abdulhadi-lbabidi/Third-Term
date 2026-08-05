@@ -58,7 +58,7 @@ export function EmployeePaymentsForm({
   const form = useForm<EmployeePaymentFormValues>({
     resolver: zodResolver(employeePaymentFormSchema),
     defaultValues: {
-      employee_id: lockedEmployeeId ? String(lockedEmployeeId) : defaultValues?.employee_id ? String(defaultValues.employee_id) : '',
+      employee_id: lockedEmployeeId ? String(lockedEmployeeId) : (defaultValues?.employee?.id ? String(defaultValues.employee.id) : (defaultValues?.employee_id ? String(defaultValues.employee_id) : '')),
       company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : defaultValues?.company_fund_currency?.id ? String(defaultValues.company_fund_currency.id) : '',
       bonuses: defaultValues?.bonuses ? String(defaultValues.bonuses) : '',
       deductions: defaultValues?.deductions ? String(defaultValues.deductions) : '',
@@ -69,7 +69,7 @@ export function EmployeePaymentsForm({
 
   useEffect(() => {
     form.reset({
-      employee_id: lockedEmployeeId ? String(lockedEmployeeId) : defaultValues?.employee_id ? String(defaultValues.employee_id) : '',
+      employee_id: lockedEmployeeId ? String(lockedEmployeeId) : (defaultValues?.employee?.id ? String(defaultValues.employee.id) : (defaultValues?.employee_id ? String(defaultValues.employee_id) : '')),
       company_fund_currency_id: defaultValues?.company_fund_currency_id ? String(defaultValues.company_fund_currency_id) : defaultValues?.company_fund_currency?.id ? String(defaultValues.company_fund_currency.id) : '',
       bonuses: defaultValues?.bonuses ? String(defaultValues.bonuses) : '',
       deductions: defaultValues?.deductions ? String(defaultValues.deductions) : '',

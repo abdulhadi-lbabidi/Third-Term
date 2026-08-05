@@ -266,7 +266,14 @@ function getCompanyFundLabel(item: CompanyFund) {
 }
 
 function getCurrencyLabel(currency: { currency: string; balance: string }) {
-  return `${currency.currency} - ${currency.balance}`;
+  const balanceVal = Number(currency.balance) || 0;
+  const colorClass = balanceVal > 0 ? 'text-emerald-600 font-semibold' : balanceVal < 0 ? 'text-red-600 font-semibold' : 'text-muted-foreground font-semibold';
+  return (
+    <span className="flex items-center justify-between gap-2 w-full">
+      <span>{currency.currency}</span>
+      <span className={colorClass}>({currency.balance})</span>
+    </span>
+  );
 }
 
 function getCurrencyExpenseableId(currency: { id: number; expenseable_id?: number; pivot?: { id: number } }) {
@@ -800,11 +807,42 @@ export function TransfersForm({
     return currency ? getCurrencyLabel(currency) : '';
   }, [selectedUserFund, selectedMorphToId]);
 
+  const selectedSourceCurrency = useMemo(() => {
+    if (!selectedMorphFromId) return null;
+
+    if (!isGeneral) {
+      return fixedFromCurrencies.find((c) => c.id === selectedMorphFromId) || null;
+    }
+
+    let currencies: any[] = [];
+    if (morphFromType === 'App\\Models\\CompanyFundCurrency') {
+      currencies = selectedFromCompanyFund?.currencies ?? [];
+    } else if (morphFromType === 'App\\Models\\ProjectFundCurrency') {
+      currencies = selectedFromProjectFund?.currencies ?? [];
+    } else if (morphFromType === 'App\\Models\\CurrencyFund') {
+      currencies = selectedFromUserFund?.currencies ?? [];
+    }
+
+    return currencies.find((c) => getCurrencyExpenseableId(c) === selectedMorphFromId) || null;
+  }, [isGeneral, selectedMorphFromId, fixedFromCurrencies, morphFromType, selectedFromCompanyFund, selectedFromProjectFund, selectedFromUserFund]);
+
+  useEffect(() => {
+    form.clearErrors('morph_from_id');
+  }, [selectedMorphFromId, form]);
+
   return (
     <Form {...form}>
       <form
         className="space-y-2"
         onSubmit={form.handleSubmit(async (values) => {
+          const bal = selectedSourceCurrency ? Number(selectedSourceCurrency.balance) || 0 : null;
+          if (bal !== null && bal <= 0) {
+            form.setError('morph_from_id', {
+              type: 'custom',
+              message: 'رصيد صندوق المصدر 0 أو أقل، غير مسموح بالتحويل',
+            });
+            return;
+          }
           const selectedCur = fixedFromCurrencies.find((c) => c.id === values.morph_from_id);
           const finalMorphFromId = selectedCur?.expenseable_id ?? getSourceExpenseableId(values.morph_from_id, morphFromType, companyFunds, projects, allFunds);
           await onSubmit({
@@ -880,7 +918,7 @@ export function TransfersForm({
                         {field.value ? (
                           (() => {
                             const selected = fixedFromCurrencies.find((c) => c.id === Number(field.value));
-                            return selected ? `${selected.currency} (${selected.balance})` : 'اختر العملة للمصدر';
+                            return selected ? getCurrencyLabel(selected) : 'اختر العملة للمصدر';
                           })()
                         ) : (
                           <SelectValue placeholder="اختر العملة للمصدر" />
@@ -890,7 +928,7 @@ export function TransfersForm({
                     <SelectContent>
                       {fixedFromCurrencies.map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
-                          {c.currency} ({c.balance})
+                          {getCurrencyLabel(c)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -994,9 +1032,10 @@ export function TransfersForm({
                         <FormControl>
                           <SelectTrigger disabled={!fromCompanyFundId}>
                             {field.value
-                              ? (selectedFromCompanyFund?.currencies?.find(c => currencyMatchesExpenseableId(c, Number(field.value)))
-                                ? `${selectedFromCompanyFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.currency} (${selectedFromCompanyFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.balance})`
-                                : 'اختر العملة')
+                              ? (() => {
+                                  const c = selectedFromCompanyFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
+                                  return c ? getCurrencyLabel(c) : 'اختر العملة';
+                                })()
                               : <SelectValue placeholder="اختر العملة" />}
                           </SelectTrigger>
                         </FormControl>
@@ -1019,7 +1058,7 @@ export function TransfersForm({
             )}
 
             {morphFromType === 'App\\Models\\ProjectFundCurrency' && (
-              <div className="grid gap-4 md:grid-cols-3 pt-2">
+              <div className="grid gap-4 md:grid-cols-3 pt-2 items-baseline">
                 <FormField
                   control={form.control}
                   name="from_project_id"
@@ -1102,9 +1141,10 @@ export function TransfersForm({
                         <FormControl>
                           <SelectTrigger disabled={!fromProjectFundId}>
                             {field.value
-                              ? (selectedFromProjectFund?.currencies?.find(c => currencyMatchesExpenseableId(c, Number(field.value)))
-                                ? `${selectedFromProjectFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.currency} (${selectedFromProjectFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.balance})`
-                                : 'اختر العملة')
+                              ? (() => {
+                                  const c = selectedFromProjectFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
+                                  return c ? getCurrencyLabel(c) : 'اختر العملة';
+                                })()
                               : <SelectValue placeholder="اختر العملة" />}
                           </SelectTrigger>
                         </FormControl>
@@ -1127,7 +1167,7 @@ export function TransfersForm({
             )}
 
             {morphFromType === 'App\\Models\\CurrencyFund' && (
-              <div className="grid gap-4 md:grid-cols-4 pt-2">
+              <div className="grid gap-4 md:grid-cols-4 pt-2 items-baseline">
                 <FormField
                   control={form.control}
                   name="from_user_role"
@@ -1236,9 +1276,10 @@ export function TransfersForm({
                         <FormControl>
                           <SelectTrigger disabled={!fromUserFundId}>
                             {field.value
-                              ? (selectedFromUserFund?.currencies?.find(c => currencyMatchesExpenseableId(c, Number(field.value)))
-                                ? `${selectedFromUserFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.currency} (${selectedFromUserFund.currencies.find(c => currencyMatchesExpenseableId(c, Number(field.value)))?.balance})`
-                                : 'اختر العملة')
+                              ? (() => {
+                                  const c = selectedFromUserFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
+                                  return c ? getCurrencyLabel(c) : 'اختر العملة';
+                                })()
                               : <SelectValue placeholder="اختر العملة" />}
                           </SelectTrigger>
                         </FormControl>
@@ -1374,7 +1415,7 @@ export function TransfersForm({
           )}
 
           {morphToType === 'App\\Models\\ProjectFundCurrency' && (
-            <div className="grid gap-4 md:grid-cols-3 pt-2">
+            <div className="grid gap-4 md:grid-cols-3 pt-2  items-baseline">
               <FormField
                 control={form.control}
                 name="project_id"
@@ -1478,7 +1519,7 @@ export function TransfersForm({
           )}
 
           {morphToType === 'App\\Models\\CurrencyFund' && (
-            <div className="grid gap-4 md:grid-cols-4 pt-2">
+            <div className="grid gap-4 md:grid-cols-4 pt-2 items-baseline">
               <FormField
                 control={form.control}
                 name="fund_user_role"

@@ -389,6 +389,10 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
   const projectFundId = form.watch('project_fund_id');
   const selectedProjectId = form.watch('project_id');
 
+  useEffect(() => {
+    form.clearErrors('expenseable_id');
+  }, [selectedExpenseableId, source, form]);
+
   const companyFundsQuery = useQuery({
     queryKey: ['expenses', 'company-funds'] as const,
     queryFn: () => companyFundsApi.getCompanyFunds(),
@@ -1058,7 +1062,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
             </div>
 
-            <div className="flex flex-wrap gap-4 [&>*]:flex-[1_1_200px]">
+            <div className="flex flex-wrap gap-4 [&>*]:flex-[1_1_200px] items-start">
               <FormField
                 control={form.control}
                 name="fund_user_role"
@@ -1276,7 +1280,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               name="user_role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>نوع المستخدم</FormLabel>
+                  <FormLabel>نوع المستلم</FormLabel>
                   <Select
                     value={field.value ?? ''}
                     onValueChange={(value) => {
@@ -1307,7 +1311,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               name="user_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>المستخدم</FormLabel>
+                  <FormLabel>المستلم</FormLabel>
                   <FormControl>
                     {roleUsersQuery.isLoading ? (
                       <Skeleton className="h-10 w-full" />

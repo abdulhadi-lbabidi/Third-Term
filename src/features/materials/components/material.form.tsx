@@ -34,7 +34,6 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
     defaultValues: {
       item_id: getMaterialItemId(defaultValues),
       name: defaultValues?.name ?? '',
-      unit: defaultValues?.unit ?? '',
       description: defaultValues?.description ?? '',
     },
   });
@@ -43,7 +42,6 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
     form.reset({
       item_id: getMaterialItemId(defaultValues),
       name: defaultValues?.name ?? '',
-      unit: defaultValues?.unit ?? '',
       description: defaultValues?.description ?? '',
     });
   }, [defaultValues, form]);
@@ -93,20 +91,6 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
               <FormLabel>اسم المادة</FormLabel>
               <FormControl>
                 <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="unit"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الوحدة</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="قطعة، متر، كغ..." />
               </FormControl>
               <FormMessage />
             </FormItem>

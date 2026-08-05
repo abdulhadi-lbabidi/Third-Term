@@ -14,7 +14,7 @@ export type Material = {
 export type CreateMaterialPayload = {
   item_id: number;
   name: string;
-  unit: string;
+  unit?: string;
   description: string;
 };
 
