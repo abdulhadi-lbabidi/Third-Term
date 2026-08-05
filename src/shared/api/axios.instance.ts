@@ -23,18 +23,18 @@ apiClient.interceptors.response.use(
   (error) => {
     const errorMessage = error.response?.data?.message || error.response?.data?.error;
     toast.error(errorMessage)
-    // if (errorMessage) {
-    //   toast.error(errorMessage);
-    // } else if (error.message && error.response?.status !== 401) {
-    //   toast.error(error.message);
-    // } else if (error.response?.status === 401) {
-    //   toast.error('انتهت الجلسة، الرجاء تسجيل الدخول مجدداً');
-    // }
+    if (errorMessage) {
+      toast.error(errorMessage);
+    } else if (error.message && error.response?.status !== 401) {
+      toast.error(error.message);
+    } else if (error.response?.status === 401) {
+      toast.error('انتهت الجلسة، الرجاء تسجيل الدخول مجدداً');
+    }
 
-    // if (error.response?.status === 401) {
-    //   localStorage.removeItem('token_finance_nouh');
-    //   window.location.href = '/auth/login';
-    // }
-    // return Promise.reject(error);
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token_finance_nouh');
+      window.location.href = '/auth/login';
+    }
+    return Promise.reject(error);
   }
 );

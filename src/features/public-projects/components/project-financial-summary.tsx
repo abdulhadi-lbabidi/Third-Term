@@ -2,16 +2,8 @@ import { DollarSign, TrendingUp, TrendingDown, Wallet, FileText } from 'lucide-r
 import { Badge } from '@/shared/components/ui/badge';
 import type { Project, ProjectStatus } from '@/features/projects/types';
 
-type ProjectFund = {
-  id: number;
-  name: string;
-};
-
 type ProjectFinancialSummaryProps = {
   project: Project;
-  funds: ProjectFund[];
-  selectedFundId: number | null;
-  onSelectFund: (id: number) => void;
   totalRevenues: number;
   totalExpenses: number;
   invoicesCount: number;
@@ -19,9 +11,6 @@ type ProjectFinancialSummaryProps = {
 
 export function ProjectFinancialSummary({
   project,
-  funds,
-  selectedFundId,
-  onSelectFund,
   totalRevenues,
   totalExpenses,
   invoicesCount,

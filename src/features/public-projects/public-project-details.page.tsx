@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { FolderKanban, Calendar, User, ShieldCheck, Wallet, DollarSign, TrendingUp, TrendingDown, FileText, Percent, ShoppingBag, Info, ArrowLeftRight } from 'lucide-react';
+import { FolderKanban, Calendar, User, ShieldCheck, Wallet, DollarSign, TrendingUp, TrendingDown, FileText, Percent, ShoppingBag, Info, ArrowLeftRight, ChevronDown } from 'lucide-react';
 import { publicProjectsApi } from './public-projects.api';
 import { apiClient } from '@/shared/api/axios.instance';
 import type { Project } from '@/features/projects/types';
@@ -18,8 +18,28 @@ import { TransactionsTable } from './components/transactions-table';
 import { InvoicesList } from './components/invoices-list';
 import { TransfersList, getTransferDetails } from './components/transfers-list';
 import { ProjectDetailsSkeleton } from './components/project-details-skeleton';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
-type TabId = 'overview' | 'revenues' | 'expenses' | 'invoices' | 'transfers';
+type TabId = 'revenues' | 'expenses' | 'invoices' | 'transfers';
+
+function TabContentSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="bg-card border border-border rounded-lg p-4 h-32 flex flex-col justify-between shadow-finance">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3.5 w-1/2" />
+          </div>
+          <div className="space-y-1.5 pt-2 border-t border-border/40 mt-4">
+            <Skeleton className="h-3 w-1/3" />
+            <Skeleton className="h-3 w-1/4" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function PublicProjectDetailsPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -27,7 +47,7 @@ export function PublicProjectDetailsPage() {
   const location = useLocation();
   const selectedProjectId = projectId ? Number(projectId) : null;
   const [activeFundTab, setActiveFundTab] = useState<number | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<TabId>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<TabId>('revenues');
   const [selectedRevenueId, setSelectedRevenueId] = useState<number | null>(null);
   const [isRevenueDialogOpen, setIsRevenueDialogOpen] = useState(false);
 
@@ -75,28 +95,28 @@ export function PublicProjectDetailsPage() {
   const currentFunds = projectDetails?.funds || [];
   const selectedFund = currentFunds.find((f) => f.id === activeFundTab) || currentFunds[0];
 
-  const { data: revenues = [] } = useQuery<Revenue[]>({
+  const { data: revenues = [], isLoading: isLoadingRevenues } = useQuery<Revenue[]>({
     queryKey: ['public-revenues', selectedFund?.id],
     queryFn: () => publicProjectsApi.getRevenues(selectedFund?.id),
-    enabled: !!selectedProjectId && !!selectedFund?.id,
+    enabled: !!selectedProjectId && !!selectedFund?.id && activeSubTab === 'revenues',
   });
 
-  const { data: expenses = [] } = useQuery<Expense[]>({
+  const { data: expenses = [], isLoading: isLoadingExpenses } = useQuery<Expense[]>({
     queryKey: ['public-expenses', selectedFund?.id],
     queryFn: () => publicProjectsApi.getExpenses(selectedFund?.id),
-    enabled: !!selectedProjectId && !!selectedFund?.id,
+    enabled: !!selectedProjectId && !!selectedFund?.id && activeSubTab === 'expenses',
   });
 
-  const { data: invoices = [] } = useQuery<Invoice[]>({
+  const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery<Invoice[]>({
     queryKey: ['public-invoices', selectedFund?.id],
     queryFn: () => publicProjectsApi.getInvoices(selectedFund?.id),
-    enabled: !!selectedProjectId && !!selectedFund?.id,
+    enabled: !!selectedProjectId && !!selectedFund?.id && activeSubTab === 'invoices',
   });
 
-  const { data: transfers = [] } = useQuery<any[]>({
+  const { data: transfers = [], isLoading: isLoadingTransfers } = useQuery<any[]>({
     queryKey: ['public-transfers', selectedFund?.id],
     queryFn: () => publicProjectsApi.getTransfers(selectedFund?.id),
-    enabled: !!selectedProjectId && !!selectedFund?.id,
+    enabled: !!selectedProjectId && !!selectedFund?.id && activeSubTab === 'transfers',
   });
 
   const { data: revenueDetails, isLoading: isLoadingRevenue } = useQuery({
@@ -178,9 +198,7 @@ export function PublicProjectDetailsPage() {
     return filteredExpenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
   }, [filteredExpenses]);
 
-  const overviewRevenues = useMemo(() => filteredRevenues.slice(0, 3), [filteredRevenues]);
-  const overviewExpenses = useMemo(() => filteredExpenses.slice(0, 3), [filteredExpenses]);
-  const overviewInvoices = useMemo(() => filteredInvoices.slice(0, 3), [filteredInvoices]);
+
 
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
@@ -200,9 +218,6 @@ export function PublicProjectDetailsPage() {
 
             <ProjectFinancialSummary
               project={projectDetails}
-              funds={currentFunds}
-              selectedFundId={selectedFund?.id || null}
-              onSelectFund={setActiveFundTab}
               totalRevenues={totalRevenuesSum}
               totalExpenses={totalExpensesSum}
               invoicesCount={filteredInvoices.length}
@@ -227,143 +242,63 @@ export function PublicProjectDetailsPage() {
               />
 
               <div className="space-y-4">
-                {activeSubTab === 'overview' && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-3 bg-card border border-border rounded-lg p-5 shadow-finance">
-                        <h4 className="text-xs font-semibold text-foreground border-b border-border pb-3 flex justify-between items-center">
-                          <span>آخر الإيرادات</span>
-                          <button onClick={() => setActiveSubTab('revenues')} className="text-[10px] text-accent-gold hover:underline font-semibold">عرض الكل</button>
-                        </h4>
-                        <div className="space-y-2">
-                          {overviewRevenues.length === 0 ? (
-                            <p className="text-xs text-muted-foreground py-4 text-center">لا توجد إيرادات مسجلة.</p>
-                          ) : (
-                            overviewRevenues.map((rev) => {
-                              const info = rev.revenueable_info;
-                              const symbol = info?.details?.currency?.symbol || info?.details?.currency?.currency || '';
-                              return (
-                                <div
-                                  key={rev.id}
-                                  onClick={() => {
-                                    setSelectedRevenueId(rev.id);
-                                    setIsRevenueDialogOpen(true);
-                                  }}
-                                  className="flex justify-between items-center text-xs p-2.5 bg-muted rounded-md cursor-pointer hover:bg-muted/80 transition-all"
-                                >
-                                  <span className="font-semibold text-foreground">{rev.statement}</span>
-                                  <span className="font-bold text-success">
-                                    +{new Intl.NumberFormat('en-US').format(Number(rev.amount) || 0)} <span className="text-xs sm:text-sm font-semibold text-muted-foreground mx-1">{symbol}</span>
-                                  </span>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 bg-card border border-border rounded-lg p-5 shadow-finance">
-                        <h4 className="text-xs font-semibold text-foreground border-b border-border pb-3 flex justify-between items-center">
-                          <span>آخر المصروفات</span>
-                          <button onClick={() => setActiveSubTab('expenses')} className="text-[10px] text-accent-gold hover:underline font-semibold">عرض الكل</button>
-                        </h4>
-                        <div className="space-y-2">
-                          {overviewExpenses.length === 0 ? (
-                            <p className="text-xs text-muted-foreground py-4 text-center">لا توجد مصروفات مسجلة.</p>
-                          ) : (
-                            overviewExpenses.map((exp) => {
-                              const info = exp.expenseable_info;
-                              const symbol = (info?.details as any)?.currency?.symbol || (info?.details as any)?.currency?.currency || '';
-                              return (
-                                <div
-                                  key={exp.id}
-                                  onClick={() => {
-                                    setSelectedExpenseId(exp.id);
-                                    setIsExpenseDialogOpen(true);
-                                  }}
-                                  className="flex justify-between items-center text-xs p-2.5 bg-muted rounded-md cursor-pointer hover:bg-muted/80 transition-all"
-                                >
-                                  <span className="font-semibold text-foreground">{exp.description}</span>
-                                  <span className="font-bold text-destructive">
-                                    -{new Intl.NumberFormat('en-US').format(Number(exp.amount) || 0)} <span className="text-xs sm:text-sm font-semibold text-muted-foreground mx-1">{symbol}</span>
-                                  </span>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 bg-card border border-border rounded-lg p-5 shadow-finance">
-                        <h4 className="text-xs font-semibold text-foreground border-b border-border pb-3 flex justify-between items-center">
-                          <span>آخر الفواتير</span>
-                          <button onClick={() => setActiveSubTab('invoices')} className="text-[10px] text-accent-gold hover:underline font-semibold">عرض الكل</button>
-                        </h4>
-                        <div className="space-y-2">
-                          {overviewInvoices.length === 0 ? (
-                            <p className="text-xs text-muted-foreground py-4 text-center">لا توجد فواتير مسجلة.</p>
-                          ) : (
-                            overviewInvoices.map((inv) => (
-                              <div
-                                key={inv.id}
-                                onClick={() => {
-                                  setSelectedInvoiceId(inv.id);
-                                  setIsInvoiceDialogOpen(true);
-                                }}
-                                className="flex justify-between items-center text-xs p-2.5 bg-muted rounded-md cursor-pointer hover:bg-muted/80 transition-all"
-                              >
-                                <span className="font-semibold text-foreground">فاتورة #{inv.invoice_number}</span>
-                                <span className="font-bold text-primary">{new Intl.NumberFormat('en-US').format(Number(inv.final_total) || 0)}</span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {activeSubTab === 'revenues' && (
-                  <TransactionsTable
-                    data={filteredRevenues as any}
-                    type="revenues"
-                    onViewDetails={(id) => {
-                      setSelectedRevenueId(id);
-                      setIsRevenueDialogOpen(true);
-                    }}
-                  />
+                  isLoadingRevenues ? (
+                    <TabContentSkeleton />
+                  ) : (
+                    <TransactionsTable
+                      data={filteredRevenues as any}
+                      type="revenues"
+                      onViewDetails={(id) => {
+                        setSelectedRevenueId(id);
+                        setIsRevenueDialogOpen(true);
+                      }}
+                    />
+                  )
                 )}
 
                 {activeSubTab === 'expenses' && (
-                  <TransactionsTable
-                    data={filteredExpenses as any}
-                    type="expenses"
-                    invoices={filteredInvoices}
-                    onViewDetails={(id) => {
-                      setSelectedExpenseId(id);
-                      setIsExpenseDialogOpen(true);
-                    }}
-                  />
+                  isLoadingExpenses ? (
+                    <TabContentSkeleton />
+                  ) : (
+                    <TransactionsTable
+                      data={filteredExpenses as any}
+                      type="expenses"
+                      invoices={filteredInvoices}
+                      onViewDetails={(id) => {
+                        setSelectedExpenseId(id);
+                        setIsExpenseDialogOpen(true);
+                      }}
+                    />
+                  )
                 )}
 
                 {activeSubTab === 'invoices' && (
-                  <InvoicesList
-                    data={filteredInvoices}
-                    onViewDetails={(id) => {
-                      setSelectedInvoiceId(id);
-                      setIsInvoiceDialogOpen(true);
-                    }}
-                  />
+                  isLoadingInvoices ? (
+                    <TabContentSkeleton />
+                  ) : (
+                    <InvoicesList
+                      data={filteredInvoices}
+                      onViewDetails={(id) => {
+                        setSelectedInvoiceId(id);
+                        setIsInvoiceDialogOpen(true);
+                      }}
+                    />
+                  )
                 )}
 
                 {activeSubTab === 'transfers' && (
-                  <TransfersList
-                    data={filteredTransfers}
-                    onViewDetails={(id) => {
-                      setSelectedTransferId(id);
-                      setIsTransferDialogOpen(true);
-                    }}
-                  />
+                  isLoadingTransfers ? (
+                    <TabContentSkeleton />
+                  ) : (
+                    <TransfersList
+                      data={filteredTransfers}
+                      onViewDetails={(id) => {
+                        setSelectedTransferId(id);
+                        setIsTransferDialogOpen(true);
+                      }}
+                    />
+                  )
                 )}
               </div>
             </div>
@@ -661,6 +596,54 @@ export function PublicProjectDetailsPage() {
                     </div>
                   </div>
                 )}
+
+                {invoiceDetails.invoice_items && invoiceDetails.invoice_items.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-foreground block">مواد الفاتورة ({invoiceDetails.invoice_items.length})</span>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                      {invoiceDetails.invoice_items.map((item: any) => (
+                        <details
+                          key={item.id}
+                          className="group border border-border rounded-lg bg-muted/40 overflow-hidden"
+                        >
+                          <summary className="flex items-center justify-between p-3 cursor-pointer select-none font-semibold text-xs text-foreground hover:bg-muted/80 list-none [&::-webkit-details-marker]:hidden">
+                            <div className="flex items-center gap-2">
+                              <ChevronDown className="size-3.5 transition-transform duration-200 group-open:rotate-180 shrink-0 text-muted-foreground" />
+                              <span>{item.material?.name || item.item_description || 'مادة بدون اسم'}</span>
+                            </div>
+                            <span className="font-bold text-primary font-mono">
+                              {new Intl.NumberFormat('en-US').format(Number(item.total_price) || 0)}
+                            </span>
+                          </summary>
+                          <div className="p-3 border-t border-border bg-card text-xs space-y-2">
+                            {(item.material?.description || item.item_description) && (
+                              <div>
+                                <span className="text-[10px] text-muted-foreground block">الوصف</span>
+                                <p className="text-foreground font-medium">{item.material?.description || item.item_description}</p>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-3 gap-2 pt-1.5 text-[10px]">
+                              <div>
+                                <span className="text-muted-foreground block">الكمية</span>
+                                <span className="font-semibold text-foreground">{item.quantity}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground block">الوحدة</span>
+                                <span className="font-semibold text-foreground">{item.unit || '-'}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground block">سعر الوحدة</span>
+                                <span className="font-semibold text-foreground font-mono">
+                                  {new Intl.NumberFormat('en-US').format(Number(item.unit_price) || 0)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
@@ -714,9 +697,9 @@ export function PublicProjectDetailsPage() {
                       <span>الجهة المرسلة</span>
                     </span>
                     <div className="space-y-1">
-                      <span className="text-xs text-foreground block truncate" title={getTransferDetails(transferDetails.morph_from_info).label}>{getTransferDetails(transferDetails.morph_from_info).label}</span>
+                      <span className="text-xs text-foreground block" title={getTransferDetails(transferDetails.morph_from_info).label}>{getTransferDetails(transferDetails.morph_from_info).label}</span>
                       <span className="text-[10px] text-muted-foreground block">{getTransferDetails(transferDetails.morph_from_info).type}</span>
-                    
+
                     </div>
                   </div>
 
@@ -725,9 +708,9 @@ export function PublicProjectDetailsPage() {
                       <span>الجهة المستلمة</span>
                     </span>
                     <div className="space-y-1">
-                      <span className="text-xs text-foreground block truncate" title={getTransferDetails(transferDetails.morph_to_info).label}>{getTransferDetails(transferDetails.morph_to_info).label}</span>
+                      <span className="text-xs text-foreground block" title={getTransferDetails(transferDetails.morph_to_info).label}>{getTransferDetails(transferDetails.morph_to_info).label}</span>
                       <span className="text-[10px] text-muted-foreground block">{getTransferDetails(transferDetails.morph_to_info).type}</span>
-                     
+
                     </div>
                   </div>
                 </div>

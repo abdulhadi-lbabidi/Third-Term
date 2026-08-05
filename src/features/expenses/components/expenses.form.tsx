@@ -234,7 +234,7 @@ function getExpenseableCurrencyId(expense?: Expense | null): number | undefined 
 
 function getFundUserRole(expense?: Expense | null): string {
   // مستخدم الصندوق فقط من expenseable_info.user_info
-  return getExpenseUserFundUserInfo(expense)?.role_type ?? '';
+  return normalizeRole(getExpenseUserFundUserInfo(expense)?.role_type);
 }
 
 function getFundUserId(expense?: Expense | null): number | undefined {
@@ -266,14 +266,19 @@ function getUserFundId(expense?: Expense | null): number | undefined {
   return details?.fund_id ?? details?.fund?.id;
 }
 
+function normalizeRole(role?: string): string {
+  if (!role) return '';
+  if (role === 'craftsmen') return 'craftsman';
+  return role;
+}
+
 function getExpenseUserRole(expense?: Expense | null): string {
-  // المستخدم السفلي فقط من كائن user الأعلى
   if (expense?.user_role) {
-    return expense.user_role;
+    return normalizeRole(expense.user_role);
   }
 
   if (expense?.user && typeof expense.user === 'object') {
-    return expense.user.role_type ?? '';
+    return normalizeRole(expense.user.role_type);
   }
 
   return '';
@@ -1254,6 +1259,30 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                 <Textarea rows={4} {...field} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="is_posted"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-border p-4 shadow-sm rtl:space-x-reverse bg-muted/10">
+              <FormControl>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                  />
+                  <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-slate-800"></div>
+                </label>
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
+                  مرحل (إرسال المصروف للصندوق المباشر)
+                </FormLabel>
+              </div>
             </FormItem>
           )}
         />

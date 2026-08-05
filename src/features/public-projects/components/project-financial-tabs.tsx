@@ -1,6 +1,6 @@
-import { LayoutGrid, TrendingUp, TrendingDown, FileText, ArrowLeftRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, FileText, ArrowLeftRight } from 'lucide-react';
 
-type TabId = 'overview' | 'revenues' | 'expenses' | 'invoices' | 'transfers';
+type TabId = 'revenues' | 'expenses' | 'invoices' | 'transfers';
 
 type ProjectFinancialTabsProps = {
   activeTab: TabId;
@@ -15,7 +15,6 @@ type ProjectFinancialTabsProps = {
 
 export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: ProjectFinancialTabsProps) {
   const tabs = [
-    { id: 'overview' as const, label: 'نظرة عامة', icon: LayoutGrid, count: null },
     { id: 'revenues' as const, label: 'الإيرادات', icon: TrendingUp, count: counts.revenues },
     { id: 'expenses' as const, label: 'المصروفات', icon: TrendingDown, count: counts.expenses },
     { id: 'invoices' as const, label: 'الفواتير', icon: FileText, count: counts.invoices },
@@ -40,7 +39,7 @@ export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: Project
             >
               <tab.icon className="size-3.5 shrink-0" />
               <span className="whitespace-nowrap">{tab.label}</span>
-              {tab.count !== null && (
+              {/* {tab.count !== null && (
                 <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${
                   isActive
                     ? 'bg-primary/10 border-primary/20 text-primary'
@@ -48,7 +47,7 @@ export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: Project
                 }`}>
                   {tab.count}
                 </span>
-              )}
+              )} */}
               <span
                 className={`absolute inset-x-2.5 bottom-0 h-0.5 rounded-full transition-colors ${
                   isActive ? 'bg-primary' : 'bg-transparent'
