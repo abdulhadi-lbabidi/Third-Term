@@ -15,11 +15,17 @@ type ExpensesDialogProps = {
     company_fund_id?: number;
     fund_user_role?: string;
   };
+  fixedFundCurrencies?: {
+    id: number;
+    currency: string;
+    symbol: string;
+    balance: string;
+  }[];
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
   loading?: boolean;
 };
 
-export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: ExpensesDialogProps) {
+export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading, fixedFundCurrencies }: ExpensesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -31,6 +37,7 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
             <ExpensesForm
               defaultValues={defaultValues}
               fixedValues={fixedValues}
+              fixedFundCurrencies={fixedFundCurrencies}
               onSubmit={async (data) => {
                 await onSubmit(data);
                 onOpenChange(false);

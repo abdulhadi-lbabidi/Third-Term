@@ -127,6 +127,19 @@ function getCurrencyLabel(currency: { currency: string; balance: string }) {
   return `${currency.currency} - ${currency.balance}`;
 }
 
+function renderCurrencyValue(currency: { currency: string; balance: string }) {
+  const bal = Number(currency.balance) || 0;
+  const isPositive = bal > 0;
+  return (
+    <span className="flex items-center gap-1.5 font-sans">
+      <span>{currency.currency} -</span>
+      <span className={isPositive ? 'text-success font-bold font-mono' : 'text-destructive font-bold font-mono'}>
+        {currency.balance}
+      </span>
+    </span>
+  );
+}
+
 /** القيمة المرسلة في expenseable_id — من حقل expenseable_id وليس id العملة */
 function getCurrencyExpenseableId(currency: { id: number; expenseable_id?: number; pivot?: { id: number } }) {
   return currency.expenseable_id ?? currency.pivot?.id ?? currency.id;
@@ -317,8 +330,9 @@ function formatNumberWithCommas(value: unknown): string {
   return parts.join('.');
 }
 
-export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: ExpensesFormProps) {
+export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, loading }: ExpensesFormProps) {
   const navigate = useNavigate();
+  const isUserFundFixed = Boolean(fixedValues?.user_fund_id);
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
@@ -326,8 +340,8 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       expenseable_type: defaultValues?.expenseable_type ?? (fixedValues?.source ? sourceToExpenseableType[fixedValues.source] : sourceToExpenseableType.company_fund),
       expenseable_id: getExpenseableCurrencyId(defaultValues),
       company_fund_id: fixedValues?.company_fund_id ?? defaultValues?.expenseable_info?.company_fund_id ?? undefined,
-      user_role: getExpenseUserRole(defaultValues),
-      user_id: getExpenseUserId(defaultValues),
+      user_role: fixedValues?.fund_user_role ?? getExpenseUserRole(defaultValues),
+      user_id: fixedValues?.user_id ?? getExpenseUserId(defaultValues),
       fund_user_role: fixedValues?.fund_user_role ?? getFundUserRole(defaultValues),
       fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
       user_fund_id: fixedValues?.user_fund_id ?? getUserFundId(defaultValues),
@@ -452,7 +466,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       const list = (res as any)?.data ?? res;
       return list as RoleUser[];
     },
-    enabled: Boolean(userRole),
+    enabled: Boolean(userRole) && !fixedValues?.user_id,
   });
   const roleUsers = roleUsersQuery.data ?? [];
 
@@ -467,7 +481,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       const list = (res as any)?.data ?? res;
       return list as RoleUser[];
     },
-    enabled: source === 'user_fund' && Boolean(fundUserRole),
+    enabled: source === 'user_fund' && Boolean(fundUserRole) && !fixedValues?.user_id,
   });
   const fundRoleUsers = fundRoleUsersQuery.data ?? [];
 
@@ -481,7 +495,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       const user = await usersApi.getUserByRole(fundUserRole, fundUserId);
       return user as FundUserRecord;
     },
-    enabled: source === 'user_fund' && Boolean(fundUserRole) && Boolean(fundUserId),
+    enabled: source === 'user_fund' && Boolean(fundUserRole) && Boolean(fundUserId) && !fixedFundCurrencies,
   });
   const selectedFundUserRecord = fundUserRecordQuery.data;
 
@@ -674,6 +688,57 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     return '';
   }, [defaultValues, selectedExpenseableId, selectedUserFund]);
 
+  const userFundCurrencies = useMemo(() => {
+    if (fixedFundCurrencies) {
+      return fixedFundCurrencies;
+    }
+    return selectedUserFund?.currencies ?? [];
+  }, [fixedFundCurrencies, selectedUserFund]);
+
+  const selectedCurrency = useMemo(() => {
+    if (!selectedExpenseableId) return null;
+    let currencies: any[] = [];
+    if (source === 'company_fund') {
+      currencies = selectedCompanyFund?.currencies ?? [];
+    } else if (source === 'project_fund') {
+      currencies = selectedProjectFundCurrencies;
+    } else if (source === 'user_fund') {
+      currencies = userFundCurrencies;
+    }
+    const found = currencies.find((c) => getCurrencyExpenseableId(c) === selectedExpenseableId);
+    if (found) return found;
+
+    if (source === 'company_fund' && defaultValues?.expenseable_info?.id === selectedExpenseableId) {
+      const details = defaultValues.expenseable_info?.details;
+      if (details && typeof details === 'object' && 'currency' in details) {
+        return {
+          currency: (details as any).currency?.currency || '',
+          balance: String((details as any).balance ?? '0'),
+        };
+      }
+    }
+    if (source === 'project_fund') {
+      const details = getExpenseProjectFundDetails(defaultValues);
+      if (details?.id === selectedExpenseableId && details.currency) {
+        return {
+          currency: details.currency.currency,
+          balance: String(details.balance ?? '0'),
+        };
+      }
+    }
+    if (source === 'user_fund') {
+      const details = getExpenseUserFundDetails(defaultValues);
+      if (details?.id === selectedExpenseableId && details.currency) {
+        return {
+          currency: details.currency.currency,
+          balance: String(details.balance ?? '0'),
+        };
+      }
+    }
+
+    return null;
+  }, [selectedExpenseableId, source, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund, defaultValues]);
+
 
   useEffect(() => {
     if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
@@ -707,19 +772,38 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     <Form {...form}>
       <form
         className="space-y-4"
-        onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(
-            toExpenseApiPayload({
-              expenseable_type: sourceToExpenseableType[values.source],
-              expenseable_id: values.expenseable_id ?? 0,
-              description: values.description,
-              amount: values.amount,
-              is_posted: values.is_posted,
-              user_id: values.user_id ?? 0,
-              created_by: values.created_by ?? 1,
-            }),
-          );
-        })}
+        onSubmit={form.handleSubmit(
+          async (values) => {
+            const bal = selectedCurrency ? Number(selectedCurrency.balance) || 0 : null;
+            if (bal !== null && bal <= 0) {
+              form.setError('expenseable_id', {
+                type: 'custom',
+                message: 'رصيد الصندوق 0 أو أقل، غير مسموح بإضافة المصروف',
+              });
+              return;
+            }
+            const urlUserId = (() => {
+              const match = window.location.pathname.match(/\/users\/view\/[^/]+\/(\d+)/);
+              return match ? Number(match[1]) : undefined;
+            })();
+            const finalUserId = values.user_id || fixedValues?.user_id || urlUserId || 0;
+
+            await onSubmit(
+              toExpenseApiPayload({
+                expenseable_type: sourceToExpenseableType[values.source],
+                expenseable_id: values.expenseable_id ?? 0,
+                description: values.description,
+                amount: values.amount,
+                is_posted: values.is_posted,
+                user_id: finalUserId,
+                created_by: values.created_by ?? 1,
+              }),
+            );
+          },
+          (errors) => {
+            console.log('Validation Errors:', errors);
+          }
+        )}
       >
         {!fixedValues?.source && (
           <FormField
@@ -814,14 +898,19 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                   <FormLabel>عملة الصندوق</FormLabel>
                   <Select
                     value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.clearErrors('expenseable_id');
+                    }}
                     disabled={!derivedCompanyFundId}
                   >
                     <FormControl>
                       <SelectTrigger disabled={!derivedCompanyFundId}>
-                        {field.value
-                          ? (selectedCompanyCurrencyName || 'اختر العملة')
-                          : <SelectValue placeholder="اختر العملة" />}
+                        {selectedCurrency ? (
+                          renderCurrencyValue(selectedCurrency)
+                        ) : (
+                          <SelectValue placeholder="اختر العملة" />
+                        )}
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -829,7 +918,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                         const value = getCurrencyExpenseableId(currency);
                         return (
                           <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                            {getCurrencyLabel(currency)}
+                            {renderCurrencyValue(currency)}
                           </SelectItem>
                         );
                       })}
@@ -930,14 +1019,19 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                   <FormLabel>عملة الصندوق</FormLabel>
                   <Select
                     value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.clearErrors('expenseable_id');
+                    }}
                     disabled={!derivedProjectFundId}
                   >
                     <FormControl>
                       <SelectTrigger disabled={!derivedProjectFundId}>
-                        {field.value
-                          ? (selectedProjectCurrencyName || 'اختر العملة')
-                          : <SelectValue placeholder="اختر العملة" />}
+                        {selectedCurrency ? (
+                          renderCurrencyValue(selectedCurrency)
+                        ) : (
+                          <SelectValue placeholder="اختر العملة" />
+                        )}
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -945,7 +1039,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                         const value = getCurrencyExpenseableId(currency);
                         return (
                           <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                            {getCurrencyLabel(currency)}
+                            {renderCurrencyValue(currency)}
                           </SelectItem>
                         );
                       })}
@@ -1074,25 +1168,30 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                     <FormLabel>عملة الصندوق</FormLabel>
                     <Select
                       value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => {
+                        field.onChange(Number(value));
+                        form.clearErrors('expenseable_id');
+                      }}
                       disabled={!userFundId}
                     >
                       <FormControl>
                         <SelectTrigger disabled={!userFundId}>
-                          {field.value
-                            ? (selectedUserCurrencyName || 'اختر العملة')
-                            : <SelectValue placeholder="اختر العملة" />}
+                          {selectedCurrency ? (
+                            renderCurrencyValue(selectedCurrency)
+                          ) : (
+                            <SelectValue placeholder="اختر العملة" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {selectedUserFund?.currencies?.map((currency) => {
+                        {userFundCurrencies.map((currency) => {
                           const value = getCurrencyExpenseableId(currency);
                           return (
                             <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                              {getCurrencyLabel(currency)}
+                              {renderCurrencyValue(currency)}
                             </SelectItem>
                           );
-                        }) ?? null}
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -1111,31 +1210,62 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                   <FormLabel>عملة الصندوق</FormLabel>
                   <Select
                     value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onValueChange={(value) => {
+                      field.onChange(Number(value));
+                      form.clearErrors('expenseable_id');
+                    }}
                     disabled={!userFundId}
                   >
                     <FormControl>
                       <SelectTrigger disabled={!userFundId}>
-                        {field.value
-                          ? (selectedUserCurrencyName || 'اختر العملة')
-                          : <SelectValue placeholder="اختر العملة" />}
+                        {selectedCurrency ? (
+                          renderCurrencyValue(selectedCurrency)
+                        ) : (
+                          <SelectValue placeholder="اختر العملة" />
+                        )}
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {selectedUserFund?.currencies?.map((currency) => {
+                      {userFundCurrencies.map((currency) => {
                         const value = getCurrencyExpenseableId(currency);
                         return (
                           <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                            {getCurrencyLabel(currency)}
+                            {renderCurrencyValue(currency)}
                           </SelectItem>
                         );
-                      }) ?? null}
+                      })}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {isUserFundFixed && (
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>المبلغ</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={formatNumberWithCommas(field.value)}
+                        onChange={(event) => {
+                          const raw = event.target.value.replace(/,/g, '');
+                          if (/^\d*\.?\d*$/.test(raw)) {
+                            field.onChange(raw === '' ? '' : Number(raw));
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
         ) : null}
 
@@ -1223,7 +1353,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               )}
             />
           </div>
-        ) : (
+        ) : !isUserFundFixed ? (
           <FormField
             control={form.control}
             name="amount"
@@ -1247,7 +1377,7 @@ export function ExpensesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               </FormItem>
             )}
           />
-        )}
+        ) : null}
 
         <FormField
           control={form.control}

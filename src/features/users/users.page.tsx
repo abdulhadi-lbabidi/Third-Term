@@ -113,6 +113,10 @@ export function UsersPage() {
     navigate(`/users/view/${activeRole}/${row.id}?tab=${activeRole}`);
   }
 
+  function handleFunds(row: UsersTabRecord) {
+    navigate(`/users/view/${activeRole}/${row.id}?tab=funds`);
+  }
+
   const columns = useMemo(
     () => [
       { header: 'الاسم', cell: (row: UsersTabRecord) => row.user.name },
@@ -153,7 +157,7 @@ export function UsersPage() {
         icon={Users}
         tabs={USER_TABS}
         defaultTab={activeRole}
-        action={
+        action = {
           <Button>
             <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
           </Button>
@@ -170,6 +174,7 @@ export function UsersPage() {
             loading={usersQuery.isFetching}
             onDelete={handleDelete}
             onView={handleEdit}
+            onFunds={handleFunds}
           />
 
           <SimplePagination

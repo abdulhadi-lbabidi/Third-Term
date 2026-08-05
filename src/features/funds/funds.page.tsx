@@ -259,7 +259,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               setAttachDialogOpen(true);
             }}
             extraFixedValues={{
-              user_id: currentFund.user?.id,
+              user_id: resolvedUserId,
               user_fund_id: currentFund.id,
               fund_user_role: userRole ?? undefined,
             }}

@@ -458,6 +458,7 @@ export function GenericFundDetails({
             [fundIdField]: fundId,
             ...extraFixedValues,
           }}
+          fixedFundCurrencies={fundCurrencies}
         />
       )}
 

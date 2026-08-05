@@ -20,7 +20,9 @@ export const expenseFormSchema = z
     created_by: z.number().optional(),
   })
   .superRefine((values, ctx) => {
-    if (!values.user_role) {
+    const isUsersPath = typeof window !== 'undefined' && window.location.pathname.includes('/users');
+
+    if (!isUsersPath && !values.user_role) {
       ctx.addIssue({
         code: 'custom',
         path: ['user_role'],
@@ -28,7 +30,7 @@ export const expenseFormSchema = z
       });
     }
 
-    if (!values.user_id) {
+    if (!isUsersPath && !values.user_id) {
       ctx.addIssue({
         code: 'custom',
         path: ['user_id'],

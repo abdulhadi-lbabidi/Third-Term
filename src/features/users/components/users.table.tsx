@@ -1,4 +1,5 @@
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
+import { Wallet } from 'lucide-react';
 
 type UsersTableProps<T> = {
   columns: DataTableColumn<T>[];
@@ -16,6 +17,7 @@ export function UsersTable<T>({
   loading,
   onDelete,
   onView,
+  onFunds,
 }: UsersTableProps<T>) {
 
   return (
@@ -33,6 +35,13 @@ export function UsersTable<T>({
         onDelete,
         onView,
         viewLabel: 'تفاصيل المستخدم',
+        extraActions: onFunds ? [
+          {
+            label: 'صناديقي',
+            icon: <Wallet className="size-4" />,
+            onClick: onFunds,
+          }
+        ] : undefined,
       }}
     />
   );
