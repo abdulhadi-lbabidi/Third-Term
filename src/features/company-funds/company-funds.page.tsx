@@ -109,6 +109,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
       setSelectedCompanyFundCurrency(null);
     },
     onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تعديل العملة');
     },
   });
 
@@ -154,6 +155,20 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               }
             />
           )}
+          {isTab && (
+            <div className="flex justify-end pb-4">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setSelectedCompanyFund(null);
+                  setDialogOpen(true);
+                }}
+              >
+                إضافة صندوق شركة
+              </Button>
+            </div>
+          )}
           <div className='flex bg-white '>
             {companyFundsQuery.isLoading ? (
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -168,16 +183,6 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                 <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                   لم يتم إضافة أي صناديق شركة بعد.
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCompanyFund(null);
-                    setDialogOpen(true);
-                  }}
-                >
-                  إضافة صندوق شركة
-                </Button>
               </div>
             ) : (
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

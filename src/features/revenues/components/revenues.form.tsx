@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -147,6 +147,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const defaultReceiverId = typeof defaultReceiver === 'object'
     ? Number(defaultReceiver.user?.id ?? defaultReceiver.id ?? 0) || undefined
     : Number(defaultReceiver ?? 0) || undefined;
+  const [assignReceiver, setAssignReceiver] = useState(() => Boolean(defaultReceiverId));
   const receiverRoleCandidates = [
     defaultValues?.received_by_role,
     typeof defaultReceiver === 'object' ? defaultReceiver.user?.role : undefined,
@@ -222,7 +223,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const projectsQuery = useQuery({
     queryKey: ['revenues', 'projects'] as const,
     queryFn: () => projectsApi.getProjects(),
-    enabled: source === 'project_fund',
+    enabled: source === 'project_fund' && !fixedValues?.project_id,
   });
   const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
@@ -253,7 +254,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       const list = (res as any)?.data ?? res;
       return list as RoleUser[];
     },
-    enabled: Boolean(receivedByRole),
+    enabled: assignReceiver && Boolean(receivedByRole),
   });
   const receiverRoleUsers = receiverRoleUsersQuery.data ?? [];
 
@@ -270,7 +271,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         )
       )?.role ?? '';
     },
-    enabled: Boolean(defaultReceiverId) && !Boolean(receivedByRole),
+    enabled: assignReceiver && Boolean(defaultReceiverId) && !Boolean(receivedByRole),
   });
 
   useEffect(() => {
@@ -419,8 +420,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               statement: values.statement,
               amount: values.amount,
               is_posted: values.is_posted,
-              user_id: values.received_by ?? 1,
-              received_by: values.received_by ?? 1,
+              user_id: values.user_id ?? 1,
+              ...(assignReceiver && values.received_by ? { received_by: values.received_by } : {}),
             });
           },
           (errors) => {
@@ -608,7 +609,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
 
         {/* Receiver Fields (المستلم) */}
-        <div className="space-y-4 px-2">
+        <div className={assignReceiver ? 'space-y-4 px-2' : 'hidden'}>
           <h3 className="font-semibold text-slate-800">تفاصيل المستلم</h3>
           <div className="grid gap-4 md:grid-cols-2 items-start">
             <FormField
@@ -892,6 +893,30 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         </div>
 
+        <div className="flex items-center gap-2 px-2 pt-2">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={assignReceiver}
+            onClick={() => {
+              const next = !assignReceiver;
+              setAssignReceiver(next);
+              if (!next) {
+                form.setValue('received_by_role', '');
+                form.setValue('received_by', undefined);
+                form.clearErrors(['received_by_role', 'received_by']);
+              }
+            }}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${assignReceiver ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+          >
+            <span className={`absolute top-0.5 size-5 rounded-full border border-border bg-white shadow-sm transition-all ${assignReceiver ? 'start-[22px]' : 'start-0.5'}`} />
+          </button>
+          <div>
+            <p className="text-sm font-medium">ربط الإيراد بمستلم</p>
+            <p className="text-xs text-muted-foreground">فعّل هذا الخيار إذا كان الإيراد مرتبطًا بمستلم محدد.</p>
+          </div>
+        </div>
+
         {/* Switch and Submit at the bottom */}
         <div className="flex items-center justify-between pt-4">
           <FormField
@@ -907,7 +932,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                       checked={field.value}
                       onChange={(e) => field.onChange(e.target.checked)}
                     />
-                    <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-slate-800"></div>
+                    <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
                   </label>
                 </FormControl>
                 <div className="space-y-1 leading-none">

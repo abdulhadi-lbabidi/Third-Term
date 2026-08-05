@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, type Control } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -34,6 +34,7 @@ import type { UserRole } from '@/features/users/types';
 import { expenseFormSchema, expenseSourceLabels, type ExpenseFormValues } from '../schemas/expenses.schema';
 import { toExpenseApiPayload } from '../expenses.payload';
 import type { CreateExpensePayload, Expense, ExpenseProjectFundCurrencyDetails, ExpenseSource, ExpenseUserFundCurrencyDetails, ExpenseableType } from '../types';
+import { Plus } from 'lucide-react';
 
 type ExpensesFormProps = {
   defaultValues?: Expense | null;
@@ -315,24 +316,69 @@ function getExpenseCreatedById(expense?: Expense | null): number {
     return expense.created_by.id;
   }
 
-  try {
-    const raw = localStorage.getItem('user_info');
-    if (raw) {
-      const user = JSON.parse(raw);
-      return Number(user?.id) || 1;
-    }
-  } catch {
-  }
-
   return 1;
 }
 
 function formatNumberWithCommas(value: unknown): string {
   if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
-  const str = String(value).replace(/,/g, '');
-  const parts = str.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
+  const [integer, decimal] = String(value).replace(/,/g, '').split('.');
+  const formatted = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return decimal === undefined ? formatted : `${formatted}.${decimal}`;
+}
+
+function ExpenseAmountField({ control, className }: { control: Control<ExpenseFormValues>; className?: string }) {
+  return (
+    <FormField control={control} name="amount" render={({ field }) => (
+      <FormItem className={className}>
+        <FormLabel>المبلغ</FormLabel>
+        <FormControl>
+          <Input type="text" inputMode="decimal" value={formatNumberWithCommas(field.value)} onChange={(event) => {
+            const raw = event.target.value.replace(/,/g, '');
+            if (/^\d*\.?\d*$/.test(raw)) field.onChange(raw === '' ? '' : Number(raw));
+          }} />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )} />
+  );
+}
+
+type ExpenseCurrencyOption = {
+  id: number;
+  expenseable_id?: number;
+  pivot?: { id: number };
+  currency: string;
+  balance: string;
+};
+
+function ExpenseCurrencyField({ control, currencies, selectedCurrency, disabled, className }: {
+  control: Control<ExpenseFormValues>;
+  currencies: ExpenseCurrencyOption[];
+  selectedCurrency: ExpenseCurrencyOption | null;
+  disabled: boolean;
+  className?: string;
+}) {
+  return (
+    <FormField control={control} name="expenseable_id" render={({ field }) => (
+      <FormItem className={className}>
+        <FormLabel>عملة الصندوق</FormLabel>
+        <Select value={field.value ? String(field.value) : ''} onValueChange={(value) => field.onChange(Number(value))} disabled={disabled}>
+          <FormControl>
+            <SelectTrigger disabled={disabled}>
+              {selectedCurrency ? renderCurrencyValue(selectedCurrency) : <SelectValue placeholder="اختر العملة" />}
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            {currencies.map((currency) => {
+              const value = getCurrencyExpenseableId(currency);
+              return <SelectItem key={`${currency.id}-${value}`} value={String(value)}>{renderCurrencyValue(currency)}</SelectItem>;
+            })}
+          </SelectContent>
+        </Select>
+        <FormMessage />
+      </FormItem>
+    )} />
+  );
 }
 
 export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, loading }: ExpensesFormProps) {
@@ -358,6 +404,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
       created_by: getExpenseCreatedById(defaultValues),
     },
   });
+  const [assignUser, setAssignUser] = useState(() => Boolean(fixedValues?.user_id || getExpenseUserId(defaultValues)));
 
   useEffect(() => {
     if (!defaultValues) {
@@ -471,7 +518,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
       const list = (res as any)?.data ?? res;
       return list as RoleUser[];
     },
-    enabled: Boolean(userRole) && !fixedValues?.user_id,
+    enabled: assignUser && Boolean(userRole) && !fixedValues?.user_id,
   });
   const roleUsers = roleUsersQuery.data ?? [];
 
@@ -735,17 +782,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               const match = window.location.pathname.match(/\/users\/view\/[^/]+\/(\d+)/);
               return match ? Number(match[1]) : undefined;
             })();
-            const finalUserId = values.user_id || fixedValues?.user_id || urlUserId || 0;
-            const currentUserId = (() => {
-              try {
-                const raw = localStorage.getItem('user_info');
-                if (raw) {
-                  const user = JSON.parse(raw);
-                  return Number(user?.id) || 1;
-                }
-              } catch {}
-              return 1;
-            })();
+            const finalUserId = assignUser ? (values.user_id || fixedValues?.user_id || urlUserId) : undefined;
 
             await onSubmit(
               toExpenseApiPayload({
@@ -755,7 +792,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                 amount: values.amount,
                 is_posted: values.is_posted,
                 user_id: finalUserId,
-                created_by: values.created_by ?? currentUserId,
+                created_by: values.created_by ?? 1,
               }),
             );
           },
@@ -849,44 +886,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="expenseable_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>عملة الصندوق</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.clearErrors('expenseable_id');
-                    }}
-                    disabled={!derivedCompanyFundId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!derivedCompanyFundId}>
-                        {selectedCurrency ? (
-                          renderCurrencyValue(selectedCurrency)
-                        ) : (
-                          <SelectValue placeholder="اختر العملة" />
-                        )}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(selectedCompanyFund?.currencies ?? []).map((currency) => {
-                        const value = getCurrencyExpenseableId(currency);
-                        return (
-                          <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                            {renderCurrencyValue(currency)}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ExpenseCurrencyField control={form.control} currencies={selectedCompanyFund?.currencies ?? []} selectedCurrency={selectedCurrency} disabled={!derivedCompanyFundId} />
           </div>
         ) : null}
 
@@ -970,66 +970,9 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem className="md:order-3">
-                  <FormLabel>المبلغ</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={formatNumberWithCommas(field.value)}
-                      onChange={(event) => {
-                        const raw = event.target.value.replace(/,/g, '');
-                        if (/^\d*\.?\d*$/.test(raw)) field.onChange(raw === '' ? '' : Number(raw));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ExpenseAmountField control={form.control} className="md:order-3" />
 
-            <FormField
-              control={form.control}
-              name="expenseable_id"
-              render={({ field }) => (
-                <FormItem className="md:order-2">
-                  <FormLabel>عملة الصندوق</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.clearErrors('expenseable_id');
-                    }}
-                    disabled={!derivedProjectFundId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!derivedProjectFundId}>
-                        {selectedCurrency ? (
-                          renderCurrencyValue(selectedCurrency)
-                        ) : (
-                          <SelectValue placeholder="اختر العملة" />
-                        )}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {selectedProjectFundCurrencies.map((currency) => {
-                        const value = getCurrencyExpenseableId(currency);
-                        return (
-                          <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                            {renderCurrencyValue(currency)}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ExpenseCurrencyField control={form.control} currencies={selectedProjectFundCurrencies} selectedCurrency={selectedCurrency} disabled={!derivedProjectFundId} className="md:order-2" />
           </div>
         ) : null}
 
@@ -1141,116 +1084,20 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="expenseable_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>عملة الصندوق</FormLabel>
-                    <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => {
-                        field.onChange(Number(value));
-                        form.clearErrors('expenseable_id');
-                      }}
-                      disabled={!userFundId}
-                    >
-                      <FormControl>
-                        <SelectTrigger disabled={!userFundId}>
-                          {selectedCurrency ? (
-                            renderCurrencyValue(selectedCurrency)
-                          ) : (
-                            <SelectValue placeholder="اختر العملة" />
-                          )}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {userFundCurrencies.map((currency) => {
-                          const value = getCurrencyExpenseableId(currency);
-                          return (
-                            <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                              {renderCurrencyValue(currency)}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <ExpenseCurrencyField control={form.control} currencies={userFundCurrencies} selectedCurrency={selectedCurrency} disabled={!userFundId} />
             </div>
           </div>
         ) : source === 'user_fund' ? (
           <div className={`grid items-start gap-4 ${fixedValues?.user_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
-            <FormField
-              control={form.control}
-              name="expenseable_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>عملة الصندوق</FormLabel>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => {
-                      field.onChange(Number(value));
-                      form.clearErrors('expenseable_id');
-                    }}
-                    disabled={!userFundId}
-                  >
-                    <FormControl>
-                      <SelectTrigger disabled={!userFundId}>
-                        {selectedCurrency ? (
-                          renderCurrencyValue(selectedCurrency)
-                        ) : (
-                          <SelectValue placeholder="اختر العملة" />
-                        )}
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {userFundCurrencies.map((currency) => {
-                        const value = getCurrencyExpenseableId(currency);
-                        return (
-                          <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                            {renderCurrencyValue(currency)}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ExpenseCurrencyField control={form.control} currencies={userFundCurrencies} selectedCurrency={selectedCurrency} disabled={!userFundId} />
 
             {isUserFundFixed && (
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>المبلغ</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={formatNumberWithCommas(field.value)}
-                        onChange={(event) => {
-                          const raw = event.target.value.replace(/,/g, '');
-                          if (/^\d*\.?\d*$/.test(raw)) {
-                            field.onChange(raw === '' ? '' : Number(raw));
-                          }
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <ExpenseAmountField control={form.control} />
             )}
           </div>
         ) : null}
 
-        {!fixedValues?.user_id ? (
+        {!fixedValues?.user_id && assignUser ? (
           <div className="grid gap-4 md:grid-cols-2 items-start">
             <FormField
               control={form.control}
@@ -1310,62 +1157,22 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               )}
             />
 
-            {source !== 'project_fund' && <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المبلغ</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={formatNumberWithCommas(field.value)}
-                      onChange={(event) => {
-                        const raw = event.target.value.replace(/,/g, '');
-                        if (/^\d*\.?\d*$/.test(raw)) {
-                          field.onChange(raw === '' ? '' : Number(raw));
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />}
+            {source !== 'project_fund' && <ExpenseAmountField control={form.control} />}
           </div>
         ) : !isUserFundFixed && source !== 'project_fund' ? (
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>المبلغ</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={formatNumberWithCommas(field.value)}
-                    onChange={(event) => {
-                      const raw = event.target.value.replace(/,/g, '');
-                      if (/^\d*\.?\d*$/.test(raw)) {
-                        field.onChange(raw === '' ? '' : Number(raw));
-                      }
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <ExpenseAmountField control={form.control} />
         ) : null}
+
+        {!assignUser && source !== 'project_fund' && !isUserFundFixed && (
+          <ExpenseAmountField control={form.control} />
+        )}
 
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>الوصف</FormLabel>
+              <FormLabel>البيان</FormLabel>
               <FormControl>
                 <Textarea rows={4} {...field} />
               </FormControl>
@@ -1373,6 +1180,35 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
             </FormItem>
           )}
         />
+        {!fixedValues?.user_id && (
+          <div className="flex items-center justify-start gap-2 px-3 py-2">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={assignUser}
+              onClick={() => {
+                setAssignUser((current) => {
+                  const next = !current;
+                  if (!next) {
+                    form.setValue('user_role', '');
+                    form.setValue('user_id', undefined);
+                    form.clearErrors(['user_role', 'user_id']);
+                  }
+                  return next;
+                });
+              }}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${assignUser ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+            >
+              <span className={`absolute top-0.5 size-5 rounded-full border border-border bg-white shadow-sm transition-all ${assignUser ? 'start-[22px]' : 'start-0.5'}`} />
+            </button>
+
+            <div>
+              <p className="text-sm font-medium">ربط المصروف بمستخدم</p>
+              <p className="text-xs text-muted-foreground">فعّل هذا الخيار إذا كان المصروف مرتبطًا بمستخدم محدد.</p>
+            </div>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="is_posted"
@@ -1382,11 +1218,11 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                 <label className="relative inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    className="peer sr-only"
+                    className="peer sr-only "
                     checked={field.value}
                     onChange={(e) => field.onChange(e.target.checked)}
                   />
-                  <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-slate-800"></div>
+                  <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
                 </label>
               </FormControl>
               <div className="space-y-1 leading-none">
@@ -1398,12 +1234,13 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
           )}
         />
 
-        <div className="flex items-center justify-start gap-3 pt-2">
+        <div className="flex items-center justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             إلغاء
           </Button>
 
           <Button type="submit" disabled={loading}>
+            <Plus className='w-6 h-6' />
             {loading
               ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')
               : (defaultValues?.id ? 'تحديث المصروف' : 'إضافة')}
