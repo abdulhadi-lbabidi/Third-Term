@@ -414,7 +414,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               statement: values.statement,
               amount: values.amount,
               is_posted: values.is_posted,
-              user_id: values.user_id ?? 1,
+              user_id: values.received_by ?? 1,
               received_by: values.received_by ?? 1,
             });
           },
@@ -443,20 +443,20 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                           variant={selected ? 'default' : 'outline'}
                           className="h-16 justify-start gap-3"
                           onClick={() => {
-                      const nextSource = item;
-                      const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
-                      field.onChange(nextSource);
-                      form.setValue('revenueable_type', nextRevenueableType);
-                      form.setValue('revenueable_id', undefined);
-                      form.setValue('company_fund_id', undefined);
-                      form.setValue('fund_user_role', '');
-                      form.setValue('fund_user_id', undefined);
-                      form.setValue('user_fund_id', undefined);
-                      form.setValue('project_fund_id', undefined);
+                            const nextSource = item;
+                            const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
+                            field.onChange(nextSource);
+                            form.setValue('revenueable_type', nextRevenueableType);
+                            form.setValue('revenueable_id', undefined);
+                            form.setValue('company_fund_id', undefined);
+                            form.setValue('fund_user_role', '');
+                            form.setValue('fund_user_id', undefined);
+                            form.setValue('user_fund_id', undefined);
+                            form.setValue('project_fund_id', undefined);
 
-                      if (nextSource !== 'project_fund') {
-                        form.setValue('project_id', undefined);
-                      }
+                            if (nextSource !== 'project_fund') {
+                              form.setValue('project_id', undefined);
+                            }
                           }}
                         >
                           <Icon className="size-5" />

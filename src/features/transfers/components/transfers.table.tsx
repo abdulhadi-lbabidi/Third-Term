@@ -1,5 +1,6 @@
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Transfer } from '../types';
+import { Link } from 'react-router-dom';
 
 type CurrentFundInfo = {
   id: number;
@@ -53,6 +54,32 @@ function getFundDetailsLabel(info?: Transfer['morph_from_info'], currentFund?: C
   return `${typeLabel}: ${name}${currencyStr}`;
 }
 
+function renderFundLink(info?: Transfer['morph_from_info'], currentFund?: CurrentFundInfo) {
+  if (!info) return '-';
+  const label = getFundDetailsLabel(info, currentFund);
+  
+  const details = info.details;
+  if (!details) return <span>{label}</span>;
+  
+  const fundId = details.company_fund_id ?? details.project_fund_id ?? details.fund_id;
+  if (!fundId) return <span>{label}</span>;
+  
+  let tab = '';
+  if (info.type === 'project_fund') {
+    tab = 'project';
+  } else if (info.type === 'user_fund' || info.type === 'currency_fund') {
+    tab = 'users';
+  }
+  
+  const url = `/funds?${tab ? `tab=${tab}&` : ''}fundId=${fundId}&fundTab=revenues`;
+  
+  return (
+    <Link to={url} className="text-primary hover:underline font-medium">
+      {label}
+    </Link>
+  );
+}
+
 function getTextLabel(value: unknown) {
   if (typeof value === 'string' && value.trim().length) {
     return value;
@@ -88,8 +115,8 @@ export function TransfersTable({ data, loading, onEdit, onDelete, currentFund }:
         </span>
       ),
     },
-    ...(!currentFund ? [{ header: 'من صندوق', cell: (row: Transfer) => getFundDetailsLabel(row.morph_from_info) }] : []),
-    { header: 'إلى صندوق', cell: (row) => getFundDetailsLabel(row.morph_to_info, currentFund) },
+    ...(!currentFund ? [{ header: 'من صندوق', cell: (row: Transfer) => renderFundLink(row.morph_from_info) }] : []),
+    { header: 'إلى صندوق', cell: (row) => renderFundLink(row.morph_to_info, currentFund) },
     { header: 'أنشئ بواسطة', cell: (row) => getTextLabel(row.created_by) },
     { header: 'تاريخ التحويل', cell: (row) => row.created_at ?? '-' },
   ];

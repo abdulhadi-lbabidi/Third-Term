@@ -39,9 +39,9 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
     onError: (error: unknown) => {
       const message =
         typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          error !== null &&
+          'response' in error &&
+          typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
           ? (error as { response: { data: { message: string } } }).response.data.message
           : 'حدث خطأ أثناء تحديث المشروع';
       toast.error(message);

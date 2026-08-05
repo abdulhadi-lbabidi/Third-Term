@@ -2,6 +2,7 @@
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Item } from '../types';
 import dayjs from 'dayjs';
+import { Badge } from '@/shared/components/ui/badge';
 
 type ItemsTableProps = {
   data: Item[];
@@ -15,26 +16,10 @@ export function ItemsTable({ data, loading, onEdit, onDelete }: ItemsTableProps)
     { header: 'اسم البند', cell: (item) => item.name },
     { header: 'الوصف', cell: (item) => item.description },
     {
-      header: 'المواد',
+      header: 'عدد المواد',
       cell: (item) => {
-        const materials = item.materials ?? [];
-
-        if (!materials.length) {
-          return <span className="text-slate-500">-</span>;
-        }
-
-        return (
-          <div className="flex flex-wrap gap-2">
-            {materials.map((material) => (
-              <span
-                key={material.id}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
-              >
-                {material.name}
-              </span>
-            ))}
-          </div>
-        );
+        const count = item.materials?.length ?? 0;
+        return <Badge variant="secondary">{count}</Badge>;
       },
     },
     { header: 'تاريخ الإنشاء', cell: (item) => (item.created_at ? dayjs(item.created_at).format('YYYY-MM-DD') : '-') },
