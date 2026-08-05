@@ -19,6 +19,6 @@ export const FileTypeMap: Record<string, string[]> = {
   [FileType.Office]: ["doc", "docx", "rtf", "odt"],
   [FileType.Spreadsheet]: ["xls", "xlsx", "csv", "ods"],
   [FileType.Presentation]: ["ppt", "pptx", "odp"],
-  [FileType.Text]: ["txt", "md", "log", "ini"],
+  [FileType.Text]: ["txt", "md", "log", "ini", "json", "js", "jsx", "ts", "tsx", "css", "scss", "html", "xml", "yaml", "yml", "php", "py", "java", "sql", "sh", "env"],
   [FileType.Archive]: ["zip", "rar", "7z", "tar", "gz", "bz2"],
 };

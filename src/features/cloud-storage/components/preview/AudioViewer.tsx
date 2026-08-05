@@ -1,5 +1,6 @@
 import type { CloudFile } from '../../types';
 import { Music } from 'lucide-react';
+import { resolveFileUrl } from '../../utils/file-utils';
 
 export const AudioViewer = ({ file }: { file: CloudFile }) => {
   if (!file.url) return <div className="p-4 text-center text-slate-500">الصوت غير متاح للعرض</div>;
@@ -10,7 +11,7 @@ export const AudioViewer = ({ file }: { file: CloudFile }) => {
         <Music className="size-10 text-pink-600" />
       </div>
       <audio controls className="w-full max-w-md">
-        <source src={file.url} />
+        <source src={resolveFileUrl(file.url) ?? undefined} />
         متصفحك لا يدعم تشغيل الصوت.
       </audio>
     </div>

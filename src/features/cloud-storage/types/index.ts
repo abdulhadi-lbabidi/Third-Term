@@ -45,3 +45,7 @@ export interface MoveFilePayload {
   target_directory_id: number;
 }
 
+export type ExplorerViewMode = 'grid' | 'list';
+export type ExplorerSortBy = 'name' | 'size' | 'date' | 'type';
+export type ExplorerSortDirection = 'asc' | 'desc';
+

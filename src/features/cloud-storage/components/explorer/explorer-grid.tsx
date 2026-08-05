@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { UploadCloud } from 'lucide-react';
-import { useDirectories, useDirectory, useMoveItems } from '../../hooks/cloud-storage.hooks';
-import type { Directory, CloudFile } from '../../types';
+import { Trash2, UploadCloud, X } from 'lucide-react';
+import { useDirectories, useDirectory, useMoveItems, useDeleteDirectory, useDeleteFile } from '../../hooks/cloud-storage.hooks';
+import type { Directory, CloudFile, ExplorerSortBy, ExplorerSortDirection, ExplorerViewMode } from '../../types';
 import { ExplorerHeader } from './explorer-header';
 import { FolderCard } from './folder.card';
 import { FileCard } from './file.card';
@@ -14,6 +14,9 @@ import { UploadFilesDialog } from './upload-files.dialog';
 import { FilePreviewDialog } from '../FilePreviewDialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { SimplePagination } from '@/components/ui/pagination';
+import { Button } from '@/shared/components/ui/button';
+import { ExplorerList } from './explorer-list';
+import { getFileType, resolveFileUrl } from '../../utils/file-utils';
 
 // ── تعريف محلي لـ PaginatedResponse في حال عدم وجوده في types ──
 interface PaginatedResponse<T> {
@@ -77,6 +80,10 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
   const [renameItem, setRenameItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
   const [deleteItem, setDeleteItem] = useState<{ item: Directory | CloudFile; type: 'folder' | 'file' } | null>(null);
   const [previewFile, setPreviewFile] = useState<CloudFile | null>(null);
+  const [viewMode, setViewMode] = useState<ExplorerViewMode>(() => (localStorage.getItem('cloud-explorer-view') as ExplorerViewMode) || 'grid');
+  const [sortBy, setSortBy] = useState<ExplorerSortBy>('name');
+  const [sortDirection, setSortDirection] = useState<ExplorerSortDirection>('asc');
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
 
   // ── Root level: GET /api/directories?paginate=1&per_page=10&page=1 ──
   const rootParams = {
@@ -101,6 +108,8 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
   } = useDirectory(currentDirId);
 
   const { mutate: moveItems } = useMoveItems();
+  const { mutateAsync: deleteDirectory } = useDeleteDirectory();
+  const { mutateAsync: deleteFile } = useDeleteFile();
 
   const isLoading = currentDirId ? isLoadingDir : isLoadingRoot;
 
@@ -181,6 +190,7 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
         setPage(1);
       }
       setSearchParams(searchParams);
+      setSelected(new Set());
 
       const index = breadcrumbs.findIndex((b) => b.id === id);
       if (index !== -1) {
@@ -200,6 +210,7 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
       searchParams.set('dirId', folder.id.toString());
       setSearchParams(searchParams);
       setSearchQuery('');
+      setSelected(new Set());
     },
     [searchParams, setSearchParams]
   );
@@ -212,8 +223,8 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
 
     const toastId = toast.loading('جاري تنزيل الملف...');
     try {
-      const sourceUrl = new URL(file.url);
-      const proxyUrl = `/file-proxy${sourceUrl.pathname}${sourceUrl.search}`;
+      const proxyUrl = resolveFileUrl(file.url);
+      if (!proxyUrl) throw new Error('Missing file URL');
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
 
@@ -253,6 +264,38 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
     [currentFiles, debouncedSearch]
   );
 
+  const sortFactor = sortDirection === 'asc' ? 1 : -1;
+  const sortedFolders = useMemo(() => [...filteredFolders].sort((a, b) => {
+    const av = sortBy === 'date' ? new Date(a.created_at).getTime() : (a.dir_name || '').toLowerCase();
+    const bv = sortBy === 'date' ? new Date(b.created_at).getTime() : (b.dir_name || '').toLowerCase();
+    return String(av).localeCompare(String(bv), 'ar', { numeric: true }) * sortFactor;
+  }), [filteredFolders, sortBy, sortFactor]);
+  const sortedFiles = useMemo(() => [...filteredFiles].sort((a, b) => {
+    const value = (file: CloudFile): string | number => {
+      if (sortBy === 'size') return Number.parseFloat(file.size) || 0;
+      if (sortBy === 'date') return new Date(file.created_at).getTime();
+      if (sortBy === 'type') return getFileType(file);
+      return file.file_name.toLowerCase();
+    };
+    return String(value(a)).localeCompare(String(value(b)), 'ar', { numeric: true }) * sortFactor;
+  }), [filteredFiles, sortBy, sortFactor]);
+
+  const changeView = (mode: ExplorerViewMode) => { setViewMode(mode); localStorage.setItem('cloud-explorer-view', mode); };
+  const selectItem = (key: string, checked: boolean) => setSelected((current) => {
+    const next = new Set(current);
+    if (checked) next.add(key);
+    else next.delete(key);
+    return next;
+  });
+  const handleBulkDelete = async () => {
+    if (!selected.size || !window.confirm(`حذف ${selected.size} عنصر محدد؟`)) return;
+    const toastId = toast.loading('جاري حذف العناصر...');
+    try {
+      await Promise.all([...selected].map((key) => { const [type, id] = key.split(':'); return type === 'folder' ? deleteDirectory(Number(id)) : deleteFile({ directoryId: currentDirId!, fileId: Number(id) }); }));
+      setSelected(new Set()); toast.success('تم حذف العناصر المحددة', { id: toastId });
+    } catch { toast.error('تعذر حذف بعض العناصر', { id: toastId }); }
+  };
+
 
 
   return (
@@ -270,13 +313,21 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        viewMode={viewMode}
+        onViewModeChange={changeView}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        sortDirection={sortDirection}
+        onToggleSortDirection={() => setSortDirection((value) => value === 'asc' ? 'desc' : 'asc')}
         onDropItem={handleDropItem}
       />
 
+      {selected.size > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm"><span className="font-medium">تم تحديد {selected.size}</span><div className="ms-auto flex gap-2"><Button size="sm" variant="destructive" onClick={handleBulkDelete}><Trash2 className="size-4" />حذف المحدد</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}><X className="size-4" />إلغاء التحديد</Button></div></div>}
+
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3' : 'space-y-2 rounded-xl border p-3'}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+            <Skeleton key={i} className={viewMode === 'grid' ? 'aspect-[4/3] w-full rounded-xl' : 'h-14 w-full rounded-lg'} />
           ))}
         </div>
       ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
@@ -289,11 +340,13 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredFolders.map((folder) => (
+          {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+            {sortedFolders.map((folder) => (
               <FolderCard
                 key={`folder-${folder.id}`}
                 folder={folder}
+                selected={selected.has(`folder:${folder.id}`)}
+                onSelect={(item, checked) => selectItem(`folder:${item.id}`, checked)}
                 onClick={handleFolderClick}
                 onRename={(f: any) => setRenameItem({ item: f, type: 'folder' })}
                 onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
@@ -305,24 +358,25 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
                   setActionTargetDirId(f.id);
                   setIsUploadOpen(true);
                 }}
-                onDownload={() => {
-                  toast('تحميل المجلد غير متاح حالياً');
-                }}
+                // onDownload={() => {
+                //   toast('تحميل المجلد غير متاح حالياً');
+                // }}
                 onDropItem={handleDropItem}
               />
             ))}
 
-            {filteredFiles.map((file) => (
+            {sortedFiles.map((file) => (
               <FileCard
                 key={`file-${file.id}`}
                 file={file}
-                onRename={(f) => setRenameItem({ item: f, type: 'file' })}
+                selected={selected.has(`file:${file.id}`)}
+                onSelect={(item, checked) => selectItem(`file:${item.id}`, checked)}
                 onDelete={(f) => setDeleteItem({ item: f, type: 'file' })}
                 onDownload={handleDownloadFile}
                 onPreview={setPreviewFile}
               />
             ))}
-          </div>
+          </div> : <ExplorerList folders={sortedFolders} files={sortedFiles} selected={selected} onSelect={selectItem} onFolder={handleFolderClick} onPreview={setPreviewFile} onDownload={handleDownloadFile} onRename={(item, type) => setRenameItem({ item, type })} onDelete={(item, type) => setDeleteItem({ item, type })} />}
 
           {!currentDirId && paginationMeta && (
             <SimplePagination
@@ -371,6 +425,7 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
         file={previewFile}
         open={!!previewFile}
         onOpenChange={(open) => !open && setPreviewFile(null)}
+        onDownload={handleDownloadFile}
       />
     </div>
   );

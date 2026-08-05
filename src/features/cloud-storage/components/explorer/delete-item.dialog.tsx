@@ -48,14 +48,14 @@ export function DeleteItemDialog({ item, type, open, onOpenChange, currentDirId 
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
+      <AlertDialogContent dir="rtl">
+        <AlertDialogHeader className="place-items-start text-right sm:place-items-start sm:text-right">
           <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className={"text-start"}>
             سيتم حذف {type === 'folder' ? 'المجلد' : 'الملف'} "{itemName}" بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="sm:justify-end">
           <AlertDialogCancel disabled={isPending}>إلغاء</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
