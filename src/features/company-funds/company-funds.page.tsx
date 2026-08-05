@@ -109,7 +109,6 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
       setSelectedCompanyFundCurrency(null);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تعديل العملة');
     },
   });
 

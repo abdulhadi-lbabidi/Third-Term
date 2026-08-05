@@ -120,7 +120,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
         <Button
           type="button"
           onClick={handleAdd}
-          
+
         >
           <Users className="size-4" />
           إضافة عضو جديد

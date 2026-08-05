@@ -315,6 +315,15 @@ function getExpenseCreatedById(expense?: Expense | null): number {
     return expense.created_by.id;
   }
 
+  try {
+    const raw = localStorage.getItem('user_info');
+    if (raw) {
+      const user = JSON.parse(raw);
+      return Number(user?.id) || 1;
+    }
+  } catch {
+  }
+
   return 1;
 }
 
@@ -727,6 +736,16 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               return match ? Number(match[1]) : undefined;
             })();
             const finalUserId = values.user_id || fixedValues?.user_id || urlUserId || 0;
+            const currentUserId = (() => {
+              try {
+                const raw = localStorage.getItem('user_info');
+                if (raw) {
+                  const user = JSON.parse(raw);
+                  return Number(user?.id) || 1;
+                }
+              } catch {}
+              return 1;
+            })();
 
             await onSubmit(
               toExpenseApiPayload({
@@ -736,7 +755,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                 amount: values.amount,
                 is_posted: values.is_posted,
                 user_id: finalUserId,
-                created_by: values.created_by ?? 1,
+                created_by: values.created_by ?? currentUserId,
               }),
             );
           },

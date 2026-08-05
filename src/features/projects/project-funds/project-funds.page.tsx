@@ -200,6 +200,21 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
             />
           )}
 
+          {isTab && (
+            <div className="flex justify-end pb-4">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setSelectedProjectFund(null);
+                  setDialogOpen(true);
+                }}
+              >
+                إضافة صندوق مشروع
+              </Button>
+            </div>
+          )}
+
           {!hasEmbeddedProjectData && projectFundsQuery.isLoading ? (
             <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
@@ -213,16 +228,6 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
               <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                 {currentProject ? `لم يتم إضافة أي صناديق لمشروع ${currentProject.name} بعد.` : 'لم يتم إضافة أي صناديق بعد.'}
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedProjectFund(null);
-                  setDialogOpen(true);
-                }}
-              >
-                إضافة صندوق مشروع
-              </Button>
             </div>
           ) : (
             <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -118,7 +118,7 @@ export function ProjectTeamPage() {
               type="button"
               variant="outline"
               onClick={() => navigate(-1)}
-              
+
             >
               العودة
             </Button>
@@ -128,7 +128,7 @@ export function ProjectTeamPage() {
                 setSelectedMember(null);
                 setDialogOpen(true);
               }}
-              
+
             >
               <Users className="size-4" />
               إضافة عضو جديد

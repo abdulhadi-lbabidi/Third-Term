@@ -1,115 +1,39 @@
 import { z } from 'zod';
 import type { ExpenseSource } from '../types';
 
-export const expenseFormSchema = z
-  .object({
-    source: z.enum(['company_fund', 'user_fund', 'project_fund']),
-    expenseable_type: z.string().optional(),
-    expenseable_id: z.number().optional(),
-    company_fund_id: z.number().optional(),
-    user_role: z.string().optional(),
-    user_id: z.number().optional(),
-    fund_user_role: z.string().optional(),
-    fund_user_id: z.number().optional(),
-    user_fund_id: z.number().optional(),
-    project_fund_id: z.number().optional(),
-    project_id: z.number().optional(),
-    description: z.string().min(1, 'الرجاء إدخال الوصف'),
-    amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
-    is_posted: z.boolean(),
-    created_by: z.number().optional(),
-  })
-  .superRefine((values, ctx) => {
-    const isUsersPath = typeof window !== 'undefined' && window.location.pathname.includes('/users');
+export const expenseFormSchema = z.object({
+  source: z.enum(['company_fund', 'user_fund', 'project_fund']),
+  expenseable_type: z.string().optional(),
+  expenseable_id: z.number().optional(),
+  company_fund_id: z.number().optional(),
+  user_role: z.string().optional(),
+  user_id: z.number().optional(),
+  fund_user_role: z.string().optional(),
+  fund_user_id: z.number().optional(),
+  user_fund_id: z.number().optional(),
+  project_fund_id: z.number().optional(),
+  project_id: z.number().optional(),
+  description: z.string().min(1, 'الرجاء إدخال الوصف'),
+  amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
+  is_posted: z.boolean(),
+  created_by: z.number().optional(),
+}).superRefine((values, ctx) => {
+  const requireField = (condition: boolean, path: keyof typeof values, message: string) => {
+    if (condition) ctx.addIssue({ code: 'custom', path: [path], message });
+  };
 
-    if (!isUsersPath && !values.user_role) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_role'],
-        message: 'الرجاء اختيار نوع المستخدم',
-      });
-    }
+  requireField(values.source === 'company_fund' && !values.company_fund_id && !values.expenseable_id, 'company_fund_id', 'الرجاء اختيار صندوق الشركة');
+  requireField(values.source === 'company_fund' && !values.expenseable_id, 'expenseable_id', 'الرجاء اختيار عملة صندوق الشركة');
 
-    if (!isUsersPath && !values.user_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_id'],
-        message: 'الرجاء اختيار المستخدم',
-      });
-    }
+  requireField(values.source === 'user_fund' && !values.fund_user_role && !values.expenseable_id, 'fund_user_role', 'الرجاء اختيار نوع مستخدم الصندوق');
+  requireField(values.source === 'user_fund' && !values.fund_user_id && !values.expenseable_id, 'fund_user_id', 'الرجاء اختيار مستخدم الصندوق');
+  requireField(values.source === 'user_fund' && !values.user_fund_id && !values.expenseable_id, 'user_fund_id', 'الرجاء اختيار صندوق المستخدم');
+  requireField(values.source === 'user_fund' && !values.expenseable_id, 'expenseable_id', 'الرجاء اختيار عملة صندوق المستخدم');
 
-    if (values.source === 'company_fund' && !values.company_fund_id && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['company_fund_id'],
-        message: 'الرجاء اختيار صندوق الشركة',
-      });
-    }
-
-    if (values.source === 'company_fund' && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['expenseable_id'],
-        message: 'الرجاء اختيار عملة صندوق الشركة',
-      });
-    }
-
-    if (values.source === 'user_fund' && !values.fund_user_role && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['fund_user_role'],
-        message: 'الرجاء اختيار نوع المستخدم لصندوق المستخدم',
-      });
-    }
-
-    if (values.source === 'user_fund' && !values.fund_user_id && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['fund_user_id'],
-        message: 'الرجاء اختيار مستخدم لصندوق المستخدم',
-      });
-    }
-
-    if (values.source === 'user_fund' && !values.user_fund_id && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['user_fund_id'],
-        message: 'الرجاء اختيار صندوق المستخدم',
-      });
-    }
-
-    if (values.source === 'user_fund' && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['expenseable_id'],
-        message: 'الرجاء اختيار عملة صندوق المستخدم',
-      });
-    }
-
-    if (values.source === 'project_fund' && !values.project_id && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['project_id'],
-        message: 'الرجاء اختيار المشروع',
-      });
-    }
-
-    if (values.source === 'project_fund' && !values.project_fund_id && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['project_fund_id'],
-        message: 'الرجاء اختيار صندوق المشروع',
-      });
-    }
-
-    if (values.source === 'project_fund' && !values.expenseable_id) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['expenseable_id'],
-        message: 'الرجاء اختيار عملة صندوق المشروع',
-      });
-    }
-  });
+  requireField(values.source === 'project_fund' && !values.project_id && !values.expenseable_id, 'project_id', 'الرجاء اختيار المشروع');
+  requireField(values.source === 'project_fund' && !values.project_fund_id && !values.expenseable_id, 'project_fund_id', 'الرجاء اختيار صندوق المشروع');
+  requireField(values.source === 'project_fund' && !values.expenseable_id, 'expenseable_id', 'الرجاء اختيار عملة صندوق المشروع');
+});
 
 export type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 export type ExpenseFormInput = z.input<typeof expenseFormSchema>;

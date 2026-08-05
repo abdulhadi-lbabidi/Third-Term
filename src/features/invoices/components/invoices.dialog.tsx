@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, CheckCircle2, ChevronLeft, FileText, PackageOpen, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ type InvoicesDialogProps = {
 };
 
 export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: InvoicesDialogProps) {
+  const closeAfterItemSaveRef = useRef(false);
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'invoice' | 'items'>('invoice');
   const [activeInvoiceId, setActiveInvoiceId] = useState<number | undefined>(invoiceId);
@@ -35,6 +36,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
     setActiveInvoiceId(invoiceId);
     setCreatedInSession(false);
     setItemFormKey(0);
+    closeAfterItemSaveRef.current = false;
   }, [isOpen, invoiceId]);
 
   const isEdit = !!activeInvoiceId;
@@ -69,6 +71,13 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
       setItemFormKey((value) => value + 1);
       toast.success(editingItem ? 'تم تحديث صنف الفاتورة بنجاح' : 'تمت إضافة صنف الفاتورة بنجاح');
       setEditingItem(null);
+      if (closeAfterItemSaveRef.current) {
+        closeAfterItemSaveRef.current = false;
+        onClose();
+      }
+    },
+    onError: () => {
+      closeAfterItemSaveRef.current = false;
     },
   });
   const deleteItemMutation = useMutation({
@@ -95,7 +104,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`max-h-[90vh] overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
+      <DialogContent className={`max-h-[90vh] !overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
         <DialogHeader>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/40 p-1">
             <button type="button" onClick={() => setStep('invoice')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm ${step === 'invoice' ? 'bg-background font-semibold text-primary shadow-sm' : 'text-muted-foreground'}`}>
@@ -130,7 +139,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
           ) : activeInvoiceId ? (
             <div className="flex flex-col gap-3">
               {invoiceItems.length > 0 && (
-                <div className="order-1 divide-y rounded-lg bg-muted/30 px-3">
+                <div className="order-1 max-h-52 divide-y overflow-y-auto rounded-lg bg-muted/30 px-3">
                   {invoiceItems.map((item) => {
                     const total = Number(item.total_price ?? Number(item.quantity) * Number(item.unit_price));
                     return (
@@ -159,12 +168,16 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
               )}
               <InvoiceItemForm
                 key={itemFormKey}
+                formId="invoice-item-dialog-form"
                 fixedInvoiceId={activeInvoiceId}
                 defaultValues={editingItem}
                 currencyLabel={currencyLabel}
                 priceStep={priceStep}
                 onSubmit={async (values) => {
                   await createItemMutation.mutateAsync(values);
+                }}
+                onInvalid={() => {
+                  closeAfterItemSaveRef.current = false;
                 }}
                 loading={createItemMutation.isPending}
               />
@@ -173,9 +186,16 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
                   <ArrowRight className="ml-2 size-4" />
                   تعديل بيانات الفاتورة
                 </Button>
-                <Button type="button" onClick={onClose}>
+                <Button
+                  type="submit"
+                  form="invoice-item-dialog-form"
+                  disabled={createItemMutation.isPending}
+                  onClick={() => {
+                    closeAfterItemSaveRef.current = true;
+                  }}
+                >
                   <CheckCircle2 className="ml-2 size-4" />
-                  إنهاء
+                  {createItemMutation.isPending ? 'جاري الإرسال...' : 'إرسال'}
                 </Button>
               </div>
             </div>

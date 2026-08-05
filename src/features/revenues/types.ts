@@ -41,8 +41,8 @@ export type CreateRevenuePayload = {
   statement: string;
   amount: number;
   is_posted: boolean;
-  user_id: number;
-  received_by: number;
+  user_id?: number;
+  received_by?: number;
 };
 
 export type UpdateRevenuePayload = Partial<CreateRevenuePayload>;

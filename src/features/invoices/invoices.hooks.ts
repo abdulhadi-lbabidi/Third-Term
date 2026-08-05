@@ -31,8 +31,11 @@ export const useCreateInvoice = () => {
 
   return useMutation({
     mutationFn: invoicesApi.createInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: INVOICES_KEYS.lists() });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: INVOICES_KEYS.lists(),
+        refetchType: 'all',
+      });
     },
   });
 };
@@ -42,11 +45,17 @@ export const useUpdateInvoice = () => {
 
   return useMutation({
     mutationFn: invoicesApi.updateInvoice,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: INVOICES_KEYS.lists() });
-      queryClient.invalidateQueries({
-        queryKey: INVOICES_KEYS.detail(variables.id),
-      });
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: INVOICES_KEYS.lists(),
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: INVOICES_KEYS.detail(variables.id),
+          refetchType: 'all',
+        }),
+      ]);
     },
   });
 };
@@ -57,7 +66,10 @@ export const useDeleteInvoice = () => {
   return useMutation({
     mutationFn: invoicesApi.deleteInvoice,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: INVOICES_KEYS.lists() });
+      await queryClient.invalidateQueries({
+        queryKey: INVOICES_KEYS.lists(),
+        refetchType: 'all',
+      });
       await queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === 'projects' && typeof query.queryKey[1] === 'number',
         refetchType: 'active',

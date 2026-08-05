@@ -77,7 +77,7 @@ export function useParams<T extends Record<string, string | undefined> = Record<
   const params = useRealParams<T>();
   return useMemo(() => {
     const decoded: any = {};
-    for (const [key, val] of Object.entries(params)) {
+    for (const [key, val] of Object.entries(params) as [string, string | undefined][]) {
       decoded[key] = deobfuscate(val);
     }
     return decoded as T;

@@ -33,6 +33,7 @@ export function NumberStepper({ value, onChange, step = 1, min = 0, disabled }: 
         step={step}
         value={normalizedValue}
         disabled={disabled}
+        onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => update(Number(event.target.value) || 0)}
         className="h-9 border-0 bg-transparent text-center font-semibold shadow-none focus-visible:ring-0"
       />

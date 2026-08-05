@@ -150,8 +150,10 @@ export function InvoicesForm({
     const matchedItem = itemName
       ? items.find((item: any) => item.name?.trim() === itemName.trim())
       : undefined;
+    const requestedSupplierId = Number(fixedValues?.supplier_id ?? defaultValues.supplier_id ?? 0) || undefined;
     const matchedSupplier = suppliers.find((supplier: any) =>
-      (defaultValues.supplier_id && Number(supplier.id) === Number(defaultValues.supplier_id))
+      (requestedSupplierId && Number(supplier.id) === requestedSupplierId)
+      || (requestedSupplierId && Number(supplier.user?.id) === requestedSupplierId)
       || (supplierRelationId && Number(supplier.id) === supplierRelationId)
       || (supplierUserId && Number(supplier.user?.id) === supplierUserId)
       || (supplierName && (supplier.user?.name || supplier.name)?.trim() === supplierName.trim())
@@ -164,8 +166,8 @@ export function InvoicesForm({
         fixedValues?.expense_id ?? defaultValues.expense_id ?? defaultValues.expense?.id ?? 0
       ),
       supplier_id: Number(
-        fixedValues?.supplier_id
-        ?? matchedSupplierId
+        matchedSupplierId
+        ?? fixedValues?.supplier_id
         ?? defaultValues.supplier_id
         ?? supplierRelationId
         ?? 0
@@ -222,7 +224,7 @@ export function InvoicesForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 items-start">
           {!fixedValues?.item_id && (
             <FormField
               control={form.control as any}

@@ -120,7 +120,7 @@ export type CreateExpensePayload = {
   description: string;
   amount: number;
   is_posted: boolean;
-  user_id: number;
+  user_id?: number;
   created_by: number;
 };
 

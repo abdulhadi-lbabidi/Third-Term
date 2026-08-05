@@ -419,7 +419,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               statement: values.statement,
               amount: values.amount,
               is_posted: values.is_posted,
-              user_id: values.user_id ?? 1,
+              user_id: values.received_by ?? 1,
               received_by: values.received_by ?? 1,
             });
           },

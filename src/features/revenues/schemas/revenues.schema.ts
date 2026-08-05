@@ -22,11 +22,11 @@ export const revenueFormSchema = z
   })
   .superRefine((values, ctx) => {
 
-    if (!values.received_by_role && !values.received_by) {
+    if (!values.received_by_role && values.received_by) {
       ctx.addIssue({ code: 'custom', path: ['received_by_role'], message: 'الرجاء اختيار نوع المستلم' });
     }
 
-    if (!values.received_by) {
+    if (values.received_by_role && !values.received_by) {
       ctx.addIssue({ code: 'custom', path: ['received_by'], message: 'الرجاء اختيار المستلم' });
     }
 

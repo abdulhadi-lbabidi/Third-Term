@@ -17,11 +17,13 @@ import { invoiceItemFormSchema, type InvoiceItemFormValues } from '../schemas/in
 import type { InvoiceItem, InvoiceOption } from '../types';
 
 type InvoiceItemFormProps = {
+  formId?: string;
   defaultValues?: InvoiceItem | null;
   fixedInvoiceId?: number;
   currencyLabel?: string;
   priceStep?: number;
   onSubmit: (data: InvoiceItemFormValues) => Promise<void>;
+  onInvalid?: () => void;
   loading?: boolean;
 };
 
@@ -33,7 +35,7 @@ function getMaterialId(item?: InvoiceItem | null) {
   return item?.material_id ?? item?.material?.id ?? 0;
 }
 
-export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, priceStep = 1, onSubmit, loading }: InvoiceItemFormProps) {
+export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currencyLabel, priceStep = 1, onSubmit, onInvalid, loading }: InvoiceItemFormProps) {
   const queryClient = useQueryClient();
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const { data: invoices = [] } = useQuery<InvoiceOption[]>({
@@ -110,10 +112,14 @@ export function InvoiceItemForm({ defaultValues, fixedInvoiceId, currencyLabel, 
   return (
     <Form {...form}>
       <form
+        id={formId}
         className="space-y-3"
-        onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(values);
-        })}
+        onSubmit={form.handleSubmit(
+          async (values) => {
+            await onSubmit(values);
+          },
+          () => onInvalid?.(),
+        )}
       >
         {!fixedInvoiceId && <FormField
           control={form.control}
