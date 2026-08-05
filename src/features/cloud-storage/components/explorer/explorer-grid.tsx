@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import axios from 'axios';
 import { UploadCloud } from 'lucide-react';
 import { useDirectories, useDirectory, useMoveItems } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile } from '../../types';
@@ -207,27 +206,33 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
 
   const handleDownloadFile = useCallback(async (file: CloudFile) => {
     if (!file.url) {
-      toast.error('لا يتوفر رابط لتحميل هذا الملف');
+      toast.error('لا يتوفر رابط لهذا الملف');
       return;
     }
 
-    const toastId = toast.loading('جاري تجهيز الملف للتحميل...');
+    const toastId = toast.loading('جاري تنزيل الملف...');
     try {
-      const response = await axios.get(file.url, { responseType: 'blob' });
-      const blob = response.data;
+      const sourceUrl = new URL(file.url);
+      const proxyUrl = `/file-proxy${sourceUrl.pathname}${sourceUrl.search}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
+
+      const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = file.file_name || 'download';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-      toast.success('تم تحميل الملف بنجاح', { id: toastId });
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = file.file_name || 'download';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        link.remove();
+      }, 1000);
+      toast.success('تم تنزيل الملف بنجاح', { id: toastId });
     } catch (error) {
-      console.error('Download failed, opening in new tab:', error);
-      toast.dismiss(toastId);
-      window.open(file.url, '_blank');
+      console.error('File download failed:', error);
+      toast.error('تعذر تنزيل الملف', { id: toastId });
     }
   }, []);
 

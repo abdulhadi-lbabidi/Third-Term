@@ -104,7 +104,7 @@ export function FileCard({
                 معاينة
               </DropdownMenuItem>
             ) : null}
-            <DropdownMenuItem onSelect={() => setTimeout(() => onDownload(file), 0)} className="gap-2 cursor-pointer">
+            <DropdownMenuItem onSelect={() => onDownload(file)} className="gap-2 cursor-pointer">
               <Download className="size-4 text-muted-foreground" />
               تحميل
             </DropdownMenuItem>

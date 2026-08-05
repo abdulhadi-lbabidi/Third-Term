@@ -31,6 +31,14 @@ export default defineConfig(({ mode }) => {
           cert: fs.readFileSync('./certificate/finance-nouh.sy.pem'),
         }
         : undefined,
+      proxy: {
+        '/file-proxy': {
+          target: 'https://nouh-finance-api.nouh-agency.com',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/file-proxy/, ''),
+        },
+      },
     },
   };
 });
