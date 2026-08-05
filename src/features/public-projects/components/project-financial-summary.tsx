@@ -19,9 +19,6 @@ type ProjectFinancialSummaryProps = {
 
 export function ProjectFinancialSummary({
   project,
-  funds,
-  selectedFundId,
-  onSelectFund,
   totalRevenues,
   totalExpenses,
   invoicesCount,
