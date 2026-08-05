@@ -20,6 +20,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        'react-router-dom-original': path.resolve(__dirname, './node_modules/react-router-dom'),
+        'react-router-dom': path.resolve(__dirname, './src/shared/lib/react-router-dom-wrapper.tsx'),
       },
     },
     server: {

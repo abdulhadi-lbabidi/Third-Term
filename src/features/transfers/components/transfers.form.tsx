@@ -267,7 +267,7 @@ function getCompanyFundLabel(item: CompanyFund) {
 
 function getCurrencyLabel(currency: { currency: string; balance: string }) {
   const balanceVal = Number(currency.balance) || 0;
-  const colorClass = balanceVal > 0 ? 'text-emerald-600 font-semibold' : balanceVal < 0 ? 'text-red-600 font-semibold' : 'text-muted-foreground font-semibold';
+  const colorClass = balanceVal > 0 ? 'text-success font-semibold' : 'text-destructive font-semibold';
   return (
     <span className="flex items-center justify-between gap-2 w-full">
       <span>{currency.currency}</span>

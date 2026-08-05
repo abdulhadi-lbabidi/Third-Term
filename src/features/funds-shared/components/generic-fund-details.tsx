@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import {
   TrendingUp,
   ArrowDownToLine,
@@ -15,7 +14,7 @@ import {
   ArrowLeftRight,
   ReceiptText,
   X,
-  Lock,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -138,7 +137,6 @@ export function GenericFundDetails({
   const expensesQuery = useExpenses(1, 50, filters, hasCurrencies && currentTab === 'expenses');
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
-  const invoicesLocked = expensesQuery.isSuccess && fundExpenses.length === 0;
   const filteredExpense = expenseFilterId
     ? fundExpenses.find((expense) => expense.id === expenseFilterId) ?? null
     : null;
@@ -220,7 +218,7 @@ export function GenericFundDetails({
               {fundCurrencies.length > 0 ? (
                 fundCurrencies.map((currency) => (
                   <div key={currency.id} className="flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-sm font-medium">
-                    <span className="text-slate-900">{currency.balance}</span>
+                    <span className={Number(currency.balance) > 0 ? 'font-semibold text-success' : 'font-semibold text-destructive'}>{currency.balance}</span>
                     <span className="text-slate-500">{currency.currency} {currency.symbol}</span>
                   </div>
                 ))
@@ -284,28 +282,14 @@ export function GenericFundDetails({
             <ArrowDownToLine className="ml-2 size-4" />
             المصروفات
           </TabsTrigger>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={<span className="inline-flex" />}>
-                <TabsTrigger value="invoices" disabled={!hasCurrencies || invoicesLocked}>
-                  {invoicesLocked ? <Lock className="ml-2 size-4" /> : <ReceiptText className="ml-2 size-4" />}
-                  الفواتير
-                </TabsTrigger>
-              </TooltipTrigger>
-              {invoicesLocked && <TooltipContent>لا يمكن إضافة فاتورة قبل إضافة مصروف للصندوق</TooltipContent>}
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger render={<span className="inline-flex" />}>
-                <TabsTrigger value="transfers" disabled={!canTransfer}>
-                  {canTransfer ? <ArrowLeftRight className="ml-2 size-4" /> : <Lock className="ml-2 size-4" />}
-                  التحويلات
-                </TabsTrigger>
-              </TooltipTrigger>
-              {!canTransfer && <TooltipContent>لا يمكن إجراء تحويل لأن رصيد الصندوق غير كافٍ</TooltipContent>}
-            </Tooltip>
-          </TooltipProvider>
+          <TabsTrigger value="invoices" disabled={!hasCurrencies}>
+            <ReceiptText className="ml-2 size-4" />
+            الفواتير
+          </TabsTrigger>
+          <TabsTrigger value="transfers" disabled={!hasCurrencies}>
+            <ArrowLeftRight className="ml-2 size-4" />
+            التحويلات
+          </TabsTrigger>
         </TabsList>
 
         {!hasCurrencies && <FundCurrencyEmptyState onAddCurrency={onAttachCurrency} />}
@@ -431,9 +415,23 @@ export function GenericFundDetails({
         </TabsContent>}
 
         {hasCurrencies && <TabsContent value="transfers" className="space-y-5">
+          {!canTransfer && (
+            <div className="flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 sm:flex-row sm:items-center">
+              <AlertTriangle className="size-5 shrink-0 text-warning" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">رصيد الصندوق غير كافٍ لإجراء تحويل</p>
+                <p className="mt-1 text-xs text-muted-foreground">أضف إيرادًا إلى الصندوق أولًا، وستبقى التحويلات السابقة ظاهرة أدناه.</p>
+              </div>
+              <Button type="button" size="sm" onClick={() => { setSelectedRevenue(null); setRevenueDialogOpen(true); }}>
+                <TrendingUp className="size-4" />
+                إضافة إيراد
+              </Button>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
             <Button
+              disabled={!canTransfer}
               onClick={() => {
                 setSelectedTransfer(null);
                 setTransferDialogOpen(true);

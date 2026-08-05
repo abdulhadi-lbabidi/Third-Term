@@ -58,6 +58,10 @@ export function useDeleteRevenue() {
     mutationFn: (id: number) => revenuesApi.deleteRevenue(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
+      await queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'projects' && typeof query.queryKey[1] === 'number',
+        refetchType: 'active',
+      });
       toast.success('تم حذف الإيراد بنجاح');
     },
     onError: () => {

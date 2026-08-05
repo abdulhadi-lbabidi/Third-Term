@@ -39,6 +39,7 @@ export function AttachCurrencyDialog({
     resolver: zodResolver(attachFundCurrencySchema),
     defaultValues: { currency_id: 0, balance: 0 },
   });
+  const balance = Number(form.watch('balance')) || 0;
 
   useEffect(() => {
     if (!open) {
@@ -111,6 +112,20 @@ export function AttachCurrencyDialog({
               )}
             />
 
+
+            <FormField
+              control={form.control}
+              name="balance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الرصيد الافتتاحي</FormLabel>
+                  <FormControl>
+                    <input type="number" step="any" className={cn('h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm outline-none', balance > 0 ? 'font-semibold text-success' : 'font-semibold text-destructive')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <Button type="submit" className="w-full" disabled={loading || currenciesLoading}>
               {loading ? 'جاري الحفظ...' : 'حفظ'}

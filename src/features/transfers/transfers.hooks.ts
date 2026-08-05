@@ -31,11 +31,15 @@ export function useDeleteTransfer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => transfersApi.deleteTransfer(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transfers'] });
-      queryClient.invalidateQueries({ queryKey: ['project-funds'] });
-      queryClient.invalidateQueries({ queryKey: ['company-funds'] });
-      queryClient.invalidateQueries({ queryKey: ['funds'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['transfers'] });
+      await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['funds'] });
+      await queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'projects' && typeof query.queryKey[1] === 'number',
+        refetchType: 'active',
+      });
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف عملية التحويل');

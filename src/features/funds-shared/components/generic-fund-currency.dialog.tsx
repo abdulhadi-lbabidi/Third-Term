@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { cn } from '@/shared/lib/utils';
 import type { GenericFundCurrency } from './generic-fund.card';
 import { attachFundCurrencySchema, type AttachFundCurrencyValues } from '@/features/funds/schemas/funds.schema';
 
@@ -21,6 +22,7 @@ export function GenericFundCurrencyDialog({ open, onOpenChange, currency, onSubm
     resolver: zodResolver(attachFundCurrencySchema),
     defaultValues: { currency_id: 0, balance: 0 },
   });
+  const balance = Number(form.watch('balance')) || 0;
 
   useEffect(() => {
     if (open && currency) {
@@ -57,6 +59,20 @@ export function GenericFundCurrencyDialog({ open, onOpenChange, currency, onSubm
                   <FormLabel>العملة</FormLabel>
                   <FormControl>
                     <Input value={currency ? `${currency.currency} ${currency.symbol}` : ''} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="balance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الرصيد</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="any" className={cn(balance > 0 ? 'font-semibold text-success' : 'font-semibold text-destructive')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

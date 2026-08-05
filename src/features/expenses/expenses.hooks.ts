@@ -63,6 +63,10 @@ export function useDeleteExpense() {
       await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['funds'] });
+      await queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'projects' && typeof query.queryKey[1] === 'number',
+        refetchType: 'active',
+      });
       toast.success('تم حذف المصروف بنجاح');
     },
     onError: () => {

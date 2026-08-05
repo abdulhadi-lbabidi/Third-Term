@@ -56,8 +56,12 @@ export const useDeleteInvoice = () => {
 
   return useMutation({
     mutationFn: invoicesApi.deleteInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: INVOICES_KEYS.lists() });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: INVOICES_KEYS.lists() });
+      await queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'projects' && typeof query.queryKey[1] === 'number',
+        refetchType: 'active',
+      });
       toast.success('تم حذف الفاتورة بنجاح');
     },
   });

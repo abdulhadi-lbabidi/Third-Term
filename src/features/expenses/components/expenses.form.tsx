@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -34,6 +34,7 @@ import type { UserRole } from '@/features/users/types';
 import { expenseFormSchema, expenseSourceLabels, type ExpenseFormValues } from '../schemas/expenses.schema';
 import { toExpenseApiPayload } from '../expenses.payload';
 import type { CreateExpensePayload, Expense, ExpenseProjectFundCurrencyDetails, ExpenseSource, ExpenseUserFundCurrencyDetails, ExpenseableType } from '../types';
+import { deobfuscate } from '@/shared/lib/react-router-dom-wrapper';
 
 type ExpensesFormProps = {
   defaultValues?: Expense | null;
@@ -731,8 +732,10 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               return;
             }
             const urlUserId = (() => {
-              const match = window.location.pathname.match(/\/users\/view\/[^/]+\/(\d+)/);
-              return match ? Number(match[1]) : undefined;
+              const match = window.location.pathname.match(/\/users\/view\/[^/]+\/([^/]+)/);
+              if (!match) return undefined;
+              const decoded = deobfuscate(match[1]);
+              return /^\d+$/.test(decoded) ? Number(decoded) : undefined;
             })();
             const finalUserId = values.user_id || fixedValues?.user_id || urlUserId || 0;
 

@@ -67,7 +67,7 @@ export function ProjectFundsSection({ funds, selectedFundId, onSelectFund }: Pro
                   <Badge
                     key={curr.id}
                     variant={isSelected ? 'default' : 'secondary'}
-                    className="text-[10px] font-mono font-bold flex items-baseline gap-0.5 px-1.5 py-0"
+                    className={`text-[10px] font-mono font-bold flex items-baseline gap-0.5 px-1.5 py-0 ${Number(curr.balance) > 0 ? 'text-success' : 'text-destructive'}`}
                   >
                     {formatNumber(curr.balance)}
                     <span className="text-[9px] font-sans font-medium opacity-80">{curr.symbol}</span>
