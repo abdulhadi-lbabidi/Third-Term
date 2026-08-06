@@ -44,7 +44,7 @@ const roleLabels: Record<string, string> = {
   employee: 'الموظف',
   engineer: 'المهندس',
   supplier: 'المورد',
-  trustee: 'الوصي',
+  trustee: 'الأمين',
   user: 'مستخدم',
 };
 

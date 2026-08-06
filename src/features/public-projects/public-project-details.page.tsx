@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FolderKanban, Calendar, User, ShieldCheck, Wallet, DollarSign, TrendingUp, TrendingDown, FileText, Percent, ShoppingBag, Info, ArrowLeftRight, ChevronDown } from 'lucide-react';
 import { publicProjectsApi } from './public-projects.api';
@@ -9,6 +9,10 @@ import type { Revenue } from '@/features/revenues/types';
 import type { Expense } from '@/features/expenses/types';
 import type { Invoice } from '@/features/invoices/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { Button } from '@/shared/components/ui/button';
+import { useDeleteExpense } from '@/features/expenses/expenses.hooks';
+import { useDeleteInvoice } from '@/features/invoices/invoices.hooks';
+import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
 
 import { PublicProjectsHeader } from './components/public-projects-header';
 import { ProjectFinancialSummary } from './components/project-financial-summary';
@@ -19,8 +23,10 @@ import { InvoicesList } from './components/invoices-list';
 import { TransfersList, getTransferDetails } from './components/transfers-list';
 import { ProjectDetailsSkeleton } from './components/project-details-skeleton';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { ProjectStagesTab } from './components/project-stages-tab';
+import { ProjectTeamTab } from './components/project-team-tab';
 
-type TabId = 'revenues' | 'expenses' | 'invoices' | 'transfers';
+type TabId = 'revenues' | 'expenses' | 'invoices' | 'transfers' | 'stages' | 'team';
 
 function TabContentSkeleton() {
   return (
@@ -45,17 +51,24 @@ export function PublicProjectDetailsPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabId | null;
+  const initialTab = (tabParam && ['revenues', 'expenses', 'invoices', 'transfers', 'stages', 'team'].includes(tabParam)) ? tabParam : 'revenues';
   const selectedProjectId = projectId ? Number(projectId) : null;
   const [activeFundTab, setActiveFundTab] = useState<number | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<TabId>('revenues');
+  const [activeSubTab, setActiveSubTab] = useState<TabId>(initialTab);
   const [selectedRevenueId, setSelectedRevenueId] = useState<number | null>(null);
   const [isRevenueDialogOpen, setIsRevenueDialogOpen] = useState(false);
 
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [expenseToDeleteId, setExpenseToDeleteId] = useState<number | null>(null);
+  const deleteExpenseMutation = useDeleteExpense();
 
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+  const [invoiceToDeleteId, setInvoiceToDeleteId] = useState<number | null>(null);
+  const deleteInvoiceMutation = useDeleteInvoice();
 
   const [selectedTransferId, setSelectedTransferId] = useState<number | null>(null);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
@@ -82,7 +95,7 @@ export function PublicProjectDetailsPage() {
     if (location.pathname.startsWith('/public-projects')) {
       navigate('/public-projects');
     } else {
-      navigate('/client/projects');
+      navigate('/public/projects');
     }
   };
 
@@ -230,16 +243,32 @@ export function PublicProjectDetailsPage() {
                 onSelectFund={setActiveFundTab}
               />
 
-              <ProjectFinancialTabs
-                activeTab={activeSubTab}
-                onTabChange={setActiveSubTab}
-                counts={{
-                  revenues: filteredRevenues.length,
-                  expenses: filteredExpenses.length,
-                  invoices: filteredInvoices.length,
-                  transfers: filteredTransfers.length,
-                }}
-              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <ProjectFinancialTabs
+                  activeTab={activeSubTab}
+                  onTabChange={setActiveSubTab}
+                  counts={{
+                    revenues: filteredRevenues.length,
+                    expenses: filteredExpenses.length,
+                    invoices: filteredInvoices.length,
+                    transfers: filteredTransfers.length,
+                  }}
+                  userRole={currentUser?.role_type}
+                />
+
+                {['engineer', 'employee'].includes(currentUser?.role_type || '') && (
+                  <div className="flex items-center gap-2">
+                    {activeSubTab === 'expenses' && (
+                      <Button
+                        onClick={() => navigate(`/public/expenses/new?projectId=${selectedProjectId}`)}
+                        className="bg-primary text-primary-foreground text-xs font-semibold py-1.5 px-3 h-8 hover:bg-primary/95"
+                      >
+                        إضافة مصروف
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-4">
                 {activeSubTab === 'revenues' && (
@@ -265,6 +294,16 @@ export function PublicProjectDetailsPage() {
                       data={filteredExpenses as any}
                       type="expenses"
                       invoices={filteredInvoices}
+                      userRole={currentUser?.role_type}
+                      onAddInvoice={(expenseId) => {
+                        navigate(`/public/invoices/new?projectId=${selectedProjectId}&expenseId=${expenseId}`);
+                      }}
+                      onEditExpense={(expenseId) => {
+                        navigate(`/public/expenses/new?projectId=${selectedProjectId}&expenseId=${expenseId}`);
+                      }}
+                      onDeleteExpense={(expenseId) => {
+                        setExpenseToDeleteId(expenseId);
+                      }}
                       onViewDetails={(id) => {
                         setSelectedExpenseId(id);
                         setIsExpenseDialogOpen(true);
@@ -279,6 +318,13 @@ export function PublicProjectDetailsPage() {
                   ) : (
                     <InvoicesList
                       data={filteredInvoices}
+                      userRole={currentUser?.role_type}
+                      onEditInvoice={(invoiceId) => {
+                        navigate(`/public/invoices/new?projectId=${selectedProjectId}&invoiceId=${invoiceId}`);
+                      }}
+                      onDeleteInvoice={(invoiceId) => {
+                        setInvoiceToDeleteId(invoiceId);
+                      }}
                       onViewDetails={(id) => {
                         setSelectedInvoiceId(id);
                         setIsInvoiceDialogOpen(true);
@@ -299,6 +345,20 @@ export function PublicProjectDetailsPage() {
                       }}
                     />
                   )
+                )}
+
+                {activeSubTab === 'stages' && (
+                  <ProjectStagesTab
+                    projectId={Number(projectId)}
+                    userRole={currentUser?.role_type}
+                  />
+                )}
+
+                {activeSubTab === 'team' && (
+                  <ProjectTeamTab
+                    projectId={Number(projectId)}
+                    userRole={currentUser?.role_type}
+                  />
                 )}
               </div>
             </div>
@@ -726,6 +786,34 @@ export function PublicProjectDetailsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <DeleteConfirmDialog
+        isOpen={expenseToDeleteId !== null}
+        onClose={() => setExpenseToDeleteId(null)}
+        isDeleting={deleteExpenseMutation.isPending}
+        onConfirm={async () => {
+          if (expenseToDeleteId) {
+            await deleteExpenseMutation.mutateAsync(expenseToDeleteId);
+            setExpenseToDeleteId(null);
+          }
+        }}
+        title="تأكيد حذف المصروف"
+        description="هل أنت متأكد من رغبتك في حذف هذا المصروف؟ لا يمكن التراجع عن هذا الإجراء."
+      />
+
+      <DeleteConfirmDialog
+        isOpen={invoiceToDeleteId !== null}
+        onClose={() => setInvoiceToDeleteId(null)}
+        isDeleting={deleteInvoiceMutation.isPending}
+        onConfirm={async () => {
+          if (invoiceToDeleteId) {
+            await deleteInvoiceMutation.mutateAsync(invoiceToDeleteId);
+            setInvoiceToDeleteId(null);
+          }
+        }}
+        title="تأكيد حذف الفاتورة"
+        description="هل أنت متأكد من رغبتك في حذف هذه الفاتورة؟ لا يمكن التراجع عن هذا الإجراء."
+      />
     </div>
   );
 }

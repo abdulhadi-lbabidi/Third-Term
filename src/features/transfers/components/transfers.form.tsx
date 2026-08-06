@@ -258,7 +258,7 @@ const roleLabels: Record<UserRole, string> = {
   employee: 'الموظف',
   engineer: 'المهندس',
   supplier: 'المورد',
-  trustee: 'الوصي',
+  trustee: 'الأمين',
 };
 
 function getCompanyFundLabel(item: CompanyFund) {
@@ -397,7 +397,7 @@ export function TransfersForm({
   defaultValues,
   isGeneral = false,
 }: TransferFormProps) {
- 
+
   const initialFromType = cleanBackslashes(defaultValues?.morph_from_type ?? (isGeneral ? 'App\\Models\\CompanyFundCurrency' : morph_from_type));
   const initialToType = cleanBackslashes(defaultValues?.morph_to_type ?? 'App\\Models\\CompanyFundCurrency');
 
@@ -1033,9 +1033,9 @@ export function TransfersForm({
                           <SelectTrigger disabled={!fromCompanyFundId}>
                             {field.value
                               ? (() => {
-                                  const c = selectedFromCompanyFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
-                                  return c ? getCurrencyLabel(c) : 'اختر العملة';
-                                })()
+                                const c = selectedFromCompanyFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
+                                return c ? getCurrencyLabel(c) : 'اختر العملة';
+                              })()
                               : <SelectValue placeholder="اختر العملة" />}
                           </SelectTrigger>
                         </FormControl>
@@ -1142,9 +1142,9 @@ export function TransfersForm({
                           <SelectTrigger disabled={!fromProjectFundId}>
                             {field.value
                               ? (() => {
-                                  const c = selectedFromProjectFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
-                                  return c ? getCurrencyLabel(c) : 'اختر العملة';
-                                })()
+                                const c = selectedFromProjectFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
+                                return c ? getCurrencyLabel(c) : 'اختر العملة';
+                              })()
                               : <SelectValue placeholder="اختر العملة" />}
                           </SelectTrigger>
                         </FormControl>
@@ -1277,9 +1277,9 @@ export function TransfersForm({
                           <SelectTrigger disabled={!fromUserFundId}>
                             {field.value
                               ? (() => {
-                                  const c = selectedFromUserFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
-                                  return c ? getCurrencyLabel(c) : 'اختر العملة';
-                                })()
+                                const c = selectedFromUserFund?.currencies?.find(curr => currencyMatchesExpenseableId(curr, Number(field.value)));
+                                return c ? getCurrencyLabel(c) : 'اختر العملة';
+                              })()
                               : <SelectValue placeholder="اختر العملة" />}
                           </SelectTrigger>
                         </FormControl>

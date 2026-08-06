@@ -4,7 +4,7 @@ import type { ExpenseSource } from '../types';
 export const expenseFormSchema = z.object({
   source: z.enum(['company_fund', 'user_fund', 'project_fund']),
   expenseable_type: z.string().optional(),
-  expenseable_id: z.number().optional(),
+  expenseable_id: z.number().nullable().optional(),
   company_fund_id: z.number().optional(),
   user_role: z.string().optional(),
   user_id: z.number().optional(),

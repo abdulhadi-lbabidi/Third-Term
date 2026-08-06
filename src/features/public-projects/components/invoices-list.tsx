@@ -1,13 +1,29 @@
-import { FileText } from 'lucide-react';
+import { FileText, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { FinancialEmptyState } from './financial-empty-state';
 import type { Invoice } from '@/features/invoices/types';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/shared/components/ui/dropdown-menu';
+import { Button } from '@/shared/components/ui/button';
 
 type InvoicesListProps = {
   data: Invoice[];
   onViewDetails: (id: number) => void;
+  userRole?: string;
+  onEditInvoice?: (invoiceId: number) => void;
+  onDeleteInvoice?: (invoiceId: number) => void;
 };
 
-export function InvoicesList({ data, onViewDetails }: InvoicesListProps) {
+export function InvoicesList({
+  data,
+  onViewDetails,
+  userRole,
+  onEditInvoice,
+  onDeleteInvoice,
+}: InvoicesListProps) {
   const formatNumber = (val: string | number) => {
     const num = Number(val) || 0;
     return new Intl.NumberFormat('en-US').format(num);
@@ -50,9 +66,41 @@ export function InvoicesList({ data, onViewDetails }: InvoicesListProps) {
                       فاتورة #{invoice.invoice_number}
                     </h4>
                   </div>
-                  <span className="shrink-0 text-xs sm:text-sm font-bold font-mono text-primary">
-                    {formatNumber(invoice.final_total)}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="shrink-0 text-xs sm:text-sm font-bold font-mono text-primary">
+                      {formatNumber(invoice.final_total)}
+                    </span>
+                    {['engineer', 'employee'].includes(userRole || '') && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 h-7 w-7 p-0 text-muted-foreground hover:text-foreground focus-visible:ring-0"
+                          >
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+                          {onEditInvoice && (
+                            <DropdownMenuItem onClick={() => onEditInvoice(invoice.id)}>
+                              <Edit2 className="ml-2 size-4 text-muted-foreground" />
+                              <span>تعديل</span>
+                            </DropdownMenuItem>
+                          )}
+                          {onDeleteInvoice && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onClick={() => onDeleteInvoice(invoice.id)}
+                            >
+                              <Trash2 className="ml-2 size-4" />
+                              <span>حذف</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
 
                 {(itemName || supplierName) && (

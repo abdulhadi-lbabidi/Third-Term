@@ -55,8 +55,8 @@ export function LoginPage() {
         }
         toast.success('تم تسجيل الدخول بنجاح');
 
-        if (user?.role_type === 'client') {
-          navigate('/client/projects', { replace: true });
+        if (user?.role_type && ['client', 'engineer', 'employee'].includes(user.role_type)) {
+          navigate('/public/projects', { replace: true });
         } else {
           navigate('/', { replace: true });
         }

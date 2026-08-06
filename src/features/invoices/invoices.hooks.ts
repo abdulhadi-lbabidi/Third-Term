@@ -70,11 +70,16 @@ export const useDeleteInvoice = () => {
         queryKey: INVOICES_KEYS.lists(),
         refetchType: 'all',
       });
+      await queryClient.invalidateQueries({ queryKey: ['public-invoices'] });
+      await queryClient.invalidateQueries({ queryKey: ['public-project-details'] });
       await queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === 'projects' && typeof query.queryKey[1] === 'number',
         refetchType: 'active',
       });
       toast.success('تم حذف الفاتورة بنجاح');
+    },
+    onError: () => {
+      toast.error('حدث خطأ أثناء حذف الفاتورة');
     },
   });
 };
