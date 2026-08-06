@@ -126,7 +126,7 @@ export function NewRevenuePage() {
   };
 
   return (
-    <div className="space-y-5 max-w-6xl mx-auto">
+    <div className="space-y-5">
       <PageHeader
         badge="الإيرادات"
         title={isEditMode ? 'تعديل إيراد' : 'إضافة إيراد'}

@@ -825,12 +825,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
               </div>
             )}
 
-            <div className="contents">
+            <div className="grid gap-4 md:col-span-full md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-              <FormItem className="md:col-span-full">
+                  <FormItem>
                     <FormLabel>المبلغ</FormLabel>
                     <FormControl>
                       <div className="relative">
@@ -887,7 +887,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
               control={form.control}
               name="statement"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="md:col-span-full">
                   <FormLabel>البيان</FormLabel>
                   <FormControl>
                     <Textarea className="resize-none" rows={3} {...field} />
