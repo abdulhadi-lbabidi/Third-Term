@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { currenciesApi } from './currencies.api';
 import type { CreateCurrencyPayload } from './types';
 
-export const useCurrencies = (page = 1, perPage = 50) => {
+export const useCurrencies = (page = 1, perPage = 50, sort?: string, search?: string) => {
   return useQuery({
-    queryKey: ['currencies', page, perPage],
-    queryFn: () => currenciesApi.getAll(page, perPage),
+    queryKey: ['currencies', page, perPage, sort, search],
+    queryFn: () => currenciesApi.getAll(page, perPage, sort, search),
   });
 };
 

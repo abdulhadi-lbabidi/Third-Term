@@ -8,9 +8,9 @@ export type CurrencyResponse = {
 };
 
 export const currenciesApi = {
-  getAll: async (page = 1, perPage = 50): Promise<CurrencyResponse> => {
+  getAll: async (page = 1, perPage = 50, sort?: string, search?: string): Promise<CurrencyResponse> => {
     const response = await apiClient.get('/currencies', {
-      params: { paginate: true, page, per_page: perPage },
+      params: { paginate: true, page, per_page: perPage, sort, 'filter[search]': search || undefined },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

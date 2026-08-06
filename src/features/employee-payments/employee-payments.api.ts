@@ -7,10 +7,31 @@ export type EmployeePaymentResponse = {
   meta?: PaginationMeta;
 };
 
+export type EmployeePaymentFilters = {
+  search?: string;
+  payment_date?: string;
+  date_from?: string;
+  date_to?: string;
+};
+
 export const employeePaymentsApi = {
-  getEmployeePayments: async (page = 1, perPage = 50): Promise<EmployeePaymentResponse> => {
+  getEmployeePayments: async (
+    page = 1,
+    perPage = 50,
+    sort?: string,
+    filters?: EmployeePaymentFilters
+  ): Promise<EmployeePaymentResponse> => {
     const response = await apiClient.get('/employee-payments', {
-      params: { paginate: true, page, per_page: perPage },
+      params: {
+        paginate: true,
+        page,
+        per_page: perPage,
+        sort,
+        'filter[search]': filters?.search || undefined,
+        'filter[payment_date]': filters?.payment_date || undefined,
+        'filter[date_from]': filters?.date_from || undefined,
+        'filter[date_to]': filters?.date_to || undefined,
+      },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react';
-import { MoreVertical, Pencil, Trash2, ChevronDown, ChevronRight, Eye, Inbox } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, ChevronDown, ChevronRight, Eye, Inbox, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,8 @@ export type DataTableColumn<T> = {
   accessorKey?: keyof T;
   cell?: (row: T) => ReactNode;
   className?: string;
+  sortable?: boolean;
+  sortKey?: string;
 };
 
 type ExtraAction<T> = {
@@ -54,6 +56,8 @@ type DataTableProps<T> = {
   deleteLabel: string;
   actions?: DataTableActions<T>;
   renderExpandedRow?: (row: T) => ReactNode;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
 export function DataTable<T>({
@@ -61,16 +65,27 @@ export function DataTable<T>({
   data,
   loading,
   emptyLabel,
-  // loadingLabel,
   confirmTitle,
   confirmDescription,
   cancelLabel,
   deleteLabel,
   actions,
   renderExpandedRow,
+  sort,
+  onSortChange,
 }: DataTableProps<T>) {
   const [pendingDelete, setPendingDelete] = useState<T | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [prevData, setPrevData] = useState<T[]>(data);
+
+  React.useEffect(() => {
+    if (!loading && data) {
+      setPrevData(data);
+    }
+  }, [data, loading]);
+
+  const displayData = (loading && data.length === 0 && prevData.length > 0) ? prevData : data;
+
   const actionCount =
     (actions?.onView ? 1 : 0) +
     (actions?.onEdit ? 1 : 0) +
@@ -92,15 +107,73 @@ export function DataTable<T>({
             <TableRow className="hover:bg-transparent">
               {renderExpandedRow ? <TableHead className="w-10" /> : null}
               {actionCount > 0 ? <TableHead className="w-14" /> : null}
-              {columns.map((column) => (
-                <TableHead key={column.header} className={column.className}>
-                  {column.header}
-                </TableHead>
-              ))}
+              {columns.map((column) => {
+                const key = column.sortKey || String(column.accessorKey || '');
+                
+                const sortItems = React.useMemo(() => {
+                  if (!sort) return [];
+                  return sort.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+                    if (s.startsWith('-')) {
+                      return { key: s.slice(1), desc: true };
+                    }
+                    return { key: s, desc: false };
+                  });
+                }, [sort]);
+
+                const sortedItem = sortItems.find(item => item.key === key);
+                const isSortedAsc = sortedItem ? !sortedItem.desc : false;
+                const isSortedDesc = sortedItem ? sortedItem.desc : false;
+
+                const handleHeaderClick = () => {
+                  if (!column.sortable || !onSortChange) return;
+                  
+                  const nextItems = [...sortItems];
+                  const foundIndex = nextItems.findIndex(item => item.key === key);
+                  
+                  if (foundIndex === -1) {
+                    nextItems.push({ key, desc: false });
+                  } else {
+                    const item = nextItems[foundIndex];
+                    if (!item.desc) {
+                      nextItems[foundIndex] = { key, desc: true };
+                    } else {
+                      nextItems.splice(foundIndex, 1);
+                    }
+                  }
+                  
+                  if (nextItems.length === 0) {
+                    onSortChange(undefined);
+                  } else {
+                    onSortChange(nextItems.map(item => `${item.desc ? '-' : ''}${item.key}`).join(','));
+                  }
+                };
+
+                return (
+                  <TableHead key={column.header} className={column.className}>
+                    {column.sortable && key ? (
+                      <div
+                        onClick={handleHeaderClick}
+                        className="flex items-center gap-1.5 cursor-pointer select-none group/sort"
+                      >
+                        <span>{column.header}</span>
+                        {isSortedAsc ? (
+                          <ArrowUp className="size-3.5 text-foreground shrink-0" />
+                        ) : isSortedDesc ? (
+                          <ArrowDown className="size-3.5 text-foreground shrink-0" />
+                        ) : (
+                          <ArrowUpDown className="size-3.5 text-muted-foreground opacity-50 group-hover/sort:opacity-100 transition-opacity shrink-0" />
+                        )}
+                      </div>
+                    ) : (
+                      column.header
+                    )}
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loading && displayData.length === 0 ? (
               Array.from({ length: 5 }).map((_, rowIndex) => (
                 <TableRow key={`skeleton-${rowIndex}`}>
                   {renderExpandedRow ? (
@@ -120,8 +193,8 @@ export function DataTable<T>({
                   ))}
                 </TableRow>
               ))
-            ) : data.length ? (
-              data.map((row, rowIndex) => (
+            ) : displayData.length ? (
+              displayData.map((row, rowIndex) => (
                 <React.Fragment key={rowIndex}>
                   <TableRow className="group">
                     {renderExpandedRow ? (

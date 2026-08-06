@@ -8,12 +8,15 @@ type CurrencyTableProps = {
   onEdit: (currency: Currency) => void;
   onDelete: (currency: Currency) => void | Promise<void>;
   onView?: (currency: Currency) => void;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
-export function CurrencyTable({ data, loading, onEdit, onDelete, onView }: CurrencyTableProps) {
+export function CurrencyTable({ data, loading, onEdit, onDelete, onView, sort, onSortChange }: CurrencyTableProps) {
   const columns: DataTableColumn<Currency>[] = [
-    { header: 'اسم العملة', cell: (row) => row.currency },
-    { header: 'الرمز', cell: (row) => row.symbol },
+    { header: 'اسم العملة', cell: (row) => row.currency, sortable: true, sortKey: 'currency' },
+    { header: 'الرمز', cell: (row) => row.symbol, sortable: true, sortKey: 'symbol' },
+    { header: 'تاريخ الإضافة', cell: (row) => row.created_at ? new Date(row.created_at).toLocaleDateString('ar-SA') : '—', sortable: true, sortKey: 'created_at' },
   ];
 
   return (
@@ -21,6 +24,8 @@ export function CurrencyTable({ data, loading, onEdit, onDelete, onView }: Curre
       columns={columns}
       data={data}
       loading={loading}
+      sort={sort}
+      onSortChange={onSortChange}
       emptyLabel="لا توجد عملات"
       loadingLabel="جاري التحميل..."
       confirmTitle="تأكيد الحذف"

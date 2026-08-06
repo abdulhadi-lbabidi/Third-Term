@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { RotateCcw, BadgeDollarSign } from 'lucide-react';
+import { RotateCcw, BadgeDollarSign, SlidersHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { usersApi } from '@/features/users/api/users.api';
-import { employeePaymentsApi, type EmployeePaymentResponse } from './employee-payments.api';
+import { employeePaymentsApi, type EmployeePaymentResponse, type EmployeePaymentFilters } from './employee-payments.api';
 import { EmployeePaymentsDialog } from './components/employee-payments.dialog';
 import { EmployeePaymentsTable } from './components/employee-payments.table';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from './types';
 import { PageHeader } from '../components/page-header';
 import { SimplePagination } from '@/components/ui/pagination';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
+import { cn } from '@/shared/lib/utils';
 
 
 export function EmployeePaymentsPage() {
@@ -20,6 +24,14 @@ export function EmployeePaymentsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const perPage = 50;
+  const [sort, setSort] = useState<string | undefined>(undefined);
+
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [paymentDate, setPaymentDate] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState<EmployeePaymentFilters>({});
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<EmployeePayment | null>(null);
@@ -32,9 +44,28 @@ export function EmployeePaymentsPage() {
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
 
   const paymentsQuery = useQuery<EmployeePaymentResponse>({
-    queryKey: ['employee-payments', page, perPage],
-    queryFn: () => employeePaymentsApi.getEmployeePayments(page, perPage),
+    queryKey: ['employee-payments', page, perPage, sort, appliedFilters],
+    queryFn: () => employeePaymentsApi.getEmployeePayments(page, perPage, sort, appliedFilters),
   });
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      search: searchQuery || undefined,
+      payment_date: paymentDate || undefined,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+    });
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setPaymentDate('');
+    setDateFrom('');
+    setDateTo('');
+    setAppliedFilters({});
+    setPage(1);
+  };
 
   const employeesQuery = useQuery({
     queryKey: ['employees'] as const,
@@ -163,6 +194,15 @@ export function EmployeePaymentsPage() {
               </Button>
             ) : null}
             <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFilterDrawerOpen(true)}
+              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
+            >
+              <SlidersHorizontal className="size-4" />
+              فلترة متقدمة
+            </Button>
+            <Button
               onClick={() => {
                 setSelectedPayment(null);
                 setDialogOpen(true);
@@ -177,6 +217,8 @@ export function EmployeePaymentsPage() {
       <EmployeePaymentsTable
         data={visiblePayments}
         loading={paymentsQuery.isLoading}
+        sort={sort}
+        onSortChange={setSort}
         onEdit={(payment) => {
           setSelectedPayment(payment);
           setDialogOpen(true);
@@ -203,6 +245,56 @@ export function EmployeePaymentsPage() {
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-search">البحث العام (الاسم أو البريد)</Label>
+            <Input
+              id="filter-search"
+              type="text"
+              placeholder="ابحث بالاسم أو البريد الإلكتروني..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-payment-date">تاريخ الدفع</Label>
+            <Input
+              id="filter-payment-date"
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-date-from">من تاريخ</Label>
+            <Input
+              id="filter-date-from"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-date-to">إلى تاريخ</Label>
+            <Input
+              id="filter-date-to"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+        </div>
+      </FilterDrawer>
     </div>
   );
 }
