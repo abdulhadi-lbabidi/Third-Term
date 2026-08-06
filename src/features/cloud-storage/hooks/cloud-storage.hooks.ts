@@ -99,3 +99,18 @@ export const useMoveItems = () => {
     },
   });
 };
+
+export const useCopyFiles = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ fileIds, targetDirectoryId }: { fileIds: number[]; targetDirectoryId: number | null }) =>
+      Promise.all(fileIds.map((mediaId) => cloudStorageApi.copyFile({
+        media_id: mediaId,
+        target_directory_id: targetDirectoryId,
+      }))),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['directories'] });
+    },
+  });
+};

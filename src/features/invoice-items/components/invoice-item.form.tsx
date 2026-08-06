@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calculator, Plus } from 'lucide-react';
+import { Calculator, Plus, RotateCcw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { materialsApi } from '@/features/materials/materials.api';
 import type { Material } from '@/features/materials/types';
@@ -23,8 +23,11 @@ type InvoiceItemFormProps = {
   currencyLabel?: string;
   priceStep?: number;
   onSubmit: (data: InvoiceItemFormValues) => Promise<void>;
+  onAddOnly?: () => void;
   onInvalid?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   loading?: boolean;
+  disabled?: boolean;
 };
 
 function getInvoiceId(item?: InvoiceItem | null) {
@@ -35,7 +38,7 @@ function getMaterialId(item?: InvoiceItem | null) {
   return item?.material_id ?? item?.material?.id ?? 0;
 }
 
-export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currencyLabel, priceStep = 1, onSubmit, onInvalid, loading }: InvoiceItemFormProps) {
+export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currencyLabel, priceStep = 1, onSubmit, onAddOnly, onInvalid, onDirtyChange, loading, disabled }: InvoiceItemFormProps) {
   const queryClient = useQueryClient();
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const { data: invoices = [] } = useQuery<InvoiceOption[]>({
@@ -74,6 +77,10 @@ export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currenc
     });
   }, [defaultValues, fixedInvoiceId, form]);
 
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
+
   const quantity = form.watch('quantity');
   const unitPrice = form.watch('unit_price');
   const totalPrice = useMemo(() => {
@@ -85,12 +92,12 @@ export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currenc
   const invoiceOptions =
     defaultValues?.invoice && !invoices.some((invoice) => invoice.id === defaultValues.invoice?.id)
       ? [
-          {
-            id: defaultValues.invoice.id,
-            invoice_number: defaultValues.invoice.invoice_number,
-          },
-          ...invoices,
-        ]
+        {
+          id: defaultValues.invoice.id,
+          invoice_number: defaultValues.invoice.invoice_number,
+        },
+        ...invoices,
+      ]
       : invoices;
 
   const materialOptions =
@@ -150,53 +157,53 @@ export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currenc
         />}
 
         <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(140px,1fr)]">
-        <FormField
-          control={form.control}
-          name="material_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>المادة</FormLabel>
-              <FormControl>
-                <SearchableSelect
-                  value={field.value ? String(field.value) : undefined}
-                  onValueChange={(value) => {
-                    const materialId = Number(value);
-                    field.onChange(materialId);
-                    const material = materialOptions.find((option) => option.id === materialId);
-                    if (material?.unit) form.setValue('unit', material.unit);
-                    if (material?.description && !form.getValues('item_description')) {
-                      form.setValue('item_description', material.description);
+          <FormField
+            control={form.control}
+            name="material_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>المادة</FormLabel>
+                <FormControl>
+                  <SearchableSelect
+                    value={field.value ? String(field.value) : undefined}
+                    onValueChange={(value) => {
+                      const materialId = Number(value);
+                      field.onChange(materialId);
+                      const material = materialOptions.find((option) => option.id === materialId);
+                      if (material?.unit) form.setValue('unit', material.unit);
+                      if (material?.description && !form.getValues('item_description')) {
+                        form.setValue('item_description', material.description);
+                      }
+                    }}
+                    options={materialOptions.map((material) => ({ value: String(material.id), label: material.name }))}
+                    placeholder="اختر المادة"
+                    searchPlaceholder="ابحث عن مادة..."
+                    emptyMessage="لا توجد مواد."
+                    bottomAction={
+                      <Button type="button" variant="ghost" size="sm" className="w-full justify-start" onClick={() => setMaterialDialogOpen(true)}>
+                        <Plus className="ml-2 size-4" />إضافة مادة جديدة
+                      </Button>
                     }
-                  }}
-                  options={materialOptions.map((material) => ({ value: String(material.id), label: material.name }))}
-                  placeholder="اختر المادة"
-                  searchPlaceholder="ابحث عن مادة..."
-                  emptyMessage="لا توجد مواد."
-                  bottomAction={
-                    <Button type="button" variant="ghost" size="sm" className="w-full justify-start" onClick={() => setMaterialDialogOpen(true)}>
-                      <Plus className="ml-2 size-4" />إضافة مادة جديدة
-                    </Button>
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="unit"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الوحدة</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="قطعة" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الوحدة</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="قطعة" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -249,10 +256,30 @@ export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currenc
             </FormItem>
           )}
         />
-
-        <Button type="submit" size="sm" className="min-w-28" disabled={loading}>
-          {loading ? 'جاري الحفظ...' : defaultValues ? 'حفظ التعديلات' : 'إضافة صنف'}
-        </Button>
+        <div className="flex justify-end gap-2">
+          {!defaultValues && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => form.reset({
+                invoice_id: fixedInvoiceId ?? 0,
+                material_id: 0,
+                item_description: '',
+                unit: '',
+                quantity: 0,
+                unit_price: 0,
+              })}
+              disabled={loading || disabled}
+            >
+              <RotateCcw className="size-4" />
+              مسح البيانات
+            </Button>
+          )}
+          <Button type="submit" size="sm" className="min-w-28" disabled={loading || disabled} onClick={onAddOnly}>
+            {loading ? 'جاري الحفظ...' : defaultValues ? 'حفظ التعديلات' : 'إضافة صنف'}
+          </Button>
+        </div>
       </form>
       <MaterialDialog
         open={materialDialogOpen}

@@ -1,17 +1,14 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '@/features/components/page-header';
-import { InvoicesForm } from './components/invoices.form';
+import { InvoicesDialog } from './components/invoices.dialog';
 import { FileText } from 'lucide-react';
-import { useInvoice } from './invoices.hooks';
 
 export function NewInvoicePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const invoiceId = Number(searchParams.get('invoiceId') || '');
   const isEditMode = Number.isFinite(invoiceId) && invoiceId > 0;
-
-  const { data: invoice, isLoading } = useInvoice(invoiceId, isEditMode);
 
   return (
     <div className="space-y-5">
@@ -26,22 +23,12 @@ export function NewInvoicePage() {
         }
       />
 
-      <div className="surface-panel p-5 sm:p-6">
-        {(isEditMode && isLoading) ? (
-          <div className="flex items-center justify-center p-8">جاري التحميل...</div>
-        ) : (
-          <InvoicesForm
-            defaultValues={isEditMode ? invoice : undefined}
-            onSuccess={(savedInvoice) => {
-              if (!isEditMode && savedInvoice?.id) {
-                navigate(`/invoice-items?invoiceId=${savedInvoice.id}&wizard=true`, { replace: true });
-              } else {
-                navigate('/invoices', { replace: true });
-              }
-            }}
-          />
-        )}
-      </div>
+      <InvoicesDialog
+        isOpen
+        embedded
+        invoiceId={isEditMode ? invoiceId : undefined}
+        onClose={() => navigate('/invoices', { replace: true })}
+      />
     </div>
   );
 }

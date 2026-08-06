@@ -79,25 +79,7 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
     },
     {
       header: 'الصناديق',
-      cell: (row) => {
-        const funds = row.funds ?? [];
-
-        if (!funds.length) {
-          return <span className="text-slate-500">-</span>;
-        }
-        return (
-          <div className="flex flex-wrap gap-2">
-            {funds.map((fund) => (
-              <span
-                key={fund.id}
-                className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 shadow-sm"
-              >
-                {fund.name}
-              </span>
-            ))}
-          </div>
-        );
-      },
+      cell: (row) => <span className="finance-num font-medium">{row.funds?.length ?? 0}</span>,
     },
     { header: 'تاريخ الإنشاء', cell: (row) => (row.created_at ? dayjs(row.created_at).format('YYYY-MM-DD') : '-') },
   ];

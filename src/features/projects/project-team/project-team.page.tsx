@@ -49,12 +49,26 @@ export function ProjectTeamPage() {
     enabled: dialogOpen,
   });
 
+  const engineersQuery = useQuery({
+    queryKey: ['engineers'] as const,
+    queryFn: async () => {
+      const res = await usersApi.getUsersByRole('engineer');
+      return (res as any)?.data ?? res;
+    },
+    enabled: dialogOpen,
+  });
+
   const members = (teamQuery.data ?? []).filter((m) => m.project?.id === projectId);
 
   const userOptions = ((employeesQuery.data ?? []) as any[]).map((e: any) => ({
     id: e.user.id,
     name: e.user?.name ?? `موظف #${e.id}`,
-  }));
+    type: 'employee' as 'employee' | 'engineer',
+  })).concat(((engineersQuery.data ?? []) as any[]).map((engineer: any) => ({
+    id: engineer.user.id,
+    name: engineer.user?.name ?? `مهندس #${engineer.id}`,
+    type: 'engineer' as 'employee' | 'engineer',
+  })));
 
   const currentProject = projectQuery.data ?? null;
 

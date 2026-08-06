@@ -71,6 +71,11 @@ export const cloudStorageApi = {
       .post('/directories/move-file', payload)
       .then(({ data }: any) => data?.data ?? data),
 
+  copyFile: (payload: { media_id: number; target_directory_id: number | null }): Promise<CloudFile> =>
+    apiClient
+      .post<CloudFile>('/directories/copy-file', payload)
+      .then(({ data }: any) => data?.data ?? data),
+
   moveItems: (payload: {
     targetDirId: number | null;
     itemIds: { id: number; type: 'file' | 'folder'; data?: any }[];

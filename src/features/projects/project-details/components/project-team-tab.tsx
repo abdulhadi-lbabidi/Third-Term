@@ -39,6 +39,15 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
     enabled: dialogOpen,
   });
 
+  const engineersQuery = useQuery({
+    queryKey: ['engineers'] as const,
+    queryFn: async () => {
+      const res = await usersApi.getUsersByRole('engineer');
+      return (res as any)?.data ?? res;
+    },
+    enabled: dialogOpen,
+  });
+
   // Filter by current project
   const members = (teamQuery.data ?? []).filter((m) => m.project?.id === projectId);
 
@@ -51,7 +60,15 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
     .map((e: any) => ({
       id: e.user.id,
       name: e.user?.name ?? `موظف #${e.id}`,
-    }));
+      type: 'employee' as 'employee' | 'engineer',
+    }))
+    .concat(((engineersQuery.data ?? []) as any[])
+      .filter((engineer: any) => !existingUserIds.has(engineer.user?.id) || engineer.user?.id === selectedMember?.user?.id)
+      .map((engineer: any) => ({
+        id: engineer.user.id,
+        name: engineer.user?.name ?? `مهندس #${engineer.id}`,
+        type: 'engineer' as 'employee' | 'engineer',
+      })));
 
   // ── Mutations ──────────────────────────────────────────────────
   const saveMutation = useMutation({

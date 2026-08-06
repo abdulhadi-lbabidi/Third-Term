@@ -19,9 +19,10 @@ type InvoicesDialogProps = {
   onClose: () => void;
   invoiceId?: number;
   fixedValues?: Record<string, any>;
+  embedded?: boolean;
 };
 
-export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: InvoicesDialogProps) {
+export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedded = false }: InvoicesDialogProps) {
   const closeAfterItemSaveRef = useRef(false);
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'invoice' | 'items'>('invoice');
@@ -29,6 +30,8 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
   const [createdInSession, setCreatedInSession] = useState(false);
   const [itemFormKey, setItemFormKey] = useState(0);
   const [editingItem, setEditingItem] = useState<InvoiceItem | null>(null);
+  const [itemFormDirty, setItemFormDirty] = useState(false);
+  const [itemSubmitIntent, setItemSubmitIntent] = useState<'add' | 'send' | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,6 +39,8 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
     setActiveInvoiceId(invoiceId);
     setCreatedInSession(false);
     setItemFormKey(0);
+    setItemFormDirty(false);
+    setItemSubmitIntent(null);
     closeAfterItemSaveRef.current = false;
   }, [isOpen, invoiceId]);
 
@@ -71,6 +76,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
       setItemFormKey((value) => value + 1);
       toast.success(editingItem ? 'تم تحديث صنف الفاتورة بنجاح' : 'تمت إضافة صنف الفاتورة بنجاح');
       setEditingItem(null);
+      setItemSubmitIntent(null);
       if (closeAfterItemSaveRef.current) {
         closeAfterItemSaveRef.current = false;
         onClose();
@@ -78,6 +84,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
     },
     onError: () => {
       closeAfterItemSaveRef.current = false;
+      setItemSubmitIntent(null);
     },
   });
   const deleteItemMutation = useMutation({
@@ -102,9 +109,13 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
     setStep('items');
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`max-h-[90vh] !overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
+  const wizardTitle = step === 'items' ? 'إضافة أصناف الفاتورة' : isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة جديدة';
+  const wizardDescription = step === 'items'
+    ? 'أضف المواد والكميات والأسعار، ويمكنك الرجوع لتعديل بيانات الفاتورة.'
+    : 'أدخل بيانات الفاتورة ثم انتقل لإضافة أصنافها.';
+
+  const wizardContent = (
+    <>
         <DialogHeader>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/40 p-1">
             <button type="button" onClick={() => setStep('invoice')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm ${step === 'invoice' ? 'bg-background font-semibold text-primary shadow-sm' : 'text-muted-foreground'}`}>
@@ -114,12 +125,8 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
               <PackageOpen className="size-4" />الأصناف
             </button>
           </div>
-          <DialogTitle>{step === 'items' ? 'إضافة أصناف الفاتورة' : isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة جديدة'}</DialogTitle>
-          <DialogDescription>
-            {step === 'items'
-              ? 'أضف المواد والكميات والأسعار، ويمكنك الرجوع لتعديل بيانات الفاتورة.'
-              : 'أدخل بيانات الفاتورة ثم انتقل لإضافة أصنافها.'}
-          </DialogDescription>
+          {embedded ? <h2 className="text-lg font-semibold text-foreground">{wizardTitle}</h2> : <DialogTitle>{wizardTitle}</DialogTitle>}
+          {embedded ? <p className="text-sm text-muted-foreground">{wizardDescription}</p> : <DialogDescription>{wizardDescription}</DialogDescription>}
         </DialogHeader>
 
         <div className="py-3">
@@ -176,10 +183,17 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
                 onSubmit={async (values) => {
                   await createItemMutation.mutateAsync(values);
                 }}
+                onAddOnly={() => {
+                  closeAfterItemSaveRef.current = false;
+                  setItemSubmitIntent('add');
+                }}
                 onInvalid={() => {
                   closeAfterItemSaveRef.current = false;
+                  setItemSubmitIntent(null);
                 }}
-                loading={createItemMutation.isPending}
+                onDirtyChange={setItemFormDirty}
+                loading={createItemMutation.isPending && itemSubmitIntent === 'add'}
+                disabled={createItemMutation.isPending && itemSubmitIntent !== 'add'}
               />
               <div className="order-2 flex items-center justify-between gap-3 pt-1">
                 <Button type="button" variant="outline" onClick={() => setStep('invoice')}>
@@ -187,20 +201,40 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues }: Invo
                   تعديل بيانات الفاتورة
                 </Button>
                 <Button
-                  type="submit"
-                  form="invoice-item-dialog-form"
+                  type="button"
                   disabled={createItemMutation.isPending}
                   onClick={() => {
-                    closeAfterItemSaveRef.current = true;
+                    if (itemFormDirty) {
+                      closeAfterItemSaveRef.current = true;
+                      setItemSubmitIntent('send');
+                      (document.getElementById('invoice-item-dialog-form') as HTMLFormElement | null)?.requestSubmit();
+                      return;
+                    }
+                    if (!invoiceItems.length) {
+                      toast.error('أضف صنفًا واحدًا على الأقل قبل إرسال الفاتورة');
+                      return;
+                    }
+                    onClose();
                   }}
                 >
                   <CheckCircle2 className="ml-2 size-4" />
-                  {createItemMutation.isPending ? 'جاري الإرسال...' : 'إرسال'}
+                  {createItemMutation.isPending && itemSubmitIntent === 'send' ? 'جاري الإرسال...' : 'إرسال'}
                 </Button>
               </div>
             </div>
           ) : null}
         </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="surface-panel p-5 sm:p-6">{wizardContent}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className={`max-h-[90vh] !overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
+        {wizardContent}
       </DialogContent>
     </Dialog>
   );

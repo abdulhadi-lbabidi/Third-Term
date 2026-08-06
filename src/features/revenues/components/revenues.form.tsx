@@ -739,13 +739,13 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
             )}
 
             {source === 'project_fund' && (
-              <div className="contents">
+              <div className="grid gap-4 md:col-span-full md:grid-cols-2">
                 {!fixedValues?.project_id && (
                   <FormField
                     control={form.control}
                     name="project_id"
                     render={({ field }) => (
-                      <FormItem className="md:col-span-3">
+                      <FormItem>
                         <FormLabel>المشروع</FormLabel>
                         {projectsQuery.isLoading ? (
                           <Skeleton className="h-11 w-full" />

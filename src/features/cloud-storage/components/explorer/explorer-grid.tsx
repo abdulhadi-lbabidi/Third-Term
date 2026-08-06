@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { UploadCloud } from 'lucide-react';
-import { useDirectories, useDirectory, useMoveItems, useDeleteDirectory, useDeleteFile } from '../../hooks/cloud-storage.hooks';
+import { useDirectories, useDirectory, useMoveItems, useDeleteDirectory, useDeleteFile, useCopyFiles } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile, ExplorerSortBy, ExplorerSortDirection, ExplorerViewMode } from '../../types';
 import { ExplorerHeader } from './explorer-header';
 import { FolderCard } from './folder.card';
@@ -38,6 +38,28 @@ interface PaginatedResponse<T> {
     to: number;
     total: number;
   };
+}
+
+const FILE_CLIPBOARD_KEY = 'cloud-storage-file-clipboard';
+
+interface FileClipboard {
+  version: 2;
+  mode: 'copy' | 'cut';
+  copiedAt: string;
+  items: Array<{ type: 'file' | 'folder'; id: number; name: string }>;
+}
+
+function readFileClipboard(): FileClipboard | null {
+  try {
+    const value = localStorage.getItem(FILE_CLIPBOARD_KEY);
+    if (!value) return null;
+    const parsed = JSON.parse(value) as Partial<FileClipboard>;
+    if (parsed.version !== 2 || (parsed.mode !== 'copy' && parsed.mode !== 'cut') || !Array.isArray(parsed.items)) return null;
+    const items = parsed.items.filter((item) => (item?.type === 'file' || item?.type === 'folder') && Number.isFinite(item?.id) && typeof item?.name === 'string');
+    return items.length ? { version: 2, mode: parsed.mode, copiedAt: parsed.copiedAt ?? '', items } : null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Hook debounce ──
@@ -86,6 +108,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [fileClipboard, setFileClipboard] = useState<FileClipboard | null>(() => readFileClipboard());
 
   // ── Root level: GET /api/directories?paginate=1&per_page=10&page=1 ──
   const rootParams = {
@@ -109,7 +132,9 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     error: dirError,
   } = useDirectory(currentDirId);
 
-  const { mutate: moveItems } = useMoveItems();
+  const { mutate: moveItems, mutateAsync: moveItemsAsync, isPending: isMoving } = useMoveItems();
+  const { mutateAsync: copyFiles, isPending: isCopying } = useCopyFiles();
+  const isPasting = isMoving || isCopying;
   const { mutateAsync: deleteDirectory } = useDeleteDirectory();
   const { mutateAsync: deleteFile } = useDeleteFile();
 
@@ -321,12 +346,14 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     && visibleItemKeys.every((key) => selected.has(key));
 
   const changeView = (mode: ExplorerViewMode) => { setViewMode(mode); localStorage.setItem('cloud-explorer-view', mode); };
-  const selectItem = (key: string, checked: boolean) => setSelected((current) => {
-    const next = new Set(current);
-    if (checked) next.add(key);
-    else next.delete(key);
-    return next;
-  });
+  const selectItem = (key: string, checked: boolean) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  };
   const toggleSelectAll = () => setSelected((current) => {
     const next = new Set(current);
     if (visibleItemKeys.every((key) => next.has(key))) {
@@ -336,19 +363,63 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     }
     return next;
   });
-  const copySelectedNames = async () => {
-    const selectedNames = [
-      ...currentFolders.filter((folder) => selected.has(`folder:${folder.id}`)).map((folder) => folder.dir_name),
-      ...currentFiles.filter((file) => selected.has(`file:${file.id}`)).map((file) => file.file_name),
-    ];
-    if (!selectedNames.length) return;
-
-    try {
-      await navigator.clipboard.writeText(selectedNames.join('\n'));
-      toast.success(`تم نسخ أسماء ${selectedNames.length} عناصر`);
-    } catch {
-      toast.error('تعذر النسخ إلى الحافظة');
+  const copySelectedFiles = () => {
+    const files = currentFiles
+      .filter((file) => selected.has(`file:${file.id}`))
+      .map((file) => ({ type: 'file' as const, id: file.id, name: file.file_name }));
+    if (!files.length) {
+      toast.error('حدد ملفًا واحدًا على الأقل للنسخ');
+      return;
     }
+
+    const clipboard: FileClipboard = { version: 2, mode: 'copy', copiedAt: new Date().toISOString(), items: files };
+    localStorage.setItem(FILE_CLIPBOARD_KEY, JSON.stringify(clipboard));
+    setFileClipboard(clipboard);
+    toast.success(`تم نسخ ${files.length} ملف إلى الحافظة`);
+  };
+  const cutSelectedItems = () => {
+    const items: FileClipboard['items'] = [
+      ...currentFolders
+        .filter((folder) => selected.has(`folder:${folder.id}`))
+        .map((folder) => ({ type: 'folder' as const, id: folder.id, name: folder.dir_name })),
+      ...currentFiles
+        .filter((file) => selected.has(`file:${file.id}`))
+        .map((file) => ({ type: 'file' as const, id: file.id, name: file.file_name })),
+    ];
+    if (!items.length) return;
+
+    const clipboard: FileClipboard = { version: 2, mode: 'cut', copiedAt: new Date().toISOString(), items };
+    localStorage.setItem(FILE_CLIPBOARD_KEY, JSON.stringify(clipboard));
+    setFileClipboard(clipboard);
+    toast.success(`تم قص ${items.length} عنصر إلى الحافظة`);
+  };
+  const pasteCopiedFiles = async () => {
+    const clipboard = readFileClipboard();
+    if (!clipboard?.items.length || isPasting) return;
+
+    const toastId = toast.loading(`جاري لصق ${clipboard.items.length} عنصر...`);
+    try {
+      if (clipboard.mode === 'copy') {
+        await copyFiles({
+          fileIds: clipboard.items.map((item) => item.id),
+          targetDirectoryId: currentDirId,
+        });
+      } else {
+        await moveItemsAsync({
+          targetDirId: currentDirId,
+          itemIds: clipboard.items.map(({ type, id }) => ({ type, id })),
+        });
+      }
+      localStorage.removeItem(FILE_CLIPBOARD_KEY);
+      setFileClipboard(null);
+      toast.success(`تم لصق ${clipboard.items.length} عنصر`, { id: toastId });
+    } catch {
+      toast.error('تعذر لصق بعض الملفات', { id: toastId });
+    }
+  };
+  const exitClipboardMode = () => {
+    localStorage.removeItem(FILE_CLIPBOARD_KEY);
+    setFileClipboard(null);
   };
   const handleBulkDelete = async () => {
     if (!selected.size || isBulkDeleting) return;
@@ -366,8 +437,9 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
 
   return (
-    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <ExplorerHeader
+    <div className="flex min-h-0 w-full flex-1 flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="shrink-0 border-b border-border bg-card">
+        <ExplorerHeader
         breadcrumbs={breadcrumbs}
         onNavigate={handleNavigate}
         onNewFolder={() => {
@@ -386,36 +458,44 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         onSortByChange={setSortBy}
         sortDirection={sortDirection}
         onToggleSortDirection={() => setSortDirection((value) => value === 'asc' ? 'desc' : 'asc')}
+        selectionTools={(
+          <SelectionToolbar
+            selectedCount={selected.size}
+            hasItems={visibleItemKeys.length > 0}
+            allItemsSelected={allVisibleItemsSelected}
+            onToggleSelectAll={toggleSelectAll}
+            onClearSelection={() => setSelected(new Set())}
+            onExitClipboard={exitClipboardMode}
+            onCopy={copySelectedFiles}
+            onCut={cutSelectedItems}
+            clipboardCount={fileClipboard?.items.length ?? 0}
+            onPaste={pasteCopiedFiles}
+            isPasting={isPasting}
+            onDelete={() => setIsBulkDeleteOpen(true)}
+          />
+        )}
         onDropItem={handleDropItem}
-      />
+        />
+      </div>
 
-      <SelectionToolbar
-        selectedCount={selected.size}
-        hasItems={visibleItemKeys.length > 0}
-        allItemsSelected={allVisibleItemsSelected}
-        onToggleSelectAll={toggleSelectAll}
-        onClearSelection={() => setSelected(new Set())}
-        onCopy={copySelectedNames}
-        onDelete={() => setIsBulkDeleteOpen(true)}
-      />
-
-      {isLoading ? (
+      <div className="min-h-0 flex-1 overflow-y-auto bg-muted/15 p-4 sm:p-5">
+        {isLoading ? (
         <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3' : 'space-y-2 rounded-xl border p-3'}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className={viewMode === 'grid' ? 'aspect-[4/3] w-full rounded-xl' : 'h-14 w-full rounded-lg'} />
           ))}
         </div>
       ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-20 text-center">
-          <UploadCloud className="size-12 text-slate-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900">المجلد فارغ</h3>
-          <p className="text-sm text-slate-500 mt-1 max-w-sm">
-            لا توجد ملفات أو مجلدات هنا. يمكنك إنشاء مجلد جديد أو رفع ملفات.
-          </p>
+        <div className="flex min-h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 px-4 py-20 text-center">
+          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <UploadCloud className="size-8" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">المجلد فارغ</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">لا توجد ملفات أو مجلدات هنا. أنشئ مجلدًا جديدًا أو ارفع ملفات للبدء.</p>
         </div>
       ) : (
         <>
-          {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+          {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
             {sortedFolders.map((folder) => (
               <FolderCard
                 key={`folder-${folder.id}`}
@@ -466,7 +546,8 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
             />
           )}
         </>
-      )}
+        )}
+      </div>
 
       <CreateFolderDialog
         open={isCreateFolderOpen}

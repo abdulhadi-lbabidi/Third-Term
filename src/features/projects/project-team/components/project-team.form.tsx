@@ -14,6 +14,7 @@ import {
 import { Input } from '@/shared/components/ui/input';
 import type { ProjectTeamMember } from '../project-team.types';
 import { InlineSearchableSelect } from '@/shared/components/ui/inline-searchable-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 
 // ───────────────────────────────────────────────
 // Exported user option shape (used by parent/dialog)
@@ -21,12 +22,14 @@ import { InlineSearchableSelect } from '@/shared/components/ui/inline-searchable
 export type UserOption = {
   id: number;
   name: string;
+  type: 'employee' | 'engineer';
 };
 
 // ───────────────────────────────────────────────
 // Zod schema
 // ───────────────────────────────────────────────
 const formSchema = z.object({
+  member_type: z.enum(['employee', 'engineer']),
   name: z.string().min(1, 'اسم الدور مطلوب'),
   user_ids: z
     .array(z.number())
@@ -48,6 +51,7 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      member_type: users.find((user) => user.id === member?.user?.id)?.type ?? 'employee',
       name: member?.name ?? '',
       user_ids: member?.user?.id ? [member.user.id] : [],
       project_id: projectId,
@@ -56,11 +60,12 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
 
   useEffect(() => {
     form.reset({
+      member_type: users.find((user) => user.id === member?.user?.id)?.type ?? 'employee',
       name: member?.name ?? '',
       user_ids: member?.user?.id ? [member.user.id] : [],
       project_id: projectId,
     });
-  }, [form, member, projectId]);
+  }, [form, member, projectId, users]);
 
   const handleSubmit = async (values: FormValues) => {
     await onSubmit({
@@ -71,11 +76,46 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
   };
 
   // Map users to SearchableSelect option shape
-  const userOptions = users.map((u) => ({ value: u.id, label: u.name }));
+  const memberType = form.watch('member_type');
+  const userOptions = users
+    .filter((user) => user.type === memberType)
+    .map((user) => ({ value: user.id, label: user.name }));
 
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+
+        <FormField
+          control={form.control}
+          name="member_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>نوع عضو المشروع</FormLabel>
+              <Select
+                value={field.value}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  field.onChange(value);
+                  form.setValue('user_ids', []);
+                  form.clearErrors('user_ids');
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر نوع العضو">
+                      {field.value === 'engineer' ? 'مهندس' : 'موظف'}
+                    </SelectValue>
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="employee">موظف</SelectItem>
+                  <SelectItem value="engineer">مهندس</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Role / title */}
         <FormField
@@ -98,7 +138,7 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
           name="user_ids"
           render={({ field }) => (
             <FormItem className="flex flex-col space-y-2">
-              <FormLabel>{member ? 'عضو الفريق' : 'أعضاء الفريق'}</FormLabel>
+              <FormLabel>{member ? (memberType === 'engineer' ? 'المهندس' : 'الموظف') : (memberType === 'engineer' ? 'المهندسون' : 'الموظفون')}</FormLabel>
               <FormControl>
                 <InlineSearchableSelect
                   multiple={!member}
@@ -112,8 +152,8 @@ export function ProjectTeamForm({ projectId, member, users, onSubmit, loading }:
                   }}
                   options={userOptions}
                   // placeholder="اختر عضو الفريق..."
-                  searchPlaceholder="ابحث عن عضو الفريق..."
-                  emptyMessage="لم يتم العثور على مستخدمين."
+                  searchPlaceholder={memberType === 'engineer' ? 'ابحث عن مهندس...' : 'ابحث عن موظف...'}
+                  emptyMessage={memberType === 'engineer' ? 'لم يتم العثور على مهندسين.' : 'لم يتم العثور على موظفين.'}
                 />
               </FormControl>
               <FormMessage />

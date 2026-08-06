@@ -40,6 +40,9 @@ const invoiceSchema = z.object({
   final_total: z.number().min(0, 'الإجمالي لا يمكن أن يكون سالباً'),
   is_posted: z.boolean(),
   is_visible_to_client: z.boolean(),
+}).refine((values) => values.discount <= values.final_total, {
+  path: ['discount'],
+  message: 'الخصم يجب أن يساوي الإجمالي أو يكون أقل منه',
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
