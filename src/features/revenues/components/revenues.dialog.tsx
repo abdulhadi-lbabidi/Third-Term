@@ -22,7 +22,7 @@ type RevenuesDialogProps = {
 export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: RevenuesDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'تعديل الإيراد' : 'إضافة إيراد جديد'}</DialogTitle>
         </DialogHeader>
@@ -35,6 +35,7 @@ export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues,
                 await onSubmit(data);
                 onOpenChange(false);
               }}
+              onCancel={() => onOpenChange(false)}
               loading={loading}
             />
           )}

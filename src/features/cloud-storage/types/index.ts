@@ -21,6 +21,8 @@ export interface Directory {
   updated_at?: string;
   files?: CloudFile[];
   children?: Directory[];
+  parent?: Directory | null;
+  ancestors?: Directory[];
 }
 
 export interface CreateDirectoryPayload {
@@ -48,4 +50,3 @@ export interface MoveFilePayload {
 export type ExplorerViewMode = 'grid' | 'list';
 export type ExplorerSortBy = 'name' | 'size' | 'date' | 'type';
 export type ExplorerSortDirection = 'asc' | 'desc';
-

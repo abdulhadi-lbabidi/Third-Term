@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Trash2, UploadCloud, X } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import { useDirectories, useDirectory, useMoveItems, useDeleteDirectory, useDeleteFile } from '../../hooks/cloud-storage.hooks';
 import type { Directory, CloudFile, ExplorerSortBy, ExplorerSortDirection, ExplorerViewMode } from '../../types';
 import { ExplorerHeader } from './explorer-header';
@@ -14,9 +14,10 @@ import { UploadFilesDialog } from './upload-files.dialog';
 import { FilePreviewDialog } from '../FilePreviewDialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { SimplePagination } from '@/components/ui/pagination';
-import { Button } from '@/shared/components/ui/button';
+import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
 import { ExplorerList } from './explorer-list';
 import { getFileType, resolveFileUrl } from '../../utils/file-utils';
+import { SelectionToolbar } from './selection-toolbar';
 
 // ── تعريف محلي لـ PaginatedResponse في حال عدم وجوده في types ──
 interface PaginatedResponse<T> {
@@ -51,10 +52,9 @@ function useDebounce<T>(value: T, delay: number): T {
 
 interface CloudStorageExplorerProps {
   projectId?: number | null;
-  rootDirectoryId?: number | null;
 }
 
-export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: CloudStorageExplorerProps) {
+export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const dirIdParam = searchParams.get('dirId');
   const currentDirId = dirIdParam ? Number(dirIdParam) : null;
@@ -84,6 +84,8 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
   const [sortBy, setSortBy] = useState<ExplorerSortBy>('name');
   const [sortDirection, setSortDirection] = useState<ExplorerSortDirection>('asc');
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // ── Root level: GET /api/directories?paginate=1&per_page=10&page=1 ──
   const rootParams = {
@@ -129,11 +131,24 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
   // ── Sync breadcrumbs when current directory changes ──
   useEffect(() => {
     if (currentDirId && currentDirectory) {
-      // إذا كانت الـ API تعيد ancestors نستخدمها، وإلا نكتفي بالاسم الحالي
-      const ancestors = (currentDirectory as any).ancestors || [];
+      const ancestors = currentDirectory.ancestors?.length
+        ? currentDirectory.ancestors
+        : (() => {
+            const chain: Directory[] = [];
+            const visited = new Set<number>();
+            let parent = currentDirectory.parent;
+
+            while (parent && !visited.has(parent.id)) {
+              visited.add(parent.id);
+              chain.unshift(parent);
+              parent = parent.parent;
+            }
+
+            return chain;
+          })();
       const newBreadcrumbs = [
         { id: null, name: 'الرئيسية' },
-        ...ancestors.map((a: any) => ({ id: a.id, name: a.dir_name })),
+        ...ancestors.map((directory) => ({ id: directory.id, name: directory.dir_name })),
         { id: currentDirId, name: currentDirectory.dir_name },
       ];
       setBreadcrumbs(newBreadcrumbs);
@@ -173,12 +188,30 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
   // ── Handlers ──
   const handleDropItem = useCallback(
     (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: any }) => {
-      const resolvedTargetFolderId = targetFolderId ?? rootDirectoryId;
+      const draggedKey = `${item.type}:${item.id}`;
+      const itemsToMove = selected.has(draggedKey)
+        ? [...selected].map((key) => {
+            const [type, id] = key.split(':');
+            return { type: type as 'file' | 'folder', id: Number(id) };
+          })
+        : [item];
+      const movableItems = itemsToMove.filter(
+        (selectedItem) => !(selectedItem.type === 'folder' && selectedItem.id === targetFolderId)
+      );
 
-      if (item.type === 'folder' && item.id === resolvedTargetFolderId) return;
-      moveItems({ targetDirId: resolvedTargetFolderId, itemIds: [item] });
+      if (!movableItems.length) return;
+      moveItems(
+        { targetDirId: targetFolderId, itemIds: movableItems },
+        {
+          onSuccess: () => {
+            setSelected(new Set());
+            toast.success(movableItems.length > 1 ? `تم نقل ${movableItems.length} عناصر` : 'تم نقل العنصر');
+          },
+          onError: () => toast.error('تعذر نقل العناصر'),
+        }
+      );
     },
-    [moveItems, rootDirectoryId]
+    [moveItems, selected]
   );
 
   const handleNavigate = useCallback(
@@ -280,6 +313,13 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
     return String(value(a)).localeCompare(String(value(b)), 'ar', { numeric: true }) * sortFactor;
   }), [filteredFiles, sortBy, sortFactor]);
 
+  const visibleItemKeys = useMemo(() => [
+    ...sortedFolders.map((folder) => `folder:${folder.id}`),
+    ...sortedFiles.map((file) => `file:${file.id}`),
+  ], [sortedFolders, sortedFiles]);
+  const allVisibleItemsSelected = visibleItemKeys.length > 0
+    && visibleItemKeys.every((key) => selected.has(key));
+
   const changeView = (mode: ExplorerViewMode) => { setViewMode(mode); localStorage.setItem('cloud-explorer-view', mode); };
   const selectItem = (key: string, checked: boolean) => setSelected((current) => {
     const next = new Set(current);
@@ -287,13 +327,40 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
     else next.delete(key);
     return next;
   });
+  const toggleSelectAll = () => setSelected((current) => {
+    const next = new Set(current);
+    if (visibleItemKeys.every((key) => next.has(key))) {
+      visibleItemKeys.forEach((key) => next.delete(key));
+    } else {
+      visibleItemKeys.forEach((key) => next.add(key));
+    }
+    return next;
+  });
+  const copySelectedNames = async () => {
+    const selectedNames = [
+      ...currentFolders.filter((folder) => selected.has(`folder:${folder.id}`)).map((folder) => folder.dir_name),
+      ...currentFiles.filter((file) => selected.has(`file:${file.id}`)).map((file) => file.file_name),
+    ];
+    if (!selectedNames.length) return;
+
+    try {
+      await navigator.clipboard.writeText(selectedNames.join('\n'));
+      toast.success(`تم نسخ أسماء ${selectedNames.length} عناصر`);
+    } catch {
+      toast.error('تعذر النسخ إلى الحافظة');
+    }
+  };
   const handleBulkDelete = async () => {
-    if (!selected.size || !window.confirm(`حذف ${selected.size} عنصر محدد؟`)) return;
+    if (!selected.size || isBulkDeleting) return;
+    setIsBulkDeleting(true);
     const toastId = toast.loading('جاري حذف العناصر...');
     try {
       await Promise.all([...selected].map((key) => { const [type, id] = key.split(':'); return type === 'folder' ? deleteDirectory(Number(id)) : deleteFile({ directoryId: currentDirId!, fileId: Number(id) }); }));
-      setSelected(new Set()); toast.success('تم حذف العناصر المحددة', { id: toastId });
+      setSelected(new Set());
+      setIsBulkDeleteOpen(false);
+      toast.success('تم حذف العناصر المحددة', { id: toastId });
     } catch { toast.error('تعذر حذف بعض العناصر', { id: toastId }); }
+    finally { setIsBulkDeleting(false); }
   };
 
 
@@ -322,7 +389,15 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
         onDropItem={handleDropItem}
       />
 
-      {selected.size > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm"><span className="font-medium">تم تحديد {selected.size}</span><div className="ms-auto flex gap-2"><Button size="sm" variant="destructive" onClick={handleBulkDelete}><Trash2 className="size-4" />حذف المحدد</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}><X className="size-4" />إلغاء التحديد</Button></div></div>}
+      <SelectionToolbar
+        selectedCount={selected.size}
+        hasItems={visibleItemKeys.length > 0}
+        allItemsSelected={allVisibleItemsSelected}
+        onToggleSelectAll={toggleSelectAll}
+        onClearSelection={() => setSelected(new Set())}
+        onCopy={copySelectedNames}
+        onDelete={() => setIsBulkDeleteOpen(true)}
+      />
 
       {isLoading ? (
         <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3' : 'space-y-2 rounded-xl border p-3'}>
@@ -413,6 +488,16 @@ export function CloudStorageExplorer({ projectId, rootDirectoryId = null }: Clou
         item={deleteItem?.item ?? null}
         type={deleteItem?.type ?? 'folder'}
         currentDirId={currentDirId}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={isBulkDeleteOpen}
+        onClose={() => !isBulkDeleting && setIsBulkDeleteOpen(false)}
+        onConfirm={handleBulkDelete}
+        isDeleting={isBulkDeleting}
+        title="تأكيد حذف العناصر المحددة"
+        description={`سيتم حذف ${selected.size} عنصر بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.`}
+        confirmLabel="حذف العناصر"
       />
 
       <UploadFilesDialog

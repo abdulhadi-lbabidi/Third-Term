@@ -123,14 +123,15 @@ export function GenericFundDetails({
       await updateRevenueMutation.mutateAsync({ id: selectedRevenue.id, payload: data });
     } else {
       await createRevenueMutation.mutateAsync(data);
-      const projectId = Number(extraFixedValues?.project_id);
-      if (Number.isFinite(projectId) && projectId > 0) {
-        await queryClient.invalidateQueries({
-          queryKey: ['projects', projectId],
-          exact: true,
-          refetchType: 'all',
-        });
-      }
+    }
+
+    const projectId = Number(extraFixedValues?.project_id);
+    if (Number.isFinite(projectId) && projectId > 0) {
+      await queryClient.invalidateQueries({
+        queryKey: ['projects', projectId],
+        exact: true,
+        refetchType: 'all',
+      });
     }
   };
 
@@ -165,14 +166,15 @@ export function GenericFundDetails({
       await updateExpenseMutation.mutateAsync({ id: selectedExpense.id, payload: data });
     } else {
       await createExpenseMutation.mutateAsync(data);
-      const projectId = Number(extraFixedValues?.project_id);
-      if (Number.isFinite(projectId) && projectId > 0) {
-        await queryClient.invalidateQueries({
-          queryKey: ['projects', projectId],
-          exact: true,
-          refetchType: 'all',
-        });
-      }
+    }
+
+    const projectId = Number(extraFixedValues?.project_id);
+    if (Number.isFinite(projectId) && projectId > 0) {
+      await queryClient.invalidateQueries({
+        queryKey: ['projects', projectId],
+        exact: true,
+        refetchType: 'all',
+      });
     }
   };
 

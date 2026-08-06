@@ -42,6 +42,7 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
                 await onSubmit(data);
                 onOpenChange(false);
               }}
+              onCancel={() => onOpenChange(false)}
               loading={loading}
             />
           )}

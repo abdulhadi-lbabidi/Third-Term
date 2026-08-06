@@ -160,7 +160,7 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
               <FormControl>
                 <Input
                   type="number"
-                  step="0.01"
+                  step="1"
                   value={field.value}
                   onChange={(event) => field.onChange(Number(event.target.value))}
                 />
