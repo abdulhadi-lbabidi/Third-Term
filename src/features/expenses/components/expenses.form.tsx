@@ -55,6 +55,7 @@ type ExpensesFormProps = {
     balance: string;
   }[];
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
+  onCancel?: () => void;
   loading?: boolean;
 };
 
@@ -381,7 +382,7 @@ function ExpenseCurrencyField({ control, currencies, selectedCurrency, disabled,
   );
 }
 
-export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, loading }: ExpensesFormProps) {
+export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, onCancel, loading }: ExpensesFormProps) {
   const navigate = useNavigate();
   const isUserFundFixed = Boolean(fixedValues?.user_fund_id);
   const form = useForm<ExpenseFormValues>({
@@ -887,6 +888,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
             )}
 
             <ExpenseCurrencyField control={form.control} currencies={selectedCompanyFund?.currencies ?? []} selectedCurrency={selectedCurrency} disabled={!derivedCompanyFundId} />
+            <ExpenseAmountField control={form.control} />
           </div>
         ) : null}
 
@@ -1157,15 +1159,11 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
               )}
             />
 
-            {source !== 'project_fund' && <ExpenseAmountField control={form.control} />}
+            {source === 'user_fund' && <ExpenseAmountField control={form.control} />}
           </div>
-        ) : !isUserFundFixed && source !== 'project_fund' ? (
+        ) : !isUserFundFixed && source === 'user_fund' ? (
           <ExpenseAmountField control={form.control} />
         ) : null}
-
-        {!assignUser && source !== 'project_fund' && !isUserFundFixed && (
-          <ExpenseAmountField control={form.control} />
-        )}
 
         <FormField
           control={form.control}
@@ -1235,7 +1233,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         />
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+          <Button type="button" variant="outline" onClick={onCancel ?? (() => navigate(-1))}>
             إلغاء
           </Button>
 

@@ -18,7 +18,7 @@ export function CloudStoragePage() {
           </div>
         </div>
 
-        <CloudStorageExplorer rootDirectoryId={1} />
+        <CloudStorageExplorer />
       </div>
     </div>
   );

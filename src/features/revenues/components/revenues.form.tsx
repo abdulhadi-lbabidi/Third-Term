@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { User, Wallet, UserCircle, Briefcase, FileText, CheckCircle2, Shield, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock } from 'lucide-react';
+import { User, Wallet, Shield, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
@@ -36,6 +38,7 @@ type RevenuesFormProps = {
     fund_user_role?: string;
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
+  onCancel?: () => void;
   loading?: boolean;
 };
 
@@ -142,7 +145,8 @@ function getRoleLabel(role: UserRole | '') {
   return role ? roleLabels[role] : '';
 }
 
-export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: RevenuesFormProps) {
+export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, loading }: RevenuesFormProps) {
+  const navigate = useNavigate();
   const defaultReceiver = defaultValues?.received_by;
   const defaultReceiverId = typeof defaultReceiver === 'object'
     ? Number(defaultReceiver.user?.id ?? defaultReceiver.id ?? 0) || undefined
@@ -431,25 +435,17 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
         )}
       >
         {!fixedValues?.source && (
-          <div className="grid gap-4 md:grid-cols-2 items-start">
-            <FormField
-              control={form.control}
-              name="source"
-              render={({ field }) => (
-                <FormItem className="col-span-full">
-                  <FormLabel>نوع الصندوق</FormLabel>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => {
-                      const Icon = item === 'company_fund' ? Briefcase : item === 'user_fund' ? UserCircle : FileText;
-                      const selected = field.value === item;
-                      return (
-                        <Button
-                          key={item}
-                          type="button"
-                          variant={selected ? 'default' : 'outline'}
-                          className="h-16 justify-start gap-3"
-                          onClick={() => {
-                            const nextSource = item;
+          <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>نوع الصندوق</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={(value) => {
+                            const nextSource = value as RevenueSource;
                             const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
                             field.onChange(nextSource);
                             form.setValue('revenueable_type', nextRevenueableType);
@@ -463,27 +459,32 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                             if (nextSource !== 'project_fund') {
                               form.setValue('project_id', undefined);
                             }
-                          }}
-                        >
-                          <Icon className="size-5" />
-                          <span>{revenueSourceLabels[item]}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                    }}
+                    className="grid gap-3 md:grid-cols-3"
+                  >
+                    {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => (
+                      <label
+                        key={item}
+                        className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
+                      >
+                        <RadioGroupItem className="border-none !p-1" value={item} />
+                        <span>{revenueSourceLabels[item]}</span>
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
 
         {/* User Fund Fields */}
         {source === 'user_fund' && !fixedValues?.user_fund_id && (
-          <div className="space-y-4 px-5">
-            <h3 className="font-semibold text-slate-800">صندوق المستخدم</h3>
+          <div className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
+            <p className="text-sm font-semibold text-foreground">صندوق المستخدم</p>
 
-            <div className="grid gap-4 md:grid-cols-2 ">
+            <div className="grid items-start gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="fund_user_role"
@@ -566,7 +567,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                 control={form.control}
                 name="user_fund_id"
                 render={({ field }) => (
-                  <FormItem className="col-span-full">
+                  <FormItem>
                     <FormLabel>صندوق المستخدم</FormLabel>
                     {fundUserRecordQuery.isLoading ? (
                       <Skeleton className="h-11 w-full" />
@@ -682,9 +683,14 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
 
 
         {/* Fund Selection and Money Fields */}
-        <div className="space-y-4 px-2">
-          <h3 className="font-semibold text-slate-800">بيانات الإيراد</h3>
-          <div className="grid gap-4">
+        <div className="space-y-4">
+          <div className={`grid items-start gap-4 ${
+            source === 'company_fund'
+              ? (fixedValues?.company_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
+              : source === 'project_fund'
+                ? (fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
+                : 'md:grid-cols-2'
+          }`}>
             {source === 'company_fund' && !fixedValues?.company_fund_id && (
               <FormField
                 control={form.control}
@@ -733,13 +739,13 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             )}
 
             {source === 'project_fund' && (
-              <div className="grid gap-4 md:grid-cols-2 items-start">
+              <div className="contents">
                 {!fixedValues?.project_id && (
                   <FormField
                     control={form.control}
                     name="project_id"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="md:col-span-3">
                         <FormLabel>المشروع</FormLabel>
                         {projectsQuery.isLoading ? (
                           <Skeleton className="h-11 w-full" />
@@ -819,12 +825,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2 items-start">
+            <div className="contents">
               <FormField
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-                  <FormItem>
+              <FormItem className="md:col-span-full">
                     <FormLabel>المبلغ</FormLabel>
                     <FormControl>
                       <div className="relative">
@@ -917,13 +923,11 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         </div>
 
-        {/* Switch and Submit at the bottom */}
-        <div className="flex items-center justify-between pt-4">
-          <FormField
+        <FormField
             control={form.control}
             name="is_posted"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border-none rtl:space-x-reverse">
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md bg-muted/10 rtl:space-x-reverse">
                 <FormControl>
                   <label className="relative inline-flex cursor-pointer items-center">
                     <input
@@ -944,8 +948,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             )}
           />
 
-          <Button type="submit" className="h-11 flex min-w-[140px] shadow-md" disabled={loading}>
-            <CheckCircle2 className="size-4 ml-2" />
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onCancel ?? (() => navigate(-1))}>
+            إلغاء
+          </Button>
+          <Button type="submit" disabled={loading}>
+            <Plus className="size-6" />
             {loading
               ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')
               : (defaultValues?.id ? 'تحديث الإيراد' : 'إضافة')}
