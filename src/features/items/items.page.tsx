@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button';
 import { itemsApi, type ItemResponse } from './items.api';
 import { ItemsDialog } from './components/items.dialog';
 import { ItemsTable } from './components/items.table';
+import { MaterialsDialog } from './components/materials.dialog';
 import type { CreateItemPayload, Item } from './types';
 import { PageHeader } from '../components/page-header';
 import { ListChecks } from 'lucide-react';
@@ -17,6 +18,8 @@ export function ItemsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [materialsDialogOpen, setMaterialsDialogOpen] = useState(false);
+  const [materialsItem, setMaterialsItem] = useState<Item | null>(null);
 
   const itemsQuery = useQuery<ItemResponse>({
     queryKey: ['items', page, perPage],
@@ -85,6 +88,10 @@ export function ItemsPage() {
           setDialogOpen(true);
         }}
         onDelete={handleDelete}
+        onShowMaterials={(item) => {
+          setMaterialsItem(item);
+          setMaterialsDialogOpen(true);
+        }}
       />
 
       <SimplePagination
@@ -103,6 +110,15 @@ export function ItemsPage() {
         item={selectedItem}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
+      />
+
+      <MaterialsDialog
+        open={materialsDialogOpen}
+        onOpenChange={(open) => {
+          setMaterialsDialogOpen(open);
+          if (!open) setMaterialsItem(null);
+        }}
+        item={materialsItem}
       />
     </div>
   );
