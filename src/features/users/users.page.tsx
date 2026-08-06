@@ -17,7 +17,7 @@ import type {
   UserRole,
 } from './types';
 import { PageHeader } from '../components/page-header';
-import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users } from 'lucide-react';
+import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users, Search, RotateCcw } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
@@ -45,7 +45,7 @@ type UsersTabRecord =
 
 const usersQueryKeys = {
   all: ['users'] as const,
-  byRole: (role: UserRole, page: number, perPage: number) => ['users', role, page, perPage] as const,
+  byRole: (role: UserRole, page: number, perPage: number, search?: string) => ['users', role, page, perPage, search] as const,
 };
 
 function UsersTableSkeleton() {
@@ -84,18 +84,36 @@ export function UsersPage() {
 
   const [page, setPage] = useState(1);
   const perPage = 50;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+
+  const handleSearchSubmit = () => {
+    setSearch(searchQuery);
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchQuery('');
+    setSearch('');
+    setPage(1);
+  };
 
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab && userRoles.includes(tab as UserRole) && tab !== activeRole) {
       setActiveRole(tab as UserRole);
-      setPage(1);
     }
   }, [activeRole, searchParams]);
 
+  useEffect(() => {
+    setSearchQuery('');
+    setSearch('');
+    setPage(1);
+  }, [activeRole]);
+
   const usersQuery = useQuery<UsersRoleResponse<UsersTabRecord>>({
-    queryKey: usersQueryKeys.byRole(activeRole, page, perPage),
-    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage),
+    queryKey: usersQueryKeys.byRole(activeRole, page, perPage, search),
+    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage, search),
   });
 
   const deleteMutation = useMutation({
@@ -135,9 +153,7 @@ export function UsersPage() {
       activeRole === 'engineer'
         ? { header: 'الراتب الأساسي', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
         : null,
-      activeRole === 'trustee'
-        ? { header: 'صلة القرابة', cell: (row: UsersTabRecord) => String((row as TrusteeRecord).kinship_relation ?? '-') }
-        : null,
+
       { header: 'تاريخ الإنشاء', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
     ],
     [activeRole]
@@ -157,10 +173,43 @@ export function UsersPage() {
         icon={Users}
         tabs={USER_TABS}
         defaultTab={activeRole}
-        action = {
-          <Button>
-            <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
-          </Button>
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-64 md:w-80">
+              <button
+                type="button"
+                onClick={handleSearchSubmit}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground inline-flex items-center justify-center p-0 border-none bg-transparent cursor-pointer"
+              >
+                <Search className="size-4" />
+              </button>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit();
+                  }
+                }}
+                placeholder="ابحث بالاسم، البريد الإلكتروني، أو رقم الهاتف..."
+                className="w-full bg-card border border-input rounded-md pl-9 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring transition-all"
+              />
+            </div>
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
+                className="!p-2 !py-1 !h-8"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            )}
+            <Button>
+              <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
+            </Button>
+          </div>
         }
       />
 

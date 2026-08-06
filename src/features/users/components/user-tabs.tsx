@@ -15,7 +15,7 @@ const roleLabels: Record<UserRole, string> = {
   employee: 'الموظف',
   engineer: 'المهندس',
   supplier: 'المورد',
-  trustee: 'الوصي',
+  trustee: 'الأمين',
 };
 
 export function UserTabs({ roles, activeRole, onChange }: UserTabsProps) {

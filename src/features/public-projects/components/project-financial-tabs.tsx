@@ -1,6 +1,6 @@
-import { TrendingUp, TrendingDown, FileText, ArrowLeftRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, FileText, ArrowLeftRight, Milestone, Users } from 'lucide-react';
 
-type TabId = 'revenues' | 'expenses' | 'invoices' | 'transfers';
+type TabId = 'revenues' | 'expenses' | 'invoices' | 'transfers' | 'stages' | 'team';
 
 type ProjectFinancialTabsProps = {
   activeTab: TabId;
@@ -11,14 +11,21 @@ type ProjectFinancialTabsProps = {
     invoices: number;
     transfers: number;
   };
+  userRole?: string;
 };
 
-export function ProjectFinancialTabs({ activeTab, onTabChange, counts }: ProjectFinancialTabsProps) {
+export function ProjectFinancialTabs({ activeTab, onTabChange, counts, userRole }: ProjectFinancialTabsProps) {
+  const canManage = ['engineer', 'employee'].includes(userRole || '');
+
   const tabs = [
     { id: 'revenues' as const, label: 'الإيرادات', icon: TrendingUp, count: counts.revenues },
     { id: 'expenses' as const, label: 'المصروفات', icon: TrendingDown, count: counts.expenses },
     { id: 'invoices' as const, label: 'الفواتير', icon: FileText, count: counts.invoices },
     { id: 'transfers' as const, label: 'التحويلات', icon: ArrowLeftRight, count: counts.transfers },
+    ...(canManage ? [
+      { id: 'stages' as const, label: 'مراحل المشروع', icon: Milestone, count: undefined },
+      { id: 'team' as const, label: 'طاقم العمل', icon: Users, count: undefined },
+    ] : []),
   ];
 
   return (

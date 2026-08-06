@@ -15,6 +15,7 @@ import {
   ReceiptText,
   X,
   AlertTriangle,
+  Undo2,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -44,12 +45,18 @@ import { useTransfers, useCreateTransfer, useUpdateTransfer, useDeleteTransfer }
 import { TransfersTable } from '@/features/transfers/components/transfers.table';
 import { TransfersDialog } from '@/features/transfers/components/transfers.dialog';
 import { FundCurrencyEmptyState } from './fund-currency-empty-state';
+import { useDeleteReInvoice, useReInvoices, useSaveReInvoice } from '@/features/re-invoices/re-invoices.hooks';
+import { ReInvoicesTable } from '@/features/re-invoices/components/re-invoices.table';
+import { ReInvoiceDialog } from '@/features/re-invoices/components/re-invoice.dialog';
+import { ReInvoiceItemsDialog } from '@/features/re-invoices/components/re-invoice-items.dialog';
+import type { ReInvoice } from '@/features/re-invoices/types';
 
 type GenericFundDetailsProps = {
   fundId: number;
   fundName: string;
   fundCurrencies: {
     id: number;
+    expenseable_id?: number;
     currency: string;
     symbol: string;
     balance: string;
@@ -106,9 +113,15 @@ export function GenericFundDetails({
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<any | null>(null);
+  const [reInvoiceDialogOpen, setReInvoiceDialogOpen] = useState(false);
+  const [selectedReInvoice, setSelectedReInvoice] = useState<ReInvoice | null>(null);
+  const [reInvoiceItemsId, setReInvoiceItemsId] = useState<number>();
 
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
+  const reInvoicesQuery = useReInvoices({ paginate: true, per_page: 5, page: 1, ...filters }, hasCurrencies && currentTab === 'returns');
+  const saveReInvoice = useSaveReInvoice();
+  const deleteReInvoice = useDeleteReInvoice();
 
   const revenuesQuery = useRevenues(1, 50, filters, hasCurrencies && currentTab === 'revenues');
   const fundRevenues = revenuesQuery.data?.data ?? [];
@@ -288,6 +301,7 @@ export function GenericFundDetails({
             <ReceiptText className="ml-2 size-4" />
             الفواتير
           </TabsTrigger>
+          <TabsTrigger value="returns" disabled={!hasCurrencies}><Undo2 className="ml-2 size-4" />المرتجعات</TabsTrigger>
           <TabsTrigger value="transfers" disabled={!hasCurrencies}>
             <ArrowLeftRight className="ml-2 size-4" />
             التحويلات
@@ -415,6 +429,7 @@ export function GenericFundDetails({
             />
           </div>
         </TabsContent>}
+        {hasCurrencies && <TabsContent value="returns" className="space-y-5"><div className="flex items-center justify-between"><div><h3 className="text-lg font-semibold">مرتجعات الصندوق</h3><p className="mt-1 text-sm text-muted-foreground">المبالغ والمواد المعادة إلى الصندوق.</p></div><Button size="sm" onClick={() => { setSelectedReInvoice(null); setReInvoiceDialogOpen(true); }}><Undo2 className="size-4" />إنشاء مرتجع</Button></div><ReInvoicesTable data={reInvoicesQuery.data?.data ?? []} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending} onEdit={(row) => { setSelectedReInvoice(row); setReInvoiceDialogOpen(true); }} onDelete={async (row) => { await deleteReInvoice.mutateAsync(row.id); }} onItems={(row) => setReInvoiceItemsId(row.id)} /></TabsContent>}
 
         {hasCurrencies && <TabsContent value="transfers" className="space-y-5">
           {!canTransfer && (
@@ -464,6 +479,8 @@ export function GenericFundDetails({
           />
         </TabsContent>}
       </Tabs>
+      <ReInvoiceDialog open={reInvoiceDialogOpen} onClose={() => { setReInvoiceDialogOpen(false); setSelectedReInvoice(null); }} value={selectedReInvoice} currencies={fundCurrencies} modelType={modelType} loading={saveReInvoice.isPending} onSubmit={async (payload) => { await saveReInvoice.mutateAsync({ id: selectedReInvoice?.id, payload }); setReInvoiceDialogOpen(false); setSelectedReInvoice(null); }} />
+      <ReInvoiceItemsDialog id={reInvoiceItemsId} onClose={() => setReInvoiceItemsId(undefined)} />
 
       {revenueDialogOpen && (
         <RevenuesDialog

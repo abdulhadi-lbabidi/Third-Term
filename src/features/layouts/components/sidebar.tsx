@@ -30,6 +30,7 @@ import {
   FileText,
   History,
   ArrowLeftRight,
+  Undo2,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -81,6 +82,7 @@ const navGroups: NavGroup[] = [
       { to: '/transfers', label: 'التحويلات', icon: ArrowLeftRight },
       { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
       { to: '/invoices', label: 'الفواتير', icon: FileText },
+      { to: '/re-invoices', label: 'المرتجعات', icon: Undo2 },
       { to: '/invoice-items', label: 'أصناف الفاتورة', icon: FileSpreadsheet },
     ],
   },

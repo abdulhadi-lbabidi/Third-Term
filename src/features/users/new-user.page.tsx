@@ -38,7 +38,7 @@ const userRoleLabels: Record<UserRole, string> = {
   employee: 'الموظف',
   engineer: 'المهندس',
   supplier: 'المورد',
-  trustee: 'الوصي',
+  trustee: 'الأمين',
 };
 
 function isUserRole(value: string | null | undefined): value is UserRole {
@@ -83,14 +83,6 @@ const baseSchema = z
           message: 'الراتب الأساسي مطلوب',
         });
       }
-    }
-
-    if (values.role === 'trustee' && !values.kinship_relation?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['kinship_relation'],
-        message: 'صلة القرابة مطلوبة',
-      });
     }
   });
 
@@ -288,7 +280,6 @@ export function NewUserPage() {
               {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-              {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               <div className="md:col-span-3 flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
@@ -325,9 +316,6 @@ export function NewUserPage() {
     } else if ('job_title' in currentUserData && currentUserData.job_title) {
       extraFieldLabel = 'المسمى الوظيفي';
       extraFieldValue = String(currentUserData.job_title);
-    } else if ('kinship_relation' in currentUserData && currentUserData.kinship_relation) {
-      extraFieldLabel = 'صلة القرابة';
-      extraFieldValue = String(currentUserData.kinship_relation);
     }
   }
 
@@ -441,7 +429,6 @@ export function NewUserPage() {
                   {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
                   {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
                   {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-                  {roleFields.trustee ? <FormField control={form.control} name="kinship_relation" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>صلة القرابة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
                   <div className="md:col-span-3 flex justify-end gap-3 pt-2">
                     <Button
                       type="button"

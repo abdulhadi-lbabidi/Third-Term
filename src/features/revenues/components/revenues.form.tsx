@@ -84,7 +84,7 @@ const roleLabels: Record<UserRole, string> = {
   employee: 'الموظف',
   engineer: 'المهندس',
   supplier: 'المورد',
-  trustee: 'الوصي',
+  trustee: 'الأمين',
 };
 
 const roleIcons: Record<UserRole, React.ElementType> = {
@@ -445,20 +445,20 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
                   <RadioGroup
                     value={field.value}
                     onValueChange={(value) => {
-                            const nextSource = value as RevenueSource;
-                            const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
-                            field.onChange(nextSource);
-                            form.setValue('revenueable_type', nextRevenueableType);
-                            form.setValue('revenueable_id', undefined);
-                            form.setValue('company_fund_id', undefined);
-                            form.setValue('fund_user_role', '');
-                            form.setValue('fund_user_id', undefined);
-                            form.setValue('user_fund_id', undefined);
-                            form.setValue('project_fund_id', undefined);
+                      const nextSource = value as RevenueSource;
+                      const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
+                      field.onChange(nextSource);
+                      form.setValue('revenueable_type', nextRevenueableType);
+                      form.setValue('revenueable_id', undefined);
+                      form.setValue('company_fund_id', undefined);
+                      form.setValue('fund_user_role', '');
+                      form.setValue('fund_user_id', undefined);
+                      form.setValue('user_fund_id', undefined);
+                      form.setValue('project_fund_id', undefined);
 
-                            if (nextSource !== 'project_fund') {
-                              form.setValue('project_id', undefined);
-                            }
+                      if (nextSource !== 'project_fund') {
+                        form.setValue('project_id', undefined);
+                      }
                     }}
                     className="grid gap-3 md:grid-cols-3"
                   >
@@ -684,13 +684,12 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
 
         {/* Fund Selection and Money Fields */}
         <div className="space-y-4">
-          <div className={`grid items-start gap-4 ${
-            source === 'company_fund'
-              ? (fixedValues?.company_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
-              : source === 'project_fund'
-                ? (fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
-                : 'md:grid-cols-2'
-          }`}>
+          <div className={`grid items-start gap-4 ${source === 'company_fund'
+            ? (fixedValues?.company_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
+            : source === 'project_fund'
+              ? (fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
+              : 'md:grid-cols-2'
+            }`}>
             {source === 'company_fund' && !fixedValues?.company_fund_id && (
               <FormField
                 control={form.control}
@@ -830,7 +829,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-full">
                     <FormLabel>المبلغ</FormLabel>
                     <FormControl>
                       <div className="relative">
@@ -924,29 +923,29 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
         </div>
 
         <FormField
-            control={form.control}
-            name="is_posted"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md bg-muted/10 rtl:space-x-reverse">
-                <FormControl>
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                    />
-                    <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-                  </label>
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
-                    مرحل (إرسال الإيراد للصندوق المباشر)
-                  </FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
+          control={form.control}
+          name="is_posted"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md bg-muted/10 rtl:space-x-reverse">
+              <FormControl>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                  />
+                  <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
+                </label>
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
+                  مرحل (إرسال الإيراد للصندوق المباشر)
+                </FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
 
         <div className="flex items-center justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onCancel ?? (() => navigate(-1))}>

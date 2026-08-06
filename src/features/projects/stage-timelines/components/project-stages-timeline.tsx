@@ -15,6 +15,7 @@ type ProjectStagesTimelineProps = {
   onDeleteTimeline?: (timeline: StageTimeline) => void;
   onEditStage?: (stage: ProjectStage) => void;
   onDeleteStage?: (stage: ProjectStage) => void;
+  canManage?: boolean;
 };
 
 const statusConfig: Record<string, { icon: React.ElementType; color: string; bg: string; line: string }> = {
@@ -44,7 +45,16 @@ function formatDateRange(start: string, end: string) {
   return `${formatArabicDate(startDate)} - ${formatArabicDate(endDate)}`;
 }
 
-export function ProjectStagesTimeline({ stages, selectedStageId, onSelectStage, onAddTimeline, onEditTimeline, onEditStage, onDeleteStage }: ProjectStagesTimelineProps) {
+export function ProjectStagesTimeline({
+  stages,
+  selectedStageId,
+  onSelectStage,
+  onAddTimeline,
+  onEditTimeline,
+  onEditStage,
+  onDeleteStage,
+  canManage = true,
+}: ProjectStagesTimelineProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -233,10 +243,12 @@ export function ProjectStagesTimeline({ stages, selectedStageId, onSelectStage, 
                       </button>
                     ))}
                   </div>
-                  <Button onClick={() => onAddTimeline(selectedStage)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm">
-                    <Plus className="size-4" />
-                    إضافة تحديث
-                  </Button>
+                  {canManage && (
+                    <Button onClick={() => onAddTimeline(selectedStage)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm">
+                      <Plus className="size-4" />
+                      إضافة تحديث
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -250,7 +262,7 @@ export function ProjectStagesTimeline({ stages, selectedStageId, onSelectStage, 
                         <Clock className="size-6 text-muted-foreground" />
                       </div>
                       <p className="text-base font-semibold text-foreground">لا يوجد تحديثات {filterStatus !== 'all' ? 'بهذه الحالة' : 'مسجلة حتى الآن'}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{filterStatus !== 'all' ? 'جرب اختيار حالة أخرى' : 'انقر على إضافة تحديث لتسجيل مهمة فرعية جديدة'}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{filterStatus !== 'all' ? 'جرب اختيار حالة أخرى' : canManage ? 'انقر على إضافة تحديث لتسجيل مهمة فرعية جديدة' : ''}</p>
                     </div>
                   );
                 }
@@ -262,8 +274,11 @@ export function ProjectStagesTimeline({ stages, selectedStageId, onSelectStage, 
                       return (
                         <div
                           key={tl.id}
-                          onClick={() => onEditTimeline(tl, selectedStage)}
-                          className="p-4 rounded-xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition-all relative overflow-hidden cursor-pointer flex items-center justify-between gap-4"
+                          onClick={() => canManage && onEditTimeline(tl, selectedStage)}
+                          className={cn(
+                            "p-4 rounded-xl border border-border bg-card shadow-sm transition-all relative overflow-hidden flex items-center justify-between gap-4",
+                            canManage ? "hover:shadow-md hover:border-primary/30 cursor-pointer" : "cursor-default"
+                          )}
                         >
                           {/* Status color indicator bar */}
                           <div className={cn("absolute top-0 right-0 w-1 h-full opacity-70", tlConfig.bg.replace('100', '400').replace('50', '400'))} />

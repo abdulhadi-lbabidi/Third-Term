@@ -101,7 +101,7 @@ const roleLabels: Record<UserRole, string> = {
   employee: 'الموظف',
   engineer: 'المهندس',
   supplier: 'المورد',
-  trustee: 'الوصي',
+  trustee: 'الأمين',
 };
 
 const sourceToExpenseableType: Record<ExpenseSource, ExpenseableType> = {
@@ -710,10 +710,10 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     } else if (source === 'user_fund') {
       currencies = userFundCurrencies;
     }
-    const found = currencies.find((c) => getCurrencyExpenseableId(c) === selectedExpenseableId);
+    const found = currencies.find((c) => Number(getCurrencyExpenseableId(c)) === Number(selectedExpenseableId));
     if (found) return found;
 
-    if (source === 'company_fund' && defaultValues?.expenseable_info?.id === selectedExpenseableId) {
+    if (source === 'company_fund' && Number(defaultValues?.expenseable_info?.id) === Number(selectedExpenseableId)) {
       const details = defaultValues.expenseable_info?.details;
       if (details && typeof details === 'object' && 'currency' in details) {
         return {
@@ -724,7 +724,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     }
     if (source === 'project_fund') {
       const details = getExpenseProjectFundDetails(defaultValues);
-      if (details?.id === selectedExpenseableId && details.currency) {
+      if (Number(details?.id) === Number(selectedExpenseableId) && details.currency) {
         return {
           currency: details.currency.currency,
           balance: String(details.balance ?? '0'),
@@ -733,7 +733,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     }
     if (source === 'user_fund') {
       const details = getExpenseUserFundDetails(defaultValues);
-      if (details?.id === selectedExpenseableId && details.currency) {
+      if (Number(details?.id) === Number(selectedExpenseableId) && details.currency) {
         return {
           currency: details.currency.currency,
           balance: String(details.balance ?? '0'),
@@ -742,8 +742,13 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     }
 
     return null;
-  }, [selectedExpenseableId, source, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund, defaultValues]);
+  }, [selectedExpenseableId, source, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund, userFundCurrencies, defaultValues]);
 
+
+  const initialSource = useMemo(() => getInitialSource(defaultValues), [defaultValues]);
+  const initialCompanyFundId = useMemo(() => defaultValues?.expenseable_info?.company_fund_id ?? defaultValues?.expenseable_info?.id, [defaultValues]);
+  const initialUserFundId = useMemo(() => getUserFundId(defaultValues), [defaultValues]);
+  const initialProjectFundId = useMemo(() => getExpenseProjectFundId(defaultValues), [defaultValues]);
 
   useEffect(() => {
     if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
@@ -752,26 +757,19 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
   }, [source, selectedProjectId, projectFunds, projectFundId, form]);
 
   useEffect(() => {
-    if (source === 'company_fund' && companyFunds.length === 1 && !companyFundId) {
-      form.setValue('company_fund_id', companyFunds[0].id);
-    }
-  }, [source, companyFunds, companyFundId, form]);
-
-  useEffect(() => {
-    let currencies: any[] = [];
-    if (source === 'company_fund') {
-      currencies = selectedCompanyFund?.currencies ?? [];
-    } else if (source === 'project_fund') {
-      currencies = selectedProjectFundCurrencies;
-    } else if (source === 'user_fund') {
-      currencies = selectedUserFund?.currencies ?? [];
+    if (!defaultValues) {
+      return;
     }
 
-    if (currencies.length === 1 && !selectedExpenseableId) {
-      const val = getCurrencyExpenseableId(currencies[0]);
-      if (val) form.setValue('expenseable_id', val);
+    const isSourceChanged = source !== initialSource;
+    const isCompanyFundChanged = source === 'company_fund' && companyFundId !== initialCompanyFundId;
+    const isUserFundChanged = source === 'user_fund' && userFundId !== initialUserFundId;
+    const isProjectFundChanged = source === 'project_fund' && projectFundId !== initialProjectFundId;
+
+    if (isSourceChanged || isCompanyFundChanged || isUserFundChanged || isProjectFundChanged) {
+      form.setValue('expenseable_id', null);
     }
-  }, [source, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund, selectedExpenseableId, form]);
+  }, [source, companyFundId, userFundId, projectFundId, initialSource, initialCompanyFundId, initialUserFundId, initialProjectFundId, defaultValues, form]);
 
   return (
     <Form {...form}>
@@ -817,7 +815,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                       const nextExpenseableType: ExpenseableType = sourceToExpenseableType[nextSource];
                       field.onChange(nextSource);
                       form.setValue('expenseable_type', nextExpenseableType);
-                      form.setValue('expenseable_id', undefined);
+                      form.setValue('expenseable_id', null);
                       form.setValue('company_fund_id', undefined);
                       form.setValue('fund_user_role', '');
                       form.setValue('fund_user_id', undefined);
@@ -863,7 +861,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                         value={field.value ? String(field.value) : ''}
                         onValueChange={(value) => {
                           field.onChange(Number(value));
-                          form.setValue('expenseable_id', undefined);
+                          form.setValue('expenseable_id', null);
                         }}
                       >
                         <FormControl>
@@ -909,7 +907,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                         onValueChange={(value) => {
                           field.onChange(Number(value));
                           form.setValue('project_fund_id', undefined);
-                          form.setValue('expenseable_id', undefined);
+                          form.setValue('expenseable_id', null);
                         }}
                       >
                         <FormControl>
@@ -946,7 +944,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                         value={field.value ? String(field.value) : ''}
                         onValueChange={(value) => {
                           field.onChange(Number(value));
-                          form.setValue('expenseable_id', undefined);
+                          form.setValue('expenseable_id', null);
                         }}
                         disabled={!selectedProjectId}
                       >
@@ -997,7 +995,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                         field.onChange(value);
                         form.setValue('fund_user_id', undefined);
                         form.setValue('user_fund_id', undefined);
-                        form.setValue('expenseable_id', undefined);
+                        form.setValue('expenseable_id', null);
                       }}
                     >
                       <FormControl>
@@ -1033,7 +1031,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                           onValueChange={(value) => {
                             field.onChange(Number(value));
                             form.setValue('user_fund_id', undefined);
-                            form.setValue('expenseable_id', undefined);
+                            form.setValue('expenseable_id', null);
                           }}
                           disabled={!fundUserRole}
                           placeholder="اختر المستخدم"
@@ -1061,7 +1059,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                         value={field.value ? String(field.value) : ''}
                         onValueChange={(value) => {
                           field.onChange(Number(value));
-                          form.setValue('expenseable_id', undefined);
+                          form.setValue('expenseable_id', null);
                         }}
                         disabled={!fundUserId}
                       >

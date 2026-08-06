@@ -40,8 +40,16 @@ export function PublicProjectsPage() {
     queryFn: publicProjectsApi.getProjects,
   });
 
+  const visibleProjects = useMemo(() => {
+    const isLimitedRole = ['employee', 'engineer'].includes(currentUser?.role_type || '');
+    if (isLimitedRole) {
+      return projects.filter((p) => p.status === 'in_progress');
+    }
+    return projects;
+  }, [projects, currentUser]);
+
   const filteredProjects = useMemo(() => {
-    return projects.filter((project) => {
+    return visibleProjects.filter((project) => {
       const matchesSearch =
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (project.client?.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -49,21 +57,21 @@ export function PublicProjectsPage() {
       const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [projects, searchQuery, statusFilter]);
+  }, [visibleProjects, searchQuery, statusFilter]);
 
   const stats = useMemo(() => {
-    const totalCost = projects.reduce((acc, curr) => acc + (Number(curr.expected_cost) || 0), 0);
-    const completedCount = projects.filter((p) => p.status === 'completed').length;
-    const inProgressCount = projects.filter((p) => p.status === 'in_progress').length;
-    const pendingCount = projects.filter((p) => p.status === 'pending').length;
-    return { total: projects.length, totalCost, completedCount, inProgressCount, pendingCount };
-  }, [projects]);
+    const totalCost = visibleProjects.reduce((acc, curr) => acc + (Number(curr.expected_cost) || 0), 0);
+    const completedCount = visibleProjects.filter((p) => p.status === 'completed').length;
+    const inProgressCount = visibleProjects.filter((p) => p.status === 'in_progress').length;
+    const pendingCount = visibleProjects.filter((p) => p.status === 'pending').length;
+    return { total: visibleProjects.length, totalCost, completedCount, inProgressCount, pendingCount };
+  }, [visibleProjects]);
 
   const handleSelectProject = (id: number) => {
     if (location.pathname.startsWith('/public-projects')) {
       navigate(`/public-projects/${id}`);
     } else {
-      navigate(`/client/projects/${id}`);
+      navigate(`/public/projects/${id}`);
     }
   };
 
@@ -77,7 +85,7 @@ export function PublicProjectsPage() {
       />
 
       <main className="px-4 py-4 space-y-3 sm:px-3 lg:px-4">
-     
+
 
         <ProjectsSummary
           total={stats.total}

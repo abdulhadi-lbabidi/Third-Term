@@ -41,6 +41,19 @@ export function NewExpensePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const isClientPath = window.location.pathname.startsWith('/client') || window.location.pathname.startsWith('/public');
+  const projectId = searchParams.get('projectId') ? Number(searchParams.get('projectId')) : undefined;
+
+  const fixedValues = useMemo(() => {
+    if (isClientPath && projectId) {
+      return {
+        source: 'project_fund' as ExpenseSource,
+        project_id: projectId,
+      };
+    }
+    return undefined;
+  }, [isClientPath, projectId]);
+
   const expenseId = Number(searchParams.get('expenseId') || '');
   const hasExpenseId = Number.isFinite(expenseId) && expenseId > 0;
 
@@ -120,7 +133,13 @@ export function NewExpensePage() {
       if (hasExpenseId) {
         await queryClient.invalidateQueries({ queryKey: ['expenses', expenseId] });
       }
-      navigate('/expenses', { replace: true });
+      await queryClient.invalidateQueries({ queryKey: ['public-expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['public-project-details'] });
+      if (isClientPath) {
+        navigate(projectId ? `/public/projects/${projectId}?tab=expenses` : '/public/projects', { replace: true });
+      } else {
+        navigate('/expenses', { replace: true });
+      }
     },
   });
 
@@ -136,14 +155,24 @@ export function NewExpensePage() {
         title={isEditMode ? 'تعديل مصروف' : 'إضافة مصروف'}
         icon={ReceiptText}
         action={
-          <Button type="button" variant="outline" onClick={() => navigate('/expenses')}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              if (isClientPath) {
+                navigate(projectId ? `/public/projects/${projectId}?tab=expenses` : '/public/projects');
+              } else {
+                navigate('/expenses');
+              }
+            }}
+          >
             رجوع
           </Button>
         }
       />
 
       <div className="surface-panel p-5 sm:p-6">
-        <ExpensesForm defaultValues={defaultValues} onSubmit={handleSubmit} loading={saveMutation.isPending} />
+        <ExpensesForm defaultValues={defaultValues} fixedValues={fixedValues} onSubmit={handleSubmit} loading={saveMutation.isPending} />
       </div>
     </div>
   );

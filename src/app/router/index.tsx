@@ -28,8 +28,11 @@ import { NewInvoicePage } from '@/features/invoices/new-invoice.page';
 import { AuditLogsPage } from '@/features/audit-logs/audit-logs.page';
 import { PublicProjectsPage } from '@/features/public-projects/public-projects.page';
 import { PublicProjectDetailsPage } from '@/features/public-projects/public-project-details.page';
+import { ReInvoicesPage } from '@/features/re-invoices/re-invoices.page';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
+
+const limitedRoles = ['client', 'engineer', 'employee'];
 
 function getAuthToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
@@ -53,13 +56,13 @@ function ProtectedRoute() {
   }
 
   const role = getUserRole();
-  const isClientPath = location.pathname.startsWith('/client');
+  const isPublicPath = location.pathname.startsWith('/public');
 
-  if (role === 'client' && !isClientPath) {
-    return <Navigate to="/client/projects" replace />;
+  if (role && limitedRoles.includes(role) && !isPublicPath) {
+    return <Navigate to="/public/projects" replace />;
   }
 
-  if (role !== 'client' && isClientPath) {
+  if (role && !limitedRoles.includes(role) && isPublicPath) {
     return <Navigate to="/" replace />;
   }
 
@@ -69,8 +72,8 @@ function ProtectedRoute() {
 function PublicOnlyRoute() {
   if (getAuthToken()) {
     const role = getUserRole();
-    if (role === 'client') {
-      return <Navigate to="/client/projects" replace />;
+    if (role && limitedRoles.includes(role)) {
+      return <Navigate to="/public/projects" replace />;
     }
     return <Navigate to="/" replace />;
   }
@@ -80,8 +83,8 @@ function PublicOnlyRoute() {
 
 function RootRedirect() {
   const role = getUserRole();
-  if (role === 'client') {
-    return <Navigate to="/client/projects" replace />;
+  if (role && limitedRoles.includes(role)) {
+    return <Navigate to="/public/projects" replace />;
   }
   return <Navigate to="/users" replace />;
 }
@@ -100,12 +103,20 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        path: '/client/projects',
+        path: '/public/projects',
         element: <PublicProjectsPage />,
       },
       {
-        path: '/client/projects/:projectId',
+        path: '/public/projects/:projectId',
         element: <PublicProjectDetailsPage />,
+      },
+      {
+        path: '/public/expenses/new',
+        element: <NewExpensePage />,
+      },
+      {
+        path: '/public/invoices/new',
+        element: <NewInvoicePage />,
       },
       {
         element: <Layout />,
@@ -193,6 +204,11 @@ export const router = createBrowserRouter([
           {
             path: '/invoices',
             element: <InvoicesPage />,
+          },
+
+          {
+            path: '/re-invoices',
+            element: <ReInvoicesPage />,
           },
           {
             path: '/invoices/new',

@@ -62,14 +62,20 @@ export const usersApi = {
   getUsersByRole: (
     role: UserRole,
     page = 1,
-    perPage = 50
+    perPage = 50,
+    search?: string
   ): Promise<UsersRoleResponse<any>> => {
     const endpoint = endpointByRole[role];
     if (!endpoint) {
       return Promise.resolve({ data: [] });
     }
     return apiClient.get<any>(endpoint, {
-      params: { paginate: true, page, per_page: perPage },
+      params: {
+        paginate: true,
+        page,
+        per_page: perPage,
+        ...(search ? { 'filter[search]': search } : {}),
+      },
     }).then(({ data }: any) => {
       if (Array.isArray(data)) return { data };
       return {

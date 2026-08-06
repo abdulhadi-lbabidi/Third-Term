@@ -1,6 +1,13 @@
-import { TrendingUp, TrendingDown, Receipt } from 'lucide-react';
+import { TrendingUp, TrendingDown, Receipt, MoreVertical, Edit2, Trash2, Plus } from 'lucide-react';
 import { FinancialEmptyState } from './financial-empty-state';
 import type { Invoice } from '@/features/invoices/types';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/shared/components/ui/dropdown-menu';
+import { Button } from '@/shared/components/ui/button';
 
 type Transaction = {
   id: number;
@@ -17,9 +24,22 @@ type TransactionsTableProps = {
   type: 'revenues' | 'expenses';
   invoices?: Invoice[];
   onViewDetails: (id: number) => void;
+  userRole?: string;
+  onAddInvoice?: (expenseId: number) => void;
+  onEditExpense?: (expenseId: number) => void;
+  onDeleteExpense?: (expenseId: number) => void;
 };
 
-export function TransactionsTable({ data, type, invoices = [], onViewDetails }: TransactionsTableProps) {
+export function TransactionsTable({
+  data,
+  type,
+  invoices = [],
+  onViewDetails,
+  userRole,
+  onAddInvoice,
+  onEditExpense,
+  onDeleteExpense,
+}: TransactionsTableProps) {
   const formatNumber = (val: string | number) => {
     const num = Number(val) || 0;
     return new Intl.NumberFormat('en-US').format(num);
@@ -68,9 +88,47 @@ export function TransactionsTable({ data, type, invoices = [], onViewDetails }: 
                   <h4 className="text-xs font-semibold text-foreground line-clamp-2 leading-normal">
                     {type === 'revenues' ? item.statement : item.description}
                   </h4>
-                  <span className={`shrink-0 text-xs font-bold font-mono ${type === 'revenues' ? 'text-success' : 'text-destructive'}`}>
-                    {type === 'revenues' ? '+' : '-'}{formatNumber(item.amount)} <span className="text-[10px] font-semibold text-muted-foreground mx-1">{currencySymbol}</span>
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-xs font-bold font-mono ${type === 'revenues' ? 'text-success' : 'text-destructive'}`}>
+                      {type === 'revenues' ? '+' : '-'}{formatNumber(item.amount)} <span className="text-[10px] font-semibold text-muted-foreground mx-1">{currencySymbol}</span>
+                    </span>
+                    {type === 'expenses' && ['engineer', 'employee'].includes(userRole || '') && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 h-7 w-7 p-0 text-muted-foreground hover:text-foreground focus-visible:ring-0"
+                          >
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+                          {onAddInvoice && (
+                            <DropdownMenuItem onClick={() => onAddInvoice(item.id)}>
+                              <Plus className="ml-2 size-4 text-muted-foreground" />
+                              <span>إضافة فاتورة</span>
+                            </DropdownMenuItem>
+                          )}
+                          {onEditExpense && (
+                            <DropdownMenuItem onClick={() => onEditExpense(item.id)}>
+                              <Edit2 className="ml-2 size-4 text-muted-foreground" />
+                              <span>تعديل</span>
+                            </DropdownMenuItem>
+                          )}
+                          {onDeleteExpense && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onClick={() => onDeleteExpense(item.id)}
+                            >
+                              <Trash2 className="ml-2 size-4" />
+                              <span>حذف</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
 
                 {type === 'expenses' && expenseInvoices.length > 0 && (

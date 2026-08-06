@@ -1,0 +1,3 @@
+export type ReInvoice = { id: number; item_id: number; supplier_id?: number; reinvoiceable_type: string; reinvoiceable_id: number; date: string; discount?: number; final_total: number; is_posted: boolean; is_visible_to_client: boolean; invoice_number?: string; item?: { id: number; name: string } | string };
+export type ReInvoicePayload = Omit<ReInvoice, 'id' | 'invoice_number' | 'item'>;
+export type ReInvoiceItem = { id: number; reinvoice_id?: number; material_id?: number; material?: { id: number; name: string; unit?: string }; item_description?: string; unit: string; quantity: number; unit_price: number; total_price?: number };

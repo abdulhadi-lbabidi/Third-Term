@@ -2,7 +2,7 @@ import { LogOut, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
 type PublicProjectsHeaderProps = {
-  currentUser: { name: string } | null;
+  currentUser: { name: string; role_type?: string } | null;
   onLogout: () => void;
   onRefresh: () => void;
   isRefreshing?: boolean;
@@ -37,7 +37,13 @@ export function PublicProjectsHeader({
               <div className="flex items-center gap-2">
                 <div className="hidden sm:block text-end">
                   <p className="text-xs font-semibold text-foreground leading-none">{currentUser.name}</p>
-                  <p className="text-[9px] text-accent-gold mt-1 font-semibold">حساب عميل</p>
+                  <p className="text-[9px] text-accent-gold mt-1 font-semibold">
+                    {currentUser.role_type === 'engineer'
+                      ? 'حساب مهندس'
+                      : currentUser.role_type === 'employee'
+                      ? 'حساب موظف'
+                      : 'حساب عميل'}
+                  </p>
                 </div>
                 <button
                   type="button"

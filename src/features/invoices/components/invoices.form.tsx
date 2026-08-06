@@ -261,38 +261,36 @@ export function InvoicesForm({
             />
           )}
 
-          {!fixedValues?.expense_id && (
-            <FormField
-              control={form.control as any}
-              name="expense_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المصروف المرتبط</FormLabel>
-                  <FormControl>
-                    <SearchableSelect
-                      options={expenseOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="اختر المصروف..."
-                      bottomAction={
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-primary"
-                          onClick={() => setIsExpenseDialogOpen(true)}
-                        >
-                          <Plus className="mr-2 size-4" />
-                          إضافة مصروف جديد
-                        </Button>
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control as any}
+            name="expense_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>المصروف المرتبط</FormLabel>
+                <FormControl>
+                  <SearchableSelect
+                    options={expenseOptions}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    placeholder="اختر المصروف..."
+                    bottomAction={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-primary"
+                        onClick={() => setIsExpenseDialogOpen(true)}
+                      >
+                        <Plus className="mr-2 size-4" />
+                        إضافة مصروف جديد
+                      </Button>
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {!fixedValues?.supplier_id && (
             <FormField
