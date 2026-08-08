@@ -112,6 +112,7 @@ export type Expense = {
   created_by_name?: string;
   created_by?: number | ExpenseUser;
   created_at?: string;
+  invoices_count?: number;
 };
 
 export type CreateExpensePayload = {

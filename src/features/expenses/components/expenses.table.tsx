@@ -77,16 +77,17 @@ export function ExpensesTable({
       ),
     },
     { header: 'أنشئ بواسطة', sortable: true, sortKey: 'creator_name', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
-    ...(onInvoices
-      ? [{
-        header: 'عدد الفواتير',
-        cell: (row: Expense) => {
-          if (invoicesLoading) return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
-          if (invoicesError) return <span title="تعذر التحقق"><AlertCircle className="size-4 text-destructive" /></span>;
-          return <Badge variant="secondary">{invoiceCountsByExpenseId?.get(row.id) ?? 0}</Badge>;
-        },
-      }]
-      : []),
+    {
+      header: 'عدد الفواتير',
+      sortable: true,
+      sortKey: 'invoices_count',
+      cell: (row: Expense) => {
+        if (invoicesLoading) return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
+        if (invoicesError) return <span title="تعذر التحقق"><AlertCircle className="size-4 text-destructive" /></span>;
+        const count = row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0;
+        return <Badge variant="secondary">{count}</Badge>;
+      },
+    },
     // { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
     { header: 'تاريخ الإنشاء', sortable: true , sortKey: 'created_at' , cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
   ];
@@ -124,18 +125,14 @@ export function ExpensesTable({
               label: (row: Expense) => {
                 if (invoicesLoading) return 'جاري التحقق من الفواتير...';
                 if (invoicesError) return 'إعادة التحقق من الفواتير';
-                const count = invoiceCountsByExpenseId?.get(row.id) ?? 0;
+                const count = row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0;
                 return `عرض الفواتير (${count})`;
               },
               icon: (row: Expense) => {
-                if (invoicesLoading) return <Loader2 className="size-4 animate-spin" />;
-                if (invoicesError) return <AlertCircle className="size-4" />;
-                return (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
-                  ? <ReceiptText className="size-4" />
-                  : <ReceiptText className="size-4" />;
+                return <ReceiptText className="size-4" />;
               },
               onClick: onInvoices,
-              hidden: (row: Expense) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
+              hidden: (row: Expense) => (row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
             }]
             : []),
           ...(onAddInvoice
@@ -158,19 +155,19 @@ export function ExpensesTable({
           ...(onInvoices
             && !invoicesLoading
             && !invoicesError
-            && data.some((row) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0)
+            && data.some((row) => (row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0)
             ? [{
               label: (row: Expense) => {
-                const count = invoiceCountsByExpenseId?.get(row.id) ?? 0;
+                const count = row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0;
                 return count > 0 ? `عرض الفواتير (${count})` : 'عرض الفواتير';
               },
               icon: (row: Expense) => {
-                return (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
+                return (row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
                   ? <ReceiptText className="size-4" />
                   : <ReceiptText className="size-4 opacity-50" />;
               },
               onClick: onInvoices,
-              hidden: (row: Expense) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
+              hidden: (row: Expense) => (row.invoices_count ?? invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
             }]
             : []),
           ...(onAddInvoice

@@ -1,6 +1,7 @@
 import { Eye } from 'lucide-react';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Department } from '../types';
+import { formatArabicDate } from '@/shared/lib/utils';
 
 type DepartmentTableProps = {
   data: Department[];
@@ -8,12 +9,23 @@ type DepartmentTableProps = {
   onEdit: (department: Department) => void;
   onDelete: (department: Department) => void | Promise<void>;
   onView?: (department: Department) => void;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
-export function DepartmentTable({ data, loading, onEdit, onDelete, onView }: DepartmentTableProps) {
+export function DepartmentTable({
+  data,
+  loading,
+  onEdit,
+  onDelete,
+  onView,
+  sort,
+  onSortChange,
+}: DepartmentTableProps) {
   const columns: DataTableColumn<Department>[] = [
-    { header: 'الاسم', cell: (row) => row.name },
-    { header: 'المدير', cell: (row) => row.main_manager || '-' },
+    { header: 'الاسم', sortable: true, sortKey: 'Name', cell: (row) => row.name },
+    { header: 'المدير', sortable: true, sortKey: 'Main_Manager', cell: (row) => row.main_manager || '-' },
+    { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
   ];
 
   return (
@@ -27,6 +39,8 @@ export function DepartmentTable({ data, loading, onEdit, onDelete, onView }: Dep
       confirmDescription="هل أنت متأكد من حذف هذا القسم؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
       deleteLabel="حذف"
+      sort={sort}
+      onSortChange={onSortChange}
       actions={{
         extraActions: onView
           ? [
