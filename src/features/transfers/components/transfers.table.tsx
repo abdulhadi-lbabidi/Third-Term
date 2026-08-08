@@ -1,6 +1,7 @@
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Transfer } from '../types';
 import { Link } from 'react-router-dom';
+import { getBooleanLabel } from '@/features/components/table-helpers';
 
 type CurrentFundInfo = {
   id: number;
@@ -102,13 +103,25 @@ type TransfersTableProps = {
   onEdit?: (transfer: Transfer) => void;
   onDelete?: (transfer: Transfer) => void;
   currentFund?: CurrentFundInfo;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
-export function TransfersTable({ data, loading, onEdit, onDelete, currentFund }: TransfersTableProps) {
+export function TransfersTable({
+  data,
+  loading,
+  onEdit,
+  onDelete,
+  currentFund,
+  sort,
+  onSortChange,
+}: TransfersTableProps) {
   const columns: DataTableColumn<Transfer>[] = [
-    { header: 'البيان', cell: (row) => row.name },
+    { header: 'البيان', sortable: true, sortKey: 'name', cell: (row) => row.name },
     {
       header: 'المبلغ',
+      sortable: true,
+      sortKey: 'amount',
       cell: (row) => (
         <span className="finance-num font-medium text-[#c9a84c]">
           {Number(row.amount || 0).toLocaleString()}
@@ -117,8 +130,8 @@ export function TransfersTable({ data, loading, onEdit, onDelete, currentFund }:
     },
     ...(!currentFund ? [{ header: 'من صندوق', cell: (row: Transfer) => renderFundLink(row.morph_from_info) }] : []),
     { header: 'إلى صندوق', cell: (row) => renderFundLink(row.morph_to_info, currentFund) },
-    { header: 'أنشئ بواسطة', cell: (row) => getTextLabel(row.created_by) },
-    { header: 'تاريخ التحويل', cell: (row) => row.created_at ?? '-' },
+    { header: 'أنشئ بواسطة', sortable: true, sortKey: 'creator_name', cell: (row) => getTextLabel(row.created_by) },
+    { header: 'تاريخ التحويل', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ?? '-' },
   ];
 
   return (
@@ -132,6 +145,8 @@ export function TransfersTable({ data, loading, onEdit, onDelete, currentFund }:
       confirmDescription="هل أنت متأكد من حذف هذا التحويل؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
       deleteLabel="حذف"
+      sort={sort}
+      onSortChange={onSortChange}
       actions={{
         onEdit,
         onDelete,

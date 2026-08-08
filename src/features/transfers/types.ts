@@ -62,6 +62,7 @@ export type Transfer = {
   morph_to_info?: TransferFundInfo;
   created_by?: number | TransferUser;
   created_at?: string;
+  is_posted?: boolean;
 };
 
 export type CreateTransferPayload = {

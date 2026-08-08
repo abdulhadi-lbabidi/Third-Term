@@ -8,8 +8,8 @@ export type ProjectResponse = {
 };
 
 export const projectsApi = {
-  getProjects: (page = 1, perPage = 50): Promise<ProjectResponse> =>
-    apiClient.get('/projects', { params: { paginate: true, page, per_page: perPage } }).then(({ data }: any) => {
+  getProjects: (page = 1, perPage = 50, filters?: Record<string, any>): Promise<ProjectResponse> =>
+    apiClient.get('/projects', { params: { paginate: true, page, per_page: perPage, ...filters } }).then(({ data }: any) => {
       if (Array.isArray(data)) return { data };
       return { data: data?.data ?? [], meta: data?.meta };
     }),

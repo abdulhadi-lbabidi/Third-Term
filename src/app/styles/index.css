@@ -331,3 +331,6 @@
 .font-tajawal * {
   font-family: 'Cairo', sans-serif !important;
 }
+[data-radix-popper-content-wrapper]:has(.transfers) {
+  top: 150px !important;
+}

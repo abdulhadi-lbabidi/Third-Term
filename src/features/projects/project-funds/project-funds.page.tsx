@@ -319,11 +319,11 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
               setDialogOpen(true);
             }}
             onDelete={async () => {
-              await deleteMutation.mutateAsync(currentFund);
               setSearchParams((prev) => {
                 prev.delete('fundId');
                 return prev;
               });
+              await deleteMutation.mutateAsync(currentFund);
             }}
             onAttachCurrency={() => {
               setSelectedProjectFund(currentFund);

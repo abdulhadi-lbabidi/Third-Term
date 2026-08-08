@@ -119,14 +119,14 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   };
 
   const handleDelete = async (fund: CompanyFund) => {
-    await deleteMutation.mutateAsync(fund);
-    toast.success('تم حذف صندوق الشركة بنجاح');
     if (selectedFundId === fund.id) {
       setSearchParams((prev) => {
         prev.delete('fundId');
         return prev;
       });
     }
+    await deleteMutation.mutateAsync(fund);
+    toast.success('تم حذف صندوق الشركة بنجاح');
   };
 
   const handleAttachCurrency = async (payload: { currency_id: number; balance: number }) => {

@@ -338,7 +338,7 @@ export function DataTable<T>({
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{confirmTitle}</DialogTitle>
-              <DialogDescription>{confirmDescription}</DialogDescription>
+              <DialogDescription className={`text-start`}>{confirmDescription}</DialogDescription>
             </DialogHeader>
 
             <DialogFooter>

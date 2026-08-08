@@ -44,14 +44,44 @@ export function getCurrencyStringFromInfo(info: any) {
   return '';
 }
 
-export type TableUser = { id?: number; name?: string; role_type?: string } | string | number | undefined;
+export type TableUser = {
+  id?: number;
+  name?: string;
+  role_type?: string;
+  role_details?: any;
+} | string | number | undefined;
+
+const roleMapping: Record<string, string> = {
+  admin: 'admin',
+  admins: 'admin',
+  client: 'client',
+  clients: 'client',
+  investor: 'investor',
+  investors: 'investor',
+  craftsman: 'craftsman',
+  craftsmen: 'craftsman',
+  employee: 'employee',
+  employees: 'employee',
+  engineer: 'engineer',
+  engineers: 'engineer',
+  supplier: 'supplier',
+  suppliers: 'supplier',
+  trustee: 'trustee',
+  trustees: 'trustee',
+};
 
 export function UserLink({ user }: { user?: TableUser }) {
   if (user && typeof user === 'object' && user.id && user.name) {
-    const role = user.role_type || 'user';
+    const rawRole = user.role_type || 'user';
+    const role = roleMapping[rawRole] || rawRole;
+    const roleId = user.role_details?.id || user.id;
+    const url = role !== 'user'
+      ? `/users/view/${role}/${roleId}?tab=${role}`
+      : `/users/view/${role}/${roleId}`;
+
     return (
       <Link
-        to={`/users/view/${role}/${user.id}`}
+        to={url}
         className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 hover:underline"
       >
         {user.name}

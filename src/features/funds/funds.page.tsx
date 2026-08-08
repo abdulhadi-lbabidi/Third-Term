@@ -248,11 +248,11 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               setDialogOpen(true);
             }}
             onDelete={async () => {
-              await deleteFundMutation.mutateAsync(currentFund);
               setSearchParams((prev) => {
                 prev.delete('fundId');
                 return prev;
               });
+              await deleteFundMutation.mutateAsync(currentFund);
             }}
             onAttachCurrency={() => {
               setSelectedFund(currentFund);

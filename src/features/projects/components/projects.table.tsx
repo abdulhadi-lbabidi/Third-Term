@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Eye, WalletMinimal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Badge } from '@/shared/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/components/ui/dialog';
 import type { Project } from '../types';
 import dayjs from 'dayjs';
 
@@ -13,9 +15,13 @@ type ProjectsTableProps = {
   onDelete?: (project: Project) => void;
   onAddFund?: (project: Project) => void;
   onView?: (project: Project) => void;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
-export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView }: ProjectsTableProps) {
+export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView, sort, onSortChange }: ProjectsTableProps) {
+  const [selectedProjectForDeps, setSelectedProjectForDeps] = useState<Project | null>(null);
+
   const statusLabels: Record<Project['status'], string> = {
     pending: 'قيد الانتظار',
     in_progress: 'قيد التنفيذ',
@@ -52,6 +58,8 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
   const columns: DataTableColumn<Project>[] = [
     {
       header: 'اسم المشروع',
+      sortable: true,
+      sortKey: 'name',
       cell: (row) => (
         <Link to={`/projects/${row.id}`} className="font-medium text-primary hover:underline hover:text-primary/80 transition-colors">
           {row.name}
@@ -59,13 +67,26 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
       )
     },
     { header: 'العميل', cell: (row) => row.client?.user?.name ?? '-' },
-    { header: 'القسم', cell: (row) => row.department?.name ?? '-' },
+    {
+      header: 'الأقسام',
+      cell: (row) => (
+        <Badge
+          variant="secondary"
+          className="finance-num cursor-pointer transition-colors hover:bg-slate-100 hover:text-slate-900"
+          onClick={() => setSelectedProjectForDeps(row)}
+        >
+          {row.departments?.length ?? 0}
+        </Badge>
+      ),
+    },
     {
       header: 'التكلفة المتوقعة',
       cell: (row) => Number(row.expected_cost || 0).toLocaleString('en-US'),
     },
     {
       header: 'الحالة',
+      sortable: true,
+      sortKey: 'status',
       cell: (row) => {
         const style = statusStyles[row.status];
 
@@ -90,43 +111,89 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
         </Badge>
       ),
     },
-    { header: 'تاريخ الإنشاء', cell: (row) => (row.created_at ? dayjs(row.created_at).format('YYYY-MM-DD') : '-') },
+    { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row) => (row.created_at ? dayjs(row.created_at).format('YYYY-MM-DD') : '-') },
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-      loading={loading}
-      emptyLabel="لا توجد مشاريع"
-      loadingLabel={
-        <div className="flex flex-col gap-2 p-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      }
-      confirmTitle="تأكيد الحذف"
-      confirmDescription="هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء."
-      cancelLabel="إلغاء"
-      deleteLabel="حذف"
-      actions={{
-        onEdit,
-        onDelete,
-        extraActions: onAddFund
-          ? [{
-            label: 'عرض المشروع',
-            icon: <Eye className="size-4" />,
-            onClick: (project) => onView?.(project)
-          },
-          {
-            label: 'الصناديق',
-            icon: <WalletMinimal className="size-4" />,
-            onClick: onAddFund,
-          },
-          ]
-          : undefined,
-      }}
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={data}
+        loading={loading}
+        emptyLabel="لا توجد مشاريع"
+        loadingLabel={
+          <div className="flex flex-col gap-2 p-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        }
+        confirmTitle="تأكيد الحذف"
+        confirmDescription="هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء."
+        cancelLabel="إلغاء"
+        deleteLabel="حذف"
+        sort={sort}
+        onSortChange={onSortChange}
+        actions={{
+          onEdit,
+          onDelete,
+          extraActions: onAddFund
+            ? [{
+              label: 'عرض المشروع',
+              icon: <Eye className="size-4" />,
+              onClick: (project) => onView?.(project)
+            },
+            {
+              label: 'الصناديق',
+              icon: <WalletMinimal className="size-4" />,
+              onClick: onAddFund,
+            },
+            ]
+            : undefined,
+        }}
+      />
+
+      <Dialog
+        open={!!selectedProjectForDeps}
+        onOpenChange={(open) => {
+          if (!open) setSelectedProjectForDeps(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>أقسام المشروع: {selectedProjectForDeps?.name}</DialogTitle>
+            <DialogDescription className="text-start">تفاصيل الأقسام التابعة لهذا المشروع.</DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-3">
+            {selectedProjectForDeps?.departments && selectedProjectForDeps.departments.length > 0 ? (
+              selectedProjectForDeps.departments.map((dep) => (
+                <div
+                  key={dep.id}
+                  className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-start shadow-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-900">{dep.name}</span>
+                    <span className="text-xs text-muted-foreground font-mono">#{dep.id}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                    <div>
+                      <span className="font-medium text-slate-500">المدير العام: </span>
+                      <span>{(dep as any).main_manager || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-500">تاريخ الإنشاء: </span>
+                      <span>{(dep as any).created_at || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-sm text-muted-foreground">لا توجد أقسام تابعة لهذا المشروع.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
