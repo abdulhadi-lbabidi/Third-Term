@@ -12,6 +12,7 @@ export type EmployeePaymentFilters = {
   payment_date?: string;
   date_from?: string;
   date_to?: string;
+  employee_id?: number;
 };
 
 export const employeePaymentsApi = {
@@ -31,6 +32,7 @@ export const employeePaymentsApi = {
         'filter[payment_date]': filters?.payment_date || undefined,
         'filter[date_from]': filters?.date_from || undefined,
         'filter[date_to]': filters?.date_to || undefined,
+        'filter[employee_id]': filters?.employee_id || undefined,
       },
     });
     if (Array.isArray(response.data)) {

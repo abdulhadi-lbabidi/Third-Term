@@ -16,6 +16,8 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
 import { cn } from '@/shared/lib/utils';
+import { DateTimeRangePicker, type DateTimeRangeValue } from '@/shared/components/ui/date-time-range-picker';
+import { format } from 'date-fns';
 
 
 export function EmployeePaymentsPage() {
@@ -31,6 +33,19 @@ export function EmployeePaymentsPage() {
   const [paymentDate, setPaymentDate] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  const rangeValue = useMemo(() => {
+    return {
+      from: dateFrom ? new Date(dateFrom) : undefined,
+      to: dateTo ? new Date(dateTo) : undefined,
+    };
+  }, [dateFrom, dateTo]);
+
+  const handleRangeChange = (value: DateTimeRangeValue | undefined) => {
+    setDateFrom(value?.from ? format(value.from, 'yyyy-MM-dd HH:mm:ss') : '');
+    setDateTo(value?.to ? format(value.to, 'yyyy-MM-dd HH:mm:ss') : '');
+  };
+
   const [appliedFilters, setAppliedFilters] = useState<EmployeePaymentFilters>({});
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,9 +58,18 @@ export function EmployeePaymentsPage() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(resolvedEmployeeId);
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
 
+  const effectiveEmployeeId = useMemo(() => {
+    if (params.employeeId) return Number(params.employeeId);
+    if (isProfileView) return Number(params.id);
+    return null;
+  }, [params.employeeId, isProfileView, params.id]);
+
   const paymentsQuery = useQuery<EmployeePaymentResponse>({
-    queryKey: ['employee-payments', page, perPage, sort, appliedFilters],
-    queryFn: () => employeePaymentsApi.getEmployeePayments(page, perPage, sort, appliedFilters),
+    queryKey: ['employee-payments', page, perPage, sort, appliedFilters, effectiveEmployeeId, selectedEmployeeId],
+    queryFn: () => employeePaymentsApi.getEmployeePayments(page, perPage, sort, {
+      ...appliedFilters,
+      employee_id: effectiveEmployeeId || selectedEmployeeId || undefined,
+    }),
   });
 
   const handleApplyFilters = () => {
@@ -86,11 +110,7 @@ export function EmployeePaymentsPage() {
     return employeesList.find((emp: any) => emp.id === targetEmployeeId) ?? null;
   }, [employeesList, isProfileView, params.id]);
 
-  const effectiveEmployeeId = useMemo(() => {
-    if (params.employeeId) return Number(params.employeeId);
-    if (isProfileView) return Number(params.id);
-    return null;
-  }, [params.employeeId, isProfileView, params.id]);
+
 
   useEffect(() => {
     if (resolvedEmployeeId !== null) {
@@ -105,14 +125,7 @@ export function EmployeePaymentsPage() {
   const totalPages = meta?.last_page ?? 1;
   const currentPage = meta?.current_page ?? page;
 
-  const visiblePayments = useMemo(() => {
-    if (isProfileView) {
-      const targetEmployeeId = Number(params.id);
-      return payments.filter((payment) => payment.employee?.id === targetEmployeeId);
-    }
-    if (!selectedEmployeeId) return payments;
-    return payments.filter((payment) => payment.employee?.id === selectedEmployeeId);
-  }, [payments, selectedEmployeeId, isProfileView, params.id]);
+  const visiblePayments = payments;
 
   const saveMutation = useMutation({
     mutationFn: async (payload: CreateEmployeePaymentPayload) => {
@@ -275,22 +288,12 @@ export function EmployeePaymentsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="filter-date-from">من تاريخ</Label>
-            <Input
-              id="filter-date-from"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="filter-date-to">إلى تاريخ</Label>
-            <Input
-              id="filter-date-to"
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+            <Label>مجال التاريخ والوقت</Label>
+            <DateTimeRangePicker
+              value={rangeValue}
+              onChange={handleRangeChange}
+              popoverSide="top"
+              popoverAlign="end"
             />
           </div>
         </div>
