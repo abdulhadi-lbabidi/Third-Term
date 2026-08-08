@@ -8,11 +8,11 @@ import { ProjectsDialog } from './components/projects.dialog';
 import { ProjectsTable } from './components/projects.table';
 import type { CreateProjectPayload, Project } from './types';
 import { PageHeader } from '../components/page-header';
-import {
-  FolderKanban,
-  // ExternalLink
-} from 'lucide-react';
+import { FolderKanban, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
+import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
+import { ProjectsFilterForm } from './components/projects-filter.form';
+import { cn } from '@/shared/lib/utils';
 
 export function ProjectsPage() {
   const navigate = useNavigate();
@@ -23,9 +23,21 @@ export function ProjectsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [clientId, setClientId] = useState<number | ''>('');
+  const [departmentId, setDepartmentId] = useState<number | ''>('');
+  const [status, setStatus] = useState<Project['status'] | ''>('');
+
+  const [sort, setSort] = useState<string | undefined>(undefined);
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+
   const projectsQuery = useQuery<ProjectResponse>({
-    queryKey: ['projects', page, perPage],
-    queryFn: () => projectsApi.getProjects(page, perPage),
+    queryKey: ['projects', page, perPage, appliedFilters, sort],
+    queryFn: () => projectsApi.getProjects(page, perPage, {
+      ...appliedFilters,
+      sort: sort || undefined,
+    }),
   });
 
   const departmentsQuery = useQuery<{ id: number; name: string }[]>({
@@ -61,6 +73,31 @@ export function ProjectsPage() {
     },
   });
 
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      'filter[search]': searchQuery || undefined,
+      'filter[client_id]': clientId || undefined,
+      'filter[department_id]': departmentId || undefined,
+      'filter[status]': status || undefined,
+    });
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setClientId('');
+    setDepartmentId('');
+    setStatus('');
+    setAppliedFilters({});
+    setPage(1);
+    queryClient.invalidateQueries({
+      queryKey: ['projects', 1, perPage, { sort: sort || undefined }],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['projects', 1, perPage, { sort: undefined }],
+    });
+  };
+
   const handleSubmit = async (payload: CreateProjectPayload) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedProject ? 'تم تعديل المشروع بنجاح' : 'تم إنشاء المشروع بنجاح');
@@ -88,15 +125,31 @@ export function ProjectsPage() {
         title="المشاريع"
         icon={FolderKanban}
         action={
-          <div className="flex items-center gap-2">
-            {/* <Button
+          <div className="flex shrink-0 items-center gap-3">
+            {(Object.values(appliedFilters).some(Boolean) || sort) ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  handleResetFilters();
+                  setSort(undefined);
+                }}
+                aria-label="إعادة ضبط الفلاتر"
+                title="إعادة ضبط الفلاتر"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            ) : null}
+            <Button
+              type="button"
               variant="outline"
-              onClick={() => window.open('/public-projects', '_blank')}
-              className="gap-2"
+              onClick={() => setFilterDrawerOpen(true)}
+              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
-              <ExternalLink className="size-4" />
-              <span>معاينة صفحة العملاء العامة</span>
-            </Button> */}
+              <SlidersHorizontal className="size-4" />
+              فلترة متقدمة
+            </Button>
             <Button onClick={handleCreate}>إضافة مشروع جديد</Button>
           </div>
         }
@@ -116,6 +169,8 @@ export function ProjectsPage() {
         onView={(project) => {
           navigate(`/projects/${project.id}`);
         }}
+        sort={sort}
+        onSortChange={setSort}
       />
 
       <SimplePagination
@@ -127,15 +182,30 @@ export function ProjectsPage() {
 
       <ProjectsDialog
         open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setSelectedProject(null);
-        }}
-        project={selectedProject}
+        onOpenChange={setDialogOpen}
         departments={departmentsQuery.data ?? []}
+        project={selectedProject}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <ProjectsFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          clientId={clientId}
+          setClientId={setClientId}
+          departmentId={departmentId}
+          setDepartmentId={setDepartmentId}
+          status={status}
+          setStatus={setStatus}
+        />
+      </FilterDrawer>
     </div>
   );
 }

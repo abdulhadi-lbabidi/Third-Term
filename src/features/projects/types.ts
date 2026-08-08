@@ -27,6 +27,7 @@ export type Project = {
   status: ProjectStatus;
   client: ClientRecord;
   department?: { id: number; name: string };
+  departments?: { id: number; name: string }[];
   funds?: ProjectFund[];
   created_at?: string;
 };

@@ -16,6 +16,8 @@ type InvoicesTableProps = {
   perPage?: number;
   editInDialog?: boolean;
   enabled?: boolean;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
 export function InvoicesTable({
@@ -24,6 +26,8 @@ export function InvoicesTable({
   perPage = 10,
   editInDialog = false,
   enabled = true,
+  sort,
+  onSortChange,
 }: InvoicesTableProps = {}) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -39,6 +43,7 @@ export function InvoicesTable({
     paginate: true,
     per_page: limit,
     page,
+    sort,
     ...filters,
     ...fixedValues,
   }, enabled);
@@ -55,12 +60,16 @@ export function InvoicesTable({
   const columns: DataTableColumn<Invoice>[] = [
     {
       header: 'رقم الفاتورة',
+      sortable: true,
+      sortKey: 'invoice_number',
       cell: (row: Invoice) => (
         <span className="font-medium text-slate-900">{row.invoice_number || `#${row.id}`}</span>
       ),
     },
     {
       header: 'التاريخ',
+      sortable: true,
+      sortKey: 'created_at',
       cell: (row: Invoice) => (
         <span className="text-sm text-slate-600">
           {row.date ? format(new Date(row.date), 'yyyy-MM-dd') : '-'}
@@ -103,6 +112,8 @@ export function InvoicesTable({
     },
     {
       header: 'الحالة',
+      sortable: true,
+      sortKey: 'is_posted',
       cell: (row: Invoice) => (
         <Badge variant={row.is_posted ? 'default' : 'secondary'} className={row.is_posted ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}>
           {row.is_posted ? 'مرحل' : 'غير مرحل'}
@@ -123,6 +134,8 @@ export function InvoicesTable({
         confirmDescription="هل أنت متأكد من حذف الفاتورة؟ لا يمكن التراجع عن هذا الإجراء."
         cancelLabel="إلغاء"
         deleteLabel="حذف"
+        sort={sort}
+        onSortChange={onSortChange}
         actions={{
           onEdit: (row) => {
             if (editInDialog) setInvoiceToEditId(row.id);

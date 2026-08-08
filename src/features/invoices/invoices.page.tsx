@@ -1,11 +1,47 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Plus, FileText, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { InvoicesTable } from './components/invoices.table';
+import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
+import { InvoicesFilterForm } from './components/invoices-filter.form';
+import { cn } from '@/shared/lib/utils';
+import { INVOICES_KEYS } from './invoices.hooks';
 
 export function InvoicesPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expenseId, setExpenseId] = useState<number | ''>('');
+  const [supplierId, setSupplierId] = useState<number | ''>('');
+  const [itemId, setItemId] = useState<number | ''>(''); 
+
+  const [sort, setSort] = useState<string | undefined>(undefined);
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      'filter[search]': searchQuery || undefined,
+      'filter[expense_id]': expenseId || undefined,
+      'filter[supplier_id]': supplierId || undefined,
+      'filter[item_id]': itemId || undefined,
+    });
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setExpenseId('');
+    setSupplierId('');
+    setItemId('');
+    setAppliedFilters({});
+    queryClient.invalidateQueries({
+      queryKey: INVOICES_KEYS.lists(),
+    });
+  };
 
   return (
     <div className="flex w-full flex-1 flex-col gap-5">
@@ -14,13 +50,39 @@ export function InvoicesPage() {
         title="الفواتير"
         icon={FileText}
         action={
-          <Button
-            onClick={() => navigate('/invoices/new')}
-            className="h-11 px-6 shadow-md sm:w-auto w-full"
-          >
-            <Plus className="mr-2 size-4" />
-            إضافة فاتورة
-          </Button>
+          <div className="flex shrink-0 items-center gap-3">
+            {(Object.values(appliedFilters).some(Boolean) || sort) ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  handleResetFilters();
+                  setSort(undefined);
+                }}
+                aria-label="إعادة ضبط الفلاتر"
+                title="إعادة ضبط الفلاتر"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFilterDrawerOpen(true)}
+              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
+            >
+              <SlidersHorizontal className="size-4" />
+              فلترة متقدمة
+            </Button>
+            <Button
+              onClick={() => navigate('/invoices/new')}
+              className="h-11 px-6 shadow-md sm:w-auto w-full"
+            >
+              <Plus className="mr-2 size-4" />
+              إضافة فاتورة
+            </Button>
+          </div>
         }
       />
 
@@ -31,8 +93,31 @@ export function InvoicesPage() {
             إدارة الفواتير المرتبطة بالمصروفات والموردين، وعرض أصناف كل فاتورة وتفاصيلها المالية.
           </p>
         </div>
-        <InvoicesTable perPage={10} />
+        <InvoicesTable
+          filters={appliedFilters}
+          sort={sort}
+          onSortChange={setSort}
+          perPage={50}
+        />
       </section>
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <InvoicesFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          expenseId={expenseId}
+          setExpenseId={setExpenseId}
+          supplierId={supplierId}
+          setSupplierId={setSupplierId}
+          itemId={itemId}
+          setItemId={setItemId}
+        />
+      </FilterDrawer>
     </div>
   );
 }

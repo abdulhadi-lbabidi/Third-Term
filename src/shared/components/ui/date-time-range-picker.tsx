@@ -316,6 +316,7 @@ function DateTimeRangePicker({
     <PopoverPrimitive.Root
       open={open}
       onOpenChange={handleOpenChange}
+      
     >
       <div className={cn("relative w-full", className)}>
         <PopoverPrimitive.Trigger asChild>

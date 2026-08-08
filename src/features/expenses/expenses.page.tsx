@@ -169,6 +169,7 @@ export function ExpensesPage() {
       <SimplePagination
         currentPage={currentPage}
         totalPages={totalPages}
+        
         onPageChange={setPage}
         meta={meta}
         limit={perPage}
