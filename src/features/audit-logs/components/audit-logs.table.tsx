@@ -19,6 +19,31 @@ const getActionBadgeClass = (action: string) => {
   return 'inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700';
 };
 
+const tableTranslations: Record<string, string> = {
+  company_funds: 'صناديق الشركة',
+  currencies: 'العملات',
+  departments: 'الأقسام',
+  directories: 'المجلدات',
+  employee_payments: 'رواتب الموظفين',
+  expenses: 'المصاريف',
+  fund_currencies: 'عملات الصناديق',
+  invoice_items: 'عناصر الفواتير',
+  invoices: 'الفواتير',
+  items: 'البنود',
+  materials: 'المواد',
+  project_fund_currencies: 'عملات صناديق المشاريع',
+  funds:"صندوق مستخدم",
+  project_funds:"صندوق مشروع",
+  projects: 'المشاريع',
+  project_stages: 'مراحل المشاريع',
+  project_teams: 'فرق عمل المشاريع',
+  re_invoice_items: 'عناصر فواتير الإيرادات',
+  re_invoices: 'فواتير الإيرادات',
+  revenues: 'الإيرادات',
+  stage_timelines: 'التواريخ الزمنية للمراحل',
+  transactions: 'الحركات المالية',
+};
+
 export function AuditLogsTable({ data, loading }: AuditLogsTableProps) {
   const columns: DataTableColumn<AuditLog>[] = [
     {
@@ -31,7 +56,7 @@ export function AuditLogsTable({ data, loading }: AuditLogsTableProps) {
     },
     {
       header: 'الجدول المتأثر',
-      cell: (row) => <span className="font-mono text-xs font-medium text-slate-700">{row.affected_table}</span>,
+      cell: (row) => <span className="text-xs font-medium text-slate-700">{tableTranslations[row.affected_table] || row.affected_table}</span>,
     },
     {
       header: 'البيان',

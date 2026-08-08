@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { UsersTable } from './components/users.table';
 import { usersApi, type UsersRoleResponse } from './api/users.api';
@@ -45,7 +45,7 @@ type UsersTabRecord =
 
 const usersQueryKeys = {
   all: ['users'] as const,
-  byRole: (role: UserRole, page: number, perPage: number, search?: string) => ['users', role, page, perPage, search] as const,
+  byRole: (role: UserRole, page: number, perPage: number, search?: string, sort?: string) => ['users', role, page, perPage, search, sort] as const,
 };
 
 function UsersTableSkeleton() {
@@ -86,6 +86,7 @@ export function UsersPage() {
   const perPage = 50;
   const [searchQuery, setSearchQuery] = useState('');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<string | undefined>(undefined);
 
   const handleSearchSubmit = () => {
     setSearch(searchQuery);
@@ -95,6 +96,7 @@ export function UsersPage() {
   const handleReset = () => {
     setSearchQuery('');
     setSearch('');
+    setSort(undefined);
     setPage(1);
   };
 
@@ -108,12 +110,14 @@ export function UsersPage() {
   useEffect(() => {
     setSearchQuery('');
     setSearch('');
+    setSort(undefined);
     setPage(1);
   }, [activeRole]);
 
   const usersQuery = useQuery<UsersRoleResponse<UsersTabRecord>>({
-    queryKey: usersQueryKeys.byRole(activeRole, page, perPage, search),
-    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage, search),
+    queryKey: usersQueryKeys.byRole(activeRole, page, perPage, search, sort),
+    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage, search, sort),
+    placeholderData: keepPreviousData,
   });
 
   const deleteMutation = useMutation({
@@ -137,7 +141,7 @@ export function UsersPage() {
 
   const columns = useMemo(
     () => [
-      { header: 'الاسم', cell: (row: UsersTabRecord) => row.user.name },
+      { header: 'الاسم', sortable: true, sortKey: 'user_name', cell: (row: UsersTabRecord) => row.user.name },
       { header: 'البريد الإلكتروني', cell: (row: UsersTabRecord) => row.user.email },
       { header: 'الهاتف', cell: (row: UsersTabRecord) => row.user.phone_number },
       { header: 'العنوان', cell: (row: UsersTabRecord) => row.user.address },
@@ -154,7 +158,7 @@ export function UsersPage() {
         ? { header: 'الراتب الأساسي', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
         : null,
 
-      { header: 'تاريخ الإنشاء', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
+      { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
     ],
     [activeRole]
   );
@@ -196,7 +200,7 @@ export function UsersPage() {
                 className="w-full bg-card border border-input rounded-md pl-9 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring transition-all"
               />
             </div>
-            {searchQuery && (
+            {(searchQuery || sort) && (
               <Button
                 type="button"
                 variant="outline"
@@ -224,6 +228,8 @@ export function UsersPage() {
             onDelete={handleDelete}
             onView={handleEdit}
             onFunds={handleFunds}
+            sort={sort}
+            onSortChange={setSort}
           />
 
           <SimplePagination

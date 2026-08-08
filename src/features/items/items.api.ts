@@ -8,9 +8,9 @@ export type ItemResponse = {
 };
 
 export const itemsApi = {
-  getItems: async (page = 1, perPage = 50): Promise<ItemResponse> => {
+  getItems: async (page = 1, perPage = 50, filters?: Record<string, any>): Promise<ItemResponse> => {
     const response = await apiClient.get('/items', {
-      params: { paginate: true, page, per_page: perPage },
+      params: { paginate: true, page, per_page: perPage, ...filters },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

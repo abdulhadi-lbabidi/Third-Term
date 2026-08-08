@@ -9,6 +9,8 @@ type UsersTableProps<T> = {
   onView?: (row: T) => void;
   onFunds?: (row: T) => void;
   onEmployeePayments?: (row: T) => void;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
 export function UsersTable<T>({
@@ -18,6 +20,8 @@ export function UsersTable<T>({
   onDelete,
   onView,
   onFunds,
+  sort,
+  onSortChange,
 }: UsersTableProps<T>) {
 
   return (
@@ -31,6 +35,8 @@ export function UsersTable<T>({
       confirmDescription="هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
       deleteLabel="حذف"
+      sort={sort}
+      onSortChange={onSortChange}
       actions={{
         onDelete,
         onView,

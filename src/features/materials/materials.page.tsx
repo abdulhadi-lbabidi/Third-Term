@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
@@ -7,7 +7,7 @@ import { materialsApi } from './materials.api';
 import { MaterialDialog } from './components/material.dialog';
 import { MaterialsTable } from './components/materials.table';
 import type { CreateMaterialPayload, Material, MaterialResponse } from './types';
-import { Boxes } from 'lucide-react';
+import { Boxes, Search, RotateCcw } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 
 export function MaterialsPage() {
@@ -17,9 +17,14 @@ export function MaterialsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<string | undefined>(undefined);
+
   const materialsQuery = useQuery<MaterialResponse>({
-    queryKey: ['materials', page, perPage],
-    queryFn: () => materialsApi.getMaterials(page, perPage),
+    queryKey: ['materials', page, perPage, search, sort],
+    queryFn: () => materialsApi.getMaterials(page, perPage, search, sort),
+    placeholderData: keepPreviousData,
   });
 
   const saveMutation = useMutation({
@@ -43,6 +48,18 @@ export function MaterialsPage() {
     },
   });
 
+  const handleSearchSubmit = () => {
+    setSearch(searchQuery);
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchQuery('');
+    setSearch('');
+    setSort(undefined);
+    setPage(1);
+  };
+
   const handleSubmit = async (payload: CreateMaterialPayload) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedMaterial ? 'تم تعديل المادة بنجاح' : 'تم إنشاء المادة بنجاح');
@@ -65,14 +82,47 @@ export function MaterialsPage() {
         title="المواد"
         icon={Boxes}
         action={
-          <Button
-            onClick={() => {
-              setSelectedMaterial(null);
-              setDialogOpen(true);
-            }}
-          >
-            إضافة مادة جديدة
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative w-64">
+              <button
+                type="button"
+                onClick={handleSearchSubmit}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground inline-flex items-center justify-center p-0 border-none bg-transparent cursor-pointer"
+              >
+                <Search className="size-4" />
+              </button>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit();
+                  }
+                }}
+                placeholder="ابحث بالاسم، البيان، أو الوحدة..."
+                className="w-full bg-card border border-input rounded-md pl-9 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring transition-all"
+              />
+            </div>
+            {(search || sort) && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
+                className="!p-2 !py-1 !h-8"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setSelectedMaterial(null);
+                setDialogOpen(true);
+              }}
+            >
+              إضافة مادة جديدة
+            </Button>
+          </div>
         }
       />
 
@@ -88,6 +138,8 @@ export function MaterialsPage() {
           setDialogOpen(true);
         }}
         onDelete={handleDelete}
+        sort={sort}
+        onSortChange={setSort}
       />
 
       <SimplePagination

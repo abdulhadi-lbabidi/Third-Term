@@ -99,6 +99,16 @@ export function DataTable<T>({
     setExpandedRows(next);
   };
 
+  const sortItems = React.useMemo(() => {
+    if (!sort) return [];
+    return sort.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+      if (s.startsWith('-')) {
+        return { key: s.slice(1), desc: true };
+      }
+      return { key: s, desc: false };
+    });
+  }, [sort]);
+
   return (
     <div className="flex min-h-0 max-h-[calc(100dvh-13rem)] flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-finance)]">
       <div className="min-h-0 flex-1 overflow-auto">
@@ -110,16 +120,6 @@ export function DataTable<T>({
               {columns.map((column) => {
                 const key = column.sortKey || String(column.accessorKey || '');
                 
-                const sortItems = React.useMemo(() => {
-                  if (!sort) return [];
-                  return sort.split(',').map(s => s.trim()).filter(Boolean).map(s => {
-                    if (s.startsWith('-')) {
-                      return { key: s.slice(1), desc: true };
-                    }
-                    return { key: s, desc: false };
-                  });
-                }, [sort]);
-
                 const sortedItem = sortItems.find(item => item.key === key);
                 const isSortedAsc = sortedItem ? !sortedItem.desc : false;
                 const isSortedDesc = sortedItem ? sortedItem.desc : false;

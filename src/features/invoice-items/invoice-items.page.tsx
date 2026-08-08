@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
@@ -8,10 +8,12 @@ import { InvoiceItemsTable } from './components/invoice-items.table';
 import { invoiceItemsApi } from './invoice-items.api';
 import type { InvoiceItemFormValues } from './schemas/invoice-items.schema';
 import type { CreateInvoiceItemPayload, InvoiceItem, InvoiceItemResponse } from './types';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet, RotateCcw, SlidersHorizontal, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
+import { InvoiceItemsFilterForm } from './components/invoice-items-filter.form';
+import { cn } from '@/shared/lib/utils';
 
 export function InvoiceItemsPage() {
   const navigate = useNavigate();
@@ -24,13 +26,25 @@ export function InvoiceItemsPage() {
   const [dialogOpen, setDialogOpen] = useState(isWizard);
   const [selectedItem, setSelectedItem] = useState<InvoiceItem | null>(null);
 
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [materialId, setMaterialId] = useState<number | ''>('');
+  const [invoiceId, setInvoiceId] = useState<number | ''>('');
+  const [sort, setSort] = useState<string | undefined>(undefined);
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+
   const invoiceItemsQuery = useQuery<InvoiceItemResponse>({
-    queryKey: ['invoice-items', page, perPage, fixedInvoiceId],
+    queryKey: ['invoice-items', page, perPage, fixedInvoiceId, appliedFilters, sort],
     queryFn: () => invoiceItemsApi.getInvoiceItems(
       page,
       perPage,
-      fixedInvoiceId ? { 'filter[invoice_id]': fixedInvoiceId } : undefined,
+      {
+        ...appliedFilters,
+        ...(fixedInvoiceId ? { 'filter[invoice_id]': fixedInvoiceId } : {}),
+        sort: sort || undefined,
+      },
     ),
+    placeholderData: keepPreviousData,
   });
 
   const saveMutation = useMutation({
@@ -53,6 +67,26 @@ export function InvoiceItemsPage() {
       await queryClient.invalidateQueries({ queryKey: ['invoice-items'] });
     },
   });
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      'filter[search]': searchQuery || undefined,
+      'filter[material_id]': materialId || undefined,
+      'filter[invoice_id]': invoiceId || undefined,
+    });
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setMaterialId('');
+    setInvoiceId('');
+    setAppliedFilters({});
+    setPage(1);
+    queryClient.invalidateQueries({
+      queryKey: ['invoice-items'],
+    });
+  };
 
   const handleSubmit = async (values: InvoiceItemFormValues) => {
     const payload: CreateInvoiceItemPayload = {
@@ -92,6 +126,30 @@ export function InvoiceItemsPage() {
                 تعديل بيانات الفاتورة
               </Button>
             )}
+            {(Object.values(appliedFilters).some(Boolean) || sort) ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  handleResetFilters();
+                  setSort(undefined);
+                }}
+                aria-label="إعادة ضبط الفلاتر"
+                title="إعادة ضبط الفلاتر"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFilterDrawerOpen(true)}
+              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
+            >
+              <SlidersHorizontal className="size-4" />
+              فلترة متقدمة
+            </Button>
             <Button
               type="button"
               onClick={() => {
@@ -123,6 +181,8 @@ export function InvoiceItemsPage() {
           setDialogOpen(true);
         }}
         onDelete={handleDelete}
+        sort={sort}
+        onSortChange={setSort}
       />
 
       <SimplePagination
@@ -143,6 +203,22 @@ export function InvoiceItemsPage() {
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <InvoiceItemsFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          materialId={materialId}
+          setMaterialId={setMaterialId}
+          invoiceId={invoiceId}
+          setInvoiceId={setInvoiceId}
+        />
+      </FilterDrawer>
     </div>
   );
 }
