@@ -32,7 +32,8 @@ type ProjectStagesTabProps = {
 
 export function ProjectStagesTab({ projectId, userRole }: ProjectStagesTabProps) {
   const queryClient = useQueryClient();
-  const canManage = ['engineer', 'employee'].includes(userRole || '');
+  const canManageStages = ['engineer'].includes(userRole || '');
+  const canManageTimelines = ['engineer', 'employee'].includes(userRole || '');
 
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<ProjectStage | null>(null);
@@ -104,6 +105,26 @@ export function ProjectStagesTab({ projectId, userRole }: ProjectStagesTabProps)
     },
   });
 
+  const saveTimelineMutation = useMutation({
+    mutationFn: async (payload: CreateStageTimelinePayload) => {
+      if (selectedTimeline) {
+        return stageTimelinesApi.update(selectedTimeline.id, payload);
+      }
+      return stageTimelinesApi.create(payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['project-stages', projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['stage-timelines', selectedStageId] });
+      setTimelineDialogOpen(false);
+      setSelectedTimeline(null);
+      setParentStageForTimeline(null);
+      toast.success(selectedTimeline ? 'تم تعديل التفصيل الزمني بنجاح' : 'تم إضافة التفصيل الزمني بنجاح');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حفظ التفصيل الزمني');
+    },
+  });
+
   const deleteStageMutation = useMutation({
     mutationFn: (stage: ProjectStage) => projectStagesApi.delete(stage.id),
     onSuccess: async () => {
@@ -116,29 +137,11 @@ export function ProjectStagesTab({ projectId, userRole }: ProjectStagesTabProps)
     },
   });
 
-  const saveTimelineMutation = useMutation({
-    mutationFn: async (payload: CreateStageTimelinePayload) => {
-      if (selectedTimeline) {
-        return stageTimelinesApi.update(selectedTimeline.id, payload);
-      }
-      return stageTimelinesApi.create(payload);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['stage-timelines'] });
-      setTimelineDialogOpen(false);
-      setSelectedTimeline(null);
-      setParentStageForTimeline(null);
-      toast.success(selectedTimeline ? 'تم تعديل التفصيل الزمني بنجاح' : 'تمت إضافة التفصيل الزمني بنجاح');
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حفظ التفصيل الزمني');
-    },
-  });
-
   const deleteTimelineMutation = useMutation({
     mutationFn: (timeline: StageTimeline) => stageTimelinesApi.delete(timeline.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['stage-timelines'] });
+      await queryClient.invalidateQueries({ queryKey: ['project-stages', projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['stage-timelines', selectedStageId] });
       setTimelineToDelete(null);
       toast.success('تم حذف التفصيل الزمني بنجاح');
     },
@@ -147,13 +150,13 @@ export function ProjectStagesTab({ projectId, userRole }: ProjectStagesTabProps)
     },
   });
 
-  const handleEditStage = (stage: ProjectStage) => {
-    setSelectedStage(stage);
+  const handleAddStage = () => {
+    setSelectedStage(null);
     setStageDialogOpen(true);
   };
 
-  const handleAddStage = () => {
-    setSelectedStage(null);
+  const handleEditStage = (stage: ProjectStage) => {
+    setSelectedStage(stage);
     setStageDialogOpen(true);
   };
 
@@ -188,7 +191,7 @@ export function ProjectStagesTab({ projectId, userRole }: ProjectStagesTabProps)
         </div>
 
         <div className="flex items-center gap-3">
-          {canManage && (
+          {canManageStages && (
             <Button
               type="button"
               onClick={handleAddStage}
@@ -207,52 +210,54 @@ export function ProjectStagesTab({ projectId, userRole }: ProjectStagesTabProps)
           onSelectStage={setSelectedStageId}
           onAddTimeline={handleAddTimeline}
           onEditTimeline={handleEditTimeline}
-          onDeleteTimeline={canManage ? handleDeleteTimeline : undefined}
-          onEditStage={canManage ? handleEditStage : undefined}
-          onDeleteStage={canManage ? handleDeleteStage : undefined}
-          canManage={canManage}
+          onDeleteTimeline={canManageStages ? handleDeleteTimeline : undefined}
+          onEditStage={canManageStages ? handleEditStage : undefined}
+          onDeleteStage={canManageStages ? handleDeleteStage : undefined}
+          canManage={canManageTimelines}
         />
       </div>
 
-      {canManage && (
+      {canManageStages && (
+        <ProjectStagesDialog
+          open={stageDialogOpen}
+          onOpenChange={(open) => {
+            setStageDialogOpen(open);
+            if (!open) setSelectedStage(null);
+          }}
+          projectId={projectId}
+          stage={selectedStage}
+          onSubmit={async (payload) => {
+            await saveStageMutation.mutateAsync(payload);
+          }}
+          loading={saveStageMutation.isPending}
+        />
+      )}
+
+      {canManageTimelines && parentStageForTimeline && (
+        <StageTimelineDialog
+          open={timelineDialogOpen}
+          onOpenChange={(open) => {
+            setTimelineDialogOpen(open);
+            if (!open) {
+              setSelectedTimeline(null);
+              setParentStageForTimeline(null);
+            }
+          }}
+          projectStageId={parentStageForTimeline.id}
+          timeline={selectedTimeline}
+          onSubmit={async (payload) => {
+            await saveTimelineMutation.mutateAsync(payload);
+          }}
+          loading={saveTimelineMutation.isPending}
+          onDelete={selectedTimeline && canManageStages ? () => {
+            setTimelineDialogOpen(false);
+            handleDeleteTimeline(selectedTimeline);
+          } : undefined}
+        />
+      )}
+
+      {canManageStages && (
         <>
-          <ProjectStagesDialog
-            open={stageDialogOpen}
-            onOpenChange={(open) => {
-              setStageDialogOpen(open);
-              if (!open) setSelectedStage(null);
-            }}
-            projectId={projectId}
-            stage={selectedStage}
-            onSubmit={async (payload) => {
-              await saveStageMutation.mutateAsync(payload);
-            }}
-            loading={saveStageMutation.isPending}
-          />
-
-          {parentStageForTimeline && (
-            <StageTimelineDialog
-              open={timelineDialogOpen}
-              onOpenChange={(open) => {
-                setTimelineDialogOpen(open);
-                if (!open) {
-                  setSelectedTimeline(null);
-                  setParentStageForTimeline(null);
-                }
-              }}
-              projectStageId={parentStageForTimeline.id}
-              timeline={selectedTimeline}
-              onSubmit={async (payload) => {
-                await saveTimelineMutation.mutateAsync(payload);
-              }}
-              loading={saveTimelineMutation.isPending}
-              onDelete={selectedTimeline ? () => {
-                setTimelineDialogOpen(false);
-                handleDeleteTimeline(selectedTimeline);
-              } : undefined}
-            />
-          )}
-
           <Dialog open={!!stageToDelete} onOpenChange={(open) => !open && setStageToDelete(null)}>
             <DialogContent>
               <DialogHeader>

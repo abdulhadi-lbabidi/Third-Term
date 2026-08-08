@@ -8,7 +8,7 @@ import { ItemsTable } from './components/items.table';
 import { MaterialsDialog } from './components/materials.dialog';
 import type { CreateItemPayload, Item } from './types';
 import { PageHeader } from '../components/page-header';
-import { ListChecks } from 'lucide-react';
+import { ListChecks, Search, RotateCcw } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 
 export function ItemsPage() {
@@ -21,9 +21,16 @@ export function ItemsPage() {
   const [materialsDialogOpen, setMaterialsDialogOpen] = useState(false);
   const [materialsItem, setMaterialsItem] = useState<Item | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<string | undefined>(undefined);
+
   const itemsQuery = useQuery<ItemResponse>({
-    queryKey: ['items', page, perPage],
-    queryFn: () => itemsApi.getItems(page, perPage),
+    queryKey: ['items', page, perPage, search, sort],
+    queryFn: () => itemsApi.getItems(page, perPage, {
+      'filter[search]': search || undefined,
+      sort: sort || undefined,
+    }),
   });
 
   const saveMutation = useMutation({
@@ -47,6 +54,21 @@ export function ItemsPage() {
     },
   });
 
+  const handleSearchSubmit = () => {
+    setSearch(searchQuery);
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchQuery('');
+    setSearch('');
+    setSort(undefined);
+    setPage(1);
+    queryClient.invalidateQueries({
+      queryKey: ['items', 1, perPage, '', undefined],
+    });
+  };
+
   const handleSubmit = async (payload: CreateItemPayload) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedItem ? 'تم تعديل البند بنجاح' : 'تم إنشاء البند بنجاح');
@@ -69,14 +91,47 @@ export function ItemsPage() {
         title="البنود"
         icon={ListChecks}
         action={
-          <Button
-            onClick={() => {
-              setSelectedItem(null);
-              setDialogOpen(true);
-            }}
-          >
-            إضافة بند جديد
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-64 md:w-80">
+              <button
+                type="button"
+                onClick={handleSearchSubmit}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground inline-flex items-center justify-center p-0 border-none bg-transparent cursor-pointer"
+              >
+                <Search className="size-4" />
+              </button>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit();
+                  }
+                }}
+                placeholder="ابحث باسم البند أو البيان..."
+                className="w-full bg-card border border-input rounded-md pl-9 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring transition-all"
+              />
+            </div>
+            {(search || sort) && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
+                className="!p-2 !py-1 !h-8"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setSelectedItem(null);
+                setDialogOpen(true);
+              }}
+            >
+              إضافة بند جديد
+            </Button>
+          </div>
         }
       />
 
@@ -92,6 +147,8 @@ export function ItemsPage() {
           setMaterialsItem(item);
           setMaterialsDialogOpen(true);
         }}
+        sort={sort}
+        onSortChange={setSort}
       />
 
       <SimplePagination
@@ -103,10 +160,7 @@ export function ItemsPage() {
 
       <ItemsDialog
         open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setSelectedItem(null);
-        }}
+        onOpenChange={setDialogOpen}
         item={selectedItem}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
@@ -114,10 +168,7 @@ export function ItemsPage() {
 
       <MaterialsDialog
         open={materialsDialogOpen}
-        onOpenChange={(open) => {
-          setMaterialsDialogOpen(open);
-          if (!open) setMaterialsItem(null);
-        }}
+        onOpenChange={setMaterialsDialogOpen}
         item={materialsItem}
       />
     </div>

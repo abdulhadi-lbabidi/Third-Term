@@ -11,12 +11,14 @@ type ItemsTableProps = {
   onEdit?: (item: Item) => void;
   onDelete?: (item: Item) => void;
   onShowMaterials?: (item: Item) => void;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
-export function ItemsTable({ data, loading, onEdit, onDelete, onShowMaterials }: ItemsTableProps) {
+export function ItemsTable({ data, loading, onEdit, onDelete, onShowMaterials, sort, onSortChange }: ItemsTableProps) {
   const columns: DataTableColumn<Item>[] = [
-    { header: 'اسم البند', cell: (item) => item.name },
-    { header: 'البيان', cell: (item) => item.description },
+    { header: 'اسم البند', sortable: true, sortKey: 'name', cell: (item) => item.name },
+    { header: 'البيان', sortable: true, sortKey: 'description', cell: (item) => item.description },
     {
       header: 'عدد المواد',
       cell: (item) => {
@@ -32,7 +34,7 @@ export function ItemsTable({ data, loading, onEdit, onDelete, onShowMaterials }:
         );
       },
     },
-    { header: 'تاريخ الإنشاء', cell: (item) => (item.created_at ? dayjs(item.created_at).format('YYYY-MM-DD') : '-') },
+    { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (item) => (item.created_at ? dayjs(item.created_at).format('YYYY-MM-DD') : '-') },
   ];
 
   return (
@@ -46,6 +48,8 @@ export function ItemsTable({ data, loading, onEdit, onDelete, onShowMaterials }:
       confirmDescription="هل أنت متأكد من حذف هذا البند؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
       deleteLabel="حذف"
+      sort={sort}
+      onSortChange={onSortChange}
       actions={{
         onEdit,
         onDelete,
