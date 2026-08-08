@@ -12,11 +12,11 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
   const client = useQueryClient();
   const [editingItem, setEditingItem] = useState<ReInvoiceItem | null>(null);
   const [materialId, setMaterialId] = useState(0); const [unit, setUnit] = useState(''); const [quantity, setQuantity] = useState(0); const [price, setPrice] = useState(0); const [description, setDescription] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{ unit?: string; description?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ material?: string; unit?: string; quantity?: string; description?: string }>({});
   const items = useQuery({ queryKey: ['re-invoice-items', reInvoiceId], queryFn: () => reInvoicesApi.getItems(reInvoiceId) });
   const materials = useQuery({ queryKey: ['re-invoice-items', 'materials'], queryFn: async () => (await materialsApi.getMaterials(1, 1000)).data });
   const reset = () => { setEditingItem(null); setMaterialId(0); setUnit(''); setQuantity(0); setPrice(0); setDescription(''); setFieldErrors({}); };
-  const startEditing = (item: ReInvoiceItem) => { setEditingItem(item); setMaterialId(item.material_id ?? item.material?.id ?? 0); setUnit(item.unit); setQuantity(Number(item.quantity)); setPrice(Number(item.unit_price)); setDescription(item.item_description ?? ''); };
+  const startEditing = (item: ReInvoiceItem) => { setEditingItem(item); setMaterialId(item.material_id ?? item.material?.id ?? 0); setUnit(item.unit); setQuantity(Number(item.quantity)); setPrice(Number(item.unit_price)); setDescription(item.item_description ?? ''); setFieldErrors({}); };
   const save = useMutation({ mutationFn: () => { const payload = { reinvoice_id: reInvoiceId, material_id: materialId, unit: unit.trim(), quantity, unit_price: price, item_description: description.trim() }; return editingItem ? reInvoicesApi.updateItem(editingItem.id, payload) : reInvoicesApi.createItem(payload); }, onSuccess: async () => { await client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }); reset(); } });
   const remove = useMutation({ mutationFn: reInvoicesApi.deleteItem, onSuccess: async () => client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }) });
   const materialRows = materials.data ?? [];
@@ -25,11 +25,13 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
       <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
         e.preventDefault();
         const errors = {
+          ...(!materialId ? { material: 'المادة مطلوبة' } : {}),
           ...(!unit.trim() ? { unit: 'الوحدة مطلوبة' } : {}),
+          ...(!Number.isFinite(quantity) || quantity <= 0 ? { quantity: 'الكمية يجب أن تكون أكبر من صفر' } : {}),
           ...(!description.trim() ? { description: 'سبب المرتجع مطلوب' } : {}),
         };
         setFieldErrors(errors);
-        if (!materialId || quantity <= 0 || Object.keys(errors).length) return;
+        if (Object.keys(errors).length) return;
         save.mutate();
       }}>
         <label className="space-y-1">
@@ -41,10 +43,16 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
             onValueChange={(value) => {
               const next = Number(value);
               setMaterialId(next);
+              setFieldErrors((errors) => ({ ...errors, material: undefined }));
               const material = materialRows.find((m) => m.id === next);
-              if (material?.unit) setUnit(material.unit);
+              if (material?.unit) {
+                setUnit(material.unit);
+                setFieldErrors((errors) => ({ ...errors, unit: undefined }));
+              }
             }}
-            placeholder="اختر المادة" />
+            placeholder="اختر المادة"
+            className={fieldErrors.material ? 'border-destructive' : undefined} />
+          {fieldErrors.material && <p className="text-sm text-destructive">{fieldErrors.material}</p>}
         </label>
         <label className="space-y-1">
           <span>الوحدة</span>
@@ -53,7 +61,8 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
         </label>
         <label className="space-y-1">
           <span>الكمية</span>
-          <Input type="number" min={1} step="any" value={quantity} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setQuantity(Number(e.target.value))} />
+          <Input type="number" min={1} step="any" value={quantity} onFocus={(e) => e.currentTarget.select()} onChange={(e) => { setQuantity(Number(e.target.value)); setFieldErrors((errors) => ({ ...errors, quantity: undefined })); }} aria-invalid={Boolean(fieldErrors.quantity)} />
+          {fieldErrors.quantity && <p className="text-sm text-destructive">{fieldErrors.quantity}</p>}
         </label>
         <label className="space-y-1">
           <span>سعر الوحدة</span>

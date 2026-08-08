@@ -429,7 +429,7 @@ export function GenericFundDetails({
             />
           </div>
         </TabsContent>}
-        {hasCurrencies && <TabsContent value="returns" className="space-y-5"><div className="flex items-center justify-between"><div><h3 className="text-lg font-semibold">مرتجعات الصندوق</h3><p className="mt-1 text-sm text-muted-foreground">المبالغ والمواد المعادة إلى الصندوق.</p></div><Button size="sm" onClick={() => { setSelectedReInvoice(null); setReInvoiceDialogOpen(true); }}><Undo2 className="size-4" />إنشاء مرتجع</Button></div><ReInvoicesTable data={reInvoicesQuery.data?.data ?? []} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending} onEdit={(row) => { setSelectedReInvoice(row); setReInvoiceDialogOpen(true); }} onDelete={async (row) => { await deleteReInvoice.mutateAsync(row.id); }} onItems={(row) => setReInvoiceItemsId(row.id)} /></TabsContent>}
+        {hasCurrencies && <TabsContent value="returns" className="space-y-5"><div className="flex items-center justify-between"><div><h3 className="text-lg font-semibold">مرتجعات الصندوق</h3><p className="mt-1 text-sm text-muted-foreground">المبالغ والمواد المعادة إلى الصندوق.</p></div><Button size="sm" onClick={() => { setSelectedReInvoice(null); setReInvoiceDialogOpen(true); }}><Undo2 className="size-4" />إنشاء مرتجع</Button></div><ReInvoicesTable data={reInvoicesQuery.data?.data ?? []} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending} onView={(row) => { setSelectedReInvoice(row); setReInvoiceItemsId(row.id); }} onEdit={(row) => { setSelectedReInvoice(row); setReInvoiceDialogOpen(true); }} onDelete={async (row) => { await deleteReInvoice.mutateAsync(row.id); }} /></TabsContent>}
 
         {hasCurrencies && <TabsContent value="transfers" className="space-y-5">
           {!canTransfer && (
@@ -484,7 +484,7 @@ export function GenericFundDetails({
         const saved = await saveReInvoice.mutateAsync({ id: editingId, payload });
         return saved;
       }} />
-      <ReInvoiceItemsDialog id={reInvoiceItemsId} onClose={() => setReInvoiceItemsId(undefined)} />
+      <ReInvoiceItemsDialog id={reInvoiceItemsId} onClose={() => { setReInvoiceItemsId(undefined); setSelectedReInvoice(null); }} onEdit={selectedReInvoice ? () => { setReInvoiceItemsId(undefined); setReInvoiceDialogOpen(true); } : undefined} readOnly />
 
       {revenueDialogOpen && (
         <RevenuesDialog

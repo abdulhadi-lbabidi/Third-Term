@@ -12,8 +12,12 @@ function normalizeReInvoicePayload(payload: ReInvoicePayload | Partial<ReInvoice
 
 export const reInvoicesApi = {
   getAll: async (params?: Record<string, unknown>): Promise<{ data: ReInvoice[]; meta?: any }> => {
-    const response = await apiClient.get('/re-invoices', { params: { paginate: true, per_page: 50, page: 1, ...params } });
+    const response = await apiClient.get('/re-invoices', { params: { paginate: true, per_page: 5, page: 1, ...params } });
     return Array.isArray(response.data) ? { data: response.data } : response.data;
+  },
+  getOne: async (id: number): Promise<ReInvoice> => {
+    const response = await apiClient.get(`/re-invoices/${id}`);
+    return response.data?.data ?? response.data;
   },
   create: async (payload: ReInvoicePayload): Promise<ReInvoice> => {
     const response = await apiClient.post('/re-invoices', normalizeReInvoicePayload(payload));

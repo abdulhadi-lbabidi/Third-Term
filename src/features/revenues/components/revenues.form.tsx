@@ -166,8 +166,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
   const form = useForm<RevenueFormInput, any, RevenueFormValues>({
     resolver: zodResolver(revenueFormSchema),
     defaultValues: {
-      source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : undefined as any),
-      revenueable_type: defaultValues?.revenueable_type ?? (fixedValues?.source ? sourceToRevenueableType[fixedValues.source] : undefined),
+      source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : 'company_fund'),
+      revenueable_type: defaultValues?.revenueable_type ?? sourceToRevenueableType[fixedValues?.source ?? 'company_fund'],
       revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
       company_fund_id: fixedValues?.company_fund_id ?? undefined,
       user_role: defaultValues?.user_role ?? ((defaultValues as any)?.user?.role_type) ?? '',
@@ -412,6 +412,61 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
     }
   }, [source, companyCurrencyOptions, projectCurrencyOptions, userCurrencyOptions, selectedRevenueableId, form]);
 
+  const amountField = (
+    <FormField
+      control={form.control}
+      name="amount"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>المبلغ</FormLabel>
+          <FormControl>
+            <Input
+              className="h-11 bg-white pl-4"
+              type="text"
+              inputMode="decimal"
+              value={formatNumberWithCommas(field.value)}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/,/g, '');
+                if (/^\d*\.?\d*$/.test(raw)) field.onChange(raw === '' ? '' : Number(raw));
+              }}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
+  const currencyField = (
+    <FormField
+      control={form.control}
+      name="revenueable_id"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>عملة الصندوق</FormLabel>
+          <FormControl>
+            <SearchableSelect
+              disabled={
+                (source === 'company_fund' && !derivedCompanyFundId) ||
+                (source === 'project_fund' && !derivedProjectFundId) ||
+                (source === 'user_fund' && !derivedUserFundId)
+              }
+              options={
+                source === 'company_fund' ? companyCurrencyOptions :
+                  source === 'project_fund' ? projectCurrencyOptions :
+                    userCurrencyOptions
+              }
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="اختر العملة..."
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
   return (
     <Form {...form}>
       <form
@@ -435,7 +490,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
         )}
       >
         {!fixedValues?.source && (
-          <FormField
+          <div>
+            <FormField
             control={form.control}
             name="source"
             render={({ field }) => (
@@ -476,7 +532,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
                 <FormMessage />
               </FormItem>
             )}
-          />
+            />
+          </div>
         )}
 
         {/* User Fund Fields */}
@@ -686,8 +743,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
         <div className="space-y-4">
           <div className={`grid items-start gap-4 ${source === 'company_fund'
             ? (fixedValues?.company_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
-            : source === 'project_fund'
-              ? (fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
+              : source === 'project_fund'
+              ? (fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-4')
               : 'md:grid-cols-2'
             }`}>
             {source === 'company_fund' && !fixedValues?.company_fund_id && (
@@ -738,7 +795,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
             )}
 
             {source === 'project_fund' && (
-              <div className="grid gap-4 md:col-span-full md:grid-cols-2">
+              <div className="contents">
                 {!fixedValues?.project_id && (
                   <FormField
                     control={form.control}
@@ -824,62 +881,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
               </div>
             )}
 
-            <div className="grid gap-4 md:col-span-full md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-full">
-                    <FormLabel>المبلغ</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          className="h-11 bg-white pl-4"
-                          type="text"
-                          inputMode="decimal"
-                          value={formatNumberWithCommas(field.value)}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/,/g, '');
-                            if (/^\d*\.?\d*$/.test(raw)) {
-                              field.onChange(raw === '' ? '' : Number(raw));
-                            }
-                          }}
-                        />
-
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="revenueable_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>عملة الصندوق</FormLabel>
-                    <FormControl>
-                      <SearchableSelect
-                        disabled={
-                          (source === 'company_fund' && !derivedCompanyFundId) ||
-                          (source === 'project_fund' && !derivedProjectFundId) ||
-                          (source === 'user_fund' && !derivedUserFundId)
-                        }
-                        options={
-                          source === 'company_fund' ? companyCurrencyOptions :
-                            source === 'project_fund' ? projectCurrencyOptions :
-                              userCurrencyOptions
-                        }
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="اختر العملة..."
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className={(source === 'project_fund' || source === 'company_fund') && !fixedValues?.source ? 'contents' : 'grid gap-4 md:col-span-full md:grid-cols-2'}>
+              {fixedValues?.source ? <>{amountField}{currencyField}</> : <>{currencyField}{amountField}</>}
             </div>
 
             <FormField
