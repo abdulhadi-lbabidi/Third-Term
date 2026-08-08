@@ -40,6 +40,10 @@ export type CreateProjectPayload = {
   status: ProjectStatus;
 };
 
+export type ProjectFormPayload = CreateProjectPayload & {
+  department_ids?: number[];
+};
+
 export type UpdateProjectPayload = {
   client_id: number;
   department_id: number;

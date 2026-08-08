@@ -1,13 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ProjectsForm } from './projects.form';
-import type { CreateProjectPayload, Project } from '../types';
+import type { Project, ProjectFormPayload } from '../types';
 
 type ProjectsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   project?: Project | null;
   departments: { id: number; name: string }[];
-  onSubmit: (data: CreateProjectPayload) => Promise<void>;
+  onSubmit: (data: ProjectFormPayload) => Promise<void>;
   loading?: boolean;
 };
 

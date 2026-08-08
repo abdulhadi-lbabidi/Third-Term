@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Clock, PlayCircle, CheckCircle2, XCircle } from 'lucide-react';
 
-import type { CreateProjectPayload, Project, ProjectStatus } from '../types';
+import type { Project, ProjectFormPayload, ProjectStatus } from '../types';
 import type { ClientRecord } from '@/features/users/types';
 import { useQuery } from '@tanstack/react-query';
 import { usersApi } from '@/features/users/api/users.api';
 
-type ProjectsFormValues = CreateProjectPayload;
+type ProjectsFormValues = ProjectFormPayload;
 
 type ProjectsFormProps = {
   defaultValues?: Project | null;
@@ -25,6 +25,7 @@ type ProjectsFormProps = {
 
 const formSchema = z.object({
   department_id: z.number().min(1, 'الرجاء اختيار القسم'),
+  department_ids: z.array(z.number()).min(1, 'الرجاء اختيار قسم واحد على الأقل').optional(),
   client_id: z.number().min(1, 'الرجاء اختيار العميل'),
   name: z.string().min(1, 'اسم المشروع مطلوب'),
   expected_cost: z.number().min(0, 'التكلفة يجب أن تكون أكبر من أو تساوي صفر'),
@@ -52,7 +53,9 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
   const form = useForm<ProjectsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      department_id: departments[0]?.id ?? 0,
+      department_id: defaultValues?.department?.id ?? departments[0]?.id ?? 0,
+      department_ids: defaultValues?.departments?.map((department) => department.id)
+        ?? (defaultValues?.department?.id ? [defaultValues.department.id] : []),
       client_id: defaultValues?.client?.id ?? clients?.[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
       expected_cost: defaultValues?.expected_cost ?? 0,
@@ -62,7 +65,9 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
 
   useEffect(() => {
     form.reset({
-      department_id: departments[0]?.id ?? 0,
+      department_id: defaultValues?.department?.id ?? departments[0]?.id ?? 0,
+      department_ids: defaultValues?.departments?.map((department) => department.id)
+        ?? (defaultValues?.department?.id ? [defaultValues.department.id] : []),
       client_id: defaultValues?.client?.id ?? clients?.[0]?.id ?? 0,
       name: defaultValues?.name ?? '',
       expected_cost: defaultValues?.expected_cost ?? 0,
@@ -80,34 +85,30 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
           await onSubmit(values);
         })}
       >
-        {/* Department */}
+        {/* Departments */}
         <FormField
           control={form.control}
-          name="department_id"
+          name="department_ids"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>القسم</FormLabel>
-              <Select
-                value={field.value ? String(field.value) : ''}
-                onValueChange={(val) => field.onChange(Number(val))}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="اختر القسم">
-                      {field.value
-                        ? departments.find((d) => d.id === field.value)?.name
-                        : null}
-                    </SelectValue>
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={String(dept.id)}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>الأقسام</FormLabel>
+              <FormControl>
+                <SearchableSelect
+                  multiple
+                  value={field.value ?? []}
+                  onValueChange={(value) => {
+                    const departmentIds = value.map(Number);
+                    field.onChange(departmentIds);
+                    form.setValue('department_id', departmentIds[0] ?? 0, { shouldValidate: true });
+                  }}
+                  options={departments.map((department) => ({
+                    value: department.id,
+                    label: department.name,
+                  }))}
+                  searchPlaceholder="ابحث عن قسم..."
+                  emptyMessage="لا توجد أقسام"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -6,7 +6,7 @@ import { Button } from '@/shared/components/ui/button';
 import { projectsApi, type ProjectResponse } from './projects.api';
 import { ProjectsDialog } from './components/projects.dialog';
 import { ProjectsTable } from './components/projects.table';
-import type { CreateProjectPayload, Project } from './types';
+import type { Project, ProjectFormPayload } from './types';
 import { PageHeader } from '../components/page-header';
 import { FolderKanban, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
@@ -47,11 +47,33 @@ export function ProjectsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: CreateProjectPayload) => {
+    mutationFn: async (payload: ProjectFormPayload) => {
+      const { department_ids: selectedDepartmentIds, ...projectFields } = payload;
+      const departmentIds = selectedDepartmentIds?.length
+        ? selectedDepartmentIds
+        : [payload.department_id];
       if (selectedProject) {
-        return projectsApi.updateProject(selectedProject.id, payload);
+        const updatedProject = await projectsApi.updateProject(selectedProject.id, {
+          ...projectFields,
+          department_id: departmentIds[0],
+        });
+        const currentDepartmentIds = (selectedProject.departments ?? []).map((department) => department.id);
+        const departmentsToAttach = departmentIds.filter((id) => !currentDepartmentIds.includes(id));
+        const departmentsToDetach = currentDepartmentIds.filter((id) => !departmentIds.includes(id));
+        if (departmentsToAttach.length) {
+          await projectsApi.attachDepartments(selectedProject.id, departmentsToAttach);
+        }
+        if (departmentsToDetach.length) {
+          await projectsApi.detachDepartments(selectedProject.id, departmentsToDetach);
+        }
+        return updatedProject;
       }
-      return projectsApi.createProject(payload);
+      const project = await projectsApi.createProject({
+        ...projectFields,
+        department_id: departmentIds[0],
+      });
+      await projectsApi.attachDepartments(project.id, departmentIds);
+      return project;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -98,7 +120,7 @@ export function ProjectsPage() {
     });
   };
 
-  const handleSubmit = async (payload: CreateProjectPayload) => {
+  const handleSubmit = async (payload: ProjectFormPayload) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedProject ? 'تم تعديل المشروع بنجاح' : 'تم إنشاء المشروع بنجاح');
   };

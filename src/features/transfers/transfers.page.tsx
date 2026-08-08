@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '@/features/components/page-header';
@@ -19,7 +18,6 @@ import { format } from 'date-fns';
 
 export function TransfersPage() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
 

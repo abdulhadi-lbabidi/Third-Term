@@ -16,7 +16,7 @@ export interface PageHeaderStat {
 
 interface PageHeaderProps {
   title: string | ReactNode;
-  badge?: string;
+  badge?: ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
   description?: ReactNode;
   action?: ReactNode;
@@ -83,11 +83,11 @@ export function PageHeader({
             </div>
           ) : null}
           <div className="min-w-0 space-y-1">
-            {badge ? (
-              <div className="status-badge-primary tracking-[0.12em] uppercase">
-                {badge}
-              </div>
-            ) : null}
+            {badge
+              ? (typeof badge === 'string'
+                  ? <div className="status-badge-primary tracking-[0.12em] uppercase">{badge}</div>
+                  : badge)
+              : null}
             <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               {title}
             </h1>

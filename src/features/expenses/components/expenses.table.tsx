@@ -89,7 +89,7 @@ export function ExpensesTable({
       },
     },
     // { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
-    { header: 'تاريخ الإنشاء', sortable: true , sortKey: 'created_at' , cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
+    { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
   ];
 
   const columns = hideTypeColumn ? allColumns.filter((c) => c.header !== 'نوع الصرف') : allColumns;
@@ -129,6 +129,7 @@ export function ExpensesTable({
                 return `عرض الفواتير (${count})`;
               },
               icon: (row: Expense) => {
+                row
                 return <ReceiptText className="size-4" />;
               },
               onClick: onInvoices,

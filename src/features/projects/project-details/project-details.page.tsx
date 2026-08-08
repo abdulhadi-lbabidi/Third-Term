@@ -3,6 +3,7 @@ import { Wallet, User, Cloud, Pencil, Users, Layers, FolderKanban, CircleDollarS
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
+import { Badge } from '@/shared/components/ui/badge';
 import { projectsApi } from '../projects.api';
 import { ProjectsDialog } from '../components/projects.dialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -12,7 +13,7 @@ import { ProjectCloudStorageTab } from './components/project-cloud-storage-tab';
 import { ProjectTeamTab } from './components/project-team-tab';
 import { ProjectFundsPage } from '../project-funds/project-funds.page';
 import { ProjectStagesTab } from './components/project-stages-tab';
-import type { Project, CreateProjectPayload } from '../types';
+import type { Project, ProjectFormPayload } from '../types';
 import toast from 'react-hot-toast';
 
 const PROJECT_TABS = [
@@ -55,8 +56,25 @@ export function ProjectDetailsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: CreateProjectPayload) => {
-      return projectsApi.updateProject(projectId, payload);
+    mutationFn: async (payload: ProjectFormPayload) => {
+      const { department_ids: selectedDepartmentIds, ...projectFields } = payload;
+      const departmentIds = selectedDepartmentIds?.length
+        ? selectedDepartmentIds
+        : [payload.department_id];
+      const updatedProject = await projectsApi.updateProject(projectId, {
+        ...projectFields,
+        department_id: departmentIds[0],
+      });
+      const currentDepartmentIds = (projectsQuery.data?.departments ?? []).map((department) => department.id);
+      const departmentsToAttach = departmentIds.filter((id) => !currentDepartmentIds.includes(id));
+      const departmentsToDetach = currentDepartmentIds.filter((id) => !departmentIds.includes(id));
+      if (departmentsToAttach.length) {
+        await projectsApi.attachDepartments(projectId, departmentsToAttach);
+      }
+      if (departmentsToDetach.length) {
+        await projectsApi.detachDepartments(projectId, departmentsToDetach);
+      }
+      return updatedProject;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
@@ -75,7 +93,15 @@ export function ProjectDetailsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        badge={currentProject ? (currentProject.department ? `${currentProject.department.name}` : 'لا يتبع لأي قسم') : undefined}
+        description={currentProject ? (
+          <div className="flex flex-wrap gap-1.5">
+            {currentProject.departments?.length ? currentProject.departments.map((department) => (
+              <Badge key={department.id} variant="secondary">{department.name}</Badge>
+            )) : (
+              <Badge variant="secondary">{currentProject.department?.name ?? 'لا يتبع لأي قسم'}</Badge>
+            )}
+          </div>
+        ) : undefined}
         icon={FolderKanban}
         title={projectName || currentProject?.name || <Skeleton className="h-8 w-48 inline-block align-middle" />}
         tabs={PROJECT_TABS}

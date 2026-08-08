@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { Eye, WalletMinimal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Badge } from '@/shared/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/components/ui/dialog';
 import type { Project } from '../types';
 import dayjs from 'dayjs';
 
@@ -20,8 +18,6 @@ type ProjectsTableProps = {
 };
 
 export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView, sort, onSortChange }: ProjectsTableProps) {
-  const [selectedProjectForDeps, setSelectedProjectForDeps] = useState<Project | null>(null);
-
   const statusLabels: Record<Project['status'], string> = {
     pending: 'قيد الانتظار',
     in_progress: 'قيد التنفيذ',
@@ -69,15 +65,23 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
     { header: 'العميل', cell: (row) => row.client?.user?.name ?? '-' },
     {
       header: 'الأقسام',
-      cell: (row) => (
-        <Badge
-          variant="secondary"
-          className="finance-num cursor-pointer transition-colors hover:bg-slate-100 hover:text-slate-900"
-          onClick={() => setSelectedProjectForDeps(row)}
-        >
-          {row.departments?.length ?? 0}
-        </Badge>
-      ),
+      cell: (row) => {
+        const departments = row.departments?.length
+          ? row.departments
+          : row.department
+            ? [row.department]
+            : [];
+
+        return departments.length ? (
+          <div className="flex max-w-72 flex-wrap gap-1.5">
+            {departments.map((department) => (
+              <Badge key={department.id} variant="secondary">
+                {department.name}
+              </Badge>
+            ))}
+          </div>
+        ) : <span className="text-muted-foreground">-</span>;
+      },
     },
     {
       header: 'التكلفة المتوقعة',
@@ -115,7 +119,6 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
   ];
 
   return (
-    <>
       <DataTable
         columns={columns}
         data={data}
@@ -152,48 +155,5 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
             : undefined,
         }}
       />
-
-      <Dialog
-        open={!!selectedProjectForDeps}
-        onOpenChange={(open) => {
-          if (!open) setSelectedProjectForDeps(null);
-        }}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>أقسام المشروع: {selectedProjectForDeps?.name}</DialogTitle>
-            <DialogDescription className="text-start">تفاصيل الأقسام التابعة لهذا المشروع.</DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-4 space-y-3">
-            {selectedProjectForDeps?.departments && selectedProjectForDeps.departments.length > 0 ? (
-              selectedProjectForDeps.departments.map((dep) => (
-                <div
-                  key={dep.id}
-                  className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-start shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-900">{dep.name}</span>
-                    <span className="text-xs text-muted-foreground font-mono">#{dep.id}</span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
-                    <div>
-                      <span className="font-medium text-slate-500">المدير العام: </span>
-                      <span>{(dep as any).main_manager || '-'}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-slate-500">تاريخ الإنشاء: </span>
-                      <span>{(dep as any).created_at || '-'}</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-sm text-muted-foreground">لا توجد أقسام تابعة لهذا المشروع.</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
