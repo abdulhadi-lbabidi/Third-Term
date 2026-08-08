@@ -97,8 +97,8 @@ export function AuditLogsPage() {
     setPage(1);
   };
 
-  const handleAffectedTableChange = (value: string) => {
-    setAffectedTable(value);
+  const handleAffectedTableChange = (value: string | null) => {
+    setAffectedTable(value ?? 'all');
     setPage(1);
   };
 

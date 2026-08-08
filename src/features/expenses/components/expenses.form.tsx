@@ -714,7 +714,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     if (found) return found;
 
     if (source === 'company_fund' && Number(defaultValues?.expenseable_info?.id) === Number(selectedExpenseableId)) {
-      const details = defaultValues.expenseable_info?.details;
+      const details = defaultValues?.expenseable_info?.details;
       if (details && typeof details === 'object' && 'currency' in details) {
         return {
           currency: (details as any).currency?.currency || '',
@@ -724,7 +724,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     }
     if (source === 'project_fund') {
       const details = getExpenseProjectFundDetails(defaultValues);
-      if (Number(details?.id) === Number(selectedExpenseableId) && details.currency) {
+      if (details && Number(details?.id) === Number(selectedExpenseableId) && details.currency) {
         return {
           currency: details.currency.currency,
           balance: String(details.balance ?? '0'),
@@ -733,7 +733,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     }
     if (source === 'user_fund') {
       const details = getExpenseUserFundDetails(defaultValues);
-      if (Number(details?.id) === Number(selectedExpenseableId) && details.currency) {
+      if (details && Number(details?.id) === Number(selectedExpenseableId) && details.currency) {
         return {
           currency: details.currency.currency,
           balance: String(details.balance ?? '0'),
