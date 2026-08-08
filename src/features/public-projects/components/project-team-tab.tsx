@@ -47,6 +47,7 @@ export function ProjectTeamTab({ projectId, userRole }: ProjectTeamTabProps) {
     .map((e: any) => ({
       id: e.user.id,
       name: e.user?.name ?? `موظف #${e.id}`,
+      type: 'employee' as const,
     }));
 
   const saveMutation = useMutation({

@@ -479,7 +479,11 @@ export function GenericFundDetails({
           />
         </TabsContent>}
       </Tabs>
-      <ReInvoiceDialog open={reInvoiceDialogOpen} onClose={() => { setReInvoiceDialogOpen(false); setSelectedReInvoice(null); }} value={selectedReInvoice} currencies={fundCurrencies} modelType={modelType} loading={saveReInvoice.isPending} onSubmit={async (payload) => { await saveReInvoice.mutateAsync({ id: selectedReInvoice?.id, payload }); setReInvoiceDialogOpen(false); setSelectedReInvoice(null); }} />
+      <ReInvoiceDialog open={reInvoiceDialogOpen} onClose={() => { setReInvoiceDialogOpen(false); setSelectedReInvoice(null); }} value={selectedReInvoice} currencies={fundCurrencies} modelType={modelType} loading={saveReInvoice.isPending} onSubmit={async (payload) => {
+        const editingId = selectedReInvoice?.id;
+        const saved = await saveReInvoice.mutateAsync({ id: editingId, payload });
+        return saved;
+      }} />
       <ReInvoiceItemsDialog id={reInvoiceItemsId} onClose={() => setReInvoiceItemsId(undefined)} />
 
       {revenueDialogOpen && (

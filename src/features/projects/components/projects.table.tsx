@@ -2,6 +2,7 @@ import { Eye, WalletMinimal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Badge } from '@/shared/components/ui/badge';
 import type { Project } from '../types';
 import dayjs from 'dayjs';
 
@@ -79,7 +80,15 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
     },
     {
       header: 'الصناديق',
-      cell: (row) => <span className="finance-num font-medium">{row.funds?.length ?? 0}</span>,
+      cell: (row) => (
+        <Badge
+          variant="secondary"
+          className="finance-num cursor-pointer transition-colors hover:bg-slate-100 hover:text-slate-900"
+          onClick={() => onAddFund?.(row)}
+        >
+          {row.funds?.length ?? 0}
+        </Badge>
+      ),
     },
     { header: 'تاريخ الإنشاء', cell: (row) => (row.created_at ? dayjs(row.created_at).format('YYYY-MM-DD') : '-') },
   ];

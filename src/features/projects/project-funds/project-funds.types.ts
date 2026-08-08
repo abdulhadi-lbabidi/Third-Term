@@ -1,5 +1,6 @@
 export type ProjectFundCurrency = {
   id: number;
+  expenseable_id?: number;
   currency: string;
   symbol: string;
   balance: string;

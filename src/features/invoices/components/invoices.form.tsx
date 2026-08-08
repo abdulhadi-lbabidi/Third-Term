@@ -49,7 +49,9 @@ type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
 type InvoicesFormProps = {
   defaultValues?: Partial<Invoice>;
-  onSuccess?: (invoice?: Invoice) => void;
+  projectId?: number;
+  projectFundId?: number;
+  onSuccess?: (invoice: Invoice) => void;
   onCancel?: () => void;
   fixedValues?: Partial<CreateInvoicePayload>;
 };
