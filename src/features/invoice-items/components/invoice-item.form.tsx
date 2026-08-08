@@ -250,7 +250,7 @@ export function InvoiceItemForm({ formId, defaultValues, fixedInvoiceId, currenc
           name="item_description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>الوصف</FormLabel>
+              <FormLabel>البيان</FormLabel>
               <FormControl><Textarea {...field} rows={2} className="min-h-16 resize-none" /></FormControl>
               <FormMessage />
             </FormItem>

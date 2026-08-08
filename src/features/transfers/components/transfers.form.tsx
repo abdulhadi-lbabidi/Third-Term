@@ -869,7 +869,7 @@ export function TransfersForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>البيان / الوصف</FormLabel>
+                <FormLabel>البيان / البيان</FormLabel>
                 <FormControl>
                   <Input placeholder="تحويل مبلغ لشراء مواد بناء المشروع الأول" {...field} />
                 </FormControl>

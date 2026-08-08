@@ -19,13 +19,25 @@ type RevenuesTableProps = {
   onEdit?: (revenue: Revenue) => void;
   onDelete?: (revenue: Revenue) => void;
   hideTypeColumn?: boolean;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
-export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn }: RevenuesTableProps) {
+export function RevenuesTable({
+  data,
+  loading,
+  onEdit,
+  onDelete,
+  hideTypeColumn,
+  sort,
+  onSortChange,
+}: RevenuesTableProps) {
   const allColumns: DataTableColumn<Revenue>[] = [
     { header: 'البيان', cell: (row) => row.statement },
     {
       header: 'المبلغ',
+      sortable: true,
+      sortKey: 'amount',
       cell: (row) => {
         const amount = Number(row.amount || 0).toLocaleString();
         const currency = getCurrencyStringFromInfo(row.revenueable_info);
@@ -40,15 +52,17 @@ export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn 
     { header: 'نوع الإيراد', cell: (row) => <FundLink type={row.revenueable_type} info={row.revenueable_info} fundTab="revenues" fallbackUser={(row as RevenueRow).user} /> },
     {
       header: 'تم الترحيل',
+      sortable: true,
+      sortKey: 'is_posted',
       cell: (row) => (
         <span className={row.is_posted ? 'font-medium bg-emerald-100 border border-emerald-200 rounded p-2 text-emerald-800' : 'font-medium text-rose-600'}>
           {getBooleanLabel(row.is_posted)}
         </span>
       ),
     },
-    { header: 'المستخدم', cell: (row) => <UserLink user={(row as RevenueRow).user} /> },
-    { header: 'مستلم بواسطة', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
-    { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ?? '-' },
+    { header: 'المستخدم', sortable: true, sortKey: 'user_name', cell: (row) => <UserLink user={(row as RevenueRow).user} /> },
+    { header: 'مستلم بواسطة', sortable: true, sortKey: 'receiver_name', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
+    { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ?? '-' },
   ];
 
   const columns = hideTypeColumn ? allColumns.filter((col) => col.header !== 'نوع الإيراد') : allColumns;
@@ -64,6 +78,8 @@ export function RevenuesTable({ data, loading, onEdit, onDelete, hideTypeColumn 
       confirmDescription="هل أنت متأكد من حذف هذا الإيراد؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
       deleteLabel="حذف"
+      sort={sort}
+      onSortChange={onSortChange}
       actions={{
         onEdit,
         onDelete,

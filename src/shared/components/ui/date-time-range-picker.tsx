@@ -349,15 +349,15 @@ function DateTimeRangePicker({
           >
             <CalendarDays
               aria-hidden="true"
-              className="size-3 shrink-0 text-muted-foreground sm:size-3.5"
+              className="size-3 shrink-0 text-muted-foreground group-hover/button:text-white sm:size-3.5"
             />
 
             <span
               className={cn(
                 "min-w-0 flex-1 truncate text-start max-sm:text-xs",
                 formattedValue
-                  ? "text-foreground"
-                  : "text-muted-foreground",
+                  ? "text-foreground group-hover/button:text-white"
+                  : "text-muted-foreground group-hover/button:text-white/90",
               )}
             >
               {formattedValue || effectivePlaceholder}
@@ -386,7 +386,7 @@ function DateTimeRangePicker({
                 }}
                 className={cn(
                   "inline-flex size-4.5 shrink-0 items-center justify-center sm:size-5",
-                  "rounded-md text-muted-foreground",
+                  "rounded-md text-muted-foreground group-hover/button:text-white",
                   "hover:bg-muted hover:text-foreground",
                 )}
               >
@@ -395,7 +395,7 @@ function DateTimeRangePicker({
             ) : (
               <ChevronDown
                 aria-hidden="true"
-                className="size-3 shrink-0 text-muted-foreground sm:size-3.5"
+                className="size-3 shrink-0 text-muted-foreground group-hover/button:text-white sm:size-3.5"
               />
             )}
           </Button>

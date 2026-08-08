@@ -30,7 +30,7 @@ export function MaterialsDialog({ open, onOpenChange, item }: MaterialsDialogPro
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <th className="px-4 py-3">اسم المادة</th>
-                    <th className="px-4 py-3">الوصف</th>
+                    <th className="px-4 py-3">البيان</th>
                     <th className="px-4 py-3">تاريخ الإنشاء</th>
                   </tr>
                 </thead>

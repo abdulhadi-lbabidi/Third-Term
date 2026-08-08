@@ -13,7 +13,7 @@ export const expenseFormSchema = z.object({
   user_fund_id: z.number().optional(),
   project_fund_id: z.number().optional(),
   project_id: z.number().optional(),
-  description: z.string().min(1, 'الرجاء إدخال الوصف'),
+  description: z.string().min(1, 'الرجاء إدخال البيان'),
   amount: z.number().positive('الرجاء إدخال مبلغ صحيح'),
   is_posted: z.boolean(),
   created_by: z.number().optional(),
