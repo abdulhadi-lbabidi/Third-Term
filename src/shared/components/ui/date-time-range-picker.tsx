@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { ar, enUS, type Locale } from "date-fns/locale";
 
 import { Button } from "@/shared/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { cn } from "@/shared/lib/utils";
 
 type DateTimeRangeValue = {
@@ -555,6 +556,14 @@ function DatePanel({
   placeholderText = "Select date and time",
   className,
 }: DatePanelProps) {
+  const [currentMonth, setCurrentMonth] = React.useState<Date>(defaultMonth || new Date());
+
+  React.useEffect(() => {
+    if (defaultMonth) {
+      setCurrentMonth(defaultMonth);
+    }
+  }, [defaultMonth]);
+
   const displayDate = value
     ? format(value, "dd-MM-yyyy HH:mm")
     : placeholderText;
@@ -604,7 +613,8 @@ function DatePanel({
         mode="single"
         selected={selected}
         onSelect={onSelect}
-        defaultMonth={defaultMonth}
+        month={currentMonth}
+        onMonthChange={setCurrentMonth}
         captionLayout="dropdown"
         startMonth={minDate}
         endMonth={maxDate}
@@ -630,11 +640,11 @@ function DatePanel({
           caption_label:
             "pointer-events-none inline-flex h-7 items-center gap-1.5 px-2.5 text-[12px] font-medium text-foreground max-sm:text-[11px]",
           nav:
-            "pointer-events-none absolute inset-x-0 top-0 z-10 flex h-8 items-center justify-between px-1 max-sm:hidden",
+            "absolute inset-x-0 top-0 z-10 flex h-8 items-center justify-between px-1",
           button_previous:
-            "absolute start-0 top-0 z-20 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-0 max-sm:hidden",
+            "absolute start-0 top-0 z-20 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-0",
           button_next:
-            "absolute end-0 top-0 z-20 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-0 max-sm:hidden",
+            "absolute end-0 top-0 z-20 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-0",
           chevron: "size-3.5 fill-muted-foreground",
           month_grid:
             "w-full table-fixed border-collapse max-sm:hidden",
@@ -679,26 +689,28 @@ function TimeSelect({
   onChange,
 }: TimeSelectProps) {
   return (
-    <select
-      value={value}
-      onChange={(event) =>
-        onChange(Number(event.target.value))
-      }
-      className={cn(
-        "h-7 rounded-md border border-border",
-        "bg-muted px-1.5",
-        "text-[12px] text-foreground",
-        "outline-none",
-        "focus:border-primary",
-        "focus:ring-2 focus:ring-primary/15",
-      )}
+    <Select
+      value={String(value)}
+      onValueChange={(val) => onChange(Number(val))}
     >
-      {values.map((item) => (
-        <option key={item} value={item}>
-          {String(item).padStart(2, "0")}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger className="h-7 w-11 text-[12px] px-1 pe-0.5 justify-between bg-muted border-border text-foreground outline-none focus-visible:border-primary focus-visible:ring-primary/15 [&_svg]:size-3">
+        <SelectValue placeholder={String(value).padStart(2, "0")} />
+      </SelectTrigger>
+      <SelectContent
+        alignItemWithTrigger={false}
+        className="w-16 max-h-[160px] overflow-y-auto z-[9999]"
+      >
+        {values.map((item) => (
+          <SelectItem
+            key={item}
+            value={String(item)}
+            className="text-[12px] py-1 ps-2 pe-6"
+          >
+            {String(item).padStart(2, "0")}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

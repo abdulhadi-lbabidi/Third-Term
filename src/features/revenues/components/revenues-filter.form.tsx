@@ -153,9 +153,9 @@ export function RevenuesFilterForm({
       </div>
 
       <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-3">
-        <p className="text-xs font-semibold text-foreground">فلترة بـ أنشئ بواسطة</p>
+        <p className="text-xs font-semibold text-foreground">فلترة بـ مستلم بواسطة</p>
         <div className="space-y-1.5">
-          <Label>نوع المستخدم</Label>
+          <Label>نوع المستلم</Label>
           <Select
             value={creatorRole}
             onValueChange={(val) => {
@@ -164,7 +164,7 @@ export function RevenuesFilterForm({
             }}
           >
             <SelectTrigger>
-              {creatorRole ? roleLabels[creatorRole] : 'اختر نوع المستخدم'}
+              {creatorRole ? roleLabels[creatorRole] : 'اختر نوع المستلم'}
             </SelectTrigger>
             <SelectContent>
               {userRoles.map((role) => (
@@ -177,7 +177,7 @@ export function RevenuesFilterForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label>أنشئ بواسطة</Label>
+          <Label>مستلم بواسطة</Label>
           {creatorUsersQuery.isLoading ? (
             <Skeleton className="h-10 w-full" />
           ) : (
@@ -185,9 +185,9 @@ export function RevenuesFilterForm({
               value={creatorId || null}
               onValueChange={(val) => setCreatorId(val ? Number(val) : '')}
               disabled={!creatorRole}
-              placeholder="اختر المستخدم"
-              searchPlaceholder="البحث عن مستخدم..."
-              emptyMessage="لا يوجد مستخدمون."
+              placeholder="اختر المستلم"
+              searchPlaceholder="البحث عن مستلم..."
+              emptyMessage="لا يوجد مستلمون."
               options={creatorUsers.map((item: any) => ({
                 value: item.user.id,
                 label: item.user.name,

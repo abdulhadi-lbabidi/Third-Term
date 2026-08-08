@@ -55,7 +55,7 @@ export function RevenuesPage() {
       'filter[search]': searchQuery || undefined,
       'filter[is_posted]': isPosted === 'true' ? true : isPosted === 'false' ? false : undefined,
       'filter[user_id]': userId || undefined,
-      'filter[created_by]': creatorId || undefined,
+      'filter[received_by]': creatorId || undefined,
       'filter[date_from]': dateFrom || undefined,
       'filter[date_to]': dateTo || undefined,
     });
