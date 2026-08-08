@@ -16,7 +16,7 @@ type ProjectTeamTabProps = {
 
 export function ProjectTeamTab({ projectId, userRole }: ProjectTeamTabProps) {
   const queryClient = useQueryClient();
-  const canManage = ['engineer', 'employee'].includes(userRole || '');
+  const canManage = false;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ProjectTeamMember | null>(null);
 

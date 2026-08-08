@@ -15,9 +15,9 @@ export type PublicProjectsResponse = {
 };
 
 export const publicProjectsApi = {
-  getProjects: async (): Promise<Project[]> => {
+  getProjects: async (filters?: Record<string, any>): Promise<Project[]> => {
     const response = await apiClient.get('/projects', {
-      params: { paginate: false },
+      params: { paginate: false, ...filters },
     });
     const result = response.data;
     if (Array.isArray(result)) return result;

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Building2 } from 'lucide-react';
 import { publicProjectsApi } from './public-projects.api';
 import { apiClient } from '@/shared/api/axios.instance';
@@ -15,6 +15,7 @@ export function PublicProjectsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const currentUser = useMemo(() => {
@@ -26,6 +27,10 @@ export function PublicProjectsPage() {
     }
   }, []);
 
+  const isLimitedRole = useMemo(() => {
+    return ['employee', 'engineer'].includes(currentUser?.role_type || '');
+  }, [currentUser]);
+
   const handleLogout = async () => {
     try {
       await apiClient.post('/logout');
@@ -35,37 +40,35 @@ export function PublicProjectsPage() {
     navigate('/auth/login', { replace: true });
   };
 
+  const handleSearchSubmit = () => {
+    setSearch(searchQuery);
+  };
+
+  const handleReset = () => {
+    setSearchQuery('');
+    setSearch('');
+  };
+
+  const apiFilters = useMemo(() => {
+    return {
+      ...(search ? { 'filter[search]': search } : {}),
+      'filter[status]': isLimitedRole ? 'in_progress' : (statusFilter !== 'all' ? statusFilter : undefined),
+    };
+  }, [search, statusFilter, isLimitedRole]);
+
   const { data: projects = [], isLoading: isLoadingProjects, refetch: refetchProjects, isRefetching } = useQuery<Project[]>({
-    queryKey: ['public-projects'],
-    queryFn: publicProjectsApi.getProjects,
+    queryKey: ['public-projects', apiFilters],
+    queryFn: () => publicProjectsApi.getProjects(apiFilters),
+    placeholderData: keepPreviousData,
   });
 
-  const visibleProjects = useMemo(() => {
-    const isLimitedRole = ['employee', 'engineer'].includes(currentUser?.role_type || '');
-    if (isLimitedRole) {
-      return projects.filter((p) => p.status === 'in_progress');
-    }
-    return projects;
-  }, [projects, currentUser]);
-
-  const filteredProjects = useMemo(() => {
-    return visibleProjects.filter((project) => {
-      const matchesSearch =
-        project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (project.client?.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (project.department?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [visibleProjects, searchQuery, statusFilter]);
-
   const stats = useMemo(() => {
-    const totalCost = visibleProjects.reduce((acc, curr) => acc + (Number(curr.expected_cost) || 0), 0);
-    const completedCount = visibleProjects.filter((p) => p.status === 'completed').length;
-    const inProgressCount = visibleProjects.filter((p) => p.status === 'in_progress').length;
-    const pendingCount = visibleProjects.filter((p) => p.status === 'pending').length;
-    return { total: visibleProjects.length, totalCost, completedCount, inProgressCount, pendingCount };
-  }, [visibleProjects]);
+    const totalCost = projects.reduce((acc, curr) => acc + (Number(curr.expected_cost) || 0), 0);
+    const completedCount = projects.filter((p) => p.status === 'completed').length;
+    const inProgressCount = projects.filter((p) => p.status === 'in_progress').length;
+    const pendingCount = projects.filter((p) => p.status === 'pending').length;
+    return { total: projects.length, totalCost, completedCount, inProgressCount, pendingCount };
+  }, [projects]);
 
   const handleSelectProject = (id: number) => {
     if (location.pathname.startsWith('/public-projects')) {
@@ -85,8 +88,6 @@ export function PublicProjectsPage() {
       />
 
       <main className="px-4 py-4 space-y-3 sm:px-3 lg:px-4">
-
-
         <ProjectsSummary
           total={stats.total}
           totalCost={stats.totalCost}
@@ -97,9 +98,12 @@ export function PublicProjectsPage() {
         <ProjectsToolbar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onSearchSubmit={handleSearchSubmit}
+          onReset={handleReset}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
-          resultsCount={filteredProjects.length}
+          resultsCount={projects.length}
+          hideStatusButtons={isLimitedRole}
         />
 
         {isLoadingProjects ? (
@@ -108,7 +112,7 @@ export function PublicProjectsPage() {
               <div key={i} className="h-44 bg-card border border-border rounded-lg shadow-finance animate-pulse" />
             ))}
           </div>
-        ) : filteredProjects.length === 0 ? (
+        ) : projects.length === 0 ? (
           <div className="py-16 text-center bg-card border border-border rounded-lg shadow-finance">
             <Building2 className="size-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="text-sm font-semibold text-foreground">لا توجد مشاريع متاحة</h3>
@@ -116,7 +120,7 @@ export function PublicProjectsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProjects.map((project) => (
+            {projects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
@@ -129,4 +133,3 @@ export function PublicProjectsPage() {
     </div>
   );
 }
-
