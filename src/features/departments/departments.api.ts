@@ -8,9 +8,9 @@ export type DepartmentResponse = {
 };
 
 export const departmentsApi = {
-  getAll: async (page = 1, perPage = 50): Promise<DepartmentResponse> => {
+  getAll: async (page = 1, perPage = 50, filters?: Record<string, any>): Promise<DepartmentResponse> => {
     const response = await apiClient.get('/departments', {
-      params: { paginate: true, page, per_page: perPage },
+      params: { paginate: true, page, per_page: perPage, ...filters },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

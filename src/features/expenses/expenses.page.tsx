@@ -161,6 +161,7 @@ export function ExpensesPage() {
         onView={handleView}
         onEdit={(expense) => navigate(`/expenses/new?expenseId=${expense.id}`)}
         onDelete={handleDelete}
+        onAddInvoice={(expense) => navigate(`/invoices/new?expenseId=${expense.id}`)}
         sort={sort}
         onSortChange={setSort}
       />

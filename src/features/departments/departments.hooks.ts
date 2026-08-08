@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { departmentsApi } from './departments.api';
 import type { CreateDepartmentPayload, UpdateDepartmentPayload } from './types';
 
-export const useDepartments = (page = 1, perPage = 50) => {
+export const useDepartments = (page = 1, perPage = 50, filters?: Record<string, any>) => {
   return useQuery({
-    queryKey: ['departments', page, perPage],
-    queryFn: () => departmentsApi.getAll(page, perPage),
+    queryKey: ['departments', page, perPage, filters],
+    queryFn: () => departmentsApi.getAll(page, perPage, filters),
   });
 };
 
