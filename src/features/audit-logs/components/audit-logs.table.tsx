@@ -34,7 +34,7 @@ export function AuditLogsTable({ data, loading }: AuditLogsTableProps) {
       cell: (row) => <span className="font-mono text-xs font-medium text-slate-700">{row.affected_table}</span>,
     },
     {
-      header: 'الوصف',
+      header: 'البيان',
       cell: (row) => <span className="text-sm font-medium">{row.description}</span>,
     },
     {

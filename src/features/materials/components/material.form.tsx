@@ -102,7 +102,7 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>الوصف</FormLabel>
+              <FormLabel>البيان</FormLabel>
               <FormControl>
                 <Textarea {...field} rows={4} />
               </FormControl>

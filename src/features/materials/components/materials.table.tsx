@@ -13,7 +13,7 @@ export function MaterialsTable({ data, loading, onEdit, onDelete }: MaterialsTab
   const columns: DataTableColumn<Material>[] = [
     { header: 'البند', cell: (material) => material.item?.name ?? material.item_id },
     { header: 'اسم المادة', cell: (material) => material.name },
-    { header: 'الوصف', cell: (material) => material.description ?? '-' },
+    { header: 'البيان', cell: (material) => material.description ?? '-' },
     { header: 'تاريخ الإنشاء', cell: (material) => (material.created_at ? dayjs(material.created_at).format('YYYY-MM-DD') : '-') },
   ];
 

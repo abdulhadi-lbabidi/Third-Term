@@ -443,7 +443,7 @@ export function PublicProjectDetailsPage() {
                 </div>
 
                 <div className="bg-muted p-3 rounded-lg border border-border">
-                  <span className="text-[10px] text-muted-foreground block mb-1">البيان / الوصف</span>
+                  <span className="text-[10px] text-muted-foreground block mb-1">البيان / البيان</span>
                   <p className="text-xs text-foreground font-semibold leading-relaxed">
                     {revenueDetails.statement}
                   </p>
@@ -526,7 +526,7 @@ export function PublicProjectDetailsPage() {
                 </div>
 
                 <div className="bg-muted p-3 rounded-lg border border-border">
-                  <span className="text-[10px] text-muted-foreground block mb-1">البيان / الوصف</span>
+                  <span className="text-[10px] text-muted-foreground block mb-1">البيان / البيان</span>
                   <p className="text-xs text-foreground font-semibold leading-relaxed">
                     {expenseDetails.description}
                   </p>
@@ -678,7 +678,7 @@ export function PublicProjectDetailsPage() {
                           <div className="p-3 border-t border-border bg-card text-xs space-y-2">
                             {(item.material?.description || item.item_description) && (
                               <div>
-                                <span className="text-[10px] text-muted-foreground block">الوصف</span>
+                                <span className="text-[10px] text-muted-foreground block">البيان</span>
                                 <p className="text-foreground font-medium">{item.material?.description || item.item_description}</p>
                               </div>
                             )}

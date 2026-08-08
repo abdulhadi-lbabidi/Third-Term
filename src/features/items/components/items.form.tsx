@@ -65,7 +65,7 @@ export function ItemsForm({ defaultValues, onSubmit, onCancel, loading }: ItemsF
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>الوصف</FormLabel>
+              <FormLabel>البيان</FormLabel>
               <FormControl>
                 <Textarea {...field} rows={4} />
               </FormControl>

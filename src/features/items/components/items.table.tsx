@@ -16,7 +16,7 @@ type ItemsTableProps = {
 export function ItemsTable({ data, loading, onEdit, onDelete, onShowMaterials }: ItemsTableProps) {
   const columns: DataTableColumn<Item>[] = [
     { header: 'اسم البند', cell: (item) => item.name },
-    { header: 'الوصف', cell: (item) => item.description },
+    { header: 'البيان', cell: (item) => item.description },
     {
       header: 'عدد المواد',
       cell: (item) => {
@@ -51,12 +51,12 @@ export function ItemsTable({ data, loading, onEdit, onDelete, onShowMaterials }:
         onDelete,
         extraActions: onShowMaterials
           ? [
-              {
-                label: 'المواد التابعة',
-                icon: <Package className="size-4" />,
-                onClick: onShowMaterials,
-              },
-            ]
+            {
+              label: 'المواد التابعة',
+              icon: <Package className="size-4" />,
+              onClick: onShowMaterials,
+            },
+          ]
           : undefined,
       }}
     />

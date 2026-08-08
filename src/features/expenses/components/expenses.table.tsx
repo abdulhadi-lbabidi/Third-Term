@@ -28,6 +28,8 @@ type ExpensesTableProps = {
   invoicesLoading?: boolean;
   invoicesError?: boolean;
   hideTypeColumn?: boolean;
+  sort?: string;
+  onSortChange?: (sort: string | undefined) => void;
 };
 
 export function ExpensesTable({
@@ -42,11 +44,15 @@ export function ExpensesTable({
   invoicesLoading,
   invoicesError,
   hideTypeColumn,
+  sort,
+  onSortChange,
 }: ExpensesTableProps) {
   const allColumns: DataTableColumn<Expense>[] = [
-    { header: 'الوصف', cell: (row) => row.description },
+    { header: 'البيان', cell: (row) => row.description },
     {
       header: 'المبلغ',
+      sortable: true,
+      sortKey: 'amount',
       cell: (row) => {
         const amount = Number(row.amount || 0).toLocaleString();
         const currency = getCurrencyStringFromInfo(row.expenseable_info);
@@ -58,29 +64,31 @@ export function ExpensesTable({
         );
       }
     },
-    { header: 'المستخدم', cell: (row) => <UserLink user={(row as ExpenseRow).user} /> },
+    { header: 'المستخدم', sortable: true, sortKey: 'user_name', cell: (row) => <UserLink user={(row as ExpenseRow).user} /> },
     { header: 'نوع الصرف', cell: (row) => <FundLink type={row.expenseable_type} info={row.expenseable_info} fundTab="expenses" fallbackUser={(row as ExpenseRow).user} /> },
     {
       header: 'تم الترحيل',
+      sortable: true,
+      sortKey: 'is_posted',
       cell: (row) => (
         <span className={row.is_posted ? 'status-badge-success' : 'status-badge-danger'}>
           {getBooleanLabel(row.is_posted)}
         </span>
       ),
     },
-    { header: 'أنشئ بواسطة', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
+    { header: 'أنشئ بواسطة', sortable: true, sortKey: 'creator_name', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
     ...(onInvoices
       ? [{
-          header: 'عدد الفواتير',
-          cell: (row: Expense) => {
-            if (invoicesLoading) return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
-            if (invoicesError) return <span title="تعذر التحقق"><AlertCircle className="size-4 text-destructive" /></span>;
-            return <Badge variant="secondary">{invoiceCountsByExpenseId?.get(row.id) ?? 0}</Badge>;
-          },
-        }]
+        header: 'عدد الفواتير',
+        cell: (row: Expense) => {
+          if (invoicesLoading) return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
+          if (invoicesError) return <span title="تعذر التحقق"><AlertCircle className="size-4 text-destructive" /></span>;
+          return <Badge variant="secondary">{invoiceCountsByExpenseId?.get(row.id) ?? 0}</Badge>;
+        },
+      }]
       : []),
     // { header: 'المعرف', cell: (row) => String(row.expenseable_id ?? '-') },
-    { header: 'تاريخ الإنشاء', cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
+    { header: 'تاريخ الإنشاء', sortable: true , sortKey: 'created_at' , cell: (row) => row.created_at ? formatArabicDate(row.created_at) : '-' },
   ];
 
   const columns = hideTypeColumn ? allColumns.filter((c) => c.header !== 'نوع الصرف') : allColumns;
@@ -96,6 +104,8 @@ export function ExpensesTable({
       confirmDescription="هل أنت متأكد من حذف هذا المصروف؟ لا يمكن التراجع عن هذا الإجراء."
       cancelLabel="إلغاء"
       deleteLabel="حذف"
+      sort={sort}
+      onSortChange={onSortChange}
       actions={{
         onEdit,
         onDelete,
@@ -111,29 +121,29 @@ export function ExpensesTable({
             : []),
           ...(onInvoices
             ? [{
-                label: (row: Expense) => {
-                  if (invoicesLoading) return 'جاري التحقق من الفواتير...';
-                  if (invoicesError) return 'إعادة التحقق من الفواتير';
-                  const count = invoiceCountsByExpenseId?.get(row.id) ?? 0;
-                   return `عرض الفواتير (${count})`;
-                },
-                icon: (row: Expense) => {
-                  if (invoicesLoading) return <Loader2 className="size-4 animate-spin" />;
-                  if (invoicesError) return <AlertCircle className="size-4" />;
-                  return (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
-                    ? <ReceiptText className="size-4" />
-                    : <ReceiptText className="size-4" />;
-                },
-                onClick: onInvoices,
-                hidden: (row: Expense) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
-              }]
+              label: (row: Expense) => {
+                if (invoicesLoading) return 'جاري التحقق من الفواتير...';
+                if (invoicesError) return 'إعادة التحقق من الفواتير';
+                const count = invoiceCountsByExpenseId?.get(row.id) ?? 0;
+                return `عرض الفواتير (${count})`;
+              },
+              icon: (row: Expense) => {
+                if (invoicesLoading) return <Loader2 className="size-4 animate-spin" />;
+                if (invoicesError) return <AlertCircle className="size-4" />;
+                return (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
+                  ? <ReceiptText className="size-4" />
+                  : <ReceiptText className="size-4" />;
+              },
+              onClick: onInvoices,
+              hidden: (row: Expense) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
+            }]
             : []),
           ...(onAddInvoice
             ? [{
-                label: 'إضافة فاتورة',
-                icon: <FilePlus2 className="size-4" />,
-                onClick: onAddInvoice,
-              }]
+              label: 'إضافة فاتورة',
+              icon: <FilePlus2 className="size-4" />,
+              onClick: onAddInvoice,
+            }]
             : []),
         ].length > 0 ? [
           ...(onView
@@ -150,25 +160,25 @@ export function ExpensesTable({
             && !invoicesError
             && data.some((row) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0)
             ? [{
-                label: (row: Expense) => {
-                  const count = invoiceCountsByExpenseId?.get(row.id) ?? 0;
-                  return count > 0 ? `عرض الفواتير (${count})` : 'عرض الفواتير';
-                },
-                icon: (row: Expense) => {
-                  return (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
-                    ? <ReceiptText className="size-4" />
-                    : <ReceiptText className="size-4 opacity-50" />;
-                },
-                onClick: onInvoices,
-                hidden: (row: Expense) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
-              }]
+              label: (row: Expense) => {
+                const count = invoiceCountsByExpenseId?.get(row.id) ?? 0;
+                return count > 0 ? `عرض الفواتير (${count})` : 'عرض الفواتير';
+              },
+              icon: (row: Expense) => {
+                return (invoiceCountsByExpenseId?.get(row.id) ?? 0) > 0
+                  ? <ReceiptText className="size-4" />
+                  : <ReceiptText className="size-4 opacity-50" />;
+              },
+              onClick: onInvoices,
+              hidden: (row: Expense) => (invoiceCountsByExpenseId?.get(row.id) ?? 0) === 0,
+            }]
             : []),
           ...(onAddInvoice
             ? [{
-                label: 'إضافة فاتورة',
-                icon: <FilePlus2 className="size-4" />,
-                onClick: onAddInvoice,
-              }]
+              label: 'إضافة فاتورة',
+              icon: <FilePlus2 className="size-4" />,
+              onClick: onAddInvoice,
+            }]
             : []),
         ] : undefined,
       }}
