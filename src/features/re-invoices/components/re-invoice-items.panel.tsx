@@ -12,16 +12,26 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onDone }: { reInvoiceId: numb
   const client = useQueryClient();
   const [editingItem, setEditingItem] = useState<ReInvoiceItem | null>(null);
   const [materialId, setMaterialId] = useState(0); const [unit, setUnit] = useState(''); const [quantity, setQuantity] = useState(0); const [price, setPrice] = useState(0); const [description, setDescription] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ unit?: string; description?: string }>({});
   const items = useQuery({ queryKey: ['re-invoice-items', reInvoiceId], queryFn: () => reInvoicesApi.getItems(reInvoiceId) });
   const materials = useQuery({ queryKey: ['re-invoice-items', 'materials'], queryFn: async () => (await materialsApi.getMaterials(1, 1000)).data });
-  const reset = () => { setEditingItem(null); setMaterialId(0); setUnit(''); setQuantity(0); setPrice(0); setDescription(''); };
+  const reset = () => { setEditingItem(null); setMaterialId(0); setUnit(''); setQuantity(0); setPrice(0); setDescription(''); setFieldErrors({}); };
   const startEditing = (item: ReInvoiceItem) => { setEditingItem(item); setMaterialId(item.material_id ?? item.material?.id ?? 0); setUnit(item.unit); setQuantity(Number(item.quantity)); setPrice(Number(item.unit_price)); setDescription(item.item_description ?? ''); };
-  const save = useMutation({ mutationFn: () => { const payload = { reinvoice_id: reInvoiceId, material_id: materialId, unit, quantity, unit_price: price, item_description: description }; return editingItem ? reInvoicesApi.updateItem(editingItem.id, payload) : reInvoicesApi.createItem(payload); }, onSuccess: async () => { await client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }); reset(); } });
+  const save = useMutation({ mutationFn: () => { const payload = { reinvoice_id: reInvoiceId, material_id: materialId, unit: unit.trim(), quantity, unit_price: price, item_description: description.trim() }; return editingItem ? reInvoicesApi.updateItem(editingItem.id, payload) : reInvoicesApi.createItem(payload); }, onSuccess: async () => { await client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }); reset(); } });
   const remove = useMutation({ mutationFn: reInvoicesApi.deleteItem, onSuccess: async () => client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }) });
   const materialRows = materials.data ?? [];
   return (
     <div className="space-y-4">
-      <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (materialId && quantity > 0) save.mutate(); }}>
+      <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
+        e.preventDefault();
+        const errors = {
+          ...(!unit.trim() ? { unit: 'الوحدة مطلوبة' } : {}),
+          ...(!description.trim() ? { description: 'سبب المرتجع مطلوب' } : {}),
+        };
+        setFieldErrors(errors);
+        if (!materialId || quantity <= 0 || Object.keys(errors).length) return;
+        save.mutate();
+      }}>
         <label className="space-y-1">
           <span>المادة</span>
           <SearchableSelect
@@ -38,7 +48,8 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onDone }: { reInvoiceId: numb
         </label>
         <label className="space-y-1">
           <span>الوحدة</span>
-          <Input value={unit} onChange={(e) => setUnit(e.target.value)} />
+          <Input value={unit} onChange={(e) => { setUnit(e.target.value); setFieldErrors((errors) => ({ ...errors, unit: undefined })); }} aria-invalid={Boolean(fieldErrors.unit)} />
+          {fieldErrors.unit && <p className="text-sm text-destructive">{fieldErrors.unit}</p>}
         </label>
         <label className="space-y-1">
           <span>الكمية</span>
@@ -50,7 +61,8 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onDone }: { reInvoiceId: numb
         </label>
         <label className="space-y-1 sm:col-span-2">
           <span>سبب المرتجع</span>
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Input value={description} onChange={(e) => { setDescription(e.target.value); setFieldErrors((errors) => ({ ...errors, description: undefined })); }} aria-invalid={Boolean(fieldErrors.description)} />
+          {fieldErrors.description && <p className="text-sm text-destructive">{fieldErrors.description}</p>}
         </label>
         <div className="flex items-center justify-between sm:col-span-2">
           <strong className="finance-num">الإجمالي: {(quantity * price).toLocaleString()}</strong>
