@@ -5,6 +5,7 @@ import type {
   CreateDirectoryPayload,
   UpdateDirectoryPayload,
   MoveFilePayload,
+  DirectoryListParams,
 } from '../types';
 
 export interface PaginatedDirectories {
@@ -17,7 +18,7 @@ export interface PaginatedDirectories {
 
 export const cloudStorageApi = {
   // GET /api/directories?paginate=1&per_page=10&page=1
-  getDirectories: (params?: Record<string, any>): Promise<Directory[] | PaginatedDirectories | any> =>
+  getDirectories: (params?: DirectoryListParams): Promise<Directory[] | PaginatedDirectories> =>
     apiClient
       .get<PaginatedDirectories>('/directories', {
         params: { paginate: 1, per_page: 10, page: 1, ...params },

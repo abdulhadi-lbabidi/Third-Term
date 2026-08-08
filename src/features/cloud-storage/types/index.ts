@@ -28,14 +28,26 @@ export interface Directory {
 export interface CreateDirectoryPayload {
   dir_name: string;
   dir_path: string;
-  parent_dir_id?: number | null;
-  project_id?: number | null;
+  parent_dir_id: number | null;
+  project_id: number | null;
 }
 
 export interface UpdateDirectoryPayload {
   dir_name?: string;
   dir_path?: string;
   parent_dir_id?: number | null;
+}
+
+export type DirectorySortField = 'id' | 'created_at' | 'dir_name' | 'dir_path';
+
+export interface DirectoryListParams {
+  paginate?: 0 | 1 | boolean;
+  per_page?: number;
+  page?: number;
+  'filter[search]'?: string;
+  'filter[project_id]'?: number;
+  'filter[parent_dir_id]'?: number;
+  sort?: DirectorySortField | `-${DirectorySortField}`;
 }
 
 export interface UploadFilesPayload {

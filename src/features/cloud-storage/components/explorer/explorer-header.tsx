@@ -20,6 +20,7 @@ interface ExplorerHeaderProps {
   sortDirection: ExplorerSortDirection;
   onToggleSortDirection: () => void;
   selectionTools: ReactNode;
+  filterTools?: ReactNode;
   onDropItem?: (targetFolderId: number | null, item: { type: 'file' | 'folder'; id: number; data?: unknown }) => void;
 }
 
@@ -64,6 +65,7 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 xl:flex-nowrap">
         {props.selectionTools}
         <div className="ms-auto flex w-full flex-wrap items-center gap-2 sm:w-auto xl:flex-nowrap">
+        {props.filterTools}
         <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
           <Search className="absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={props.searchQuery} onChange={(e) => props.onSearchChange(e.target.value)} placeholder="بحث في المجلد..." className="h-9 pe-9" />

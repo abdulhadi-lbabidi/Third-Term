@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { UploadCloud } from 'lucide-react';
 import { useDirectories, useDirectory, useMoveItems, useDeleteDirectory, useDeleteFile, useCopyFiles } from '../../hooks/cloud-storage.hooks';
-import type { Directory, CloudFile, ExplorerSortBy, ExplorerSortDirection, ExplorerViewMode } from '../../types';
+import type { Directory, CloudFile, DirectoryListParams, DirectorySortField, ExplorerSortBy, ExplorerSortDirection, ExplorerViewMode } from '../../types';
 import { ExplorerHeader } from './explorer-header';
 import { FolderCard } from './folder.card';
 import { FileCard } from './file.card';
@@ -18,6 +18,7 @@ import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialo
 import { ExplorerList } from './explorer-list';
 import { getFileType, resolveFileUrl } from '../../utils/file-utils';
 import { SelectionToolbar } from './selection-toolbar';
+import { DirectoryFilters, type DirectoryFilterValue } from './directory-filters';
 
 // ── تعريف محلي لـ PaginatedResponse في حال عدم وجوده في types ──
 interface PaginatedResponse<T> {
@@ -83,7 +84,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   // ── Pagination state ──
   const [page, setPage] = useState(1);
-  const perPage = 50;
+  const perPage = 10;
 
   // ── Breadcrumbs ──
   const [breadcrumbs, setBreadcrumbs] = useState<{ id: number | null; name: string }[]>([
@@ -109,12 +110,20 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [fileClipboard, setFileClipboard] = useState<FileClipboard | null>(() => readFileClipboard());
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [draftFilters, setDraftFilters] = useState<DirectoryFilterValue>(() => ({ projectId: projectId ?? undefined }));
+  const [appliedFilters, setAppliedFilters] = useState<DirectoryFilterValue>(() => ({ projectId: projectId ?? undefined }));
 
   // ── Root level: GET /api/directories?paginate=1&per_page=10&page=1 ──
-  const rootParams = {
-    ...(projectId ? { 'filter[project_id]': projectId } : {}),
+  const directorySortField: DirectorySortField = sortBy === 'date' ? 'created_at' : 'dir_name';
+  const rootParams: DirectoryListParams = {
+    paginate: 1,
     page,
     per_page: perPage,
+    'filter[search]': debouncedSearch.trim() || undefined,
+    'filter[project_id]': projectId ?? appliedFilters.projectId,
+    'filter[parent_dir_id]': appliedFilters.parentDirectoryId,
+    sort: sortDirection === 'desc' ? `-${directorySortField}` : directorySortField,
   };
 
   const {
@@ -139,6 +148,16 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   const { mutateAsync: deleteFile } = useDeleteFile();
 
   const isLoading = currentDirId ? isLoadingDir : isLoadingRoot;
+
+  useEffect(() => {
+    if (!currentDirId) setPage(1);
+  }, [currentDirId, debouncedSearch, projectId, appliedFilters, sortBy, sortDirection]);
+
+  useEffect(() => {
+    if (projectId == null) return;
+    setDraftFilters((current) => ({ ...current, projectId }));
+    setAppliedFilters((current) => ({ ...current, projectId }));
+  }, [projectId]);
 
   // ── Error handling ──
   useEffect(() => {
@@ -191,7 +210,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
       return rootData;
     }
     if (rootData && typeof rootData === 'object' && 'data' in rootData) {
-      return (rootData as PaginatedResponse<Directory>).data;
+      return (rootData as unknown as PaginatedResponse<Directory>).data;
     }
     return [];
   }, [currentDirId, currentDirectory, rootData]);
@@ -207,7 +226,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     if (currentDirId || !rootData || typeof rootData !== 'object' || !('meta' in rootData)) {
       return null;
     }
-    return (rootData as PaginatedResponse<Directory>).meta;
+    return (rootData as unknown as PaginatedResponse<Directory>).meta;
   }, [currentDirId, rootData]);
 
   // ── Handlers ──
@@ -308,10 +327,10 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   // ── Filtering (debounced) ──
   const filteredFolders = useMemo(
     () =>
-      currentFolders.filter((d) =>
+      currentFolders.filter((d) => !currentDirId ||
         (d.dir_name || '').toLowerCase().includes(debouncedSearch.toLowerCase())
       ),
-    [currentFolders, debouncedSearch]
+    [currentDirId, currentFolders, debouncedSearch]
   );
 
   const filteredFiles = useMemo(
@@ -472,6 +491,26 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
             onPaste={pasteCopiedFiles}
             isPasting={isPasting}
             onDelete={() => setIsBulkDeleteOpen(true)}
+          />
+        )}
+        filterTools={(
+          <DirectoryFilters
+            open={isFilterOpen}
+            onOpenChange={setIsFilterOpen}
+            value={draftFilters}
+            onChange={setDraftFilters}
+            projectIdLocked={projectId != null}
+            activeFilterCount={Number(projectId == null && appliedFilters.projectId != null) + Number(appliedFilters.parentDirectoryId != null)}
+            onApply={() => {
+              setAppliedFilters(draftFilters);
+              setPage(1);
+            }}
+            onReset={() => {
+              const resetValue = { projectId: projectId ?? undefined };
+              setDraftFilters(resetValue);
+              setAppliedFilters(resetValue);
+              setPage(1);
+            }}
           />
         )}
         onDropItem={handleDropItem}

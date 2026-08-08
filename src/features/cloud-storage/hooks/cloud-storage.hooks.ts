@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cloudStorageApi } from '../api/cloud-storage.api';
-import type { CreateDirectoryPayload, UpdateDirectoryPayload } from '../types';
+import type { CreateDirectoryPayload, DirectoryListParams, UpdateDirectoryPayload } from '../types';
 
 // ──────────────────────────────────────────────────────────
 // GET /api/directories?paginate=1&per_page=10&page=1
 // Used for the root listing when no directory is open.
 // ──────────────────────────────────────────────────────────
-export const useDirectories = (params?: Record<string, any>) => {
+export const useDirectories = (params?: DirectoryListParams) => {
   return useQuery({
     queryKey: ['directories', 'list', params],
     queryFn: () => cloudStorageApi.getDirectories(params),

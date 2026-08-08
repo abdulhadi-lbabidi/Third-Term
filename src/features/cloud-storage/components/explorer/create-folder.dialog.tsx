@@ -21,7 +21,7 @@ import { Button } from '@/shared/components/ui/button';
 import { useCreateDirectory } from '../../hooks/cloud-storage.hooks';
 
 const schema = z.object({
-  dir_name: z.string().min(1, 'اسم المجلد مطلوب'),
+  dir_name: z.string().trim().min(1, 'اسم المجلد مطلوب'),
 });
 
 interface CreateFolderDialogProps {
@@ -33,7 +33,7 @@ interface CreateFolderDialogProps {
 
 export function CreateFolderDialog({ open, onOpenChange, parentDirId, projectId }: CreateFolderDialogProps) {
   const { mutate: createDirectory, isPending } = useCreateDirectory();
-  
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -42,12 +42,14 @@ export function CreateFolderDialog({ open, onOpenChange, parentDirId, projectId 
   });
 
   const onSubmit = (data: z.infer<typeof schema>) => {
+    const folderName = data.dir_name.trim();
+
     createDirectory(
       {
-        dir_name: data.dir_name,
-        dir_path: `/projects/${projectId || 'general'}`, // Determine the correct path strategy based on backend logic
-        parent_dir_id: parentDirId,
-        project_id: projectId,
+        dir_name: folderName,
+        dir_path: `/${folderName}`,
+        parent_dir_id: parentDirId ?? null,
+        project_id: projectId ?? null,
       },
       {
         onSuccess: () => {
