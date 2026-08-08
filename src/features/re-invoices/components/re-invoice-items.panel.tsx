@@ -8,7 +8,7 @@ import { materialsApi } from '@/features/materials/materials.api';
 import { reInvoicesApi } from '../re-invoices.api';
 import type { ReInvoiceItem } from '../types';
 
-export function ReInvoiceItemsPanel({ reInvoiceId, onDone }: { reInvoiceId: number; onDone?: () => void }) {
+export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoiceId: number; onBack?: () => void; onDone?: () => void }) {
   const client = useQueryClient();
   const [editingItem, setEditingItem] = useState<ReInvoiceItem | null>(null);
   const [materialId, setMaterialId] = useState(0); const [unit, setUnit] = useState(''); const [quantity, setQuantity] = useState(0); const [price, setPrice] = useState(0); const [description, setDescription] = useState('');
@@ -86,8 +86,9 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onDone }: { reInvoiceId: numb
         </div>
         )}
       </div>
-      <div className="flex justify-end">
-        <Button type="button" onClick={onDone} disabled={!items.data?.length}>إرسال</Button>
+      <div className="flex items-center justify-between gap-2">
+        <Button type="button" variant="outline" onClick={onBack}>العودة إلى البيانات</Button>
+        <Button type="button" onClick={onDone} disabled={!items.data?.length}>إنهاء</Button>
       </div>
     </div>
   )

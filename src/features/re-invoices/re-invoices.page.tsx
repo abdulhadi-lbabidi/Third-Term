@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Banknote, CheckCircle2, Plus, Undo2 } from 'lucide-react';
+import { Plus, Undo2 } from 'lucide-react';
 import { PageHeader } from '@/features/components/page-header';
 import { Button } from '@/shared/components/ui/button';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
@@ -19,6 +19,7 @@ const modelBySource: Record<FundSource, string> = {
   company: 'App\\Models\\CompanyFundCurrency',
   user: 'App\\Models\\CurrencyFund',
 };
+const EMPTY_ROWS: any[] = [];
 
 export function ReInvoicesPage() {
   const [itemsId, setItemsId] = useState<number>();
@@ -29,15 +30,14 @@ export function ReInvoicesPage() {
   const query = useReInvoices();
   const remove = useDeleteReInvoice();
   const save = useSaveReInvoice();
-  const rows = query.data?.data ?? [];
+  const rows = query.data?.data ?? EMPTY_ROWS;
 
   const projectFunds = useQuery({ queryKey: ['re-invoices', 'project-funds'], queryFn: () => projectFundsApi.getProjectFunds(), enabled: fundPickerOpen && source === 'project' });
   const companyFunds = useQuery({ queryKey: ['re-invoices', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds()).data, enabled: fundPickerOpen && source === 'company' });
   const userFunds = useQuery({ queryKey: ['re-invoices', 'user-funds'], queryFn: fundsApi.getFunds, enabled: fundPickerOpen && source === 'user' });
-  const funds: any[] = source === 'project' ? (projectFunds.data ?? []) : source === 'company' ? (companyFunds.data ?? []) : (userFunds.data ?? []);
+  const funds: any[] = source === 'project' ? (projectFunds.data ?? EMPTY_ROWS) : source === 'company' ? (companyFunds.data ?? EMPTY_ROWS) : (userFunds.data ?? EMPTY_ROWS);
   const selectedFund = funds.find((fund) => fund.id === fundId);
   const fundLoading = projectFunds.isLoading || companyFunds.isLoading || userFunds.isLoading;
-  const stats = useMemo(() => ({ posted: rows.filter((row) => row.is_posted).length, amount: rows.reduce((sum, row) => sum + Number(row.final_total || 0), 0) }), [rows]);
 
   useEffect(() => {
     if (!fundPickerOpen || !selectedReInvoice || fundId || !funds.length) return;
@@ -54,7 +54,8 @@ export function ReInvoicesPage() {
   };
 
   const openEditDialog = (row: ReInvoice) => {
-    const matchedSource = (Object.entries(modelBySource).find(([, type]) => type === row.reinvoiceable_type)?.[0] ?? 'project') as FundSource;
+    const normalizedType = row.reinvoiceable_type?.replace(/\\+/g, '\\');
+    const matchedSource = (Object.entries(modelBySource).find(([, type]) => type === normalizedType)?.[0] ?? 'project') as FundSource;
     setSelectedReInvoice(row);
     setSource(matchedSource);
     setFundId(undefined);
@@ -63,7 +64,6 @@ export function ReInvoicesPage() {
 
   return <div className="flex flex-1 flex-col gap-5">
     <PageHeader badge="الإدارة المالية" title="المرتجعات" icon={Undo2} action={<Button onClick={openCreateDialog}><Plus className="size-4" />إنشاء مرتجع</Button>} />
-    <div className="grid gap-3 sm:grid-cols-3"><div className="surface-panel p-4"><p className="text-xs text-muted-foreground">إجمالي المرتجعات</p><p className="finance-num mt-1 text-2xl font-bold">{rows.length}</p></div><div className="surface-panel p-4"><p className="flex gap-1 text-xs text-muted-foreground"><CheckCircle2 className="size-4" />المرحلة</p><p className="finance-num mt-1 text-2xl font-bold">{stats.posted}</p></div><div className="surface-panel p-4"><p className="flex gap-1 text-xs text-muted-foreground"><Banknote className="size-4" />القيمة الإجمالية</p><p className="finance-num mt-1 text-2xl font-bold">{stats.amount.toLocaleString()}</p></div></div>
     <section className="surface-panel space-y-4 p-4 sm:p-5"><div><h2 className="font-semibold">سجل المرتجعات</h2><p className="mt-1 text-sm text-muted-foreground">مرتجعات صناديق المشاريع والشركة والمستخدمين.</p></div><ReInvoicesTable data={rows} loading={query.isLoading || remove.isPending} onEdit={openEditDialog} onDelete={async (row) => { await remove.mutateAsync(row.id); }} onItems={(row) => setItemsId(row.id)} /></section>
 
     <ReInvoiceDialog
@@ -77,6 +77,7 @@ export function ReInvoicesPage() {
       headerFields={<>
         <label className="space-y-1 sm:col-span-1"><span>نوع الصندوق</span><SearchableSelect value={source} onValueChange={(value) => { setSource(value as FundSource); setFundId(undefined); }} options={[{ value: 'project', label: 'صندوق مشروع' }, { value: 'company', label: 'صندوق شركة' }, { value: 'user', label: 'صندوق مستخدم' }]} /></label>
         <label className="space-y-1 sm:col-span-1"><span>الصندوق</span><SearchableSelect loading={fundLoading} value={fundId} onValueChange={(value) => setFundId(Number(value))} options={funds.map((fund) => ({ value: fund.id, label: fund.project?.name ? `${fund.name} — ${fund.project.name}` : fund.name }))} placeholder="اختر الصندوق" emptyMessage="لا توجد صناديق" /></label>
+        {selectedReInvoice && !fundLoading && funds.length > 0 && !selectedFund && <p className="text-sm text-destructive sm:col-span-2">تعذر تحديد الصندوق المرتبط تلقائيًا. اختر الصندوق الصحيح للمتابعة.</p>}
         {selectedFund && !selectedFund.currencies?.length && <p className="text-sm text-destructive sm:col-span-2">لا توجد عملات مرفقة بهذا الصندوق. أضف عملة أولًا.</p>}
       </>}
       onSubmit={async (payload) => {

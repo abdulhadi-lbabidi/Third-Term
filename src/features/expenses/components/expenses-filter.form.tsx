@@ -3,7 +3,7 @@ import { DateTimeRangePicker, type DateTimeRangeValue } from '@/shared/component
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/shared/components/ui/select';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
@@ -94,7 +94,7 @@ export function ExpensesFilterForm({
         <Label htmlFor="filter-is-posted">حالة الترحيل</Label>
         <Select
           value={isPosted}
-          onValueChange={setIsPosted}
+          onValueChange={(val) => setIsPosted(val ?? '')}
         >
           <SelectTrigger id="filter-is-posted">
             {isPosted === 'true' ? 'مرحل' : isPosted === 'false' ? 'غير مرحل' : 'الكل'}

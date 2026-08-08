@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { format, parseISO } from 'date-fns';
@@ -28,6 +28,10 @@ const REINVOICEABLE_TYPES = [
 
 export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, onSubmit, loading, headerFields, submitDisabled }: Props) {
   const form = useForm<ReInvoicePayload>();
+  const initialValueRef = useRef(value);
+  const initialModelTypeRef = useRef(modelType);
+  initialValueRef.current = value;
+  initialModelTypeRef.current = modelType;
   const { errors } = form.formState;
   const [step, setStep] = useState<'details' | 'items'>('details');
   const [activeId, setActiveId] = useState<number | undefined>(value?.id);
@@ -35,9 +39,11 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
   const suppliers = useQuery({ queryKey: ['users', 'supplier'], queryFn: () => usersApi.getUsersByRole('supplier', 1, 1000), enabled: open && step === 'details' });
   const itemRows = items.data?.data ?? EMPTY_ROWS;
   const supplierRows = suppliers.data?.data ?? EMPTY_ROWS;
+  const currencyKey = currencies.map((currency) => currency.expenseable_id ?? currency.id).join(',');
   const selectItem = (id: string | number) => {
     const itemId = Number(id);
     form.setValue('item_id', itemId, { shouldDirty: true, shouldValidate: true });
+    form.setValue('supplier_id', undefined, { shouldDirty: true, shouldValidate: true });
     const selectedItem: any = itemRows.find((item: any) => Number(item.id) === itemId);
     const linkedSupplier = selectedItem?.supplier;
     const linkedSupplierId = Number(selectedItem?.supplier_id ?? linkedSupplier?.id ?? linkedSupplier?.user?.id ?? 0);
@@ -73,7 +79,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
       validate: (id) => {
         const currencyId = Number(id);
         if (!Number.isInteger(currencyId) || currencyId <= 0) return 'عملة الصندوق مطلوبة';
-        return currencies.some((currency) => Number(currency.expenseable_id ?? currency.id) === currencyId)
+        return currencyKey.split(',').map(Number).includes(currencyId)
           || 'عملة الصندوق المحددة غير صالحة';
       },
     });
@@ -95,7 +101,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
       validate: (total) => Number.isFinite(Number(total)) && Number(total) >= 0
         || 'الإجمالي يجب أن يكون صفرًا أو أكبر',
     });
-  }, [currencies, form, itemRows, supplierRows]);
+  }, [currencyKey, form, itemRows, supplierRows]);
 
   useEffect(() => {
     if (!open) {
@@ -103,14 +109,58 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
       setActiveId(undefined);
       return;
     }
-    // بعد إنشاء المرتجع لا نعيد تهيئة النموذج عند تحديث استعلامات الصندوق؛
-    // وإلا سيعود المستخدم من تبويب الأصناف إلى تبويب البيانات.
-    if (activeId && !value) return;
-    const itemName = typeof value?.item === 'string' ? value.item : value?.item?.name;
-    const matchedItem = itemName ? itemRows.find((item: any) => item.name?.trim() === itemName.trim()) : undefined;
-    const supplierRelation = typeof value?.supplier === 'object' ? value.supplier : undefined;
-    const supplierName = typeof value?.supplier === 'string' ? value.supplier : supplierRelation?.user?.name ?? supplierRelation?.name;
-    const requestedSupplierId = Number(value?.supplier_id ?? 0) || undefined;
+
+    // تهيئة واحدة لكل جلسة إنشاء/تعديل. تحميل القوائم لاحقًا لا يعيد ضبط النموذج.
+    setStep('details');
+    const initialValue = initialValueRef.current;
+    setActiveId(initialValue?.id);
+    form.reset({
+      item_id: Number(initialValue?.item_id ?? 0),
+      supplier_id: Number(initialValue?.supplier_id ?? 0) || undefined,
+      reinvoiceable_type: initialModelTypeRef.current,
+      reinvoiceable_id: Number(initialValue?.reinvoiceable_id ?? 0),
+      date: initialValue?.date?.slice(0, 10) ?? format(new Date(), 'yyyy-MM-dd'),
+      discount: Number(initialValue?.discount ?? 0),
+      final_total: Number(initialValue?.final_total ?? 0),
+      is_posted: Boolean(initialValue?.is_posted),
+      is_visible_to_client: initialValue?.is_visible_to_client ?? true,
+    });
+  }, [form, open, value?.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    form.setValue('reinvoiceable_type', modelType, { shouldValidate: true });
+
+    const currentCurrencyId = Number(form.getValues('reinvoiceable_id'));
+    const availableCurrencyIds = currencyKey ? currencyKey.split(',').map(Number) : [];
+    const currentCurrencyIsAvailable = availableCurrencyIds.includes(currentCurrencyId);
+
+    if (availableCurrencyIds.length === 1 && !currentCurrencyIsAvailable) {
+      form.setValue('reinvoiceable_id', availableCurrencyIds[0], { shouldValidate: true });
+    } else if (availableCurrencyIds.length > 1 && currentCurrencyId > 0 && !currentCurrencyIsAvailable && !value?.id) {
+      form.setValue('reinvoiceable_id', 0, { shouldValidate: true });
+    }
+  }, [currencyKey, form, modelType, open, value?.id]);
+
+  useEffect(() => {
+    if (!open || !value || !itemRows.length || form.formState.dirtyFields.item_id) return;
+    const currentItemId = Number(form.getValues('item_id'));
+    if (itemRows.some((item: any) => Number(item.id) === currentItemId)) return;
+
+    const itemName = typeof value.item === 'string' ? value.item : value.item?.name;
+    const matchedItem = itemName
+      ? itemRows.find((item: any) => item.name?.trim() === itemName.trim())
+      : undefined;
+    if (matchedItem) form.setValue('item_id', Number(matchedItem.id), { shouldValidate: true });
+  }, [form, itemRows, open, value]);
+
+  useEffect(() => {
+    if (!open || !value || !supplierRows.length || form.formState.dirtyFields.supplier_id) return;
+    const supplierRelation = typeof value.supplier === 'object' ? value.supplier : undefined;
+    const supplierName = typeof value.supplier === 'string'
+      ? value.supplier
+      : supplierRelation?.user?.name ?? supplierRelation?.name;
+    const requestedSupplierId = Number(value.supplier_id ?? 0) || undefined;
     const matchedSupplier = supplierRows.find((supplier: any) =>
       (requestedSupplierId && Number(supplier.id) === requestedSupplierId)
       || (requestedSupplierId && Number(supplier.user?.id) === requestedSupplierId)
@@ -118,13 +168,12 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
       || (supplierRelation?.user?.id && Number(supplier.user?.id) === Number(supplierRelation.user.id))
       || (supplierName && (supplier.user?.name ?? supplier.name)?.trim() === supplierName.trim())
     );
-    setStep('details'); setActiveId(value?.id);
-    form.reset({ item_id: Number(value?.item_id ?? matchedItem?.id ?? 0), supplier_id: matchedSupplier?.id ?? requestedSupplierId, reinvoiceable_type: modelType, reinvoiceable_id: value?.reinvoiceable_id ?? (currencies.length === 1 ? (currencies[0].expenseable_id ?? currencies[0].id) : 0), date: value?.date?.slice(0, 10) ?? format(new Date(), 'yyyy-MM-dd'), discount: Number(value?.discount ?? 0), final_total: Number(value?.final_total ?? 0), is_posted: Boolean(value?.is_posted), is_visible_to_client: value?.is_visible_to_client ?? true });
-  }, [activeId, currencies, form, itemRows, modelType, open, supplierRows, value]);
+    if (matchedSupplier) form.setValue('supplier_id', Number(matchedSupplier.id), { shouldValidate: true });
+  }, [form, open, supplierRows, value]);
 
   return <Dialog open={open} onOpenChange={(next) => !next && onClose()}><DialogContent className="!max-w-3xl !overflow-y-auto"><DialogHeader><DialogTitle>{value ? 'تحديث المرتجع' : 'إنشاء مرتجع'}</DialogTitle></DialogHeader>
     <Tabs value={step} onValueChange={(next) => setStep(next as 'details' | 'items')}>
-      <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="details"><FileText className="ml-2 size-4" />بيانات المرتجع</TabsTrigger><TabsTrigger value="items" disabled={!activeId}><PackageOpen className="ml-2 size-4" />الأصناف</TabsTrigger></TabsList>
+      <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="details"><FileText className="ml-2 size-4" />بيانات المرتجع</TabsTrigger><TabsTrigger value="items" disabled={!activeId || form.formState.isDirty}><PackageOpen className="ml-2 size-4" />الأصناف</TabsTrigger></TabsList>
       <TabsContent value="details" className="pt-4"><form className="grid gap-4 sm:grid-cols-2" onSubmit={form.handleSubmit(async (payload) => {
         const latestItems = await items.refetch();
         if (latestItems.isError) {
@@ -143,13 +192,14 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         const saved: any = await onSubmit(payload);
         const id = Number(saved?.id ?? saved?.data?.id ?? saved?.re_invoice?.id ?? saved?.reInvoice?.id ?? value?.id);
         if (Number.isInteger(id) && id > 0) {
+          form.reset(payload);
           setActiveId(id);
           setStep('items');
         }
       })}>
         {headerFields}
         <label className="space-y-1"><span>البند</span><SearchableSelect loading={items.isLoading} options={itemRows.map((row: any) => ({ value: row.id, label: row.name }))} value={form.watch('item_id')} onValueChange={selectItem} placeholder="اختر البند" />{errors.item_id && <p className="text-sm text-destructive">{errors.item_id.message}</p>}</label>
-        <label className="space-y-1"><span>المزوّد</span><SearchableSelect loading={suppliers.isLoading} options={supplierRows.map((row: any) => ({ value: row.id, label: row.user?.name ?? row.name }))} value={form.watch('supplier_id')} onValueChange={(id) => form.setValue('supplier_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر المزوّد" />{errors.supplier_id && <p className="text-sm text-destructive">{errors.supplier_id.message}</p>}</label>
+        <label className="space-y-1"><span>المزوّد <span className="text-xs text-muted-foreground">(اختياري)</span></span><SearchableSelect loading={suppliers.isLoading} options={supplierRows.map((row: any) => ({ value: row.id, label: row.user?.name ?? row.name }))} value={form.watch('supplier_id')} onValueChange={(id) => form.setValue('supplier_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر المزوّد" bottomAction={form.watch('supplier_id') ? <Button type="button" variant="ghost" size="sm" className="w-full justify-start" onClick={() => form.setValue('supplier_id', undefined, { shouldDirty: true, shouldValidate: true })}>بدون مزوّد</Button> : undefined} />{errors.supplier_id && <p className="text-sm text-destructive">{errors.supplier_id.message}</p>}</label>
         <label className="space-y-1"><span>عملة الصندوق</span><SearchableSelect options={currencies.map((row) => ({ value: row.expenseable_id ?? row.id, label: `${row.currency} ${row.symbol} — ${Number(row.balance).toLocaleString()}`, className: Number(row.balance) > 0 ? 'text-success' : 'text-destructive' }))} value={form.watch('reinvoiceable_id')} onValueChange={(id) => form.setValue('reinvoiceable_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر العملة" />{errors.reinvoiceable_id && <p className="text-sm text-destructive">{errors.reinvoiceable_id.message}</p>}</label>
         <label className="space-y-1 flex flex-col"><span>التاريخ</span>
           <Popover>
@@ -199,9 +249,9 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
             />
           )}
         </div>
-        <div className="flex justify-end gap-2 sm:col-span-2"><Button type="button" variant="outline" onClick={onClose}>إلغاء</Button><Button type="submit" disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : activeId ? 'حفظ والمتابعة' : 'إنشاء والمتابعة'}</Button></div>
+        <div className="flex justify-end gap-2 sm:col-span-2"><Button type="button" variant="outline" onClick={onClose}>إلغاء</Button><Button type="submit" disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : value ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
       </form></TabsContent>
-      <TabsContent value="items" className="pt-4">{activeId && <ReInvoiceItemsPanel reInvoiceId={activeId} onDone={onClose} />}</TabsContent>
+      <TabsContent value="items" className="pt-4">{activeId && <ReInvoiceItemsPanel reInvoiceId={activeId} onBack={() => setStep('details')} onDone={onClose} />}</TabsContent>
     </Tabs>
   </DialogContent></Dialog>;
 }
