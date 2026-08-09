@@ -6,10 +6,11 @@ import type { CreateDirectoryPayload, DirectoryListParams, UpdateDirectoryPayloa
 // GET /api/directories?paginate=1&per_page=10&page=1
 // Used for the root listing when no directory is open.
 // ──────────────────────────────────────────────────────────
-export const useDirectories = (params?: DirectoryListParams) => {
+export const useDirectories = (params?: DirectoryListParams, enabled = true) => {
   return useQuery({
     queryKey: ['directories', 'list', params],
     queryFn: () => cloudStorageApi.getDirectories(params),
+    enabled,
   });
 };
 

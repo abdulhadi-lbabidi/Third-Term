@@ -46,7 +46,6 @@ export interface DirectoryListParams {
   page?: number;
   'filter[search]'?: string;
   'filter[project_id]'?: number;
-  'filter[parent_dir_id]'?: number;
   sort?: DirectorySortField | `-${DirectorySortField}`;
 }
 

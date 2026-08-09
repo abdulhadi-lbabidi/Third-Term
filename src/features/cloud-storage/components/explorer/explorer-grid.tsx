@@ -13,7 +13,6 @@ import { DeleteItemDialog } from './delete-item.dialog';
 import { UploadFilesDialog } from './upload-files.dialog';
 import { FilePreviewDialog } from '../FilePreviewDialog';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { SimplePagination } from '@/components/ui/pagination';
 import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
 import { ExplorerList } from './explorer-list';
 import { getFileType, resolveFileUrl } from '../../utils/file-utils';
@@ -73,6 +72,21 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+function flattenDirectories(directories: Directory[]): Directory[] {
+  const result: Directory[] = [];
+  const visited = new Set<number>();
+
+  const visit = (directory: Directory) => {
+    if (visited.has(directory.id)) return;
+    visited.add(directory.id);
+    result.push(directory);
+    (directory.children ?? []).forEach(visit);
+  };
+
+  directories.forEach(visit);
+  return result;
+}
+
 interface CloudStorageExplorerProps {
   projectId?: number | null;
 }
@@ -94,6 +108,8 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   // ── Search ──
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const normalizedSearch = debouncedSearch.trim();
+  const isSearching = normalizedSearch.length > 0;
 
   // ── Dialogs state ──
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
@@ -117,12 +133,10 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   // ── Root level: GET /api/directories?paginate=1&per_page=10&page=1 ──
   const directorySortField: DirectorySortField = sortBy === 'date' ? 'created_at' : 'dir_name';
   const rootParams: DirectoryListParams = {
-    paginate: 1,
-    page,
-    per_page: perPage,
-    'filter[search]': debouncedSearch.trim() || undefined,
+    paginate: !currentDirId && isSearching ? 0 : 1,
+    page: !currentDirId && isSearching ? undefined : page,
+    per_page: !currentDirId && isSearching ? undefined : perPage,
     'filter[project_id]': projectId ?? appliedFilters.projectId,
-    'filter[parent_dir_id]': appliedFilters.parentDirectoryId,
     sort: sortDirection === 'desc' ? `-${directorySortField}` : directorySortField,
   };
 
@@ -131,7 +145,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     isLoading: isLoadingRoot,
     isError: isRootError,
     error: rootError,
-  } = useDirectories(currentDirId ? undefined : rootParams);
+  } = useDirectories(rootParams, !currentDirId);
 
   // ── Inside a folder: GET /api/directories/{id} ──
   const {
@@ -178,18 +192,18 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
       const ancestors = currentDirectory.ancestors?.length
         ? currentDirectory.ancestors
         : (() => {
-            const chain: Directory[] = [];
-            const visited = new Set<number>();
-            let parent = currentDirectory.parent;
+          const chain: Directory[] = [];
+          const visited = new Set<number>();
+          let parent = currentDirectory.parent;
 
-            while (parent && !visited.has(parent.id)) {
-              visited.add(parent.id);
-              chain.unshift(parent);
-              parent = parent.parent;
-            }
+          while (parent && !visited.has(parent.id)) {
+            visited.add(parent.id);
+            chain.unshift(parent);
+            parent = parent.parent;
+          }
 
-            return chain;
-          })();
+          return chain;
+        })();
       const newBreadcrumbs = [
         { id: null, name: 'الرئيسية' },
         ...ancestors.map((directory) => ({ id: directory.id, name: directory.dir_name })),
@@ -202,32 +216,35 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   }, [currentDirId, currentDirectory]);
 
   // ── Extract folders and files ──
-  const currentFolders: Directory[] = useMemo(() => {
-    if (currentDirId) {
-      return currentDirectory?.children ?? [];
-    }
-    if (Array.isArray(rootData)) {
-      return rootData;
-    }
+  const rootDirectories = useMemo<Directory[]>(() => {
+    if (Array.isArray(rootData)) return rootData;
     if (rootData && typeof rootData === 'object' && 'data' in rootData) {
       return (rootData as unknown as PaginatedResponse<Directory>).data;
     }
     return [];
-  }, [currentDirId, currentDirectory, rootData]);
+  }, [rootData]);
+
+  const searchableRootDirectories = useMemo(
+    () => isSearching ? flattenDirectories(rootDirectories) : rootDirectories,
+    [isSearching, rootDirectories]
+  );
+
+  const currentFolders: Directory[] = useMemo(() => {
+    if (currentDirId) {
+      return currentDirectory?.children ?? [];
+    }
+    return searchableRootDirectories;
+  }, [currentDirId, currentDirectory, searchableRootDirectories]);
 
   const currentFiles: CloudFile[] = useMemo(() => {
     if (currentDirId) {
       return currentDirectory?.files ?? [];
     }
-    return [];
-  }, [currentDirId, currentDirectory]);
-
-  const paginationMeta = useMemo(() => {
-    if (currentDirId || !rootData || typeof rootData !== 'object' || !('meta' in rootData)) {
-      return null;
+    if (isSearching) {
+      return searchableRootDirectories.flatMap((directory) => directory.files ?? []);
     }
-    return (rootData as unknown as PaginatedResponse<Directory>).meta;
-  }, [currentDirId, rootData]);
+    return [];
+  }, [currentDirId, currentDirectory, isSearching, searchableRootDirectories]);
 
   // ── Handlers ──
   const handleDropItem = useCallback(
@@ -235,9 +252,9 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
       const draggedKey = `${item.type}:${item.id}`;
       const itemsToMove = selected.has(draggedKey)
         ? [...selected].map((key) => {
-            const [type, id] = key.split(':');
-            return { type: type as 'file' | 'folder', id: Number(id) };
-          })
+          const [type, id] = key.split(':');
+          return { type: type as 'file' | 'folder', id: Number(id) };
+        })
         : [item];
       const movableItems = itemsToMove.filter(
         (selectedItem) => !(selectedItem.type === 'folder' && selectedItem.id === targetFolderId)
@@ -257,6 +274,11 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     },
     [moveItems, selected]
   );
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setPage(1);
+  }, []);
 
   const handleNavigate = useCallback(
     (id: number | null) => {
@@ -326,11 +348,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   // ── Filtering (debounced) ──
   const filteredFolders = useMemo(
-    () =>
-      currentFolders.filter((d) => !currentDirId ||
-        (d.dir_name || '').toLowerCase().includes(debouncedSearch.toLowerCase())
-      ),
-    [currentDirId, currentFolders, debouncedSearch]
+    () => normalizedSearch
+      ? currentFolders.filter((directory) =>
+        `${directory.dir_name} ${directory.dir_path}`.toLocaleLowerCase().includes(normalizedSearch.toLocaleLowerCase())
+      )
+      : currentFolders,
+    [currentFolders, normalizedSearch]
   );
 
   const filteredFiles = useMemo(
@@ -459,132 +482,120 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     <div className="flex min-h-0 w-full flex-1 flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="shrink-0 border-b border-border bg-card">
         <ExplorerHeader
-        breadcrumbs={breadcrumbs}
-        onNavigate={handleNavigate}
-        onNewFolder={() => {
-          setActionTargetDirId(currentDirId);
-          setIsCreateFolderOpen(true);
-        }}
-        onUploadFiles={() => {
-          setActionTargetDirId(currentDirId);
-          setIsUploadOpen(true);
-        }}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        viewMode={viewMode}
-        onViewModeChange={changeView}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        sortDirection={sortDirection}
-        onToggleSortDirection={() => setSortDirection((value) => value === 'asc' ? 'desc' : 'asc')}
-        selectionTools={(
-          <SelectionToolbar
-            selectedCount={selected.size}
-            hasItems={visibleItemKeys.length > 0}
-            allItemsSelected={allVisibleItemsSelected}
-            onToggleSelectAll={toggleSelectAll}
-            onClearSelection={() => setSelected(new Set())}
-            onExitClipboard={exitClipboardMode}
-            onCopy={copySelectedFiles}
-            onCut={cutSelectedItems}
-            clipboardCount={fileClipboard?.items.length ?? 0}
-            onPaste={pasteCopiedFiles}
-            isPasting={isPasting}
-            onDelete={() => setIsBulkDeleteOpen(true)}
-          />
-        )}
-        filterTools={(
-          <DirectoryFilters
-            open={isFilterOpen}
-            onOpenChange={setIsFilterOpen}
-            value={draftFilters}
-            onChange={setDraftFilters}
-            projectIdLocked={projectId != null}
-            activeFilterCount={Number(projectId == null && appliedFilters.projectId != null) + Number(appliedFilters.parentDirectoryId != null)}
-            onApply={() => {
-              setAppliedFilters(draftFilters);
-              setPage(1);
-            }}
-            onReset={() => {
-              const resetValue = { projectId: projectId ?? undefined };
-              setDraftFilters(resetValue);
-              setAppliedFilters(resetValue);
-              setPage(1);
-            }}
-          />
-        )}
-        onDropItem={handleDropItem}
+          breadcrumbs={breadcrumbs}
+          onNavigate={handleNavigate}
+          onNewFolder={() => {
+            setActionTargetDirId(currentDirId);
+            setIsCreateFolderOpen(true);
+          }}
+          onUploadFiles={() => {
+            setActionTargetDirId(currentDirId);
+            setIsUploadOpen(true);
+          }}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          viewMode={viewMode}
+          onViewModeChange={changeView}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          sortDirection={sortDirection}
+          onToggleSortDirection={() => setSortDirection((value) => value === 'asc' ? 'desc' : 'asc')}
+          selectionTools={(
+            <SelectionToolbar
+              selectedCount={selected.size}
+              hasItems={visibleItemKeys.length > 0}
+              allItemsSelected={allVisibleItemsSelected}
+              onToggleSelectAll={toggleSelectAll}
+              onClearSelection={() => setSelected(new Set())}
+              onExitClipboard={exitClipboardMode}
+              onCopy={copySelectedFiles}
+              onCut={cutSelectedItems}
+              clipboardCount={fileClipboard?.items.length ?? 0}
+              onPaste={pasteCopiedFiles}
+              isPasting={isPasting}
+              onDelete={() => setIsBulkDeleteOpen(true)}
+            />
+          )}
+          filterTools={(
+            <DirectoryFilters
+              open={isFilterOpen}
+              onOpenChange={setIsFilterOpen}
+              value={draftFilters}
+              onChange={setDraftFilters}
+              projectIdLocked={projectId != null}
+              activeFilterCount={Number(projectId == null && appliedFilters.projectId != null)}
+              onApply={() => {
+                setAppliedFilters(draftFilters);
+                setPage(1);
+              }}
+              onReset={() => {
+                const resetValue = { projectId: projectId ?? undefined };
+                setDraftFilters(resetValue);
+                setAppliedFilters(resetValue);
+                setPage(1);
+              }}
+            />
+          )}
+          onDropItem={handleDropItem}
         />
       </div>
 
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/15 p-2.5 sm:p-5">
         {isLoading ? (
-        <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-3' : 'space-y-2 rounded-xl border p-2 sm:p-3'}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className={viewMode === 'grid' ? 'aspect-[4/3] w-full rounded-xl' : 'h-14 w-full rounded-lg'} />
-          ))}
-        </div>
-      ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
-        <div className="flex min-h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 px-4 py-20 text-center">
-          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UploadCloud className="size-8" />
+          <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-3' : 'space-y-2 rounded-xl border p-2 sm:p-3'}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className={viewMode === 'grid' ? 'aspect-[4/3] w-full rounded-xl' : 'h-14 w-full rounded-lg'} />
+            ))}
           </div>
-          <h3 className="text-lg font-semibold text-foreground">المجلد فارغ</h3>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">لا توجد ملفات أو مجلدات هنا. أنشئ مجلدًا جديدًا أو ارفع ملفات للبدء.</p>
-        </div>
-      ) : (
-        <>
-          {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-3">
-            {sortedFolders.map((folder) => (
-              <FolderCard
-                key={`folder-${folder.id}`}
-                folder={folder}
-                selected={selected.has(`folder:${folder.id}`)}
-                onSelect={(item, checked) => selectItem(`folder:${item.id}`, checked)}
-                onClick={handleFolderClick}
-                onRename={(f: any) => setRenameItem({ item: f, type: 'folder' })}
-                onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
-                onNewFolder={(f) => {
-                  setActionTargetDirId(f.id);
-                  setIsCreateFolderOpen(true);
-                }}
-                onUploadFiles={(f) => {
-                  setActionTargetDirId(f.id);
-                  setIsUploadOpen(true);
-                }}
-                // onDownload={() => {
-                //   toast('تحميل المجلد غير متاح حالياً');
-                // }}
-                onDropItem={handleDropItem}
-              />
-            ))}
+        ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
+          <div className="flex min-h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 px-4 py-20 text-center">
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <UploadCloud className="size-8" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">المجلد فارغ</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">لا توجد ملفات أو مجلدات هنا. أنشئ مجلدًا جديدًا أو ارفع ملفات للبدء.</p>
+          </div>
+        ) : (
+          <>
+            {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-3">
+              {sortedFolders.map((folder) => (
+                <FolderCard
+                  key={`folder-${folder.id}`}
+                  folder={folder}
+                  selected={selected.has(`folder:${folder.id}`)}
+                  onSelect={(item, checked) => selectItem(`folder:${item.id}`, checked)}
+                  onClick={handleFolderClick}
+                  onRename={(f: any) => setRenameItem({ item: f, type: 'folder' })}
+                  onDelete={(f) => setDeleteItem({ item: f, type: 'folder' })}
+                  onNewFolder={(f) => {
+                    setActionTargetDirId(f.id);
+                    setIsCreateFolderOpen(true);
+                  }}
+                  onUploadFiles={(f) => {
+                    setActionTargetDirId(f.id);
+                    setIsUploadOpen(true);
+                  }}
+                  // onDownload={() => {
+                  //   toast('تحميل المجلد غير متاح حالياً');
+                  // }}
+                  onDropItem={handleDropItem}
+                />
+              ))}
 
-            {sortedFiles.map((file) => (
-              <FileCard
-                key={`file-${file.id}`}
-                file={file}
-                selected={selected.has(`file:${file.id}`)}
-                onSelect={(item, checked) => selectItem(`file:${item.id}`, checked)}
-                onDelete={(f) => setDeleteItem({ item: f, type: 'file' })}
-                onDownload={handleDownloadFile}
-                onPreview={setPreviewFile}
-              />
-            ))}
-          </div> : <ExplorerList folders={sortedFolders} files={sortedFiles} selected={selected} onSelect={selectItem} onFolder={handleFolderClick} onPreview={setPreviewFile} onDownload={handleDownloadFile} onRename={(item, type) => setRenameItem({ item, type })} onDelete={(item, type) => setDeleteItem({ item, type })} />}
+              {sortedFiles.map((file) => (
+                <FileCard
+                  key={`file-${file.id}`}
+                  file={file}
+                  selected={selected.has(`file:${file.id}`)}
+                  onSelect={(item, checked) => selectItem(`file:${item.id}`, checked)}
+                  onDelete={(f) => setDeleteItem({ item: f, type: 'file' })}
+                  onDownload={handleDownloadFile}
+                  onPreview={setPreviewFile}
+                />
+              ))}
+            </div> : <ExplorerList folders={sortedFolders} files={sortedFiles} selected={selected} onSelect={selectItem} onFolder={handleFolderClick} onPreview={setPreviewFile} onDownload={handleDownloadFile} onRename={(item, type) => setRenameItem({ item, type })} onDelete={(item, type) => setDeleteItem({ item, type })} />}
 
-          {!currentDirId && paginationMeta && (
-            <SimplePagination
-              currentPage={paginationMeta.current_page}
-              totalPages={paginationMeta.last_page}
-              onPageChange={setPage}
-              meta={{
-                from: paginationMeta.from,
-                to: paginationMeta.to,
-                total: paginationMeta.total,
-              }}
-            />
-          )}
-        </>
+          </>
         )}
       </div>
 

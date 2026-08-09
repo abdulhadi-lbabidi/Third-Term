@@ -176,7 +176,7 @@ function SimplePagination({
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="sticky bottom-0 z-10 mt-auto flex min-w-0 flex-col items-center gap-2 bg-transparent p-0 sm:flex-row sm:justify-between sm:gap-4 sm:rounded-lg sm:border sm:border-border sm:bg-card/95 sm:p-4 sm:shadow-sm sm:backdrop-blur">
+    <div className="mt-auto flex min-w-0 flex-col items-center gap-2 bg-transparent p-0 sm:flex-row sm:justify-between sm:gap-4 sm:rounded-lg sm:border sm:border-border sm:bg-card sm:p-4 sm:shadow-sm">
       {meta ? (
         <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-center text-xs text-muted-foreground sm:justify-start sm:gap-3 sm:text-start">
           <span className="hidden sm:inline">

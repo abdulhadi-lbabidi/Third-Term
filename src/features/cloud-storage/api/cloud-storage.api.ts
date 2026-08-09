@@ -10,10 +10,15 @@ import type {
 
 export interface PaginatedDirectories {
   data: Directory[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
+  links?: Record<string, unknown>;
+  meta: {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+  };
 }
 
 export const cloudStorageApi = {
@@ -23,7 +28,7 @@ export const cloudStorageApi = {
       .get<PaginatedDirectories>('/directories', {
         params: { paginate: 1, per_page: 10, page: 1, ...params },
       })
-      .then(({ data }: any) => data?.data ?? data),
+      .then(({ data }) => data),
 
   // GET /api/directories/{id}  → returns directory with files[] and children[]
   getDirectory: (id: number): Promise<Directory> =>
@@ -41,7 +46,7 @@ export const cloudStorageApi = {
 
   updateDirectory: (id: number, payload: UpdateDirectoryPayload): Promise<Directory> =>
     apiClient
-      .put<Directory>(`/directories/${id}`, payload)
+      .patch<Directory>(`/directories/${id}`, payload)
       .then(({ data }: any) => data?.data ?? data),
 
   deleteDirectory: (id: number): Promise<void> =>
@@ -84,7 +89,7 @@ export const cloudStorageApi = {
     const promises = payload.itemIds.map((item) => {
       if (item.type === 'folder') {
         return apiClient
-          .put(`/directories/${item.id}`, { parent_dir_id: payload.targetDirId })
+          .patch(`/directories/${item.id}`, { parent_dir_id: payload.targetDirId })
           .then(({ data }: any) => data?.data ?? data);
       } else {
         return apiClient

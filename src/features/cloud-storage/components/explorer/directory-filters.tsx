@@ -3,7 +3,6 @@ import { SlidersHorizontal } from 'lucide-react';
 import { projectsApi } from '@/features/projects/projects.api';
 import { Button } from '@/shared/components/ui/button';
 import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
-import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
@@ -11,7 +10,6 @@ import { cn } from '@/shared/lib/utils';
 
 export interface DirectoryFilterValue {
   projectId?: number;
-  parentDirectoryId?: number;
 }
 
 interface DirectoryFiltersProps {
@@ -24,12 +22,6 @@ interface DirectoryFiltersProps {
   projectIdLocked?: boolean;
   activeFilterCount: number;
 }
-
-const optionalNumber = (value: string) => {
-  if (!value.trim()) return undefined;
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
-};
 
 export function DirectoryFilters({
   open,
@@ -102,18 +94,6 @@ export function DirectoryFilters({
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="directory-parent-filter">معرّف المجلد الأب</Label>
-          <Input
-            id="directory-parent-filter"
-            type="number"
-            min={1}
-            inputMode="numeric"
-            value={value.parentDirectoryId ?? ''}
-            placeholder="المجلدات الرئيسية"
-            onChange={(event) => onChange({ ...value, parentDirectoryId: optionalNumber(event.target.value) })}
-          />
-        </div>
       </FilterDrawer>
     </>
   );
