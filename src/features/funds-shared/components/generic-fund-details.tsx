@@ -94,7 +94,7 @@ export function GenericFundDetails({
   const expenseFilterId = Number(searchParams.get('expenseId') || 0) || null;
   const hasCurrencies = fundCurrencies.length > 0;
   const canTransfer = fundCurrencies.some((currency) => Number(currency.balance) > 0);
-  const tabsDragStartRef = useRef({ x: 0, scrollLeft: 0, rtl: false });
+  const tabsDragStartRef = useRef({ x: 0, scrollLeft: 0 });
   const tabsDraggingRef = useRef(false);
   const tabsDragMovedRef = useRef(false);
 
@@ -105,7 +105,6 @@ export function GenericFundDetails({
     tabsDragStartRef.current = {
       x: event.clientX,
       scrollLeft: event.currentTarget.scrollLeft,
-      rtl: window.getComputedStyle(event.currentTarget).direction === 'rtl',
     };
   };
 
@@ -113,8 +112,7 @@ export function GenericFundDetails({
     if (!tabsDraggingRef.current) return;
     const distance = event.clientX - tabsDragStartRef.current.x;
     if (Math.abs(distance) > 8) tabsDragMovedRef.current = true;
-    event.currentTarget.scrollLeft = tabsDragStartRef.current.scrollLeft
-      + (tabsDragStartRef.current.rtl ? distance : -distance);
+    event.currentTarget.scrollLeft = tabsDragStartRef.current.scrollLeft + distance;
   };
 
   const stopTabsDragging = () => {
@@ -326,6 +324,7 @@ export function GenericFundDetails({
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="min-w-0 w-full">
         <div
+          dir="rtl"
           className="-mx-3 mb-4 cursor-grab touch-pan-x select-none overflow-x-auto px-3 pb-1 active:cursor-grabbing sm:mx-0 sm:mb-5 sm:px-0"
           onPointerDown={handleTabsPointerDown}
           onPointerMove={handleTabsPointerMove}

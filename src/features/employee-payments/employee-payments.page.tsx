@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { RotateCcw, BadgeDollarSign, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw, BadgeDollarSign, Plus, SlidersHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { usersApi } from '@/features/users/api/users.api';
@@ -159,16 +159,16 @@ export function EmployeePaymentsPage() {
   };
 
   return (
-    <div className="flex flex-col flex-1 space-y-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
       <PageHeader
         badge="الموظفون"
         title={selectedEmployee ? `رواتب ${selectedEmployee.user.name}` : (profileEmployee ? `رواتب ${profileEmployee.user?.name ?? profileEmployee.name}` : 'رواتب الموظفين')}
         icon={BadgeDollarSign}
         action={
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap">
             {!params.employeeId && !isProfileView ? (
-              <div className="flex shrink-0 items-center gap-3">
-                <div className="w-[210px] shrink-0">
+              <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+                <div className="min-w-0 flex-1 sm:w-[210px] sm:flex-none">
                   <SearchableSelect
                     value={selectedEmployeeId}
                     onValueChange={(value) => setSelectedEmployeeId(value ? Number(value) : null)}
@@ -188,6 +188,7 @@ export function EmployeePaymentsPage() {
                     type="button"
                     variant="outline"
                     size="icon"
+                    className="shrink-0"
                     onClick={() => setSelectedEmployeeId(null)}
                     aria-label="عرض الكل"
                     title="عرض الكل"
@@ -201,6 +202,7 @@ export function EmployeePaymentsPage() {
               <Button
                 type="button"
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => navigate('/employee-payments')}
               >
                 عرض كل الموظفين
@@ -210,18 +212,20 @@ export function EmployeePaymentsPage() {
               type="button"
               variant="outline"
               onClick={() => setFilterDrawerOpen(true)}
-              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
+              className={cn("min-w-0 flex-1 sm:flex-none", Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
               فلترة متقدمة
             </Button>
             <Button
+              className="min-w-0 flex-1 sm:flex-none"
               onClick={() => {
                 setSelectedPayment(null);
                 setDialogOpen(true);
               }}
             >
-              إضافة راتب جديد
+              <Plus className="size-4" />
+              <span className="truncate">إضافة راتب جديد</span>
             </Button>
           </div>
         }

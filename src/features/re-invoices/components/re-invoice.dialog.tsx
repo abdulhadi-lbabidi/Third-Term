@@ -88,19 +88,6 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         && !Number.isNaN(Date.parse(`${date}T00:00:00`))
         || 'التاريخ مطلوب ويجب أن يكون صالحًا',
     });
-    form.register('discount', {
-      valueAsNumber: true,
-      validate: (discount) => {
-        const value = Number(discount ?? 0);
-        if (!Number.isFinite(value) || value < 0) return 'الخصم يجب أن يكون صفرًا أو أكبر';
-        return value <= Number(form.getValues('final_total')) || 'الخصم لا يمكن أن يتجاوز الإجمالي';
-      },
-    });
-    form.register('final_total', {
-      valueAsNumber: true,
-      validate: (total) => Number.isFinite(Number(total)) && Number(total) >= 0
-        || 'الإجمالي يجب أن يكون صفرًا أو أكبر',
-    });
   }, [currencyKey, form, itemRows, supplierRows]);
 
   useEffect(() => {
@@ -175,6 +162,14 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
     <Tabs value={step} onValueChange={(next) => setStep(next as 'details' | 'items')}>
       <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="details"><FileText className="ml-2 size-4" />بيانات المرتجع</TabsTrigger><TabsTrigger value="items" disabled={!activeId || form.formState.isDirty}><PackageOpen className="ml-2 size-4" />الأصناف</TabsTrigger></TabsList>
       <TabsContent value="details" className="pt-4"><form className="grid gap-4 sm:grid-cols-2" onSubmit={form.handleSubmit(async (payload) => {
+        if (Number(payload.discount ?? 0) > Number(payload.final_total)) {
+          form.setError('discount', {
+            type: 'validate',
+            message: 'الخصم لا يمكن أن يتجاوز الإجمالي',
+          });
+          return;
+        }
+
         const latestItems = await items.refetch();
         if (latestItems.isError) {
           form.setError('item_id', { type: 'validate', message: 'تعذر التحقق من البند، حاول مرة أخرى' });
@@ -217,12 +212,27 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         </label>
         <label className="space-y-1"          >
           <span>الخصم</span>
-          <Input type="number" min={0} step="any" {...form.register('discount', { valueAsNumber: true })} />
+          <Input type="number" min={0} max={form.watch('final_total') ?? undefined} step="any" {...form.register('discount', {
+            valueAsNumber: true,
+            validate: (discount) => {
+              const discountValue = Number(discount ?? 0);
+              if (!Number.isFinite(discountValue) || discountValue < 0) return 'الخصم يجب أن يكون صفرًا أو أكبر';
+              return discountValue <= Number(form.getValues('final_total')) || 'الخصم لا يمكن أن يتجاوز الإجمالي';
+            },
+          })} />
           {errors.discount && <p className="text-sm text-destructive">{errors.discount.message}</p>}
         </label>
         <label className="space-y-1">
           <span>الإجمالي</span>
-          <Input type="number" min={0} step="any" {...form.register('final_total', { valueAsNumber: true })} />
+          <Input type="number" min={0} step="any" {...form.register('final_total', {
+            valueAsNumber: true,
+            validate: (total) => {
+              const totalValue = Number(total);
+              if (!Number.isFinite(totalValue) || totalValue < 0) return 'الإجمالي يجب أن يكون صفرًا أو أكبر';
+              return Number(form.getValues('discount') ?? 0) <= totalValue || 'الإجمالي يجب ألا يكون أقل من الخصم';
+            },
+            onChange: () => void form.trigger('discount'),
+          })} />
           {errors.final_total && <p className="text-sm text-destructive">{errors.final_total.message}</p>}
         </label>
         <div className="flex gap-5 sm:col-span-2">

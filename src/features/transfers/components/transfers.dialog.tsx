@@ -36,14 +36,14 @@ export function TransfersDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-5xl max-h-[90vh] overflow-visible">
-        <DialogHeader>
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto overscroll-contain p-4 !max-w-5xl sm:max-h-[90dvh] sm:p-6">
+        <DialogHeader className="pe-6">
           <DialogTitle>{defaultValues ? 'تعديل عملية التحويل' : 'إجراء عملية تحويل مالي'}</DialogTitle>
         </DialogHeader>
-        <div className="py-3">
+        <div className="min-w-0 py-3">
           {isEdit && isLoading ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="h-4 w-20" />
