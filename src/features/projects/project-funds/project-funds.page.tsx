@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Wallet } from 'lucide-react';
+import { FolderKanban, Wallet } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -19,6 +19,18 @@ import { GenericFundDialog } from '@/features/funds-shared/components/generic-fu
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
+import { SimplePagination } from '@/components/ui/pagination';
+import { FundsListToolbar, type FundSortOption } from '@/features/funds-shared/components/funds-list-toolbar';
+import { useDebouncedValue } from '@/features/funds-shared/use-debounced-value';
+
+const PROJECT_SORT_OPTIONS: FundSortOption[] = [
+  { value: '-created_at', label: 'الأحدث أولًا' },
+  { value: 'created_at', label: 'الأقدم أولًا' },
+  { value: 'name', label: 'اسم الصندوق أ–ي' },
+  { value: '-name', label: 'اسم الصندوق ي–أ' },
+  { value: 'project_name', label: 'اسم المشروع أ–ي' },
+  { value: '-project_name', label: 'اسم المشروع ي–أ' },
+];
 
 const projectFundsQueryKeys = {
   all: ['project-funds'] as const,
@@ -32,6 +44,11 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedFundId = searchParams.get('fundId') ? Number(searchParams.get('fundId')) : null;
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const perPage = Math.max(1, Number(searchParams.get('perPage')) || 20);
+  const sort = searchParams.get('sort') || PROJECT_SORT_OPTIONS[0].value;
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const debouncedSearch = useDebouncedValue(search.trim());
 
   const queryClient = useQueryClient();
   const projectId = Number(params.projectId || '');
@@ -48,10 +65,21 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
   const [selectedProjectFundForView, setSelectedProjectFundForView] = useState<ProjectFund | null>(null);
   const [selectedProjectFundCurrency, setSelectedProjectFundCurrency] = useState<ProjectFundCurrency | null>(null);
 
-  const projectFundsQuery = useQuery<ProjectFund[]>({
-    queryKey: projectFundsQueryKeys.list(hasProjectId ? projectId : undefined),
-    queryFn: () => projectFundsApi.getProjectFunds(hasProjectId ? projectId : undefined),
+  useEffect(() => {
+    setSearchParams((previous) => {
+      if ((previous.get('q') || '') === debouncedSearch) return previous;
+      if (debouncedSearch) previous.set('q', debouncedSearch);
+      else previous.delete('q');
+      previous.set('page', '1');
+      return previous;
+    }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
+  const projectFundsQuery = useQuery({
+    queryKey: [...projectFundsQueryKeys.list(hasProjectId ? projectId : undefined), { page, perPage, search: debouncedSearch, sort }],
+    queryFn: () => projectFundsApi.getProjectFunds({ projectId: hasProjectId ? projectId : undefined, page, perPage: hasProjectId ? 1000 : perPage, search: debouncedSearch, sort }),
     enabled: !hasEmbeddedProjectData,
+    placeholderData: keepPreviousData,
   });
 
   const currenciesQuery = useQuery({
@@ -76,7 +104,8 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
       created_at: projectData!.created_at,
     },
   }));
-  const availableFunds = hasEmbeddedProjectData ? embeddedFunds : (projectFundsQuery.data ?? []);
+  const availableFunds = hasEmbeddedProjectData ? embeddedFunds : (projectFundsQuery.data?.data ?? []);
+  const projectFundsMeta = projectFundsQuery.data?.meta;
   const currentFund = fundDetailsQuery.data || availableFunds.find((f) => f.id === selectedFundId) || null;
 
   const visibleProjectFunds = hasProjectId
@@ -201,7 +230,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
           )}
 
           {isTab && (
-            <div className="flex justify-end pb-4">
+            <div className="hidden">
               <Button
                 type="button"
                 size="sm"
@@ -215,6 +244,23 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
             </div>
           )}
 
+          {isTab ? (
+            <FundsListToolbar
+              title="صناديق المشاريع"
+              icon={<FolderKanban className="size-5" />}
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="البحث باسم الصندوق أو المشروع..."
+              sort={sort}
+              onSortChange={(value) => setSearchParams((previous) => { previous.set('sort', value); previous.set('page', '1'); return previous; })}
+              sortOptions={PROJECT_SORT_OPTIONS}
+              onReset={() => { setSearch(''); setSearchParams((previous) => { previous.delete('q'); previous.delete('sort'); previous.set('page', '1'); return previous; }); }}
+              onCreate={() => { setSelectedProjectFund(null); setDialogOpen(true); }}
+              createLabel="إضافة صندوق"
+              total={projectFundsMeta?.total}
+            />
+          ) : null}
+
           {!hasEmbeddedProjectData && projectFundsQuery.isLoading ? (
             <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
@@ -222,7 +268,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
               ))}
             </div>
           ) : visibleProjectFunds.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
+            <div className="flex flex-col items-center justify-center w-full rounded-lg border border-dashed border-border py-16 text-center">
               <Wallet className="mb-4 size-10 text-muted-foreground" />
               <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
               <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
@@ -259,6 +305,17 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
               ))}
             </div>
           )}
+          {isTab && projectFundsMeta ? (
+            <SimplePagination
+              currentPage={projectFundsMeta.current_page ?? page}
+              totalPages={projectFundsMeta.last_page ?? 1}
+              onPageChange={(value) => setSearchParams((previous) => { previous.set('page', String(value)); return previous; })}
+              meta={projectFundsMeta}
+              limit={perPage}
+              limitOptions={[5, 10, 20, 50]}
+              onLimitChange={(value) => setSearchParams((previous) => { previous.set('perPage', String(value)); previous.set('page', '1'); return previous; })}
+            />
+          ) : null}
         </>
       ) : (
         !hasEmbeddedProjectData && projectFundsQuery.isLoading ? (

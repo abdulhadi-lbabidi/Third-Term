@@ -1,132 +1,64 @@
-import * as React from "react"
+import * as React from 'react';
+import { MoreHorizontalIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/shared/lib/utils';
 
-import { cn } from "@/shared/lib/utils"
-import { Button } from "@/components/ui/button"
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select"
-
-function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
+function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
     <nav
       role="navigation"
       aria-label="pagination"
       data-slot="pagination"
-      className={cn("mx-auto flex w-full justify-center", className)}
+      className={cn('flex w-full justify-center', className)}
       {...props}
     />
-  )
+  );
 }
 
-function PaginationContent({
-  className,
-  ...props
-}: React.ComponentProps<"ul">) {
+function PaginationContent({ className, ...props }: React.ComponentProps<'ul'>) {
   return (
     <ul
       data-slot="pagination-content"
-      className={cn("flex items-center gap-0.5", className)}
+      className={cn('flex items-center gap-1', className)}
       {...props}
     />
-  )
+  );
 }
 
-function PaginationItem({ ...props }: React.ComponentProps<"li">) {
-  return <li data-slot="pagination-item" {...props} />
+function PaginationItem(props: React.ComponentProps<'li'>) {
+  return <li data-slot="pagination-item" {...props} />;
 }
 
 type PaginationLinkProps = {
-  isActive?: boolean
-} & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">
+  isActive?: boolean;
+} & React.ComponentProps<'a'>;
 
-function PaginationLink({
-  className,
-  isActive,
-  size = "icon",
-  ...props
-}: PaginationLinkProps) {
+function PaginationLink({ className, isActive, ...props }: PaginationLinkProps) {
   return (
     <Button
-      variant={isActive ? "outline" : "ghost"}
-      size={size}
-      className={cn(className)}
+      variant={isActive ? 'default' : 'ghost'}
+      size="icon"
+      className={cn('size-9 rounded-md', className)}
       nativeButton={false}
       render={
         <a
-          aria-current={isActive ? "page" : undefined}
+          aria-current={isActive ? 'page' : undefined}
           data-slot="pagination-link"
           data-active={isActive}
           {...props}
         />
       }
     />
-  )
+  );
 }
 
-function PaginationPrevious({
-  className,
-  text = "Previous",
-  ...props
-}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+function PaginationEllipsis() {
   return (
-    <PaginationLink
-      aria-label="Go to previous page"
-      size="default"
-      className={cn("pl-1.5!", className)}
-      {...props}
-    >
-        <ChevronRightIcon data-icon="inline-start" />
-      <span>{text}</span>
-    
-    </PaginationLink>
-  )
-}
-
-function PaginationNext({
-  className,
-  text = "Next",
-  ...props
-}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
-  return (
-    <PaginationLink
-      aria-label="Go to next page"
-      size="default"
-      className={cn("pr-1.5!", className)}
-      {...props}
-    >
-       
-      <span>{text}</span>
-       <ChevronLeftIcon data-icon="inline-end" />
-    
-    </PaginationLink>
-  )
-}
-
-function PaginationEllipsis({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
-  return (
-    <span
-      aria-hidden
-      data-slot="pagination-ellipsis"
-      className={cn(
-        "flex size-7 items-center justify-center sm:size-8 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      <MoreHorizontalIcon
-      />
-      <span className="sr-only">More pages</span>
+    <span aria-hidden className="flex size-9 items-center justify-center text-muted-foreground">
+      <MoreHorizontalIcon className="size-4" />
+      <span className="sr-only">صفحات إضافية</span>
     </span>
-  )
+  );
 }
 
 export type PaginationMeta = {
@@ -150,108 +82,52 @@ export type SimplePaginationProps = {
 
 function getPageNumbers(currentPage: number, lastPage: number) {
   const pages: (number | 'ellipsis')[] = [];
+
   if (lastPage <= 7) {
-    for (let i = 1; i <= lastPage; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    if (currentPage > 3) pages.push('ellipsis');
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(lastPage - 1, currentPage + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (currentPage < lastPage - 2) pages.push('ellipsis');
-    pages.push(lastPage);
+    for (let page = 1; page <= lastPage; page += 1) pages.push(page);
+    return pages;
   }
+
+  pages.push(1);
+  if (currentPage > 3) pages.push('ellipsis');
+
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(lastPage - 1, currentPage + 1);
+  for (let page = start; page <= end; page += 1) pages.push(page);
+
+  if (currentPage < lastPage - 2) pages.push('ellipsis');
+  pages.push(lastPage);
   return pages;
 }
 
-function SimplePagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-  meta,
-  limit,
-  limitOptions,
-  onLimitChange,
-}: SimplePaginationProps) {
+function SimplePagination({ currentPage, totalPages, onPageChange }: SimplePaginationProps) {
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
+  if (totalPages <= 1) return null;
+
   return (
-    <div className="mt-auto flex min-w-0 flex-col items-center gap-2 bg-transparent p-0 sm:flex-row sm:justify-between sm:gap-4 sm:rounded-lg sm:border sm:border-border sm:bg-card sm:p-4 sm:shadow-sm">
-      {meta ? (
-        <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-center text-xs text-muted-foreground sm:justify-start sm:gap-3 sm:text-start">
-          <span className="hidden sm:inline">
-            عرض {meta.from ?? 0} إلى {meta.to ?? 0} من إجمالي {meta.total ?? 0} عنصر
-          </span>
-          {limitOptions && onLimitChange && limit ? (
-            <div className="flex items-center gap-2 sm:border-r sm:border-border/50 sm:pr-3">
-              <span>عرض</span>
-              <Select value={limit.toString()} onValueChange={(v) => {
-                onPageChange(1); // Reset page on limit change
-                onLimitChange(Number(v));
-              }}>
-                <SelectTrigger className="h-7 w-[70px] text-xs" dir="ltr">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {limitOptions.map((opt) => (
-                    <SelectItem key={opt} value={opt.toString()}>
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div />
-      )}
-
-      <Pagination className="mx-0 w-full max-w-full justify-start overflow-x-auto sm:w-auto sm:justify-center">
-        <PaginationContent className="mx-auto w-max gap-0">
-          <PaginationItem>
-            <PaginationPrevious
-              text="السابق"
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage > 1) onPageChange(currentPage - 1);
-              }}
-              className={cn('h-9 w-auto px-2! sm:h-10 sm:px-4!', currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
-            />
+    <Pagination className="mt-4 overflow-x-auto py-1">
+      <PaginationContent className="mx-auto w-max">
+        {pageNumbers.map((pageNumber, index) => (
+          <PaginationItem key={`${pageNumber}-${index}`}>
+            {pageNumber === 'ellipsis' ? (
+              <PaginationEllipsis />
+            ) : (
+              <PaginationLink
+                isActive={pageNumber === currentPage}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onPageChange(pageNumber);
+                }}
+                className="cursor-pointer"
+              >
+                {pageNumber}
+              </PaginationLink>
+            )}
           </PaginationItem>
-
-          {pageNumbers.map((p, idx) => (
-            <PaginationItem key={idx}>
-              {p === 'ellipsis' ? (
-                <PaginationEllipsis />
-              ) : (
-                <PaginationLink
-                  isActive={p === currentPage}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onPageChange(p);
-                  }}
-                  className="size-9 cursor-pointer sm:size-10"
-                >
-                  {p}
-                </PaginationLink>
-              )}
-            </PaginationItem>
-          ))}
-
-          <PaginationItem>
-            <PaginationNext
-              text="التالي"
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage < totalPages) onPageChange(currentPage + 1);
-              }}
-              className={cn('h-9 w-auto px-2! sm:h-10 sm:px-4!', currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
+        ))}
+      </PaginationContent>
+    </Pagination>
   );
 }
 
@@ -261,7 +137,5 @@ export {
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
   SimplePagination,
-}
+};

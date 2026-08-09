@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { UploadCloud } from 'lucide-react';
@@ -98,7 +98,11 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   // ── Pagination state ──
   const [page, setPage] = useState(1);
-  const perPage = 10;
+  const perPage = 20;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [loadedRootDirectories, setLoadedRootDirectories] = useState<Directory[]>([]);
+  const [lastPage, setLastPage] = useState(1);
 
   // ── Breadcrumbs ──
   const [breadcrumbs, setBreadcrumbs] = useState<{ id: number | null; name: string }[]>([
@@ -145,6 +149,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     isLoading: isLoadingRoot,
     isError: isRootError,
     error: rootError,
+    isFetching: isFetchingRoot,
   } = useDirectories(rootParams, !currentDirId);
 
   // ── Inside a folder: GET /api/directories/{id} ──
@@ -166,6 +171,39 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
   useEffect(() => {
     if (!currentDirId) setPage(1);
   }, [currentDirId, debouncedSearch, projectId, appliedFilters, sortBy, sortDirection]);
+
+  useEffect(() => {
+    if (Array.isArray(rootData)) {
+      setLoadedRootDirectories(rootData);
+      setLastPage(1);
+      return;
+    }
+
+    if (!rootData || typeof rootData !== 'object' || !('data' in rootData)) return;
+    const response = rootData as unknown as PaginatedResponse<Directory>;
+    setLastPage(response.meta.last_page);
+    setLoadedRootDirectories((current) => {
+      if (response.meta.current_page === 1) return response.data;
+      const byId = new Map(current.map((directory) => [directory.id, directory]));
+      response.data.forEach((directory) => byId.set(directory.id, directory));
+      return [...byId.values()];
+    });
+  }, [rootData]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    const root = scrollContainerRef.current;
+    if (!target || !root || currentDirId || isSearching) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !isFetchingRoot && page < lastPage) {
+        setPage((current) => current + 1);
+      }
+    }, { root, rootMargin: '160px 0px', threshold: 0 });
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [currentDirId, isFetchingRoot, isSearching, lastPage, page]);
 
   useEffect(() => {
     if (projectId == null) return;
@@ -217,12 +255,8 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   // ── Extract folders and files ──
   const rootDirectories = useMemo<Directory[]>(() => {
-    if (Array.isArray(rootData)) return rootData;
-    if (rootData && typeof rootData === 'object' && 'data' in rootData) {
-      return (rootData as unknown as PaginatedResponse<Directory>).data;
-    }
-    return [];
-  }, [rootData]);
+    return loadedRootDirectories;
+  }, [loadedRootDirectories]);
 
   const searchableRootDirectories = useMemo(
     () => isSearching ? flattenDirectories(rootDirectories) : rootDirectories,
@@ -540,7 +574,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         />
       </div>
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/15 p-2.5 sm:p-5">
+      <div ref={scrollContainerRef} className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/15 p-2.5 sm:p-5">
         {isLoading ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-3' : 'space-y-2 rounded-xl border p-2 sm:p-3'}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -594,6 +628,12 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
                 />
               ))}
             </div> : <ExplorerList folders={sortedFolders} files={sortedFiles} selected={selected} onSelect={selectItem} onFolder={handleFolderClick} onPreview={setPreviewFile} onDownload={handleDownloadFile} onRename={(item, type) => setRenameItem({ item, type })} onDelete={(item, type) => setDeleteItem({ item, type })} />}
+
+            {!currentDirId && !isSearching ? (
+              <div ref={loadMoreRef} className="flex h-12 items-center justify-center" aria-hidden>
+                {isFetchingRoot && page > 1 ? <Skeleton className="h-2 w-24 rounded-full" /> : null}
+              </div>
+            ) : null}
 
           </>
         )}

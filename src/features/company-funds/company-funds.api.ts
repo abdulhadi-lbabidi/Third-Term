@@ -12,10 +12,23 @@ export type CompanyFundResponse = {
   meta?: PaginationMeta;
 };
 
+export type CompanyFundsListParams = {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  sort?: string;
+};
+
 export const companyFundsApi = {
-  getCompanyFunds: async (page = 1, perPage = 50): Promise<CompanyFundResponse> => {
+  getCompanyFunds: async ({ page = 1, perPage = 50, search, sort = '-created_at' }: CompanyFundsListParams = {}): Promise<CompanyFundResponse> => {
     const response = await apiClient.get('/company-funds', {
-      params: { paginate: true, page, per_page: perPage },
+      params: {
+        paginate: true,
+        page,
+        per_page: perPage,
+        'filter[search]': search || undefined,
+        sort: sort || undefined,
+      },
     });
     if (Array.isArray(response.data)) {
       return { data: response.data };

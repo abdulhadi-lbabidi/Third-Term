@@ -19,6 +19,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
+const DEFAULT_COLUMN_CLASS_NAME = 'max-w-64';
+
+const getColumnClassName = (className?: string) =>
+  `${DEFAULT_COLUMN_CLASS_NAME} ${className ?? ''}`.trim();
+
 export type DataTableColumn<T> = {
   header: string;
   accessorKey?: keyof T;
@@ -149,7 +154,7 @@ export function DataTable<T>({
                 };
 
                 return (
-                  <TableHead key={column.header} className={column.className}>
+                  <TableHead key={column.header} className={getColumnClassName(column.className)}>
                     {column.sortable && key ? (
                       <div
                         onClick={handleHeaderClick}
@@ -187,7 +192,7 @@ export function DataTable<T>({
                     </TableCell>
                   ) : null}
                   {columns.map((column, colIndex) => (
-                    <TableCell key={`skeleton-col-${colIndex}`} className={column.className}>
+                    <TableCell key={`skeleton-col-${colIndex}`} className={getColumnClassName(column.className)}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
@@ -291,12 +296,17 @@ export function DataTable<T>({
                       </TableCell>
                     ) : null}
                     {columns.map((column) => (
-                      <TableCell key={column.header} className={column.className}>
-                        {column.cell
-                          ? column.cell(row)
-                          : column.accessorKey
-                            ? String(row[column.accessorKey] ?? '')
-                            : null}
+                      <TableCell key={column.header} className={getColumnClassName(column.className)}>
+                        <div
+                          className="line-clamp-2 min-w-0 max-w-full whitespace-normal break-words leading-5"
+                          title={column.accessorKey ? String(row[column.accessorKey] ?? '') : undefined}
+                        >
+                          {column.cell
+                            ? column.cell(row)
+                            : column.accessorKey
+                              ? String(row[column.accessorKey] ?? '')
+                              : null}
+                        </div>
                       </TableCell>
                     ))}
                   </TableRow>

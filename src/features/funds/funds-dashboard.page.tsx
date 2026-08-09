@@ -30,7 +30,7 @@ export function FundsDashboardPage() {
       <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })}>
         {activeTab === 'company' && <TabsContent value="company" className="mt-0 p-4 bg-white rounded-2xl h-full shadow outline-none border-none">
           {/* add title & icon to this div */}
-          <div className="flex items-center space-x-2 mb-6">
+          <div className="hidden">
             <Building2 className="h-6 w-6" />
             <h2 className="text-xl font-bold">صناديق الشركة</h2>
           </div>
@@ -39,7 +39,7 @@ export function FundsDashboardPage() {
 
         {activeTab === 'project' && <TabsContent value="project" className="mt-0 p-4 bg-white rounded-2xl shadow outline-none border-none">
           {/* add title & icon to this div */}
-          <div className="flex items-center space-x-2 mb-6">
+          <div className="hidden">
             <FolderKanban className="h-6 w-6" />
             <h2 className="text-xl font-bold">صناديق المشاريع</h2>
           </div>
@@ -48,7 +48,7 @@ export function FundsDashboardPage() {
 
         {activeTab === 'users' && <TabsContent value="users" className="mt-0 p-4 bg-white rounded-2xl shadow outline-none border-none">
           {/* add title & icon to this div */}
-          <div className="flex items-center space-x-2 mb-6">
+          <div className="hidden">
             <Users className="h-6 w-6" />
             <h2 className="text-xl font-bold">صناديق المستخدمين</h2>
           </div>

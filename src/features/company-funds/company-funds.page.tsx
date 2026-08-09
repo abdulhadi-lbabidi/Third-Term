@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Wallet } from 'lucide-react';
+import { Building2, Wallet } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
 import { currenciesApi } from '@/features/currencies/currencies.api';
@@ -16,17 +16,32 @@ import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/ge
 import type { CompanyFund, CompanyFundCurrency } from './types';
 import { PageHeader } from '../components/page-header';
 import { cn } from '@/shared/lib/utils';
+import { SimplePagination } from '@/components/ui/pagination';
+import { FundsListToolbar, type FundSortOption } from '@/features/funds-shared/components/funds-list-toolbar';
+import { useDebouncedValue } from '@/features/funds-shared/use-debounced-value';
 
 const companyFundsQueryKeys = {
   all: ['company-funds'] as const,
   detail: (id: number) => [...companyFundsQueryKeys.all, id] as const,
 };
 
+const COMPANY_SORT_OPTIONS: FundSortOption[] = [
+  { value: '-created_at', label: 'الأحدث أولًا' },
+  { value: 'created_at', label: 'الأقدم أولًا' },
+  { value: 'name', label: 'الاسم أ–ي' },
+  { value: '-name', label: 'الاسم ي–أ' },
+];
+
 export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const selectedFundId = searchParams.get('fundId') ? Number(searchParams.get('fundId')) : null;
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const perPage = Math.max(1, Number(searchParams.get('perPage')) || 20);
+  const sort = searchParams.get('sort') || COMPANY_SORT_OPTIONS[0].value;
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const debouncedSearch = useDebouncedValue(search.trim());
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
@@ -38,12 +53,20 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const [selectedCompanyFundForView, setSelectedCompanyFundForView] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundCurrency, setSelectedCompanyFundCurrency] = useState<CompanyFundCurrency | null>(null);
 
+  useEffect(() => {
+    setSearchParams((previous) => {
+      if ((previous.get('q') || '') === debouncedSearch) return previous;
+      if (debouncedSearch) previous.set('q', debouncedSearch);
+      else previous.delete('q');
+      previous.set('page', '1');
+      return previous;
+    }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
   const companyFundsQuery = useQuery({
-    queryKey: companyFundsQueryKeys.all,
-    queryFn: async () => {
-      const response = await companyFundsApi.getCompanyFunds();
-      return response.data;
-    },
+    queryKey: [...companyFundsQueryKeys.all, { page, perPage, search: debouncedSearch, sort }],
+    queryFn: () => companyFundsApi.getCompanyFunds({ page, perPage, search: debouncedSearch, sort }),
+    placeholderData: keepPreviousData,
   });
 
   const currenciesQuery = useQuery({
@@ -58,7 +81,9 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     enabled: !!selectedFundId,
   });
 
-  const currentFund = fundDetailsQuery.data || companyFundsQuery.data?.find((f) => f.id === selectedFundId) || null;
+  const companyFunds = companyFundsQuery.data?.data ?? [];
+  const companyFundsMeta = companyFundsQuery.data?.meta;
+  const currentFund = fundDetailsQuery.data || companyFunds.find((f) => f.id === selectedFundId) || null;
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { name: string }) => {
@@ -156,7 +181,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
             />
           )}
           {isTab && (
-            <div className="flex justify-end pb-4">
+            <div className="hidden">
               <Button
                 type="button"
                 size="sm"
@@ -169,6 +194,22 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               </Button>
             </div>
           )}
+          {isTab ? (
+            <FundsListToolbar
+              title="صناديق الشركة"
+              icon={<Building2 className="size-5" />}
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="البحث باسم صندوق الشركة..."
+              sort={sort}
+              onSortChange={(value) => setSearchParams((previous) => { previous.set('sort', value); previous.set('page', '1'); return previous; })}
+              sortOptions={COMPANY_SORT_OPTIONS}
+              onReset={() => { setSearch(''); setSearchParams((previous) => { previous.delete('q'); previous.delete('sort'); previous.set('page', '1'); return previous; }); }}
+              onCreate={() => { setSelectedCompanyFund(null); setDialogOpen(true); }}
+              createLabel="إضافة صندوق"
+              total={companyFundsMeta?.total}
+            />
+          ) : null}
           <div className='flex bg-white '>
             {companyFundsQuery.isLoading ? (
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -176,8 +217,8 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                   <GenericFundCardSkeleton key={i} />
                 ))}
               </div>
-            ) : (companyFundsQuery.data ?? []).length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
+            ) : companyFunds.length === 0 ? (
+              <div className="flex flex-col items-center w-full justify-center rounded-lg border border-dashed border-border py-16 text-center">
                 <Wallet className="mb-4 size-10 text-muted-foreground" />
                 <h4 className="text-sm font-medium text-foreground">لا توجد صناديق</h4>
                 <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
@@ -186,7 +227,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               </div>
             ) : (
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {(companyFundsQuery.data ?? []).map((fund) => (
+                {companyFunds.map((fund) => (
                   <GenericFundCard
                     key={fund.id}
                     fundId={fund.id}
@@ -215,6 +256,17 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               </div>
             )}
           </div>
+          {isTab && companyFundsMeta ? (
+            <SimplePagination
+              currentPage={companyFundsMeta.current_page ?? page}
+              totalPages={companyFundsMeta.last_page ?? 1}
+              onPageChange={(value) => setSearchParams((previous) => { previous.set('page', String(value)); return previous; })}
+              meta={companyFundsMeta}
+              limit={perPage}
+              limitOptions={[5, 10, 20, 50]}
+              onLimitChange={(value) => setSearchParams((previous) => { previous.set('perPage', String(value)); previous.set('page', '1'); return previous; })}
+            />
+          ) : null}
         </>
       ) : (
         currentFund && (

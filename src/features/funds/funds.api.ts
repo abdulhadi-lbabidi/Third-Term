@@ -2,6 +2,7 @@ import { apiClient } from '@/shared/api/axios.instance';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
 import type { CreateFundPayload, Fund, FundCurrencyAttachPayload, UpdateFundPayload } from './types';
+import type { PaginationMeta } from '@/components/ui/pagination';
 
 type UserFundsResponse = {
   user?: {
@@ -9,10 +10,26 @@ type UserFundsResponse = {
   };
 };
 
+export type FundsResponse = { data: Fund[]; meta?: PaginationMeta };
+export type FundsListParams = {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  sort?: string;
+};
+
 export const fundsApi = {
-  getFunds: async (): Promise<Fund[]> => {
-    const response = await apiClient.get('/funds');
-    return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+  getFunds: async ({ page = 1, perPage = 20, search, sort = 'user_name' }: FundsListParams = {}): Promise<FundsResponse> => {
+    const response = await apiClient.get('/funds', { params: {
+      paginate: true,
+      page,
+      per_page: perPage,
+      'filter[search]': search || undefined,
+      sort: sort || undefined,
+    } });
+    return Array.isArray(response.data)
+      ? { data: response.data }
+      : { data: response.data?.data ?? [], meta: response.data?.meta };
   },
 
   getFundsByUserRole: async (role: UserRole, userId: number): Promise<Fund[]> => {

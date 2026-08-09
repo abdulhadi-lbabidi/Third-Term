@@ -176,6 +176,13 @@ export function DashboardPage() {
                     style: {
                       paddingTop: '12px',
                       paddingBottom: '12px',
+                      whiteSpace: 'normal',
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitBoxOrient: 'vertical',
+                      WebkitLineClamp: 2,
+                      lineHeight: '20px',
+                      maxHeight: '64px',
                     },
                   },
                 }}

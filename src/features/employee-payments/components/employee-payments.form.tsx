@@ -208,7 +208,7 @@ export function EmployeePaymentsForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="1"
                     value={field.value}
                     onChange={(event) => field.onChange(event.target.value)}
                   />
@@ -227,7 +227,7 @@ export function EmployeePaymentsForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="1"
                     value={field.value}
                     onChange={(event) => field.onChange(event.target.value)}
                   />

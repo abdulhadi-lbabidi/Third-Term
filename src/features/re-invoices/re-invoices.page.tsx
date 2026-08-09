@@ -43,9 +43,9 @@ export function ReInvoicesPage() {
   const save = useSaveReInvoice();
   const rows = query.data?.data ?? EMPTY_ROWS;
 
-  const projectFunds = useQuery({ queryKey: ['re-invoices', 'project-funds'], queryFn: () => projectFundsApi.getProjectFunds(), enabled: fundPickerOpen && source === 'project' });
-  const companyFunds = useQuery({ queryKey: ['re-invoices', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds()).data, enabled: fundPickerOpen && source === 'company' });
-  const userFunds = useQuery({ queryKey: ['re-invoices', 'user-funds'], queryFn: fundsApi.getFunds, enabled: fundPickerOpen && source === 'user' });
+  const projectFunds = useQuery({ queryKey: ['re-invoices', 'project-funds'], queryFn: async () => (await projectFundsApi.getProjectFunds({ perPage: 1000 })).data, enabled: fundPickerOpen && source === 'project' });
+  const companyFunds = useQuery({ queryKey: ['re-invoices', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds({ perPage: 1000 })).data, enabled: fundPickerOpen && source === 'company' });
+  const userFunds = useQuery({ queryKey: ['re-invoices', 'user-funds'], queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data, enabled: fundPickerOpen && source === 'user' });
   const funds: any[] = source === 'project' ? (projectFunds.data ?? EMPTY_ROWS) : source === 'company' ? (companyFunds.data ?? EMPTY_ROWS) : (userFunds.data ?? EMPTY_ROWS);
   const selectedFund = funds.find((fund) => fund.id === fundId);
   const fundLoading = projectFunds.isLoading || companyFunds.isLoading || userFunds.isLoading;

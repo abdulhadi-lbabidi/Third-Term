@@ -233,7 +233,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
 
   const allProjectFundsQuery = useQuery<ProjectFund[]>({
     queryKey: ['revenues', 'project-funds', fixedValues?.project_id] as const,
-    queryFn: () => projectFundsApi.getProjectFunds(fixedValues?.project_id),
+    queryFn: async () => (await projectFundsApi.getProjectFunds({ projectId: fixedValues?.project_id, perPage: 1000 })).data,
     enabled: source === 'project_fund',
   });
   const allProjectFunds = allProjectFundsQuery.data ?? [];
@@ -329,7 +329,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
 
   const { data: allUserFunds = [] } = useQuery<Fund[]>({
     queryKey: ['revenues', 'all-user-funds'] as const,
-    queryFn: () => fundsApi.getFunds(),
+    queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data,
     enabled: source === 'user_fund' && Boolean(fundUserId || userFundId || defaultValues?.id),
   });
 

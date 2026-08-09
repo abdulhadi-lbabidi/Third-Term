@@ -526,7 +526,7 @@ export function TransfersForm({
 
   const allFundsQuery = useQuery({
     queryKey: ['transfers', 'all-funds-lookup'] as const,
-    queryFn: () => fundsApi.getFunds(),
+    queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data,
     enabled: !isGeneral && morphFromType === 'App\\Models\\CurrencyFund',
   });
   const allFunds = allFundsQuery.data ?? [];

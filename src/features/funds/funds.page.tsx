@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet } from 'lucide-react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Users, Wallet } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 import { PageHeader } from '../components/page-header';
@@ -17,10 +17,22 @@ import { GenericFundCard } from '@/features/funds-shared/components/generic-fund
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
+import { SimplePagination } from '@/components/ui/pagination';
+import { FundsListToolbar, type FundSortOption } from '@/features/funds-shared/components/funds-list-toolbar';
+import { useDebouncedValue } from '@/features/funds-shared/use-debounced-value';
 
 type UserRecord = Awaited<ReturnType<typeof usersApi.getUserByRole>>;
 
 const fundsQueryKeys = { all: ['funds'] as const };
+
+const USER_FUNDS_SORT_OPTIONS: FundSortOption[] = [
+  { value: 'user_name', label: 'اسم المستخدم أ–ي' },
+  { value: '-user_name', label: 'اسم المستخدم ي–أ' },
+  { value: 'name', label: 'اسم الصندوق أ–ي' },
+  { value: '-name', label: 'اسم الصندوق ي–أ' },
+  { value: '-created_at', label: 'الأحدث أولًا' },
+  { value: 'created_at', label: 'الأقدم أولًا' },
+];
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
@@ -36,6 +48,11 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const hasUserContext = hasUserId && !!userRole;
 
   const selectedFundId = searchParams.get('fundId') ? Number(searchParams.get('fundId')) : null;
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const perPage = Math.max(1, Number(searchParams.get('perPage')) || 20);
+  const sort = searchParams.get('sort') || USER_FUNDS_SORT_OPTIONS[0].value;
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const debouncedSearch = useDebouncedValue(search.trim());
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [attachDialogOpen, setAttachDialogOpen] = useState(false);
@@ -55,10 +72,22 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
     enabled: hasUserContext && Boolean(userRole),
   });
 
-  const fundsQuery = useQuery<Fund[]>({
-    queryKey: fundsQueryKeys.all,
-    queryFn: () => fundsApi.getFunds(),
+  useEffect(() => {
+    if (hasUserContext) return;
+    setSearchParams((previous) => {
+      if ((previous.get('q') || '') === debouncedSearch) return previous;
+      if (debouncedSearch) previous.set('q', debouncedSearch);
+      else previous.delete('q');
+      previous.set('page', '1');
+      return previous;
+    }, { replace: true });
+  }, [debouncedSearch, hasUserContext, setSearchParams]);
+
+  const fundsQuery = useQuery({
+    queryKey: [...fundsQueryKeys.all, { page, perPage, search: debouncedSearch, sort }],
+    queryFn: () => fundsApi.getFunds({ page, perPage, search: debouncedSearch, sort }),
     enabled: !hasUserContext,
+    placeholderData: keepPreviousData,
   });
 
   const currenciesQuery = useQuery({
@@ -70,7 +99,8 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const resolvedUserId = userRecordQuery.data?.user.id ?? userId;
   const visibleFunds = hasUserContext
     ? ((userRecordQuery.data?.user.funds as Fund[] | undefined) ?? [])
-    : (fundsQuery.data ?? []);
+    : (fundsQuery.data?.data ?? []);
+  const fundsMeta = hasUserContext ? undefined : fundsQuery.data?.meta;
 
   const fundDetailsQuery = useQuery({
     queryKey: ['funds', 'detail', selectedFundId],
@@ -164,6 +194,23 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
             />
           )}
 
+          {isTab && !hasUserContext ? (
+            <FundsListToolbar
+              title="صناديق المستخدمين"
+              icon={<Users className="size-5" />}
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="البحث في صناديق المستخدمين..."
+              sort={sort}
+              onSortChange={(value) => setSearchParams((previous) => { previous.set('sort', value); previous.set('page', '1'); return previous; })}
+              sortOptions={USER_FUNDS_SORT_OPTIONS}
+              onReset={() => { setSearch(''); setSearchParams((previous) => { previous.delete('q'); previous.delete('sort'); previous.set('page', '1'); return previous; }); }}
+              onCreate={() => { setSelectedFund(null); setDialogOpen(true); }}
+              createLabel="إضافة صندوق"
+              total={fundsMeta?.total}
+            />
+          ) : null}
+
           {(hasUserContext ? userRecordQuery.isLoading : fundsQuery.isLoading) ? (
             <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
@@ -221,6 +268,17 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               ))}
             </div>
           )}
+          {isTab && fundsMeta ? (
+            <SimplePagination
+              currentPage={fundsMeta.current_page ?? page}
+              totalPages={fundsMeta.last_page ?? 1}
+              onPageChange={(value) => setSearchParams((previous) => { previous.set('page', String(value)); return previous; })}
+              meta={fundsMeta}
+              limit={perPage}
+              limitOptions={[5, 10, 20, 50]}
+              onLimitChange={(value) => setSearchParams((previous) => { previous.set('perPage', String(value)); previous.set('page', '1'); return previous; })}
+            />
+          ) : null}
         </>
       ) : (
         currentFund && (

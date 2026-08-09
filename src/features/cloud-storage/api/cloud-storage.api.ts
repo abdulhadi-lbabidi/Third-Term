@@ -22,11 +22,11 @@ export interface PaginatedDirectories {
 }
 
 export const cloudStorageApi = {
-  // GET /api/directories?paginate=1&per_page=10&page=1
+  // GET /api/directories?paginate=1&per_page=20&page=1
   getDirectories: (params?: DirectoryListParams): Promise<Directory[] | PaginatedDirectories> =>
     apiClient
       .get<PaginatedDirectories>('/directories', {
-        params: { paginate: 1, per_page: 10, page: 1, ...params },
+        params: { paginate: 1, per_page: 20, page: 1, ...params },
       })
       .then(({ data }) => data),
 

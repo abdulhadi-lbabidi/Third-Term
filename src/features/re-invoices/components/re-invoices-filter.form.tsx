@@ -21,9 +21,9 @@ export function ReInvoicesFilterForm({ value, onChange }: Props) {
 
   const items = useQuery({ queryKey: ['re-invoices-filter', 'items'], queryFn: () => itemsApi.getItems(1, 1000) });
   const suppliers = useQuery({ queryKey: ['re-invoices-filter', 'suppliers'], queryFn: () => usersApi.getUsersByRole('supplier', 1, 1000) });
-  const projectFunds = useQuery({ queryKey: ['re-invoices-filter', 'project-funds'], queryFn: () => projectFundsApi.getProjectFunds(), enabled: value.fundSource === 'project' });
-  const companyFunds = useQuery({ queryKey: ['re-invoices-filter', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds(1, 1000)).data, enabled: value.fundSource === 'company' });
-  const userFunds = useQuery({ queryKey: ['re-invoices-filter', 'user-funds'], queryFn: fundsApi.getFunds, enabled: value.fundSource === 'user' });
+  const projectFunds = useQuery({ queryKey: ['re-invoices-filter', 'project-funds'], queryFn: async () => (await projectFundsApi.getProjectFunds({ perPage: 1000 })).data, enabled: value.fundSource === 'project' });
+  const companyFunds = useQuery({ queryKey: ['re-invoices-filter', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds({ perPage: 1000 })).data, enabled: value.fundSource === 'company' });
+  const userFunds = useQuery({ queryKey: ['re-invoices-filter', 'user-funds'], queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data, enabled: value.fundSource === 'user' });
 
   const fundRows: any[] = value.fundSource === 'project'
     ? (projectFunds.data ?? [])

@@ -11,6 +11,7 @@ export const useDirectories = (params?: DirectoryListParams, enabled = true) => 
     queryKey: ['directories', 'list', params],
     queryFn: () => cloudStorageApi.getDirectories(params),
     enabled,
+    placeholderData: (previousData) => previousData,
   });
 };
 
