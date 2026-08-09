@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs';
 import {
   TrendingUp,
@@ -93,6 +94,39 @@ export function GenericFundDetails({
   const expenseFilterId = Number(searchParams.get('expenseId') || 0) || null;
   const hasCurrencies = fundCurrencies.length > 0;
   const canTransfer = fundCurrencies.some((currency) => Number(currency.balance) > 0);
+  const tabsDragStartRef = useRef({ x: 0, scrollLeft: 0, rtl: false });
+  const tabsDraggingRef = useRef(false);
+  const tabsDragMovedRef = useRef(false);
+
+  const handleTabsPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    tabsDragMovedRef.current = false;
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    tabsDraggingRef.current = true;
+    tabsDragStartRef.current = {
+      x: event.clientX,
+      scrollLeft: event.currentTarget.scrollLeft,
+      rtl: window.getComputedStyle(event.currentTarget).direction === 'rtl',
+    };
+  };
+
+  const handleTabsPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!tabsDraggingRef.current) return;
+    const distance = event.clientX - tabsDragStartRef.current.x;
+    if (Math.abs(distance) > 8) tabsDragMovedRef.current = true;
+    event.currentTarget.scrollLeft = tabsDragStartRef.current.scrollLeft
+      + (tabsDragStartRef.current.rtl ? distance : -distance);
+  };
+
+  const stopTabsDragging = () => {
+    tabsDraggingRef.current = false;
+  };
+
+  const preventTabClickAfterDrag = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!tabsDragMovedRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    tabsDragMovedRef.current = false;
+  };
 
   const handleTabChange = (value: string) => {
     setSearchParams((prev) => {
@@ -209,9 +243,9 @@ export function GenericFundDetails({
   }, [transfersQuery.data?.data]);
 
   return (
-    <div className="flex flex-col space-y-6 bg-white p-4 rounded-2xl">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-5">
-        <div className="flex items-start gap-4">
+    <div className="flex min-w-0 flex-col space-y-5 rounded-xl bg-white p-0 sm:space-y-6 sm:p-4">
+      <div className="flex min-w-0 flex-col gap-4 pb-3 sm:flex-row sm:items-start sm:justify-between sm:pb-5">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           {onBack && (
             <Button
               variant="secondary"
@@ -223,16 +257,16 @@ export function GenericFundDetails({
               <ArrowRight className="size-4" />
             </Button>
           )}
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">{fundName}</h2>
+              <h2 className="break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{fundName}</h2>
               {extraDetails && <div>{extraDetails}</div>}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {fundCurrencies.length > 0 ? (
                 fundCurrencies.map((currency) => (
-                  <div key={currency.id} className="flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-sm font-medium">
+                  <div key={currency.id} className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-sm font-medium">
                     <span className={Number(currency.balance) > 0 ? 'font-semibold text-success' : 'font-semibold text-destructive'}>{currency.balance}</span>
                     <span className="text-slate-500">{currency.currency} {currency.symbol}</span>
                   </div>
@@ -247,74 +281,89 @@ export function GenericFundDetails({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={onAttachCurrency} className="bg-slate-100 hover:bg-slate-200">
-            <Banknote className="ml-2 size-4" />
-            إرفاق عملة
-          </Button>
-          <Button variant="secondary" size="sm" onClick={onEdit} className="bg-slate-100 hover:bg-slate-200">
-            <Edit2 className="ml-2 size-4" />
-            تعديل
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
-                />
-              }
-            >
-              <Trash2 className="ml-2 size-4" />
-              حذف
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                <AlertDialogDescription>
-                  هل أنت متأكد من حذف صندوق "{fundName}"؟ لا يمكن التراجع عن هذا الإجراء.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  حذف
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <TooltipProvider>
+          <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:shrink-0">
+            <Tooltip>
+              <TooltipTrigger render={<Button type="button" variant="secondary" size="sm" onClick={onAttachCurrency} aria-label="إرفاق عملة" className="size-9 bg-slate-100 px-0 hover:bg-slate-200 sm:h-8 sm:w-auto sm:px-3" />}>
+                <Banknote className="size-4 sm:ml-2" />
+                <span className="hidden sm:inline">إرفاق عملة</span>
+              </TooltipTrigger>
+              <TooltipContent>إرفاق عملة</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger render={<Button type="button" variant="secondary" size="sm" onClick={onEdit} aria-label="تعديل الصندوق" className="size-9 bg-slate-100 px-0 hover:bg-slate-200 sm:h-8 sm:w-auto sm:px-3" />}>
+                <Edit2 className="size-4 sm:ml-2" />
+                <span className="hidden sm:inline">تعديل</span>
+              </TooltipTrigger>
+              <TooltipContent>تعديل الصندوق</TooltipContent>
+            </Tooltip>
+            <AlertDialog>
+              <Tooltip>
+                <TooltipTrigger render={<AlertDialogTrigger render={<Button variant="secondary" size="sm" aria-label="حذف الصندوق" className="size-9 bg-rose-50 px-0 text-rose-600 hover:bg-rose-100 hover:text-rose-700 sm:h-8 sm:w-auto sm:px-3" />} />}>
+                  <Trash2 className="size-4 sm:ml-2" />
+                  <span className="hidden sm:inline">حذف</span>
+                </TooltipTrigger>
+                <TooltipContent>حذف الصندوق</TooltipContent>
+              </Tooltip>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    هل أنت متأكد من حذف صندوق "{fundName}"؟ لا يمكن التراجع عن هذا الإجراء.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    حذف
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </TooltipProvider>
       </div>
 
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-5 max-w-full justify-start">
-          <TabsTrigger value="revenues" disabled={!hasCurrencies}>
-            <TrendingUp className="ml-2 size-4" />
-            الإيرادات
-          </TabsTrigger>
-          <TabsTrigger value="expenses" disabled={!hasCurrencies}>
-            <ArrowDownToLine className="ml-2 size-4" />
-            المصروفات
-          </TabsTrigger>
-          <TabsTrigger value="invoices" disabled={!hasCurrencies}>
-            <ReceiptText className="ml-2 size-4" />
-            الفواتير
-          </TabsTrigger>
-          <TabsTrigger value="returns" disabled={!hasCurrencies}><Undo2 className="ml-2 size-4" />المرتجعات</TabsTrigger>
-          <TabsTrigger value="transfers" disabled={!hasCurrencies}>
-            <ArrowLeftRight className="ml-2 size-4" />
-            التحويلات
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="min-w-0 w-full">
+        <div
+          className="-mx-3 mb-4 cursor-grab touch-pan-x select-none overflow-x-auto px-3 pb-1 active:cursor-grabbing sm:mx-0 sm:mb-5 sm:px-0"
+          onPointerDown={handleTabsPointerDown}
+          onPointerMove={handleTabsPointerMove}
+          onPointerUp={stopTabsDragging}
+          onPointerCancel={stopTabsDragging}
+          onPointerLeave={stopTabsDragging}
+          onClickCapture={preventTabClickAfterDrag}
+          onDragStart={(event) => event.preventDefault()}
+        >
+          <TabsList className="flex h-auto w-max min-w-full justify-start [&_[data-slot=tabs-trigger]]:h-9 [&_[data-slot=tabs-trigger]]:shrink-0">
+            <TabsTrigger value="revenues" disabled={!hasCurrencies}>
+              <TrendingUp className="ml-2 size-4" />
+              الإيرادات
+            </TabsTrigger>
+            <TabsTrigger value="expenses" disabled={!hasCurrencies}>
+              <ArrowDownToLine className="ml-2 size-4" />
+              المصروفات
+            </TabsTrigger>
+            <TabsTrigger value="invoices" disabled={!hasCurrencies}>
+              <ReceiptText className="ml-2 size-4" />
+              الفواتير
+            </TabsTrigger>
+            <TabsTrigger value="returns" disabled={!hasCurrencies}><Undo2 className="ml-2 size-4" />المرتجعات</TabsTrigger>
+            <TabsTrigger value="transfers" disabled={!hasCurrencies}>
+              <ArrowLeftRight className="ml-2 size-4" />
+              التحويلات
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {!hasCurrencies && <FundCurrencyEmptyState onAddCurrency={onAttachCurrency} />}
 
-        {hasCurrencies && <TabsContent value="revenues" className="space-y-5">
-          <div className="flex items-center justify-between">
+        {hasCurrencies && <TabsContent value="revenues" className="min-w-0 space-y-4 sm:space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h4 className="text-sm font-medium text-foreground">جدول الإيرادات</h4>
             <Button
               size="sm"
+              className="w-full sm:w-auto"
               onClick={() => {
                 setSelectedRevenue(null);
                 setRevenueDialogOpen(true);
@@ -338,15 +387,15 @@ export function GenericFundDetails({
           />
         </TabsContent>}
 
-        {hasCurrencies && <TabsContent value="expenses" className="space-y-5">
-          <div className="flex items-center justify-between">
+        {hasCurrencies && <TabsContent value="expenses" className="min-w-0 space-y-4 sm:space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-semibold text-foreground">مصروفات الصندوق</h3>
             <Button
               onClick={() => {
                 setSelectedExpense(null);
                 setExpenseDialogOpen(true);
               }}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
             >
               <PlusCircle className="mr-2 size-4" />
               إضافة مصروف
@@ -385,12 +434,9 @@ export function GenericFundDetails({
           />
         </TabsContent>}
 
-        {hasCurrencies && <TabsContent value="invoices" className="space-y-5">
+        {hasCurrencies && <TabsContent value="invoices" className="min-w-0 space-y-4 sm:space-y-5">
           <div>
             <h3 className="text-lg font-semibold text-foreground">فواتير الصندوق</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              تُنشأ الفاتورة من إجراء الفاتورة داخل جدول المصروفات، وتظهر هنا بعد ربطها بالصندوق.
-            </p>
           </div>
           {expenseFilterId && (
             <div className="flex flex-col gap-3 rounded-lg bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -405,6 +451,7 @@ export function GenericFundDetails({
                 type="button"
                 size="sm"
                 variant="ghost"
+                className="w-auto self-end sm:self-auto"
                 onClick={() => {
                   setSearchParams((previous) => {
                     previous.delete('expenseId');
@@ -429,9 +476,29 @@ export function GenericFundDetails({
             />
           </div>
         </TabsContent>}
-        {hasCurrencies && <TabsContent value="returns" className="space-y-5"><div className="flex items-center justify-between"><div><h3 className="text-lg font-semibold">مرتجعات الصندوق</h3><p className="mt-1 text-sm text-muted-foreground">المبالغ والمواد المعادة إلى الصندوق.</p></div><Button size="sm" onClick={() => { setSelectedReInvoice(null); setReInvoiceDialogOpen(true); }}><Undo2 className="size-4" />إنشاء مرتجع</Button></div><ReInvoicesTable data={reInvoicesQuery.data?.data ?? []} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending} onView={(row) => { setSelectedReInvoice(row); setReInvoiceItemsId(row.id); }} onEdit={(row) => { setSelectedReInvoice(row); setReInvoiceDialogOpen(true); }} onDelete={async (row) => { await deleteReInvoice.mutateAsync(row.id); }} /></TabsContent>}
+        {hasCurrencies && <TabsContent value="returns" className="min-w-0 space-y-4 sm:space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div>
+            <h3 className="text-lg font-semibold">مرتجعات الصندوق</h3>
+          </div>
+            <Button size="sm" className="w-full sm:w-auto" onClick={() => { setSelectedReInvoice(null); setReInvoiceDialogOpen(true); }}>
+              <Undo2 className="size-4" />إنشاء مرتجع</Button>
+          </div>
+          <ReInvoicesTable
+            data={reInvoicesQuery.data?.data ?? []} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending}
+            onView={(row) => {
+              setSelectedReInvoice(row);
+              setReInvoiceItemsId(row.id);
+            }}
+            onEdit={(row) => {
+              setSelectedReInvoice(row);
+              setReInvoiceDialogOpen(true);
+            }}
+            onDelete={async (row) => {
+              await deleteReInvoice.mutateAsync(row.id);
+            }} />
+        </TabsContent>}
 
-        {hasCurrencies && <TabsContent value="transfers" className="space-y-5">
+        {hasCurrencies && <TabsContent value="transfers" className="min-w-0 space-y-4 sm:space-y-5">
           {!canTransfer && (
             <div className="flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 sm:flex-row sm:items-center">
               <AlertTriangle className="size-5 shrink-0 text-warning" />
@@ -439,13 +506,13 @@ export function GenericFundDetails({
                 <p className="text-sm font-semibold text-foreground">رصيد الصندوق غير كافٍ لإجراء تحويل</p>
                 <p className="mt-1 text-xs text-muted-foreground">أضف إيرادًا إلى الصندوق أولًا، وستبقى التحويلات السابقة ظاهرة أدناه.</p>
               </div>
-              <Button type="button" size="sm" onClick={() => { setSelectedRevenue(null); setRevenueDialogOpen(true); }}>
+              <Button type="button" size="sm" className="w-full sm:w-auto" onClick={() => { setSelectedRevenue(null); setRevenueDialogOpen(true); }}>
                 <TrendingUp className="size-4" />
                 إضافة إيراد
               </Button>
             </div>
           )}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
             <Button
               disabled={!canTransfer}
@@ -453,7 +520,7 @@ export function GenericFundDetails({
                 setSelectedTransfer(null);
                 setTransferDialogOpen(true);
               }}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
             >
               <PlusCircle className="mr-2 size-4" />
               إضافة تحويل

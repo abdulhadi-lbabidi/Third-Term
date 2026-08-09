@@ -77,7 +77,7 @@ export function AuditLogsFilterForm({
     <div className="space-y-4">
       <div className="space-y-1.5">
         <Label>نوع العملية</Label>
-        <Select value={actionType} onValueChange={setActionType}>
+        <Select value={actionType} onValueChange={(val) => setActionType(val ?? 'all')}>
           <SelectTrigger className="h-10">
             <SelectValue placeholder="اختر نوع العملية" />
           </SelectTrigger>
@@ -92,7 +92,7 @@ export function AuditLogsFilterForm({
 
       <div className="space-y-1.5">
         <Label>الجدول المتأثر</Label>
-        <Select value={affectedTable} onValueChange={setAffectedTable}>
+        <Select value={affectedTable} onValueChange={(val) => setAffectedTable(val ?? 'all')}>
           <SelectTrigger className="h-10">
             <SelectValue placeholder="الجدول المتأثر">
               {affectedTable === 'all' ? 'كل الجداول' : (affectedTablesList.find(t => t.value === affectedTable)?.label)}

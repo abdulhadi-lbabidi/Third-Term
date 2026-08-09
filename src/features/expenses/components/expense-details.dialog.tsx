@@ -334,12 +334,12 @@ export function ExpenseDetailsDialog({ open, onOpenChange, expenseId }: ExpenseD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-3 p-4 !max-w-5xl overflow-x-hidden" dir="rtl">
-        <DialogHeader className="pb-2.5">
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col gap-3 overflow-hidden p-3 !max-w-5xl sm:max-h-[90dvh] sm:p-4" dir="rtl">
+        <DialogHeader className="shrink-0 pb-2.5">
           <DialogTitle>تفاصيل المصروف</DialogTitle>
         </DialogHeader>
 
-        <div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-1">
           {expenseQuery.isLoading ? (
             <div className="space-y-2.5">
               <Skeleton className="h-20 w-full rounded-lg" />
@@ -357,8 +357,8 @@ export function ExpenseDetailsDialog({ open, onOpenChange, expenseId }: ExpenseD
           ) : null}
         </div>
 
-        <DialogFooter className="pt-1">
-          <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="shrink-0 border-t border-border pt-3">
+          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
             إغلاق
           </Button>
         </DialogFooter>

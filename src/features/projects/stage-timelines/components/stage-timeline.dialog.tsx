@@ -22,7 +22,7 @@ export function StageTimelineDialog({
 }: StageTimelineDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto p-4 sm:max-h-[90dvh] sm:max-w-[600px] sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold mb-4">
             {timeline ? 'تعديل التفصيل الزمني' : 'إضافة تفصيل زمني جديد'}

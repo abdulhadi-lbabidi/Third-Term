@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { UsersTable } from './components/users.table';
 import { usersApi, type UsersRoleResponse } from './api/users.api';
 import type {
@@ -17,7 +18,7 @@ import type {
   UserRole,
 } from './types';
 import { PageHeader } from '../components/page-header';
-import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users, Search, RotateCcw } from 'lucide-react';
+import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users, Search, RotateCcw, Plus } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
@@ -58,7 +59,7 @@ function UsersTableSkeleton() {
         </div>
         <div className="space-y-3 p-4">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="grid grid-cols-6 gap-3 rounded-md border border-border p-3">
+            <div key={index} className="grid grid-cols-2 gap-3 rounded-md border border-border p-3 sm:grid-cols-4 lg:grid-cols-6">
               <div className="h-4 animate-pulse rounded bg-muted" />
               <div className="h-4 animate-pulse rounded bg-muted" />
               <div className="h-4 animate-pulse rounded bg-muted" />
@@ -141,24 +142,24 @@ export function UsersPage() {
 
   const columns = useMemo(
     () => [
-      { header: 'الاسم', sortable: true, sortKey: 'user_name', cell: (row: UsersTabRecord) => row.user.name },
-      { header: 'البريد الإلكتروني', cell: (row: UsersTabRecord) => row.user.email },
-      { header: 'الهاتف', cell: (row: UsersTabRecord) => row.user.phone_number },
-      { header: 'العنوان', cell: (row: UsersTabRecord) => row.user.address },
+      { header: 'الاسم', sortable: true, sortKey: 'user_name', className: 'min-w-40', cell: (row: UsersTabRecord) => <span className="block max-w-52 truncate font-medium">{row.user.name}</span> },
+      { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-start">{row.user.email}</span> },
+      { header: 'الهاتف', className: 'min-w-36', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
+      { header: 'العنوان', className: 'min-w-52 max-w-64', cell: (row: UsersTabRecord) => <span className="block max-w-64 truncate">{row.user.address || '-'}</span> },
       activeRole === 'investor'
-        ? { header: 'نسبة الاستثمار', cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-') }
+        ? { header: 'نسبة الاستثمار', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-') }
         : null,
       activeRole === 'employee'
-        ? { header: 'المسمى الوظيفي', cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-') }
+        ? { header: 'المسمى الوظيفي', className: 'min-w-40', cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-') }
         : null,
       activeRole === 'engineer'
-        ? { header: 'المسمى الوظيفي', cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-') }
+        ? { header: 'المسمى الوظيفي', className: 'min-w-40', cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-') }
         : null,
       activeRole === 'engineer'
-        ? { header: 'الراتب الأساسي', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
+        ? { header: 'الراتب الأساسي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
         : null,
 
-      { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
+      { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', className: 'min-w-32', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
     ],
     [activeRole]
   );
@@ -170,7 +171,7 @@ export function UsersPage() {
   const currentPage = meta?.current_page ?? page;
 
   return (
-    <div className="flex flex-col flex-1 space-y-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
       <PageHeader
         badge="المستخدمون"
         title="المستخدمون"
@@ -178,26 +179,27 @@ export function UsersPage() {
         tabs={USER_TABS}
         defaultTab={activeRole}
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative w-64 md:w-80">
+          <form
+            className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSearchSubmit();
+            }}
+          >
+            <div className="relative w-full sm:min-w-72 sm:flex-1 lg:w-80">
               <button
-                type="button"
-                onClick={handleSearchSubmit}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground inline-flex items-center justify-center p-0 border-none bg-transparent cursor-pointer"
+                type="submit"
+                aria-label="بحث"
+                className="absolute end-1 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Search className="size-4" />
               </button>
-              <input
-                type="text"
+              <Input
+                type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearchSubmit();
-                  }
-                }}
                 placeholder="ابحث بالاسم، البريد الإلكتروني، أو رقم الهاتف..."
-                className="w-full bg-card border border-input rounded-md pl-9 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring transition-all"
+                className="h-10 pe-11"
               />
             </div>
             {(searchQuery || sort) && (
@@ -205,15 +207,22 @@ export function UsersPage() {
                 type="button"
                 variant="outline"
                 onClick={handleReset}
-                className="!p-2 !py-1 !h-8"
+                size="icon"
+                aria-label="إعادة ضبط البحث والترتيب"
+                title="إعادة ضبط البحث والترتيب"
               >
                 <RotateCcw className="size-4" />
               </Button>
             )}
-            <Button>
-              <Link to={`/users/new${activeRole ? `?tab=${activeRole}` : ''}`}>إضافة مستخدم</Link>
+            <Button
+              type="button"
+              className="min-w-0 flex-1 sm:flex-none"
+              onClick={() => navigate(`/users/new${activeRole ? `?tab=${activeRole}` : ''}`)}
+            >
+              <Plus className="size-4" />
+              إضافة مستخدم
             </Button>
-          </div>
+          </form>
         }
       />
 

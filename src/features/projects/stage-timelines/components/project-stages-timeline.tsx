@@ -80,21 +80,21 @@ export function ProjectStagesTimeline({
   const selectedStage = stages.find((s) => s.id === selectedStageId);
 
   return (
-    <div className="flex flex-col space-y-6 p-6">
+    <div className="flex min-w-0 flex-col space-y-4 p-0 sm:space-y-6 sm:p-4 lg:p-6">
       {/* Horizontal Timeline */}
-      <div className="relative group px-4">
+      <div className="group relative min-w-0 sm:px-4">
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-8 z-20 size-8 bg-card border border-border shadow-md rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all opacity-0 group-hover:opacity-100 translate-x-1/2"
+          className="absolute right-0 top-8 z-20 hidden size-8 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-md transition-all hover:bg-muted/50 hover:text-foreground group-hover:opacity-100 sm:flex"
         >
           <ChevronRight className="size-5" />
         </button>
 
         <div
           ref={scrollContainerRef}
-          className="relative w-full overflow-x-auto mx-auto scrollbar-none"
+          className="scrollbar-none relative mx-auto w-full touch-pan-x overflow-x-auto"
         >
-          <div className="flex items-center justify-center min-w-max p-4  relative">
+          <div className="relative flex min-w-max items-center justify-start p-2 sm:justify-center sm:p-4">
             {stages.map((stage, index) => {
               const config = statusConfig[stage.status as string] || statusConfig.pending;
               const Icon = config.icon;
@@ -147,7 +147,7 @@ export function ProjectStagesTimeline({
 
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-8 z-20 size-8 bg-card border border-border shadow-md rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all opacity-0 group-hover:opacity-100 -translate-x-1/2"
+          className="absolute left-0 top-8 z-20 hidden size-8 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-md transition-all hover:bg-muted/50 hover:text-foreground group-hover:opacity-100 sm:flex"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -159,16 +159,16 @@ export function ProjectStagesTimeline({
         const timelines = selectedStage.timelines ?? [];
 
         return (
-          <div className="bg-card border border-border rounded-xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
-              <div>
+          <div className="min-w-0 animate-in rounded-xl border border-border bg-card p-3 shadow-sm fade-in slide-in-from-bottom-4 duration-500 sm:p-5 lg:p-6">
+            <div className="mb-5 flex min-w-0 flex-col justify-between gap-4 md:flex-row md:items-start lg:mb-8 lg:gap-6">
+              <div className="min-w-0">
                 <div className="flex items-center gap-3 mb-2">
                   <div className={cn('size-10 rounded-full flex items-center justify-center shadow-sm', config.bg, config.color)}>
                     <config.icon className="size-5" />
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <h3 className="text-2xl font-bold text-foreground">{selectedStage.name}</h3>
+                <div className="flex min-w-0 items-start justify-between gap-2 sm:justify-start sm:gap-4">
+                  <h3 className="min-w-0 break-words text-xl font-bold text-foreground sm:text-2xl">{selectedStage.name}</h3>
                   <div className="flex items-center gap-1">
                     {onEditStage && (
                       <Button variant="ghost" size="icon" onClick={() => onEditStage(selectedStage)} className="size-8 text-muted-foreground hover:text-primary" title="تعديل المرحلة">
@@ -182,19 +182,19 @@ export function ProjectStagesTimeline({
                     )}
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-5">
-                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg border border-border shadow-sm">
+                <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:flex sm:flex-wrap sm:items-center sm:gap-4 lg:mt-5">
+                  <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 shadow-sm">
                     <Calendar className="size-4 text-muted-foreground" />
                     <span>البدء: <strong className="text-foreground">{formatArabicDate(selectedStage.start_date)}</strong></span>
                   </div>
-                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg border border-border shadow-sm">
+                  <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 shadow-sm">
                     <Clock className="size-4 text-muted-foreground" />
                     <span>المتوقع: <strong className="text-foreground">{formatArabicDate(selectedStage.expected_end_date)}</strong></span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-5 min-w-[220px] bg-muted/50 p-4 rounded-xl border border-border shadow-sm">
+              <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-muted/50 p-3 shadow-sm md:w-auto md:min-w-[220px] md:gap-5 md:p-4">
                 <div>
                   <span className="block text-sm font-semibold text-muted-foreground mb-1">نسبة الإنجاز</span>
                   <span className="block text-xs text-muted-foreground">للمرحلة الحالية</span>
@@ -217,15 +217,16 @@ export function ProjectStagesTimeline({
             </div>
 
             {/* Sub Timelines */}
-            <div className="pt-8 border-t border-border">
+            <div className="border-t border-border pt-5 lg:pt-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h4 className="text-lg font-bold text-foreground">التحديثات الزمنية</h4>
                   <p className="text-sm text-muted-foreground mt-1">سجل التحديثات والمهام الفرعية لهذه المرحلة</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center bg-muted/50 border border-border p-1 rounded-lg">
+                <div className="flex min-w-0 flex-col gap-2 sm:items-stretch lg:flex-row lg:items-center lg:gap-3">
+                  <div className="max-w-full overflow-x-auto pb-1">
+                  <div className="flex w-max items-center rounded-lg border border-border bg-muted/50 p-1">
                     <button
                       onClick={() => setFilterStatus('all')}
                       className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors", filterStatus === 'all' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
@@ -242,9 +243,9 @@ export function ProjectStagesTimeline({
                         {key === 'pending' ? 'بالانتظار' : key === 'in_progress' ? 'قيد التنفيذ' : key === 'completed' ? 'مكتمل' : 'ملغى'}
                       </button>
                     ))}
-                  </div>
+                  </div></div>
                   {canManage && (
-                    <Button onClick={() => onAddTimeline(selectedStage)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm">
+                    <Button onClick={() => onAddTimeline(selectedStage)} className="w-full gap-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 lg:w-auto">
                       <Plus className="size-4" />
                       إضافة تحديث
                     </Button>
@@ -276,14 +277,14 @@ export function ProjectStagesTimeline({
                           key={tl.id}
                           onClick={() => canManage && onEditTimeline(tl, selectedStage)}
                           className={cn(
-                            "p-4 rounded-xl border border-border bg-card shadow-sm transition-all relative overflow-hidden flex items-center justify-between gap-4",
+                            "relative flex min-w-0 flex-col items-stretch justify-between gap-3 overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm transition-all sm:flex-row sm:items-center sm:gap-4 sm:p-4",
                             canManage ? "hover:shadow-md hover:border-primary/30 cursor-pointer" : "cursor-default"
                           )}
                         >
                           {/* Status color indicator bar */}
                           <div className={cn("absolute top-0 right-0 w-1 h-full opacity-70", tlConfig.bg.replace('100', '400').replace('50', '400'))} />
 
-                          <div className="flex items-center gap-4 pr-2">
+                          <div className="flex min-w-0 items-center gap-3 pr-2 sm:gap-4">
                             {/* Progress Circle */}
                             <div className="relative flex items-center justify-center size-12 shrink-0">
                               <svg className="transform -rotate-90 size-12" viewBox="0 0 48 48">
@@ -301,7 +302,7 @@ export function ProjectStagesTimeline({
                             </div>
 
                             {/* Details */}
-                            <div className="flex flex-col gap-1.5">
+                            <div className="min-w-0 flex flex-col gap-1.5">
                               <span className="font-semibold text-foreground line-clamp-1">{tl.stage_name}</span>
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <Calendar className="size-3.5 opacity-70" />
@@ -311,7 +312,7 @@ export function ProjectStagesTimeline({
                           </div>
 
                           {/* Status */}
-                          <div className="shrink-0 pl-1">
+                          <div className="shrink-0 self-end pl-1 sm:self-auto">
                             <span className={cn('px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap', tlConfig.bg, tlConfig.color)}>
                               {tl.status === 'pending' ? 'بالانتظار' : tl.status === 'in_progress' ? 'قيد التنفيذ' : tl.status === 'completed' ? 'مكتمل' : 'ملغى'}
                             </span>

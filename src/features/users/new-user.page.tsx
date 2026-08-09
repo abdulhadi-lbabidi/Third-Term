@@ -235,9 +235,9 @@ export function NewUserPage() {
 
   if (!editMode) {
     return (
-      <Card className="overflow-hidden">
-        <CardHeader className="px-6">
-          <div className="flex items-center justify-between gap-4">
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
                 إضافة مستخدم
@@ -247,26 +247,27 @@ export function NewUserPage() {
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
             >
               رجوع
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="px-6 pb-3 pt-1">
+        <CardContent className="px-4 pb-4 pt-1 sm:px-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الاسم</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>كلمة المرور</FormLabel><FormControl><Input {...field} type="password" className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 sm:col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
 
               <FormField control={form.control} name="role" render={({ field }) => (
-                <FormItem className="md:col-span-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                <FormItem className="rounded-lg border border-border bg-muted/40 p-3.5 sm:col-span-2 lg:col-span-3">
                   <FormLabel className="mb-3 block">نوع المستخدم</FormLabel>
                   <FormControl>
-                    <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-8">
+                    <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                       {userRoles.map((item) => (
                         <RadioGroupItem key={item} value={item}>
                           {userRoleLabels[item]}
@@ -280,15 +281,16 @@ export function NewUserPage() {
               {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-              <div className="md:col-span-3 flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end lg:col-span-3">
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
                 >
                   إلغاء
                 </Button>
-                <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ المستخدم'}</Button>
+                <Button type="submit" className="w-full sm:w-auto" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ المستخدم'}</Button>
               </div>
             </form>
           </Form>
@@ -320,7 +322,7 @@ export function NewUserPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-4 sm:space-y-5">
       <PageHeader
         badge={userRoleLabels[activeRole] || 'المستخدم'}
         icon={User}
@@ -331,6 +333,7 @@ export function NewUserPage() {
           <Button
             type="button"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
           >
             رجوع
@@ -338,12 +341,12 @@ export function NewUserPage() {
         }
       />
 
-      <div className="surface-panel p-4 sm:p-5">
+      <div className="surface-panel min-w-0 overflow-hidden p-3 sm:p-5">
         {activeTab === 'details' && (
           <div>
             {!isEditingMode ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <User className="size-6" />
@@ -353,18 +356,18 @@ export function NewUserPage() {
                       <p className="text-xs text-muted-foreground">{userRoleLabels[activeRole]}</p>
                     </div>
                   </div>
-                  <Button type="button" onClick={() => setIsEditingMode(true)} className="gap-2">
+                  <Button type="button" onClick={() => setIsEditingMode(true)} className="w-full gap-2 sm:w-auto">
                     <Pencil className="size-4" />
                     تعديل البيانات
                   </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
                     <Mail className="mt-0.5 size-4 text-muted-foreground shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userEmail || '-'}</p>
+                      <p dir="ltr" className="mt-0.5 break-all text-start text-sm font-medium text-foreground">{userEmail || '-'}</p>
                     </div>
                   </div>
 
@@ -372,7 +375,7 @@ export function NewUserPage() {
                     <Phone className="mt-0.5 size-4 text-muted-foreground shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted-foreground">رقم الهاتف</p>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userPhone || '-'}</p>
+                      <p dir="ltr" className="mt-0.5 break-all text-start text-sm font-medium text-foreground">{userPhone || '-'}</p>
                     </div>
                   </div>
 
@@ -380,7 +383,7 @@ export function NewUserPage() {
                     <MapPin className="mt-0.5 size-4 text-muted-foreground shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted-foreground">العنوان</p>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userAddress || '-'}</p>
+                      <p className="mt-0.5 break-words text-sm font-medium text-foreground">{userAddress || '-'}</p>
                     </div>
                   </div>
 
@@ -421,23 +424,24 @@ export function NewUserPage() {
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الاسم</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 md:col-span-3"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 sm:col-span-2 lg:col-span-3"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
                   {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
                   {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
                   {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-                  <div className="md:col-span-3 flex justify-end gap-3 pt-2">
+                  <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end lg:col-span-3">
                     <Button
                       type="button"
                       variant="outline"
+                      className="w-full sm:w-auto"
                       onClick={() => setIsEditingMode(false)}
                     >
                       إلغاء التعديل
                     </Button>
-                    <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ التعديلات'}</Button>
+                    <Button type="submit" className="w-full sm:w-auto" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ التعديلات'}</Button>
                   </div>
                 </form>
               </Form>

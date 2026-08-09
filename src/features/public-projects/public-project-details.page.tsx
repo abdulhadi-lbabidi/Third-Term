@@ -357,7 +357,6 @@ export function PublicProjectDetailsPage() {
                 {activeSubTab === 'team' && (
                   <ProjectTeamTab
                     projectId={Number(projectId)}
-                    userRole={currentUser?.role_type}
                   />
                 )}
               </div>

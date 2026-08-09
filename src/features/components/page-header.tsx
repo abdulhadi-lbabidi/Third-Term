@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cn } from "@/shared/lib/utils";
 
@@ -44,6 +44,10 @@ export function PageHeader({
   boxed = true,
 }: PageHeaderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef({ x: 0, scrollLeft: 0 });
+  const isDraggingRef = useRef(false);
+  const dragMovedRef = useRef(false);
 
   const rawTab = searchParams.get(tabParam);
   const isValidTab = tabs?.some((t) => t.value === rawTab);
@@ -60,6 +64,27 @@ export function PageHeader({
     });
   }
 
+  function handleTabsPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    dragMovedRef.current = false;
+    if (event.button !== 0 || event.pointerType !== 'mouse') return;
+    isDraggingRef.current = true;
+    dragStartRef.current = {
+      x: event.clientX,
+      scrollLeft: event.currentTarget.scrollLeft,
+    };
+  }
+
+  function handleTabsPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!isDraggingRef.current) return;
+    const distance = event.clientX - dragStartRef.current.x;
+    if (Math.abs(distance) > 8) dragMovedRef.current = true;
+    event.currentTarget.scrollLeft = dragStartRef.current.scrollLeft - distance;
+  }
+
+  function handleTabsPointerEnd() {
+    isDraggingRef.current = false;
+  }
+
   const hasTabs = tabs && tabs.length > 0;
 
   return (
@@ -72,11 +97,11 @@ export function PageHeader({
     >
       <div
         className={cn(
-          "flex flex-col gap-4 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-5",
+          "flex flex-col gap-4 px-4 py-3 sm:px-5 lg:flex-row lg:items-center",
           hasTabs && "pb-3"
         )}
       >
-        <div className="flex min-w-0 items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3 lg:flex-1">
           {Icon ? (
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-primary">
               <Icon className="size-5" />
@@ -96,11 +121,11 @@ export function PageHeader({
             ) : null}
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-4">
+        <div className="flex min-w-0 w-full flex-col gap-3 lg:ms-auto lg:w-auto lg:shrink-0 lg:flex-row lg:items-center lg:justify-end">
           {stats?.length ? (
-            <div className="flex flex-wrap items-center divide-x divide-border">
+            <div className="flex max-w-full items-center overflow-x-auto divide-x divide-border pb-1 lg:pb-0">
               {stats.map((stat) => (
-                <div key={stat.label} className="flex items-center gap-2 px-3 first:pr-0 last:pl-0">
+                <div key={stat.label} className="flex shrink-0 items-center gap-2 px-3 first:ps-0 last:pe-0">
                   {stat.icon ? <span className="text-muted-foreground">{stat.icon}</span> : null}
                   <div className="leading-tight">
                     <div className="text-[11px] text-muted-foreground">{stat.label}</div>
@@ -110,19 +135,37 @@ export function PageHeader({
               ))}
             </div>
           ) : null}
-          {action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : null}
+          {action ? (
+            <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:flex-nowrap">
+              {action}
+            </div>
+          ) : null}
         </div>
       </div>
 
       {hasTabs && activeTab ? (
-        <div className="flex items-end gap-1 overflow-x-auto border-t border-border px-3 sm:px-5">
+        <div
+          ref={tabsScrollRef}
+          className="flex max-w-full cursor-grab touch-pan-x select-none items-end gap-1 overflow-x-auto border-t border-border px-3 active:cursor-grabbing sm:px-5"
+          onPointerDown={handleTabsPointerDown}
+          onPointerMove={handleTabsPointerMove}
+          onPointerUp={handleTabsPointerEnd}
+          onPointerCancel={handleTabsPointerEnd}
+          onPointerLeave={handleTabsPointerEnd}
+        >
           {tabs!.map((tab) => {
             const isActive = activeTab === tab.value;
             return (
               <button
                 key={tab.value}
                 type="button"
-                onClick={() => handleTabChange(tab.value)}
+                onClick={(event) => {
+                  if (dragMovedRef.current) {
+                    event.preventDefault();
+                    return;
+                  }
+                  handleTabChange(tab.value);
+                }}
                 className={cn(
                   "relative my-1 flex shrink-0 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",

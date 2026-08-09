@@ -184,9 +184,9 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="min-w-0 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold text-foreground">مراحل المشروع</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             إدارة وتتبع المراحل المرتبطة بهذا المشروع ({stagesWithTimelines.length} مرحلة)
@@ -197,7 +197,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
           <Button
             type="button"
             onClick={handleAddStage}
-
+            className="w-full sm:w-auto"
           >
             <Plus className="size-4" />
             إضافة مرحلة
@@ -205,7 +205,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
         </div>
       </div>
 
-      <div className="bg-white min-h-[400px]">
+      <div className="min-w-0 bg-white sm:min-h-[400px]">
         <ProjectStagesTimeline
           stages={stagesWithTimelines}
           selectedStageId={selectedStageId}

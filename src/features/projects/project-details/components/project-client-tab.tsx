@@ -53,20 +53,20 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
   const currentStatus = projectStatusMap[project.status] || projectStatusMap.pending;
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="min-w-0 space-y-4 sm:space-y-5">
+      <div className="min-w-0">
         <h2 className="text-lg font-semibold text-foreground">العميل والتعاقد</h2>
         <p className="mt-1 text-sm text-muted-foreground">البيانات الخاصة بالعميل وتفاصيل التعاقد للمشروع</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-5 rounded-lg border border-border bg-card p-5 shadow-[var(--shadow-finance)]">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-md border border-border bg-muted text-primary">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:gap-4">
+        <div className="flex min-w-0 flex-col gap-4 rounded-lg border border-border bg-card p-3.5 shadow-[var(--shadow-finance)] sm:gap-5 sm:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-primary sm:size-11">
               <User className="size-5" />
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-foreground">
+            <div className="min-w-0">
+              <h3 className="break-words text-base font-semibold text-foreground">
                 {project.client?.user?.name || 'اسم العميل غير متوفر'}
               </h3>
               <span className="status-badge-neutral mt-1">عميل مشروع</span>
@@ -74,12 +74,12 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+            <div className="flex min-w-0 items-center gap-3 text-muted-foreground">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
                 <Phone className="size-4" />
               </div>
               {project.client?.user?.phone_number ? (
-                <a href={`tel:${project.client.user.phone_number}`} className="text-sm font-medium text-primary hover:underline" dir="ltr">
+                <a href={`tel:${project.client.user.phone_number}`} className="min-w-0 break-all text-start text-sm font-medium text-primary hover:underline" dir="ltr">
                   {project.client.user.phone_number}
                 </a>
               ) : (
@@ -87,12 +87,12 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
               )}
             </div>
 
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+            <div className="flex min-w-0 items-center gap-3 text-muted-foreground">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
                 <Mail className="size-4" />
               </div>
               {project.client?.user?.email ? (
-                <a href={`mailto:${project.client.user.email}`} className="text-sm font-medium text-primary hover:underline">
+                <a href={`mailto:${project.client.user.email}`} className="min-w-0 break-all text-start text-sm font-medium text-primary hover:underline" dir="ltr">
                   {project.client.user.email}
                 </a>
               ) : (
@@ -100,36 +100,36 @@ export function ProjectClientTab({ project }: { project: Project | null }) {
               )}
             </div>
 
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+            <div className="flex min-w-0 items-start gap-3 text-muted-foreground">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
                 <MapPin className="size-4" />
               </div>
-              <span className="text-sm font-medium text-foreground">{project.client?.user?.address || 'غير متوفر'}</span>
+              <span className="min-w-0 break-words text-sm font-medium text-foreground">{project.client?.user?.address || 'غير متوفر'}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 rounded-lg border border-border bg-card p-5 shadow-[var(--shadow-finance)]">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-md border border-border bg-muted text-success">
+        <div className="flex min-w-0 flex-col gap-4 rounded-lg border border-border bg-card p-3.5 shadow-[var(--shadow-finance)] sm:gap-5 sm:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-success sm:size-11">
               <Building2 className="size-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-foreground">تفاصيل التعاقد</h3>
               <p className="mt-1 text-sm text-muted-foreground">البيانات التعاقدية للمشروع</p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="grid gap-1 border-b border-border pb-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
               <span className="text-sm text-muted-foreground">القيمة المتوقعة</span>
-              <span className="finance-num text-base font-semibold text-foreground">
+              <span className="finance-num break-words text-base font-semibold text-foreground sm:text-end">
                 {project.expected_cost?.toLocaleString() || 0} ر.س
               </span>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="grid gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
               <span className="text-sm text-muted-foreground">حالة المشروع</span>
-              <span className={currentStatus.color}>{currentStatus.label}</span>
+              <span className={`${currentStatus.color} w-fit`}>{currentStatus.label}</span>
             </div>
           </div>
         </div>

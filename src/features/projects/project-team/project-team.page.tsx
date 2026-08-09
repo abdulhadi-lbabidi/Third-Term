@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Users } from 'lucide-react';
+import { ArrowRight, UserPlus, Users } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { usersApi } from '@/features/users/api/users.api';
@@ -116,7 +116,7 @@ export function ProjectTeamPage() {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-4 sm:space-y-5">
       <PageHeader
         badge="المشاريع"
         icon={Users}
@@ -127,13 +127,14 @@ export function ProjectTeamPage() {
           )
         }
         action={
-          <div className="flex gap-3">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate(-1)}
-
+              className="min-w-0"
             >
+              <ArrowRight className="size-4" />
               العودة
             </Button>
             <Button
@@ -142,10 +143,10 @@ export function ProjectTeamPage() {
                 setSelectedMember(null);
                 setDialogOpen(true);
               }}
-
+              className="min-w-0"
             >
-              <Users className="size-4" />
-              إضافة عضو جديد
+              <UserPlus className="size-4" />
+              <span className="truncate">إضافة عضو جديد</span>
             </Button>
           </div>
         }

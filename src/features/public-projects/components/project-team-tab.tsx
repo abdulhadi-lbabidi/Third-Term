@@ -11,10 +11,9 @@ import type { ProjectTeamMember } from '@/features/projects/project-team/project
 
 type ProjectTeamTabProps = {
   projectId: number;
-  userRole?: string;
 };
 
-export function ProjectTeamTab({ projectId, userRole }: ProjectTeamTabProps) {
+export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   const queryClient = useQueryClient();
   const canManage = false;
   const [dialogOpen, setDialogOpen] = useState(false);

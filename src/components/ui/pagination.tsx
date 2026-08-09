@@ -117,7 +117,7 @@ function PaginationEllipsis({
       aria-hidden
       data-slot="pagination-ellipsis"
       className={cn(
-        "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
+        "flex size-7 items-center justify-center sm:size-8 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -176,9 +176,9 @@ function SimplePagination({
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="sticky bottom-0 z-10 mt-auto flex flex-col items-center justify-between gap-4 rounded-lg border border-border bg-card/95 p-4 shadow-sm backdrop-blur sm:flex-row">
+    <div className="sticky bottom-0 z-10 mt-auto flex items-center justify-center bg-transparent p-0 sm:justify-between sm:gap-4 sm:rounded-lg sm:border sm:border-border sm:bg-card/95 sm:p-4 sm:shadow-sm sm:backdrop-blur">
       {meta ? (
-        <div className="text-xs text-muted-foreground flex items-center gap-3">
+        <div className="hidden max-w-full flex-wrap items-center gap-3 text-xs text-muted-foreground sm:flex">
           <span>
             عرض {meta.from ?? 0} إلى {meta.to ?? 0} من إجمالي {meta.total ?? 0} عنصر
           </span>
@@ -207,8 +207,8 @@ function SimplePagination({
         <div />
       )}
 
-      <Pagination className="mx-0 w-auto">
-        <PaginationContent>
+      <Pagination className="mx-0 w-auto max-w-full overflow-x-auto">
+        <PaginationContent className="gap-0">
           <PaginationItem>
             <PaginationPrevious
               text="السابق"
@@ -216,12 +216,12 @@ function SimplePagination({
                 e.preventDefault();
                 if (currentPage > 1) onPageChange(currentPage - 1);
               }}
-              className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              className={cn('size-8 p-0! sm:h-10 sm:w-auto sm:px-4!', currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
             />
           </PaginationItem>
 
           {pageNumbers.map((p, idx) => (
-            <PaginationItem key={idx}>
+            <PaginationItem key={idx} className={p === currentPage ? undefined : 'hidden sm:block'}>
               {p === 'ellipsis' ? (
                 <PaginationEllipsis />
               ) : (
@@ -231,7 +231,7 @@ function SimplePagination({
                     e.preventDefault();
                     onPageChange(p);
                   }}
-                  className="cursor-pointer"
+                  className="size-8 cursor-pointer sm:size-10"
                 >
                   {p}
                 </PaginationLink>
@@ -246,7 +246,7 @@ function SimplePagination({
                 e.preventDefault();
                 if (currentPage < totalPages) onPageChange(currentPage + 1);
               }}
-              className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              className={cn('size-8 p-0! sm:h-10 sm:w-auto sm:px-4!', currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
             />
           </PaginationItem>
         </PaginationContent>

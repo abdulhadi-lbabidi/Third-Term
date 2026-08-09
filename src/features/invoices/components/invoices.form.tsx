@@ -263,7 +263,7 @@ export function InvoicesForm({
             />
           )}
 
-          <FormField
+          {!fixedValues?.expense_id && <FormField
             control={form.control as any}
             name="expense_id"
             render={({ field }) => (
@@ -292,7 +292,7 @@ export function InvoicesForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          />}
 
           {!fixedValues?.supplier_id && (
             <FormField

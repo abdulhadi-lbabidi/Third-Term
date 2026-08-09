@@ -31,6 +31,7 @@ import {
   History,
   ArrowLeftRight,
   Undo2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -39,6 +40,8 @@ import { NotificationsDropdown } from './notifications-dropdown';
 
 type SidebarProps = {
   onLogout: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 };
 
 type NavItem = {
@@ -111,7 +114,7 @@ const navGroups: NavGroup[] = [
 
 
 
-function NavGroupComponent({ group, collapsed }: { group: NavGroup; collapsed: boolean }) {
+function NavGroupComponent({ group, collapsed, onNavigate }: { group: NavGroup; collapsed: boolean; onNavigate?: () => void }) {
   const storageKey = `sidebar-group-${group.label}`;
   const [expanded, setExpanded] = useState(() => {
     const saved = localStorage.getItem(storageKey);
@@ -137,6 +140,7 @@ function NavGroupComponent({ group, collapsed }: { group: NavGroup; collapsed: b
               <NavLink
                 key={item.to}
                 to={item.to}
+                onClick={onNavigate}
                 title={item.label}
                 className={({ isActive }) =>
                   cn(
@@ -184,6 +188,7 @@ function NavGroupComponent({ group, collapsed }: { group: NavGroup; collapsed: b
               <NavLink
                 key={item.to}
                 to={item.to}
+                onClick={onNavigate}
                 title={item.label}
                 className={({ isActive }) =>
                   cn(
@@ -212,7 +217,7 @@ function NavGroupComponent({ group, collapsed }: { group: NavGroup; collapsed: b
   );
 }
 
-export function Sidebar({ onLogout }: SidebarProps) {
+export function Sidebar({ onLogout, mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved !== null ? saved === 'true' : false;
@@ -242,22 +247,34 @@ export function Sidebar({ onLogout }: SidebarProps) {
   const userDisplayName = currentUser?.name || 'سامر كمال الدسوقي';
   const userEmail = currentUser?.email || 'admin_1@example.com';
   const userRoleName = currentUser?.role_type === 'user' ? 'مستخدم' : currentUser?.role_type || 'Admin';
+  const displayCollapsed = collapsed && !mobileOpen;
 
   return (
+    <>
+    <button
+      type="button"
+      aria-label="إغلاق القائمة الجانبية"
+      onClick={onMobileClose}
+      className={cn(
+        'fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden',
+        mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+      )}
+    />
     <aside
       className={cn(
-        'flex h-screen flex-col border-e border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300',
-        collapsed ? 'w-[76px]' : 'w-[248px]'
+        'fixed inset-y-0 right-0 z-50 flex h-dvh w-[min(86vw,288px)] flex-col border-e border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-300 md:relative md:z-auto md:h-screen md:translate-x-0 md:shadow-none md:transition-[width]',
+        mobileOpen ? 'translate-x-0' : 'translate-x-full',
+        displayCollapsed ? 'md:w-[76px]' : 'md:w-[248px]'
       )}
     >
       <div className="border-b border-sidebar-border px-3 py-3 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/15 text-xs font-bold text-sidebar-primary
-               ${collapsed && "!hidden"}`}>
+               ${displayCollapsed && "!hidden"}`}>
               ن
             </span>
-            {!collapsed ? (
+            {!displayCollapsed ? (
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">نوح المالية</p>
                 <p className="truncate text-[11px] text-sidebar-foreground/55">نظام محاسبة وإدارة</p>
@@ -266,6 +283,9 @@ export function Sidebar({ onLogout }: SidebarProps) {
           </div>
 
           <NotificationsDropdown />
+          <Button type="button" variant="ghost" size="icon-sm" className="md:hidden" onClick={onMobileClose} aria-label="إغلاق القائمة">
+            <X className="size-4" />
+          </Button>
         </div>
 
       </div>
@@ -273,31 +293,31 @@ export function Sidebar({ onLogout }: SidebarProps) {
       <div className={cn(
         'flex-1 overflow-y-auto py-2',
         '[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border/80 hover:[&::-webkit-scrollbar-thumb]:bg-sidebar-foreground/20 transition-colors',
-        collapsed ? 'px-2' : 'px-2.5'
+        displayCollapsed ? 'px-2' : 'px-2.5'
       )}>
         <nav className="space-y-1">
           {navGroups.map((group) => (
-            <NavGroupComponent key={group.label} group={group} collapsed={collapsed} />
+            <NavGroupComponent key={group.label} group={group} collapsed={displayCollapsed} onNavigate={onMobileClose} />
           ))}
         </nav>
       </div>
 
       <div className="border-t border-sidebar-border p-3">
-        <div className={cn('flex items-center gap-2', collapsed && 'flex-col')}>
+        <div className={cn('flex items-center gap-2', displayCollapsed && 'flex-col')}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={cn(
                   'flex h-auto w-full items-center rounded-md p-2 text-start transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground outline-none',
-                  collapsed ? 'justify-center' : 'gap-3'
+                  displayCollapsed ? 'justify-center' : 'gap-3'
                 )}
               >
                 <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
                   <User className="size-4" />
                   <span className="absolute bottom-0 end-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
                 </div>
-                {!collapsed && (
+                {!displayCollapsed && (
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">{userDisplayName}</p>
                     <p className="truncate text-[11px] text-sidebar-foreground/60">{userRoleName}</p>
@@ -306,7 +326,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              align={collapsed ? 'center' : 'end'}
+              align={displayCollapsed ? 'center' : 'end'}
               side="top"
               className="mb-2 w-56 border-sidebar-border bg-sidebar text-sidebar-foreground shadow-md"
             >
@@ -330,7 +350,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
             onClick={toggleSidebar}
             variant="outline"
             size="sm"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:flex"
             aria-label={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
             title={collapsed ? 'فتح الشريط الجانبي' : 'إغلاق الشريط الجانبي'}
           >
@@ -339,5 +359,6 @@ export function Sidebar({ onLogout }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

@@ -23,8 +23,8 @@ export function ProjectTeamDialog({
 }: ProjectTeamDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto p-4 sm:max-h-[90dvh] sm:max-w-xl sm:p-6">
+        <DialogHeader className="pe-6">
           <DialogTitle>
             {member ? 'تعديل بيانات العضو' : 'إضافة عضو جديد لفريق المشروع'}
           </DialogTitle>

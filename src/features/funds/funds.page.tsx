@@ -133,7 +133,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   });
 
   return (
-    <div className={cn("space-y-5", isTab && "space-y-0")}>
+    <div className={cn("min-w-0 space-y-5", isTab && "space-y-0")}>
       {!effectiveFundId ? (
         <>
           {!isTab && (
