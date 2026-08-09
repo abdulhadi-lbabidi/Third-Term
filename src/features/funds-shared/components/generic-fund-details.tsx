@@ -112,7 +112,7 @@ export function GenericFundDetails({
     if (!tabsDraggingRef.current) return;
     const distance = event.clientX - tabsDragStartRef.current.x;
     if (Math.abs(distance) > 8) tabsDragMovedRef.current = true;
-    event.currentTarget.scrollLeft = tabsDragStartRef.current.scrollLeft + distance;
+    event.currentTarget.scrollLeft = tabsDragStartRef.current.scrollLeft - distance;
   };
 
   const stopTabsDragging = () => {

@@ -58,14 +58,14 @@ export function CurrenciesPage() {
   const currentPage = meta?.current_page ?? page;
 
   return (
-    <div className="flex flex-col flex-1 space-y-4">
+    <div className="flex min-w-0 flex-1 flex-col space-y-4">
       <PageHeader
         badge="المالية"
         title="العملات"
         icon={Banknote}
         action={
-          <div className="flex items-center gap-2">
-            <div className="relative w-64">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:flex-nowrap">
+            <div className="relative basis-full sm:basis-auto sm:flex-1 lg:w-64 lg:flex-none">
               <button
                 type="button"
                 onClick={handleSearchSubmit}
@@ -83,7 +83,7 @@ export function CurrenciesPage() {
                   }
                 }}
                 placeholder="ابحث باسم العملة أو الرمز..."
-                className="w-full bg-card border border-input rounded-md pl-9 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/25 focus:border-ring transition-all"
+                className="h-10 w-full rounded-md border border-input bg-card py-1.5 pl-9 pr-4 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25 sm:text-xs"
               />
             </div>
             {searchQuery && (
@@ -91,12 +91,16 @@ export function CurrenciesPage() {
                 type="button"
                 variant="outline"
                 onClick={handleReset}
-                className="!p-2 !py-1 !h-8"
+                className="size-10 shrink-0 p-0"
+                aria-label="إعادة ضبط البحث"
+                title="إعادة ضبط البحث"
               >
                 <RotateCcw className="size-4" />
               </Button>
             )}
-            <Button onClick={openCreateDialog}>إضافة عملة جديدة</Button>
+            <Button onClick={openCreateDialog} className="h-10 shrink-0 px-3 sm:px-4">
+              إضافة عملة جديدة
+            </Button>
           </div>
         }
       />

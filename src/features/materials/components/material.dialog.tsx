@@ -14,7 +14,7 @@ type MaterialDialogProps = {
 export function MaterialDialog({ open, onOpenChange, material, onSubmit, loading }: MaterialDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-1rem)] overflow-y-auto p-4 sm:max-w-[520px] sm:p-6">
         <DialogHeader>
           <DialogTitle>{material ? 'تعديل مادة' : 'إضافة مادة جديدة'}</DialogTitle>
         </DialogHeader>

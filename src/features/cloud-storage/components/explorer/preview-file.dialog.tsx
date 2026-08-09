@@ -17,12 +17,12 @@ export function PreviewFileDialog({ open, onOpenChange, file }: PreviewFileDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-50">
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100vw-0.5rem)] max-w-none flex-col overflow-hidden bg-slate-50 p-0 sm:w-[min(94vw,56rem)]">
         <DialogHeader className="p-4 border-b bg-white">
           <DialogTitle>{file.file_name || 'معاينة الملف'}</DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 flex items-center justify-center overflow-auto p-4 relative min-h-[400px]">
+        <div className="relative flex min-h-[240px] flex-1 items-center justify-center overflow-auto p-2 sm:min-h-[400px] sm:p-4">
           {!file.url ? (
             <div className="text-slate-500 text-center">لا يوجد رابط لمعاينة هذا الملف.</div>
           ) : isImage(file.extension) ? (

@@ -72,7 +72,7 @@ export function SelectionToolbar({
 
   return (
     <TooltipProvider>
-      <div className="flex min-w-fit items-center gap-1 text-sm">
+      <div className="flex min-w-0 w-full items-center gap-1 overflow-x-auto text-sm xl:w-auto">
         <Tooltip>
           <TooltipTrigger render={<span className="mx-2 inline-flex" />}>
             <Checkbox
@@ -85,8 +85,8 @@ export function SelectionToolbar({
           </TooltipTrigger>
           <TooltipContent>{allItemsSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل'}</TooltipContent>
         </Tooltip>
-        <span className="mx-1 font-medium text-muted-foreground">{hasSelection ? `تم تحديد ${selectedCount}` : 'لم يتم تحديد عناصر'}</span>
-        <div className="ms-auto flex flex-wrap gap-1">
+        <span className="mx-1 shrink-0 font-medium text-muted-foreground">{hasSelection ? `تم تحديد ${selectedCount}` : 'لم يتم تحديد عناصر'}</span>
+        <div className="ms-auto flex shrink-0 gap-1">
           <ActionButton label="نسخ" icon={Copy} onClick={onCopy} disabled={!hasSelection || actionsLocked} />
           <ActionButton label="قص" icon={Scissors} onClick={onCut} disabled={!hasSelection || actionsLocked} />
           <ActionButton label={clipboardCount ? `لصق ${clipboardCount} عنصر` : 'لصق'} icon={ClipboardPaste} onClick={onPaste} disabled={!clipboardCount || isPasting} loading={isPasting} />

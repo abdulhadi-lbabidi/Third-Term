@@ -37,7 +37,7 @@ export function InvoicesTable({
   useEffect(() => {
     setPage(1);
     setLimit(perPage);
-  }, [filterKey]);
+  }, [filterKey, perPage]);
 
   const { data: response, isLoading } = useInvoices({
     paginate: true,
@@ -123,7 +123,7 @@ export function InvoicesTable({
   ];
 
   return (
-    <div className="flex flex-col flex-1 space-y-4">
+    <div className="flex min-w-0 flex-1 flex-col space-y-3 sm:space-y-4">
       <DataTable
         columns={columns}
         data={invoices}

@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
-import { ArrowDownAZ, ArrowUpAZ, ChevronLeft, Cloud, FolderPlus, Grid2X2, List, Search, UploadCloud } from 'lucide-react';
+import { useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { ArrowDownAZ, ArrowUpAZ, Check, ChevronLeft, Cloud, FolderPlus, Grid2X2, List, Search, UploadCloud, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
-import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/lib/utils';
 import type { ExplorerSortBy, ExplorerSortDirection, ExplorerViewMode } from '../../types';
 
@@ -26,6 +27,11 @@ interface ExplorerHeaderProps {
 
 export function ExplorerHeader(props: ExplorerHeaderProps) {
   const [dragOverId, setDragOverId] = useState<number | null | 'root'>(null);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const breadcrumbsDragStartRef = useRef({ x: 0, scrollLeft: 0 });
+  const breadcrumbsDraggingRef = useRef(false);
+  const breadcrumbsDragMovedRef = useRef(false);
+  const sortLabels: Record<ExplorerSortBy, string> = { name: 'الاسم', size: 'الحجم', date: 'التاريخ', type: 'النوع' };
   const handleDrop = (event: React.DragEvent<HTMLElement>, targetId: number | null) => {
     event.preventDefault(); setDragOverId(null);
     try {
@@ -34,8 +40,34 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
     } catch { /* ignored */ }
   };
 
+  const handleBreadcrumbsPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    breadcrumbsDragMovedRef.current = false;
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    breadcrumbsDraggingRef.current = true;
+    breadcrumbsDragStartRef.current = { x: event.clientX, scrollLeft: event.currentTarget.scrollLeft };
+  };
+
+  const handleBreadcrumbsPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!breadcrumbsDraggingRef.current) return;
+    const distance = event.clientX - breadcrumbsDragStartRef.current.x;
+    if (Math.abs(distance) > 8) breadcrumbsDragMovedRef.current = true;
+    event.currentTarget.scrollLeft = breadcrumbsDragStartRef.current.scrollLeft - distance;
+  };
+
+  const stopBreadcrumbsDragging = () => {
+    breadcrumbsDraggingRef.current = false;
+  };
+
+  const preventBreadcrumbClickAfterDrag = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!breadcrumbsDragMovedRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    breadcrumbsDragMovedRef.current = false;
+  };
+
   return (
-    <div className="space-y-3 px-4 pb-3 pt-4 sm:px-5">
+    <TooltipProvider>
+    <div className="min-w-0 space-y-3 px-3 pb-3 pt-3 sm:px-5 sm:pt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -46,13 +78,48 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
             <p className="text-xs text-muted-foreground">الملفات العامة</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={props.onNewFolder}><FolderPlus className="size-4" />مجلد جديد</Button>
-          <Button size="sm" onClick={props.onUploadFiles}><UploadCloud className="size-4" />رفع ملفات</Button>
+        <div className="ms-auto flex flex-wrap justify-end gap-2">
+          <Tooltip><TooltipTrigger render={<Button variant="outline" size="sm" onClick={props.onNewFolder} aria-label="مجلد جديد" />}><FolderPlus className="size-4" /><span className="hidden sm:inline">مجلد جديد</span></TooltipTrigger><TooltipContent>مجلد جديد</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger render={<Button size="sm" onClick={props.onUploadFiles} aria-label="رفع ملفات" />}><UploadCloud className="size-4" /><span className="hidden sm:inline">رفع ملفات</span></TooltipTrigger><TooltipContent>رفع ملفات</TooltipContent></Tooltip>
         </div>
       </div>
 
-      <div className="flex min-h-10 min-w-0 items-center gap-1 overflow-x-auto rounded-lg bg-muted/45 px-2 py-1">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 xl:flex-nowrap">
+        {props.selectionTools}
+        <div className="ms-auto flex min-w-0 w-full flex-wrap items-center justify-end gap-2 xl:w-auto xl:flex-nowrap">
+        {props.filterTools}
+        {!mobileSearchOpen && <Tooltip><TooltipTrigger render={<Button type="button" variant="outline" size="icon-sm" className="sm:hidden" onClick={() => setMobileSearchOpen(true)} aria-label="البحث" />}><Search className="size-4" /></TooltipTrigger><TooltipContent>البحث</TooltipContent></Tooltip>}
+        <div className={cn('relative order-first min-w-0 basis-full sm:order-none sm:block sm:basis-auto sm:flex-1 xl:w-64 xl:flex-none', !mobileSearchOpen && 'hidden')}>
+          <Search className="absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input autoFocus={mobileSearchOpen} value={props.searchQuery} onChange={(e) => props.onSearchChange(e.target.value)} placeholder="بحث في المجلد..." className="h-9 pe-9 ps-9" />
+          <button type="button" onClick={() => setMobileSearchOpen(false)} className="absolute start-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground sm:hidden" aria-label="إغلاق البحث"><X className="size-4" /></button>
+        </div>
+        <DropdownMenu>
+          <Tooltip><TooltipTrigger render={<span />}><DropdownMenuTrigger asChild><Button variant="outline" size="sm" aria-label="الترتيب">{props.sortDirection === 'asc' ? <ArrowDownAZ className="size-4" /> : <ArrowUpAZ className="size-4" />}<span className="hidden sm:inline">{sortLabels[props.sortBy]}</span></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent>نوع واتجاه الترتيب</TooltipContent></Tooltip>
+          <DropdownMenuContent align="end">
+            {(Object.entries(sortLabels) as [ExplorerSortBy, string][]).map(([value, label]) => <DropdownMenuItem key={value} onSelect={() => props.onSortByChange(value)}>{props.sortBy === value && <Check className="size-4" />}{label}</DropdownMenuItem>)}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={props.onToggleSortDirection}>{props.sortDirection === 'asc' ? <ArrowUpAZ className="size-4" /> : <ArrowDownAZ className="size-4" />}{props.sortDirection === 'asc' ? 'ترتيب تنازلي' : 'ترتيب تصاعدي'}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <div className="flex rounded-md bg-muted/60 p-0.5">
+          <Tooltip><TooltipTrigger render={<Button variant={props.viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => props.onViewModeChange('grid')} aria-label="عرض شبكي" />}><Grid2X2 className="size-4" /></TooltipTrigger><TooltipContent>عرض شبكي</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger render={<Button variant={props.viewMode === 'list' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => props.onViewModeChange('list')} aria-label="عرض قائمة" />}><List className="size-4" /></TooltipTrigger><TooltipContent>عرض قائمة</TooltipContent></Tooltip>
+        </div>
+        </div>
+      </div>
+
+      <div
+        dir="rtl"
+        className="flex min-h-10 min-w-0 cursor-grab touch-pan-x select-none items-center gap-1 overflow-x-auto rounded-lg bg-muted/45 px-2 py-1 active:cursor-grabbing"
+        onPointerDown={handleBreadcrumbsPointerDown}
+        onPointerMove={handleBreadcrumbsPointerMove}
+        onPointerUp={stopBreadcrumbsDragging}
+        onPointerCancel={stopBreadcrumbsDragging}
+        onPointerLeave={stopBreadcrumbsDragging}
+        onClickCapture={preventBreadcrumbClickAfterDrag}
+        onDragStart={(event) => event.preventDefault()}
+      >
           {props.breadcrumbs.map((crumb, index) => <div key={crumb.id ?? 'root'} className="flex items-center">
             <button type="button" onClick={() => props.onNavigate(crumb.id)}
               onDragOver={(e) => { e.preventDefault(); setDragOverId(crumb.id ?? 'root'); }} onDragLeave={() => setDragOverId(null)} onDrop={(e) => handleDrop(e, crumb.id)}
@@ -61,38 +128,7 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
             </button>{index < props.breadcrumbs.length - 1 && <ChevronLeft className="size-4 text-muted-foreground" />}
           </div>)}
       </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 xl:flex-nowrap">
-        {props.selectionTools}
-        <div className="ms-auto flex w-full flex-wrap items-center gap-2 sm:w-auto xl:flex-nowrap">
-        {props.filterTools}
-        <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
-          <Search className="absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={props.searchQuery} onChange={(e) => props.onSearchChange(e.target.value)} placeholder="بحث في المجلد..." className="h-9 pe-9" />
-        </div>
-        <div className="w-36 shrink-0">
-          <SearchableSelect
-            value={props.sortBy}
-            onValueChange={(value) => props.onSortByChange(value as ExplorerSortBy)}
-            options={[
-              { value: 'name', label: 'الاسم' },
-              { value: 'size', label: 'الحجم' },
-              { value: 'date', label: 'التاريخ' },
-              { value: 'type', label: 'النوع' },
-            ]}
-            placeholder="ترتيب حسب"
-            searchPlaceholder="ابحث عن فلتر..."
-            emptyMessage="لا يوجد فلتر مطابق"
-            className="h-9 min-h-9 bg-background py-1"
-          />
-        </div>
-        <Button variant="outline" size="icon-sm" onClick={props.onToggleSortDirection} aria-label="عكس ترتيب الفرز">{props.sortDirection === 'asc' ? <ArrowDownAZ className="size-4" /> : <ArrowUpAZ className="size-4" />}</Button>
-        <div className="flex rounded-md bg-muted/60 p-0.5">
-          <Button variant={props.viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => props.onViewModeChange('grid')} aria-label="عرض شبكي"><Grid2X2 className="size-4" /></Button>
-          <Button variant={props.viewMode === 'list' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => props.onViewModeChange('list')} aria-label="عرض قائمة"><List className="size-4" /></Button>
-        </div>
-        </div>
-      </div>
     </div>
+    </TooltipProvider>
   );
 }

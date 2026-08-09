@@ -82,7 +82,7 @@ function PaginationPrevious({
       {...props}
     >
         <ChevronRightIcon data-icon="inline-start" />
-      <span className="hidden sm:block">{text}</span>
+      <span>{text}</span>
     
     </PaginationLink>
   )
@@ -101,7 +101,7 @@ function PaginationNext({
       {...props}
     >
        
-      <span className="hidden sm:block">{text}</span>
+      <span>{text}</span>
        <ChevronLeftIcon data-icon="inline-end" />
     
     </PaginationLink>
@@ -176,14 +176,14 @@ function SimplePagination({
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="sticky bottom-0 z-10 mt-auto flex items-center justify-center bg-transparent p-0 sm:justify-between sm:gap-4 sm:rounded-lg sm:border sm:border-border sm:bg-card/95 sm:p-4 sm:shadow-sm sm:backdrop-blur">
+    <div className="sticky bottom-0 z-10 mt-auto flex min-w-0 flex-col items-center gap-2 bg-transparent p-0 sm:flex-row sm:justify-between sm:gap-4 sm:rounded-lg sm:border sm:border-border sm:bg-card/95 sm:p-4 sm:shadow-sm sm:backdrop-blur">
       {meta ? (
-        <div className="hidden max-w-full flex-wrap items-center gap-3 text-xs text-muted-foreground sm:flex">
-          <span>
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-center text-xs text-muted-foreground sm:justify-start sm:gap-3 sm:text-start">
+          <span className="hidden sm:inline">
             عرض {meta.from ?? 0} إلى {meta.to ?? 0} من إجمالي {meta.total ?? 0} عنصر
           </span>
           {limitOptions && onLimitChange && limit ? (
-            <div className="flex items-center gap-2 border-r border-border/50 pr-3">
+            <div className="flex items-center gap-2 sm:border-r sm:border-border/50 sm:pr-3">
               <span>عرض</span>
               <Select value={limit.toString()} onValueChange={(v) => {
                 onPageChange(1); // Reset page on limit change
@@ -207,8 +207,8 @@ function SimplePagination({
         <div />
       )}
 
-      <Pagination className="mx-0 w-auto max-w-full overflow-x-auto">
-        <PaginationContent className="gap-0">
+      <Pagination className="mx-0 w-full max-w-full justify-start overflow-x-auto sm:w-auto sm:justify-center">
+        <PaginationContent className="mx-auto w-max gap-0">
           <PaginationItem>
             <PaginationPrevious
               text="السابق"
@@ -216,12 +216,12 @@ function SimplePagination({
                 e.preventDefault();
                 if (currentPage > 1) onPageChange(currentPage - 1);
               }}
-              className={cn('size-8 p-0! sm:h-10 sm:w-auto sm:px-4!', currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
+              className={cn('h-9 w-auto px-2! sm:h-10 sm:px-4!', currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
             />
           </PaginationItem>
 
           {pageNumbers.map((p, idx) => (
-            <PaginationItem key={idx} className={p === currentPage ? undefined : 'hidden sm:block'}>
+            <PaginationItem key={idx}>
               {p === 'ellipsis' ? (
                 <PaginationEllipsis />
               ) : (
@@ -231,7 +231,7 @@ function SimplePagination({
                     e.preventDefault();
                     onPageChange(p);
                   }}
-                  className="size-8 cursor-pointer sm:size-10"
+                  className="size-9 cursor-pointer sm:size-10"
                 >
                   {p}
                 </PaginationLink>
@@ -246,7 +246,7 @@ function SimplePagination({
                 e.preventDefault();
                 if (currentPage < totalPages) onPageChange(currentPage + 1);
               }}
-              className={cn('size-8 p-0! sm:h-10 sm:w-auto sm:px-4!', currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
+              className={cn('h-9 w-auto px-2! sm:h-10 sm:px-4!', currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer')}
             />
           </PaginationItem>
         </PaginationContent>

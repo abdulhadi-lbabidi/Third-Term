@@ -44,13 +44,13 @@ export function InvoicesPage() {
   };
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-5">
+    <div className="flex min-w-0 w-full flex-1 flex-col gap-4 sm:gap-5">
       <PageHeader
         badge="الإدارة المالية"
         title="الفواتير"
         icon={FileText}
         action={
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:gap-3">
             {(Object.values(appliedFilters).some(Boolean) || sort) ? (
               <Button
                 type="button"
@@ -70,14 +70,17 @@ export function InvoicesPage() {
               type="button"
               variant="outline"
               onClick={() => setFilterDrawerOpen(true)}
-              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
+              className={cn(
+                "h-10 shrink-0 px-3 sm:h-11 sm:px-4",
+                Object.values(appliedFilters).some(Boolean) && "border-primary text-primary",
+              )}
             >
               <SlidersHorizontal className="size-4" />
               فلترة متقدمة
             </Button>
             <Button
               onClick={() => navigate('/invoices/new')}
-              className="h-11 px-6 shadow-md sm:w-auto w-full"
+              className="h-10 shrink-0 px-3 shadow-md sm:h-11 sm:px-6"
             >
               <Plus className="mr-2 size-4" />
               إضافة فاتورة
@@ -86,10 +89,10 @@ export function InvoicesPage() {
         }
       />
 
-      <section className="surface-panel min-w-0 space-y-4 p-4 sm:p-5">
+      <section className="surface-panel min-w-0 space-y-4 p-3 sm:p-5">
         <div>
           <h2 className="text-base font-semibold text-slate-900">سجل الفواتير</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             إدارة الفواتير المرتبطة بالمصروفات والموردين، وعرض أصناف كل فاتورة وتفاصيلها المالية.
           </p>
         </div>

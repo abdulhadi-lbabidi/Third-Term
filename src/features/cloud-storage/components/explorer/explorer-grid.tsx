@@ -517,9 +517,9 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-muted/15 p-4 sm:p-5">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/15 p-2.5 sm:p-5">
         {isLoading ? (
-        <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3' : 'space-y-2 rounded-xl border p-3'}>
+        <div className={viewMode === 'grid' ? 'grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-3' : 'space-y-2 rounded-xl border p-2 sm:p-3'}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className={viewMode === 'grid' ? 'aspect-[4/3] w-full rounded-xl' : 'h-14 w-full rounded-lg'} />
           ))}
@@ -534,7 +534,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         </div>
       ) : (
         <>
-          {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+          {viewMode === 'grid' ? <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-3">
             {sortedFolders.map((folder) => (
               <FolderCard
                 key={`folder-${folder.id}`}

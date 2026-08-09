@@ -52,7 +52,7 @@ export function UploadFilesDialog({ open, onOpenChange, directoryId }: UploadFil
         if (!val) setFiles([]);
       }
     }}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
         <DialogHeader>
           <DialogTitle>رفع ملفات</DialogTitle>
           <DialogDescription>
@@ -62,7 +62,7 @@ export function UploadFilesDialog({ open, onOpenChange, directoryId }: UploadFil
         
         <div 
           {...getRootProps()} 
-          className={`mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 transition-colors cursor-pointer
+          className={`mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-colors cursor-pointer sm:p-10
             ${isDragActive ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400'}
           `}
         >
@@ -89,11 +89,11 @@ export function UploadFilesDialog({ open, onOpenChange, directoryId }: UploadFil
           </div>
         )}
 
-        <div className="flex justify-end pt-4 gap-2 border-t mt-4">
+        <div className="mt-4 flex flex-wrap justify-end gap-2 border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             إلغاء
           </Button>
-          <Button onClick={handleUpload} disabled={isPending || files.length === 0 || !directoryId} className="min-w-[120px]">
+          <Button onClick={handleUpload} disabled={isPending || files.length === 0 || !directoryId} className="min-w-[120px] flex-1 sm:flex-none">
             {isPending ? 'جاري الرفع...' : `رفع (${files.length}) ملفات`}
           </Button>
         </div>

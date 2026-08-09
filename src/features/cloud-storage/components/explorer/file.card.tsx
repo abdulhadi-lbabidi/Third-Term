@@ -61,7 +61,7 @@ export function FileCard({ file, selected, onSelect, onDelete, onDownload, onPre
 
       <div className="absolute start-2 top-2" onClick={(event) => event.stopPropagation()}>
         <DropdownMenu dir="rtl" open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger asChild><Button size="icon-sm" variant="ghost" className="bg-background/80 opacity-0 shadow-sm group-hover:opacity-100"><MoreVertical className="size-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild><Button size="icon-sm" variant="ghost" className="bg-background/80 shadow-sm sm:opacity-0 sm:group-hover:opacity-100"><MoreVertical className="size-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             {canPreview(file) && <DropdownMenuItem onSelect={() => setTimeout(preview, 0)}><Eye className="size-4" />معاينة</DropdownMenuItem>}
             <DropdownMenuItem onSelect={() => onDownload(file)}><Download className="size-4" />تنزيل</DropdownMenuItem>

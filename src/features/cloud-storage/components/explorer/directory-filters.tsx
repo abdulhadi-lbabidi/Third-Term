@@ -6,6 +6,7 @@ import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/lib/utils';
 
 export interface DirectoryFilterValue {
@@ -52,16 +53,27 @@ export function DirectoryFilters({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className={cn(activeFilterCount > 0 && 'border-primary text-primary')}
-        onClick={() => onOpenChange(true)}
-      >
-        <SlidersHorizontal className="size-4" />
-        فلترة{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={(
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn(activeFilterCount > 0 && 'border-primary text-primary')}
+                onClick={() => onOpenChange(true)}
+                aria-label="فلترة متقدمة"
+              />
+            )}
+          >
+            <SlidersHorizontal className="size-4" />
+            <span className="hidden sm:inline">فلترة{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
+            {activeFilterCount > 0 && <span className="sm:hidden">{activeFilterCount}</span>}
+          </TooltipTrigger>
+          <TooltipContent>فلترة متقدمة</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <FilterDrawer
         open={open}

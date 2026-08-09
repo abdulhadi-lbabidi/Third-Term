@@ -21,7 +21,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange, onDownload }: File
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[85vh] max-w-5xl flex-col gap-0 overflow-hidden bg-slate-50 p-0">
+      <DialogContent className="flex h-[92dvh] w-[calc(100vw-0.5rem)] max-w-none flex-col gap-0 overflow-hidden bg-slate-50 p-0 sm:h-[85vh] sm:w-[min(94vw,64rem)]">
         <DialogHeader className="flex shrink-0 flex-row items-center gap-3 space-y-0 border-b bg-white py-3 ps-4 pe-12">
           <div className="rounded-md bg-muted p-2"><Icon className={`size-5 ${color}`} /></div>
           <div className="min-w-0 flex-1 text-right">

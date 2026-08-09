@@ -57,16 +57,16 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-h-[90vh] w-[min(94vw,1100px)] max-w-none overflow-y-auto">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-none overflow-y-auto p-4 sm:w-[min(94vw,1100px)] sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl">
+            <DialogTitle className="pe-7 text-lg leading-7 sm:text-xl">
               {isLoading ? <Skeleton className="h-7 w-64" /> : `تفاصيل الفاتورة - ${invoice?.invoice_number || `#${invoice?.id}`}`}
             </DialogTitle>
           </DialogHeader>
 
           {isLoading || !invoice ? (
             <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="h-4 w-20" />
@@ -74,7 +74,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4">
+              <div className="grid grid-cols-1 gap-4 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
                 {Array.from({ length: 2 }).map((_, i) => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="h-4 w-20" />
@@ -85,7 +85,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
             </div>
           ) : (
             <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <span className="text-sm text-slate-500">التاريخ:</span>
                   <p className="mr-1 inline font-medium text-slate-900">
@@ -133,7 +133,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
                 </div>
               </div>
 
-              <div className="border-t pt-4 grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
+              <div className="grid grid-cols-1 gap-4 rounded-lg border-t bg-slate-50 p-4 pt-4 sm:grid-cols-2">
                 <div>
                   <span className="text-sm text-slate-500">الخصم:</span>
                   <p className="mr-1 inline font-medium text-slate-900">{Number(invoice.discount || 0).toLocaleString()} {currencyLabel}</p>
@@ -151,7 +151,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
                     <p className="text-xs text-slate-500">المواد والكميات والأسعار المرتبطة بهذه الفاتورة</p>
                   </div>
                   {invoiceItems.length > 0 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary">{invoiceItems.length} صنف</Badge>
                       <Button type="button" size="sm" onClick={() => setItemDialogOpen(true)}>
                         <PlusCircle className="ml-2 size-4" />
@@ -185,12 +185,12 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
                         const total = Number(item.total_price ?? Number(item.quantity) * Number(item.unit_price));
                         return (
                           <details key={item.id} className="group rounded-lg bg-muted/40 px-3">
-                            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 [&::-webkit-details-marker]:hidden">
+                            <summary className="flex cursor-pointer list-none flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 [&::-webkit-details-marker]:hidden">
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{item.material?.name ?? `مادة #${item.material_id}`}</p>
                                 <p className="text-xs text-muted-foreground">{item.quantity} {item.unit} × {Number(item.unit_price).toLocaleString()} {currencyLabel}</p>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
                                 <span className="finance-num font-semibold">{total.toLocaleString()} {currencyLabel}</span>
                                 <ChevronLeft className="size-4 transition-transform group-open:-rotate-90" />
                               </div>
@@ -200,7 +200,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
                         );
                       })}
                     </div>
-                    <div className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-primary/5 px-3 py-2 text-sm">
                       <span>مجموع الأصناف قبل الخصم</span>
                       <span className="finance-num font-bold">{itemsTotal.toLocaleString()} {currencyLabel}</span>
                     </div>
