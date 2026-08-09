@@ -79,8 +79,6 @@ export function ExpensesTable({
     { header: 'أنشئ بواسطة', sortable: true, sortKey: 'creator_name', cell: (row) => <UserLink user={(row as ExpenseRow).created_by} /> },
     {
       header: 'عدد الفواتير',
-      sortable: true,
-      sortKey: 'invoices_count',
       cell: (row: Expense) => {
         if (invoicesLoading) return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
         if (invoicesError) return <span title="تعذر التحقق"><AlertCircle className="size-4 text-destructive" /></span>;

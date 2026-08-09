@@ -143,7 +143,7 @@ export function UsersPage() {
   const columns = useMemo(
     () => [
       { header: 'الاسم', sortable: true, sortKey: 'user_name', className: 'min-w-40', cell: (row: UsersTabRecord) => <span className="block max-w-52 truncate font-medium">{row.user.name}</span> },
-      { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-start">{row.user.email}</span> },
+      { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-center">{row.user.email}</span> },
       { header: 'الهاتف', className: 'min-w-36', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
       { header: 'العنوان', className: 'min-w-52 max-w-64', cell: (row: UsersTabRecord) => <span className="block max-w-64 truncate">{row.user.address || '-'}</span> },
       activeRole === 'investor'
