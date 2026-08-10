@@ -101,14 +101,15 @@ export function ReInvoicesPage() {
   };
 
   return <div className="flex flex-1 flex-col gap-5">
-    <PageHeader badge="الإدارة المالية" title="المرتجعات" icon={Undo2} action={<div className="flex items-center gap-2">{(activeFilterCount > 0 || sort) && <Button type="button" variant="outline" size="icon" title="إعادة ضبط الفلاتر والترتيب" onClick={() => { resetFilters(); setSort(undefined); }}><RotateCcw className="size-4" /></Button>}<Button type="button" variant="outline" className={cn(activeFilterCount > 0 && 'border-primary text-primary')} onClick={() => setFilterDrawerOpen(true)}><SlidersHorizontal className="size-4" />فلترة{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</Button><Button onClick={openCreateDialog}><Plus className="size-4" />إنشاء مرتجع</Button></div>} />
-    <section className="surface-panel space-y-4 p-4 sm:p-5"><div><h2 className="font-semibold">سجل المرتجعات</h2><p className="mt-1 text-sm text-muted-foreground">مرتجعات صناديق المشاريع والشركة والمستخدمين.</p></div><ReInvoicesTable data={rows} loading={query.isLoading || remove.isPending} sort={sort} onSortChange={(next) => { setSort(next); setPage(1); }} onView={(row) => { setSelectedReInvoice(row); setItemsId(row.id); }} onEdit={openEditDialog} onDelete={async (row) => { await remove.mutateAsync(row.id); }} /></section>
-
-    <SimplePagination currentPage={meta?.current_page ?? page} totalPages={meta?.last_page ?? 1} onPageChange={setPage} meta={meta} limit={perPage} limitOptions={[5, 10, 20, 50]} onLimitChange={(limit) => { setPerPage(limit); setPage(1); }} />
+    <PageHeader badge="الإدارة المالية" title="المرتجعات" icon={Undo2} action={<div className="flex items-center gap-2">{(activeFilterCount > 0 || sort) && <Button type="button" variant="outline" size="icon" title="إعادة ضبط الفلاتر والترتيب" onClick={() => { resetFilters(); setSort(undefined); }}><RotateCcw className="size-4" /></Button>}<Button type="button" variant="outline" className={cn(activeFilterCount > 0 && 'border-primary text-primary')} onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}><SlidersHorizontal className="size-4" />فلترة{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</Button><Button onClick={openCreateDialog}><Plus className="size-4" />إنشاء مرتجع</Button></div>} />
 
     <FilterDrawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen} onApply={applyFilters} onReset={resetFilters} title="فلترة المرتجعات">
       <ReInvoicesFilterForm value={draftFilters} onChange={setDraftFilters} />
     </FilterDrawer>
+
+    <section className="surface-panel space-y-4 p-4 sm:p-5"><div><h2 className="font-semibold">سجل المرتجعات</h2><p className="mt-1 text-sm text-muted-foreground">مرتجعات صناديق المشاريع والشركة والمستخدمين.</p></div><ReInvoicesTable data={rows} loading={query.isLoading || remove.isPending} sort={sort} onSortChange={(next) => { setSort(next); setPage(1); }} onView={(row) => { setSelectedReInvoice(row); setItemsId(row.id); }} onEdit={openEditDialog} onDelete={async (row) => { await remove.mutateAsync(row.id); }} /></section>
+
+    <SimplePagination currentPage={meta?.current_page ?? page} totalPages={meta?.last_page ?? 1} onPageChange={setPage} meta={meta} limit={perPage} limitOptions={[5, 10, 20, 50]} onLimitChange={(limit) => { setPerPage(limit); setPage(1); }} />
 
     <ReInvoiceDialog
       open={fundPickerOpen}

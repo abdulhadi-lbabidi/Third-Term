@@ -211,7 +211,7 @@ export function EmployeePaymentsPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn("min-w-0 flex-1 sm:flex-none", Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -229,38 +229,6 @@ export function EmployeePaymentsPage() {
             </Button>
           </div>
         }
-      />
-
-      <EmployeePaymentsTable
-        data={visiblePayments}
-        loading={paymentsQuery.isLoading}
-        sort={sort}
-        onSortChange={setSort}
-        onEdit={(payment) => {
-          setSelectedPayment(payment);
-          setDialogOpen(true);
-        }}
-        onDelete={handleDelete}
-      />
-
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        meta={meta}
-      />
-
-      <EmployeePaymentsDialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setSelectedPayment(null);
-        }}
-        employees={employeesList}
-        employeePayment={selectedPayment}
-        lockedEmployeeId={effectiveEmployeeId}
-        onSubmit={handleSubmit}
-        loading={saveMutation.isPending}
       />
 
       <FilterDrawer
@@ -300,6 +268,38 @@ export function EmployeePaymentsPage() {
           </div>
         </div>
       </FilterDrawer>
+
+      <EmployeePaymentsTable
+        data={visiblePayments}
+        loading={paymentsQuery.isLoading}
+        sort={sort}
+        onSortChange={setSort}
+        onEdit={(payment) => {
+          setSelectedPayment(payment);
+          setDialogOpen(true);
+        }}
+        onDelete={handleDelete}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
+      />
+
+      <EmployeePaymentsDialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setSelectedPayment(null);
+        }}
+        employees={employeesList}
+        employeePayment={selectedPayment}
+        lockedEmployeeId={effectiveEmployeeId}
+        onSubmit={handleSubmit}
+        loading={saveMutation.isPending}
+      />
     </div>
   );
 }

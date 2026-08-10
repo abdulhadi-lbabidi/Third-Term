@@ -157,43 +157,45 @@ export function FilterDrawer({
   onApply,
   onReset,
 }: FilterDrawerProps) {
+  if (!open) return null;
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent side="left" dir="rtl">
-        <DrawerHeader>
-          <DrawerTitle>
-            <SlidersHorizontal className="size-4" />
-            {title}
-          </DrawerTitle>
-          <DrawerClose>
-            <XIcon className="size-4" />
-            <span className="sr-only">إغلاق</span>
-          </DrawerClose>
-        </DrawerHeader>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+        <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
+          <SlidersHorizontal className="size-4 text-primary" />
+          <span>{title}</span>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+          onClick={() => onOpenChange(false)}
+        >
+          <XIcon className="size-4" />
+          <span className="sr-only">إغلاق</span>
+        </Button>
+      </div>
 
-        <DrawerBody>{children}</DrawerBody>
+      <div className="mb-4 [&>div]:grid [&>div]:grid-cols-1 [&>div]:sm:grid-cols-2 [&>div]:md:grid-cols-3 [&>div]:lg:grid-cols-4 [&>div]:gap-4 [&>div]:space-y-0">
+        {children}
+      </div>
 
-        <DrawerFooter>
-          <Button
-            variant="outline"
-            onClick={() => {
-              onReset();
-              onOpenChange(false);
-            }}
-          >
-            إعادة ضبط
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => {
-              onApply();
-              onOpenChange(false);
-            }}
-          >
-            تطبيق الفلترة
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+      <div className="flex justify-end gap-2 border-t border-border pt-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onReset}
+        >
+          إعادة ضبط
+        </Button>
+        <Button
+          type="button"
+          onClick={onApply}
+        >
+          تطبيق الفلترة
+        </Button>
+      </div>
+    </div>
   );
 }

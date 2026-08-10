@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User, Wallet, Shield, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
@@ -145,8 +144,7 @@ function getRoleLabel(role: UserRole | '') {
   return role ? roleLabels[role] : '';
 }
 
-export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, loading }: RevenuesFormProps) {
-  const navigate = useNavigate();
+export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: RevenuesFormProps) {
   const defaultReceiver = defaultValues?.received_by;
   const defaultReceiverId = typeof defaultReceiver === 'object'
     ? Number(defaultReceiver.user?.id ?? defaultReceiver.id ?? 0) || undefined
@@ -492,46 +490,46 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
         {!fixedValues?.source && (
           <div>
             <FormField
-            control={form.control}
-            name="source"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>نوع الصندوق</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={(value) => {
-                      const nextSource = value as RevenueSource;
-                      const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
-                      field.onChange(nextSource);
-                      form.setValue('revenueable_type', nextRevenueableType);
-                      form.setValue('revenueable_id', undefined);
-                      form.setValue('company_fund_id', undefined);
-                      form.setValue('fund_user_role', '');
-                      form.setValue('fund_user_id', undefined);
-                      form.setValue('user_fund_id', undefined);
-                      form.setValue('project_fund_id', undefined);
+              control={form.control}
+              name="source"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نوع الصندوق</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={(value) => {
+                        const nextSource = value as RevenueSource;
+                        const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
+                        field.onChange(nextSource);
+                        form.setValue('revenueable_type', nextRevenueableType);
+                        form.setValue('revenueable_id', undefined);
+                        form.setValue('company_fund_id', undefined);
+                        form.setValue('fund_user_role', '');
+                        form.setValue('fund_user_id', undefined);
+                        form.setValue('user_fund_id', undefined);
+                        form.setValue('project_fund_id', undefined);
 
-                      if (nextSource !== 'project_fund') {
-                        form.setValue('project_id', undefined);
-                      }
-                    }}
-                    className="grid gap-3 md:grid-cols-3"
-                  >
-                    {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => (
-                      <label
-                        key={item}
-                        className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
-                      >
-                        <RadioGroupItem className="border-none !p-1" value={item} />
-                        <span>{revenueSourceLabels[item]}</span>
-                      </label>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+                        if (nextSource !== 'project_fund') {
+                          form.setValue('project_id', undefined);
+                        }
+                      }}
+                      className="grid gap-3 md:grid-cols-3"
+                    >
+                      {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => (
+                        <label
+                          key={item}
+                          className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
+                        >
+                          <RadioGroupItem className="border-none !p-1" value={item} />
+                          <span>{revenueSourceLabels[item]}</span>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
         )}
@@ -743,7 +741,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
         <div className="space-y-4">
           <div className={`grid items-start gap-4 ${source === 'company_fund'
             ? (fixedValues?.company_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-3')
-              : source === 'project_fund'
+            : source === 'project_fund'
               ? (fixedValues?.project_fund_id ? 'md:grid-cols-2' : 'md:grid-cols-4')
               : 'md:grid-cols-2'
             }`}>
@@ -951,9 +949,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, onCancel, l
         />
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel ?? (() => navigate(-1))}>
-            إلغاء
-          </Button>
           <Button type="submit" disabled={loading}>
             <Plus className="size-6" />
             {loading

@@ -17,7 +17,7 @@ import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialo
 import { ExplorerList } from './explorer-list';
 import { getFileType, resolveFileUrl } from '../../utils/file-utils';
 import { SelectionToolbar } from './selection-toolbar';
-import { DirectoryFilters, type DirectoryFilterValue } from './directory-filters';
+import { DirectoryFiltersTrigger, DirectoryFiltersContent, type DirectoryFilterValue } from './directory-filters';
 
 // ── تعريف محلي لـ PaginatedResponse في حال عدم وجوده في types ──
 interface PaginatedResponse<T> {
@@ -551,28 +551,37 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
             />
           )}
           filterTools={(
-            <DirectoryFilters
+            <DirectoryFiltersTrigger
               open={isFilterOpen}
               onOpenChange={setIsFilterOpen}
-              value={draftFilters}
-              onChange={setDraftFilters}
-              projectIdLocked={projectId != null}
               activeFilterCount={Number(projectId == null && appliedFilters.projectId != null)}
-              onApply={() => {
-                setAppliedFilters(draftFilters);
-                setPage(1);
-              }}
-              onReset={() => {
-                const resetValue = { projectId: projectId ?? undefined };
-                setDraftFilters(resetValue);
-                setAppliedFilters(resetValue);
-                setPage(1);
-              }}
             />
           )}
           onDropItem={handleDropItem}
         />
       </div>
+
+      {isFilterOpen && (
+        <div className="px-2.5 pt-2.5 sm:px-5 sm:pt-5 pb-0 shrink-0">
+          <DirectoryFiltersContent
+            open={isFilterOpen}
+            onOpenChange={setIsFilterOpen}
+            value={draftFilters}
+            onChange={setDraftFilters}
+            projectIdLocked={projectId != null}
+            onApply={() => {
+              setAppliedFilters(draftFilters);
+              setPage(1);
+            }}
+            onReset={() => {
+              const resetValue = { projectId: projectId ?? undefined };
+              setDraftFilters(resetValue);
+              setAppliedFilters(resetValue);
+              setPage(1);
+            }}
+          />
+        </div>
+      )}
 
       <div ref={scrollContainerRef} className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/15 p-2.5 sm:p-5">
         {isLoading ? (

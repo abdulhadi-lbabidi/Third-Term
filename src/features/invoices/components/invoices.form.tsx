@@ -52,14 +52,12 @@ type InvoicesFormProps = {
   projectId?: number;
   projectFundId?: number;
   onSuccess?: (invoice: Invoice) => void;
-  onCancel?: () => void;
   fixedValues?: Partial<CreateInvoicePayload>;
 };
 
 export function InvoicesForm({
   defaultValues,
   onSuccess,
-  onCancel,
   fixedValues,
 }: InvoicesFormProps) {
   const { mutateAsync: createInvoice, isPending: isCreating } = useCreateInvoice();
@@ -431,11 +429,6 @@ export function InvoicesForm({
         </div>
 
         <div className="flex items-center justify-end gap-3">
-          {onCancel && (
-            <Button type="button" variant="outline" className="h-11 min-w-[100px]" onClick={onCancel} disabled={isPending}>
-              إلغاء
-            </Button>
-          )}
           <Button type="submit" className="h-11 min-w-[140px]" disabled={isPending}>
             <CheckCircle2 className="size-4 ml-2" />
             {isPending ? (isEdit ? 'جاري التحديث...' : 'جاري الإضافة...') : (isEdit ? 'تحديث الفاتورة' : 'إضافة فاتورة')}

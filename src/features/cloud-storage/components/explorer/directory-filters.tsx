@@ -20,10 +20,43 @@ interface DirectoryFiltersProps {
   onApply: () => void;
   onReset: () => void;
   projectIdLocked?: boolean;
-  activeFilterCount: number;
 }
 
-export function DirectoryFilters({
+export function DirectoryFiltersTrigger({
+  open,
+  onOpenChange,
+  activeFilterCount,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  activeFilterCount: number;
+}) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          render={(
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={cn(activeFilterCount > 0 && 'border-primary text-primary')}
+              onClick={() => onOpenChange(!open)}
+              aria-label="فلترة متقدمة"
+            />
+          )}
+        >
+          <SlidersHorizontal className="size-4" />
+          <span className="hidden sm:inline">فلترة{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
+          {activeFilterCount > 0 && <span className="sm:hidden">{activeFilterCount}</span>}
+        </TooltipTrigger>
+        <TooltipContent>فلترة متقدمة</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+export function DirectoryFiltersContent({
   open,
   onOpenChange,
   value,
@@ -31,7 +64,6 @@ export function DirectoryFilters({
   onApply,
   onReset,
   projectIdLocked = false,
-  activeFilterCount,
 }: DirectoryFiltersProps) {
   const projectsQuery = useQuery({
     queryKey: ['cloud-storage', 'filter-projects'],
@@ -44,57 +76,32 @@ export function DirectoryFilters({
   }));
 
   return (
-    <>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            render={(
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(activeFilterCount > 0 && 'border-primary text-primary')}
-                onClick={() => onOpenChange(true)}
-                aria-label="فلترة متقدمة"
-              />
-            )}
-          >
-            <SlidersHorizontal className="size-4" />
-            <span className="hidden sm:inline">فلترة{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
-            {activeFilterCount > 0 && <span className="sm:hidden">{activeFilterCount}</span>}
-          </TooltipTrigger>
-          <TooltipContent>فلترة متقدمة</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <FilterDrawer
-        open={open}
-        onOpenChange={onOpenChange}
-        onApply={onApply}
-        onReset={onReset}
-        title="فلترة المجلدات"
-      >
-        <div className="space-y-2">
-          <Label htmlFor="directory-project-filter">معرّف المشروع</Label>
-          <SearchableSelect
-            value={value.projectId ?? ''}
-            disabled={projectIdLocked}
-            loading={projectsQuery.isLoading}
-            options={projectOptions}
-            placeholder="اختر المشروع"
-            searchPlaceholder="ابحث عن مشروع..."
-            emptyMessage="لا توجد مشاريع"
-            onValueChange={(projectValue) => onChange({
-              ...value,
-              projectId: projectValue === '' ? undefined : Number(projectValue),
-            })}
-          />
-          {projectIdLocked && (
-            <p className="text-xs text-muted-foreground">تم تثبيت المشروع من صفحة تفاصيل المشروع.</p>
-          )}
-        </div>
-
-      </FilterDrawer>
-    </>
+    <FilterDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      onApply={onApply}
+      onReset={onReset}
+      title="فلترة المجلدات"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="directory-project-filter">معرّف المشروع</Label>
+        <SearchableSelect
+          value={value.projectId ?? ''}
+          disabled={projectIdLocked}
+          loading={projectsQuery.isLoading}
+          options={projectOptions}
+          placeholder="اختر المشروع"
+          searchPlaceholder="ابحث عن مشروع..."
+          emptyMessage="لا توجد مشاريع"
+          onValueChange={(projectValue) => onChange({
+            ...value,
+            projectId: projectValue === '' ? undefined : Number(projectValue),
+          })}
+        />
+        {projectIdLocked && (
+          <p className="text-xs text-muted-foreground">تم تثبيت المشروع من صفحة تفاصيل المشروع.</p>
+        )}
+      </div>
+    </FilterDrawer>
   );
 }

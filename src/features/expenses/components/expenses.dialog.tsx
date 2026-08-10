@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ExpensesForm } from './expenses.form';
 import type { CreateExpensePayload, Expense } from '../types';
@@ -26,26 +27,36 @@ type ExpensesDialogProps = {
 };
 
 export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading, fixedFundCurrencies }: ExpensesDialogProps) {
+  const [formKey, setFormKey] = useState(0);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={open}
+      disablePointerDismissal
+      onOpenChange={(nextOpen, details) => {
+        if (!nextOpen) details.preventUnmountOnClose();
+        if (details.reason === 'escape-key') return;
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent keepMounted className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'تعديل المصروف' : 'إضافة مصروف جديد'}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          {open && (
             <ExpensesForm
+              key={formKey}
               defaultValues={defaultValues}
               fixedValues={fixedValues}
               fixedFundCurrencies={fixedFundCurrencies}
               onSubmit={async (data) => {
                 await onSubmit(data);
+                setFormKey((value) => value + 1);
                 onOpenChange(false);
               }}
               onCancel={() => onOpenChange(false)}
               loading={loading}
             />
-          )}
         </div>
       </DialogContent>
     </Dialog>

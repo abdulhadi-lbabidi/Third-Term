@@ -3,7 +3,6 @@ import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { RevenuesTable } from './components/revenues.table';
 import { useCreateRevenue, useRevenues, useDeleteRevenue, useUpdateRevenue } from './revenues.hooks';
-import { RevenuesDialog } from './components/revenues.dialog';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Revenue } from './types';
 import { TrendingUp, SlidersHorizontal, RotateCcw } from 'lucide-react';
@@ -135,7 +134,7 @@ export function RevenuesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -150,36 +149,6 @@ export function RevenuesPage() {
             </Button>
           </div>
         }
-      />
-
-      <RevenuesTable
-        data={revenues}
-        loading={isLoading}
-        onEdit={handleEditClick}
-        onDelete={handleDelete}
-        sort={sort}
-        onSortChange={setSort}
-      />
-
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        meta={meta}
-        limit={perPage}
-        limitOptions={[5, 10, 20, 50, 100]}
-        onLimitChange={setPerPage}
-      />
-
-      <RevenuesDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultValues={revenueToEdit}
-        loading={createRevenue.isPending || updateRevenue.isPending}
-        onSubmit={async (payload) => {
-          if (revenueToEdit) await updateRevenue.mutateAsync({ id: revenueToEdit.id, payload });
-          else await createRevenue.mutateAsync(payload);
-        }}
       />
 
       <FilterDrawer
@@ -205,6 +174,25 @@ export function RevenuesPage() {
           handleRangeChange={handleRangeChange}
         />
       </FilterDrawer>
+
+      <RevenuesTable
+        data={revenues}
+        loading={isLoading}
+        onEdit={handleEditClick}
+        onDelete={handleDelete}
+        sort={sort}
+        onSortChange={setSort}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
+        limit={perPage}
+        limitOptions={[5, 10, 20, 50, 100]}
+        onLimitChange={setPerPage}
+      />
     </div>
   );
 }

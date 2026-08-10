@@ -136,7 +136,7 @@ export function InvoiceItemsPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -154,6 +154,22 @@ export function InvoiceItemsPage() {
           </div>
         }
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <InvoiceItemsFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          materialId={materialId}
+          setMaterialId={setMaterialId}
+          invoiceId={invoiceId}
+          setInvoiceId={setInvoiceId}
+        />
+      </FilterDrawer>
 
       <InvoiceItemsTable
         data={invoiceItems}
@@ -189,22 +205,6 @@ export function InvoiceItemsPage() {
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
-
-      <FilterDrawer
-        open={filterDrawerOpen}
-        onOpenChange={setFilterDrawerOpen}
-        onApply={handleApplyFilters}
-        onReset={handleResetFilters}
-      >
-        <InvoiceItemsFilterForm
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          materialId={materialId}
-          setMaterialId={setMaterialId}
-          invoiceId={invoiceId}
-          setInvoiceId={setInvoiceId}
-        />
-      </FilterDrawer>
     </div>
   );
 }

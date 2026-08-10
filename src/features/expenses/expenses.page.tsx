@@ -147,7 +147,7 @@ export function ExpensesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -159,6 +159,30 @@ export function ExpensesPage() {
           </div>
         }
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <ExpensesFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          isPosted={isPosted}
+          setIsPosted={setIsPosted}
+          userRole={userRole}
+          setUserRole={setUserRole}
+          userId={userId}
+          setUserId={setUserId}
+          creatorRole={creatorRole}
+          setCreatorRole={setCreatorRole}
+          creatorId={creatorId}
+          setCreatorId={setCreatorId}
+          rangeValue={rangeValue}
+          handleRangeChange={handleRangeChange}
+        />
+      </FilterDrawer>
 
       <ExpensesTable
         data={expenses}
@@ -174,7 +198,7 @@ export function ExpensesPage() {
       <SimplePagination
         currentPage={currentPage}
         totalPages={totalPages}
-        
+
         onPageChange={setPage}
         meta={meta}
         limit={perPage}

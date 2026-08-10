@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { RevenuesForm } from './revenues.form';
 import type { CreateRevenuePayload, Revenue } from '../types';
@@ -20,25 +21,35 @@ type RevenuesDialogProps = {
 };
 
 export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: RevenuesDialogProps) {
+  const [formKey, setFormKey] = useState(0);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={open}
+      disablePointerDismissal
+      onOpenChange={(nextOpen, details) => {
+        if (!nextOpen) details.preventUnmountOnClose();
+        if (details.reason === 'escape-key') return;
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent keepMounted className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'تعديل الإيراد' : 'إضافة إيراد جديد'}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          {open && (
             <RevenuesForm
+              key={formKey}
               defaultValues={defaultValues}
               fixedValues={fixedValues}
               onSubmit={async (data) => {
                 await onSubmit(data);
+                setFormKey((value) => value + 1);
                 onOpenChange(false);
               }}
               onCancel={() => onOpenChange(false)}
               loading={loading}
             />
-          )}
         </div>
       </DialogContent>
     </Dialog>

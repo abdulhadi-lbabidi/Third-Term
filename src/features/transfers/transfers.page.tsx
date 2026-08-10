@@ -135,7 +135,7 @@ export function TransfersPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -151,6 +151,24 @@ export function TransfersPage() {
           </div>
         }
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <TransfersFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          userRole={userRole}
+          setUserRole={setUserRole}
+          userId={userId}
+          setUserId={setUserId}
+          rangeValue={rangeValue}
+          handleRangeChange={handleRangeChange}
+        />
+      </FilterDrawer>
 
       <TransfersTable
         data={transfers}
@@ -184,24 +202,6 @@ export function TransfersPage() {
           loading={createMutation.isPending || updateMutation.isPending}
         />
       )}
-
-      <FilterDrawer
-        open={filterDrawerOpen}
-        onOpenChange={setFilterDrawerOpen}
-        onApply={handleApplyFilters}
-        onReset={handleResetFilters}
-      >
-        <TransfersFilterForm
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          userRole={userRole}
-          setUserRole={setUserRole}
-          userId={userId}
-          setUserId={setUserId}
-          rangeValue={rangeValue}
-          handleRangeChange={handleRangeChange}
-        />
-      </FilterDrawer>
     </div>
   );
 }

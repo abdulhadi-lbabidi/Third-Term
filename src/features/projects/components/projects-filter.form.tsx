@@ -7,6 +7,7 @@ import { usersApi } from '@/features/users/api/users.api';
 import { projectsApi } from '../projects.api';
 import type { Project } from '../types';
 import { cn } from '@/shared/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 
 export type ProjectsFilterFormProps = {
   searchQuery: string;
@@ -19,30 +20,22 @@ export type ProjectsFilterFormProps = {
   setStatus: (val: Project['status'] | '') => void;
 };
 
-const statuses: { value: Project['status']; label: string; activeClass: string; hoverClass: string }[] = [
+const statuses: { value: Project['status']; label: string }[] = [
   {
     value: 'pending',
     label: 'قيد الانتظار',
-    activeClass: 'bg-amber-50 border-amber-300 text-amber-700 border-2 font-semibold shadow-sm',
-    hoverClass: 'hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200',
   },
   {
     value: 'in_progress',
     label: 'قيد التنفيذ',
-    activeClass: 'bg-blue-50 border-blue-300 text-blue-700 border-2 font-semibold shadow-sm',
-    hoverClass: 'hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200',
   },
   {
     value: 'completed',
     label: 'مكتمل',
-    activeClass: 'bg-emerald-50 border-emerald-300 text-emerald-700 border-2 font-semibold shadow-sm',
-    hoverClass: 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200',
   },
   {
     value: 'cancelled',
     label: 'ملغي',
-    activeClass: 'bg-rose-50 border-rose-300 text-rose-700 border-2 font-semibold shadow-sm',
-    hoverClass: 'hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200',
   },
 ];
 
@@ -120,29 +113,23 @@ export function ProjectsFilterForm({
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label>الحالة</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {statuses.map((item) => {
-            const isSelected = status === item.value;
-            return (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setStatus(isSelected ? '' : item.value)}
-                className={cn(
-                  "flex h-11 items-center justify-center rounded-lg border text-xs transition-all duration-200 cursor-pointer",
-                  isSelected
-                    ? item.activeClass
-                    : "bg-background text-muted-foreground border-border hover:border-muted-foreground/30",
-                  !isSelected && item.hoverClass
-                )}
-              >
+        <Select value={status} onValueChange={(val) => setStatus((val ?? '') as Project['status'] | '')}>
+          <SelectTrigger className="h-10">
+            <SelectValue placeholder="اختر الحالة">
+              {status ? (statuses.find((item) => item.value === status)?.label) : 'الكل'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">الكل</SelectItem>
+            {statuses.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
                 {item.label}
-              </button>
-            );
-          })}
-        </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

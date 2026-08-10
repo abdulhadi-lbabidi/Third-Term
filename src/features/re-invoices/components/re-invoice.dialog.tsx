@@ -259,7 +259,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
             />
           )}
         </div>
-        <div className="flex justify-end gap-2 sm:col-span-2"><Button type="button" variant="outline" onClick={onClose}>إلغاء</Button><Button type="submit" disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : value ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
+        <div className="flex justify-end gap-2 sm:col-span-2"><Button type="submit" disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : value ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
       </form></TabsContent>
       <TabsContent value="items" className="pt-4">{activeId && <ReInvoiceItemsPanel reInvoiceId={activeId} onBack={() => setStep('details')} onDone={onClose} />}</TabsContent>
     </Tabs>

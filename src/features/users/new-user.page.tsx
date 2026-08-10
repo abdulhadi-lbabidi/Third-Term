@@ -149,9 +149,10 @@ type NewUserPageProps = {
   embedded?: boolean;
   createRole?: UserRole;
   onClose?: () => void;
+  onCreated?: () => void;
 };
 
-export function NewUserPage({ embedded = false, createRole, onClose }: NewUserPageProps = {}) {
+export function NewUserPage({ embedded = false, createRole, onClose, onCreated }: NewUserPageProps = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useParams();
@@ -203,6 +204,7 @@ export function NewUserPage({ embedded = false, createRole, onClose }: NewUserPa
       if (editMode) {
         setIsEditingMode(false);
       } else if (embedded) {
+        onCreated?.();
         onClose?.();
       } else {
         navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`, { replace: true });

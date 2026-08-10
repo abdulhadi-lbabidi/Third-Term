@@ -20,9 +20,9 @@ import type {
 import { PageHeader } from '../components/page-header';
 import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users, Search, RotateCcw, Plus } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
 import { NewUserPage } from './new-user.page';
-
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
 const USER_TABS = [
@@ -79,11 +79,19 @@ function UsersTableSkeleton() {
 export function UsersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialRole = searchParams.get('tab');
   const [activeRole, setActiveRole] = useState<UserRole>(() => {
     return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';
   });
+
+  const handleRoleChange = (value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', value);
+      return next;
+    });
+  };
 
   const [page, setPage] = useState(1);
   const perPage = 50;
@@ -145,7 +153,21 @@ export function UsersPage() {
 
   const columns = useMemo(
     () => [
-      { header: 'الاسم', sortable: true, sortKey: 'user_name', className: 'min-w-40', cell: (row: UsersTabRecord) => <span className="block max-w-52 truncate font-medium">{row.user.name}</span> },
+      {
+        header: 'الاسم',
+        sortable: true,
+        sortKey: 'user_name',
+        className: 'min-w-40',
+        cell: (row: UsersTabRecord) => (
+          <button
+            type="button"
+            onClick={() => handleFunds(row)}
+            className="block max-w-52 truncate text-start font-medium text-primary hover:underline"
+          >
+            {row.user.name}
+          </button>
+        ),
+      },
       { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-center">{row.user.email}</span> },
       { header: 'الهاتف', className: 'min-w-36', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
       { header: 'العنوان', className: 'min-w-52 max-w-64', cell: (row: UsersTabRecord) => <span className="block max-w-64 truncate">{row.user.address || '-'}</span> },
@@ -179,8 +201,6 @@ export function UsersPage() {
         badge="المستخدمون"
         title="المستخدمون"
         icon={Users}
-        tabs={USER_TABS}
-        defaultTab={activeRole}
         action={
           <form
             className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap"
@@ -189,6 +209,32 @@ export function UsersPage() {
               handleSearchSubmit();
             }}
           >
+            <Select value={activeRole} onValueChange={handleRoleChange}>
+              <SelectTrigger className="h-10 w-full sm:w-48 shrink-0">
+                <SelectValue placeholder="اختر النوع">
+                  {(() => {
+                    const currentTab = USER_TABS.find((tab) => tab.value === activeRole);
+                    if (!currentTab) return null;
+                    return (
+                      <div className="flex items-center gap-2">
+                        {currentTab.icon}
+                        <span>{currentTab.label}</span>
+                      </div>
+                    );
+                  })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {USER_TABS.map((tab) => (
+                  <SelectItem key={tab.value} value={tab.value}>
+                    <div className="flex items-center gap-2">
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="relative w-full sm:min-w-72 sm:flex-1 lg:w-80">
               <button
                 type="submit"

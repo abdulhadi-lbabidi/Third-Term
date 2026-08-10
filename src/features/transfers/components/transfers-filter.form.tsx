@@ -71,56 +71,54 @@ export function TransfersFilterForm({
         />
       </div>
 
-      <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-3">
-        <p className="text-xs font-semibold text-foreground">فلترة بـ أنشئ بواسطة</p>
-        <div className="space-y-1.5">
-          <Label>نوع المنشئ</Label>
-          <Select
-            value={userRole}
-            onValueChange={(val) => {
-              setUserRole(val as UserRole);
-              setUserId('');
-            }}
-          >
-            <SelectTrigger>
-              {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
-            </SelectTrigger>
-            <SelectContent>
-              {userRoles.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {roleLabels[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>أنشئ بواسطة</Label>
-          {roleUsersQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <SearchableSelect
-              value={userId || null}
-              onValueChange={(val) => setUserId(val ? Number(val) : '')}
-              disabled={!userRole}
-              placeholder="اختر المستخدم"
-              searchPlaceholder="البحث عن مستخدم..."
-              emptyMessage="لا يوجد مستخدمون."
-              options={roleUsers.map((item: any) => ({
-                value: item.user.id,
-                label: item.user.name,
-              }))}
-            />
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <Label>نوع المنشئ</Label>
+        <Select
+          value={userRole}
+          onValueChange={(val) => {
+            setUserRole(val as UserRole);
+            setUserId('');
+          }}
+        >
+          <SelectTrigger>
+            {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
+          </SelectTrigger>
+          <SelectContent>
+            {userRoles.map((role) => (
+              <SelectItem key={role} value={role}>
+                {roleLabels[role]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="space-y-1.5  ">
+      <div className="space-y-1.5">
+        <Label>أنشئ بواسطة</Label>
+        {roleUsersQuery.isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <SearchableSelect
+            value={userId || null}
+            onValueChange={(val) => setUserId(val ? Number(val) : '')}
+            disabled={!userRole}
+            placeholder="اختر المستخدم"
+            searchPlaceholder="البحث عن مستخدم..."
+            emptyMessage="لا يوجد مستخدمون."
+            options={roleUsers.map((item: any) => ({
+              value: item.user.id,
+              label: item.user.name,
+            }))}
+          />
+        )}
+      </div>
+
+      <div className="hidden sm:block space-y-1.5">
         <Label>مجال التاريخ والوقت</Label>
         <DateTimeRangePicker
           value={rangeValue}
           onChange={handleRangeChange}
+          contentClassName="transfers"
         />
       </div>
     </div>

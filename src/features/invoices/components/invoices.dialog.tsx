@@ -20,9 +20,10 @@ type InvoicesDialogProps = {
   invoiceId?: number;
   fixedValues?: Record<string, any>;
   embedded?: boolean;
+  onCompleted?: () => void;
 };
 
-export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedded = false }: InvoicesDialogProps) {
+export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedded = false, onCompleted }: InvoicesDialogProps) {
   const closeAfterItemSaveRef = useRef(false);
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'invoice' | 'items'>('invoice');
@@ -32,9 +33,9 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
   const [editingItem, setEditingItem] = useState<InvoiceItem | null>(null);
   const [itemFormDirty, setItemFormDirty] = useState(false);
   const [itemSubmitIntent, setItemSubmitIntent] = useState<'add' | 'send' | null>(null);
+  const [formSessionKey, setFormSessionKey] = useState(0);
 
   useEffect(() => {
-    if (!isOpen) return;
     setStep('invoice');
     setActiveInvoiceId(invoiceId);
     setCreatedInSession(false);
@@ -42,7 +43,19 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
     setItemFormDirty(false);
     setItemSubmitIntent(null);
     closeAfterItemSaveRef.current = false;
-  }, [isOpen, invoiceId]);
+  }, [invoiceId]);
+
+  const completeDialog = () => {
+    setFormSessionKey((value) => value + 1);
+    setStep('invoice');
+    setActiveInvoiceId(invoiceId);
+    setCreatedInSession(false);
+    setEditingItem(null);
+    setItemFormDirty(false);
+    setItemSubmitIntent(null);
+    onCompleted?.();
+    onClose();
+  };
 
   const isEdit = !!activeInvoiceId;
   const invoiceQuery = useInvoice(activeInvoiceId as number, isEdit && isOpen);
@@ -79,7 +92,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
       setItemSubmitIntent(null);
       if (closeAfterItemSaveRef.current) {
         closeAfterItemSaveRef.current = false;
-        onClose();
+        completeDialog();
       }
     },
     onError: () => {
@@ -100,7 +113,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
     if (!savedId) return;
 
     if (invoiceId && !createdInSession) {
-      onClose();
+      completeDialog();
       return;
     }
 
@@ -115,7 +128,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
     : 'أدخل بيانات الفاتورة ثم انتقل لإضافة أصنافها.';
 
   const wizardContent = (
-    <>
+    <div key={formSessionKey}>
         <DialogHeader>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/40 p-1">
             <button type="button" onClick={() => setStep('invoice')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm ${step === 'invoice' ? 'bg-background font-semibold text-primary shadow-sm' : 'text-muted-foreground'}`}>
@@ -139,7 +152,6 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
               <InvoicesForm
                 defaultValues={invoiceQuery.data}
                 onSuccess={handleInvoiceSaved}
-                onCancel={onClose}
                 fixedValues={fixedValues}
               />
             )
@@ -214,7 +226,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
                       toast.error('أضف صنفًا واحدًا على الأقل قبل إرسال الفاتورة');
                       return;
                     }
-                    onClose();
+                    completeDialog();
                   }}
                 >
                   <CheckCircle2 className="ml-2 size-4" />
@@ -224,7 +236,7 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
             </div>
           ) : null}
         </div>
-    </>
+    </div>
   );
 
   if (embedded) {
@@ -232,8 +244,16 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`max-h-[90vh] !overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
+    <Dialog
+      open={isOpen}
+      disablePointerDismissal
+      onOpenChange={(open, details) => {
+        if (!open) details.preventUnmountOnClose();
+        if (details.reason === 'escape-key') return;
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent keepMounted className={`max-h-[90vh] !overflow-y-auto !max-w-3xl ${step === 'items' ? '!max-w-3xl' : 'max-w-2xl'}`}>
         {wizardContent}
       </DialogContent>
     </Dialog>
