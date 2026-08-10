@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, CheckCircle2, ChevronLeft, FileText, PackageOpen, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronLeft, FileText, PackageOpen, Pencil, ReceiptText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
@@ -21,9 +21,10 @@ type InvoicesDialogProps = {
   fixedValues?: Record<string, any>;
   embedded?: boolean;
   onCompleted?: () => void;
+  showExpenseStep?: boolean;
 };
 
-export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedded = false, onCompleted }: InvoicesDialogProps) {
+export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedded = false, onCompleted, showExpenseStep = false }: InvoicesDialogProps) {
   const closeAfterItemSaveRef = useRef(false);
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'invoice' | 'items'>('invoice');
@@ -130,7 +131,12 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
   const wizardContent = (
     <div key={formSessionKey}>
         <DialogHeader>
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/40 p-1">
+          <div className={`grid gap-2 rounded-lg bg-muted/40 p-1 ${showExpenseStep ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {showExpenseStep && (
+              <div className="flex items-center justify-center gap-2 rounded-md px-2 py-2 text-sm text-muted-foreground">
+                <ReceiptText className="size-4" />المصروف
+              </div>
+            )}
             <button type="button" onClick={() => setStep('invoice')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm ${step === 'invoice' ? 'bg-background font-semibold text-primary shadow-sm' : 'text-muted-foreground'}`}>
               <FileText className="size-4" />بيانات الفاتورة
             </button>

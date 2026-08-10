@@ -206,10 +206,11 @@ export function GenericFundDetails({
   }, [fundInvoicesQuery.data]);
 
   const handleExpenseSubmit = async (data: any) => {
+    let savedExpense;
     if (selectedExpense) {
-      await updateExpenseMutation.mutateAsync({ id: selectedExpense.id, payload: data });
+      savedExpense = await updateExpenseMutation.mutateAsync({ id: selectedExpense.id, payload: data });
     } else {
-      await createExpenseMutation.mutateAsync(data);
+      savedExpense = await createExpenseMutation.mutateAsync(data);
     }
 
     const projectId = Number(extraFixedValues?.project_id);
@@ -220,6 +221,7 @@ export function GenericFundDetails({
         refetchType: 'all',
       });
     }
+    return savedExpense;
   };
 
   const transfersFilters = useMemo(() => {

@@ -26,12 +26,12 @@ type UserRecord = Awaited<ReturnType<typeof usersApi.getUserByRole>>;
 const fundsQueryKeys = { all: ['funds'] as const };
 
 const USER_FUNDS_SORT_OPTIONS: FundSortOption[] = [
+  { value: '-created_at', label: 'الأحدث أولًا' },
+  { value: 'created_at', label: 'الأقدم أولًا' },
   { value: 'user_name', label: 'اسم المستخدم أ–ي' },
   { value: '-user_name', label: 'اسم المستخدم ي–أ' },
   { value: 'name', label: 'اسم الصندوق أ–ي' },
   { value: '-name', label: 'اسم الصندوق ي–أ' },
-  { value: '-created_at', label: 'الأحدث أولًا' },
-  { value: 'created_at', label: 'الأقدم أولًا' },
 ];
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
@@ -98,7 +98,9 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
 
   const resolvedUserId = userRecordQuery.data?.user.id ?? userId;
   const visibleFunds = hasUserContext
-    ? ((userRecordQuery.data?.user.funds as Fund[] | undefined) ?? [])
+    ? [...((userRecordQuery.data?.user.funds as Fund[] | undefined) ?? [])].sort((a, b) =>
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+      )
     : (fundsQuery.data?.data ?? []);
   const fundsMeta = hasUserContext ? undefined : fundsQuery.data?.meta;
 

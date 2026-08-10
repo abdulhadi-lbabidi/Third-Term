@@ -94,16 +94,18 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
     enabled: !!selectedFundId && !hasEmbeddedProjectData,
   });
 
-  const embeddedFunds: ProjectFund[] = (projectData?.funds ?? []).map((fund) => ({
-    ...fund,
-    project: {
-      id: projectData!.id,
-      name: projectData!.name,
-      expected_cost: projectData!.expected_cost,
-      status: projectData!.status,
-      created_at: projectData!.created_at,
-    },
-  }));
+  const embeddedFunds: ProjectFund[] = (projectData?.funds ?? [])
+    .map((fund) => ({
+      ...fund,
+      project: {
+        id: projectData!.id,
+        name: projectData!.name,
+        expected_cost: projectData!.expected_cost,
+        status: projectData!.status,
+        created_at: projectData!.created_at,
+      },
+    }))
+    .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
   const availableFunds = hasEmbeddedProjectData ? embeddedFunds : (projectFundsQuery.data?.data ?? []);
   const projectFundsMeta = projectFundsQuery.data?.meta;
   const currentFund = fundDetailsQuery.data || availableFunds.find((f) => f.id === selectedFundId) || null;

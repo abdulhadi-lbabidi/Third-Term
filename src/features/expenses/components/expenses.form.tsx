@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm, type Control } from 'react-hook-form';
@@ -54,6 +54,7 @@ type ExpensesFormProps = {
     balance: string;
   }[];
   onSubmit: (data: CreateExpensePayload) => Promise<void>;
+  onSubmitWithInvoice?: (data: CreateExpensePayload) => Promise<void>;
   onCancel?: () => void;
   loading?: boolean;
 };
@@ -122,6 +123,13 @@ function getFundLabel(item: FundLabelSource) {
 
 function getCompanyFundLabel(item: CompanyFund) {
   return item.name;
+}
+
+function newestFundsFirst<T extends { id: number; created_at?: string }>(funds: T[]): T[] {
+  return [...funds].sort((a, b) => {
+    const dateDifference = (Date.parse(b.created_at ?? '') || 0) - (Date.parse(a.created_at ?? '') || 0);
+    return dateDifference || b.id - a.id;
+  });
 }
 
 function renderCurrencyValue(currency: { currency: string; balance: string }) {
@@ -381,7 +389,8 @@ function ExpenseCurrencyField({ control, currencies, selectedCurrency, disabled,
   );
 }
 
-export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, loading }: ExpensesFormProps) {
+export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, onSubmitWithInvoice, loading }: ExpensesFormProps) {
+  const submitModeRef = useRef<'expense' | 'invoice'>('expense');
   const isUserFundFixed = Boolean(fixedValues?.user_fund_id);
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -445,7 +454,10 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     queryFn: () => companyFundsApi.getCompanyFunds(),
     enabled: source === 'company_fund',
   });
-  const companyFunds: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+  const companyFunds: CompanyFund[] = useMemo(() => {
+    const funds = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+    return newestFundsFirst(funds);
+  }, [companyFundsQuery.data]);
 
   const derivedCompanyFundId = useMemo(() => {
     if (companyFundId) {
@@ -549,10 +561,14 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     enabled: source === 'user_fund' && Boolean(fundUserRole) && Boolean(fundUserId) && !fixedFundCurrencies,
   });
   const selectedFundUserRecord = fundUserRecordQuery.data;
+  const userFunds = useMemo(
+    () => newestFundsFirst(selectedFundUserRecord?.user.funds ?? []),
+    [selectedFundUserRecord],
+  );
 
   const projectFunds: ProjectFund[] = useMemo(() => {
     if (source !== 'project_fund' || !selectedProjectId) return [];
-    return selectedProjectDetails?.funds ?? [];
+    return newestFundsFirst(selectedProjectDetails?.funds ?? []);
   }, [selectedProjectDetails?.funds, selectedProjectId, source]);
 
   const derivedProjectFundId = useMemo(() => {
@@ -600,10 +616,10 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
       return undefined;
     }
 
-    return selectedFundUserRecord?.user.funds?.find((fund) =>
+    return userFunds.find((fund) =>
       fund.currencies?.some((currency) => currencyMatchesExpenseableId(currency, selectedExpenseableId)),
     )?.id;
-  }, [selectedExpenseableId, selectedFundUserRecord, userFundId]);
+  }, [selectedExpenseableId, userFundId, userFunds]);
 
   useEffect(() => {
     if (source !== 'user_fund') {
@@ -674,13 +690,13 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
 
   const selectedUserFund = useMemo(() => {
     if (!derivedUserFundId) return undefined;
-    return selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId);
-  }, [derivedUserFundId, selectedFundUserRecord]);
+    return userFunds.find((fund) => fund.id === derivedUserFundId);
+  }, [derivedUserFundId, userFunds]);
 
   const selectedUserFundName = useMemo(() => {
     if (!derivedUserFundId) return '';
 
-    const fromFunds = selectedFundUserRecord?.user.funds?.find((fund) => fund.id === derivedUserFundId)?.name;
+    const fromFunds = userFunds.find((fund) => fund.id === derivedUserFundId)?.name;
     if (fromFunds) return fromFunds;
 
     const details = getExpenseUserFundDetails(defaultValues);
@@ -689,7 +705,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     }
 
     return '';
-  }, [defaultValues, derivedUserFundId, selectedFundUserRecord]);
+  }, [defaultValues, derivedUserFundId, userFunds]);
 
   const userFundCurrencies = useMemo(() => {
     if (fixedFundCurrencies) {
@@ -781,8 +797,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
             })();
             const finalUserId = assignUser ? (values.user_id || fixedValues?.user_id || urlUserId) : undefined;
 
-            await onSubmit(
-              toExpenseApiPayload({
+            const payload = toExpenseApiPayload({
                 expenseable_type: sourceToExpenseableType[values.source],
                 expenseable_id: values.expenseable_id ?? 0,
                 description: values.description,
@@ -790,8 +805,12 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                 is_posted: values.is_posted,
                 user_id: finalUserId,
                 created_by: values.created_by ?? 1,
-              }),
-            );
+              });
+            if (submitModeRef.current === 'invoice' && onSubmitWithInvoice) {
+              await onSubmitWithInvoice(payload);
+            } else {
+              await onSubmit(payload);
+            }
           },
           (errors) => {
             console.log('Validation Errors:', errors);
@@ -1069,7 +1088,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(selectedFundUserRecord?.user.funds ?? []).map((fund) => (
+                          {userFunds.map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
                               {getFundLabel(fund)}
                             </SelectItem>
@@ -1229,7 +1248,13 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         />
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="submit" disabled={loading}>
+          {onSubmitWithInvoice && !defaultValues?.id && (
+            <Button type="submit" variant="outline" disabled={loading} onClick={() => { submitModeRef.current = 'invoice'; }}>
+              <Plus className='w-6 h-6' />
+              إنشاء مع فاتورة
+            </Button>
+          )}
+          <Button type="submit" disabled={loading} onClick={() => { submitModeRef.current = 'expense'; }}>
             <Plus className='w-6 h-6' />
             {loading
               ? (defaultValues?.id ? 'جاري التحديث...' : 'جاري الإضافة...')

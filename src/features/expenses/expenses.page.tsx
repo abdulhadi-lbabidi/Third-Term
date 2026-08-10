@@ -221,8 +221,8 @@ export function ExpensesPage() {
         defaultValues={expenseToEdit}
         loading={createExpense.isPending || updateExpense.isPending}
         onSubmit={async (payload) => {
-          if (expenseToEdit) await updateExpense.mutateAsync({ id: expenseToEdit.id, payload });
-          else await createExpense.mutateAsync(payload);
+          if (expenseToEdit) return updateExpense.mutateAsync({ id: expenseToEdit.id, payload });
+          return createExpense.mutateAsync(payload);
         }}
       />
 

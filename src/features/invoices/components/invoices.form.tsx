@@ -450,7 +450,7 @@ export function InvoicesForm({
         open={isExpenseDialogOpen}
         onOpenChange={setIsExpenseDialogOpen}
         onSubmit={async (data) => {
-          await createExpenseMutation.mutateAsync(data);
+          return createExpenseMutation.mutateAsync(data);
         }}
         loading={createExpenseMutation.isPending}
       />

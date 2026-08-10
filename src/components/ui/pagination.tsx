@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MoreHorizontalIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontalIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 
@@ -108,6 +108,21 @@ function SimplePagination({ currentPage, totalPages, onPageChange }: SimplePagin
   return (
     <Pagination className="mt-4 overflow-x-auto py-1">
       <PaginationContent className="mx-auto w-max">
+        <PaginationItem>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={currentPage <= 1}
+            onClick={() => onPageChange(currentPage - 1)}
+            aria-label="الصفحة السابقة"
+            className="gap-1"
+          >
+            <ChevronRight className="size-4" />
+            السابق
+          </Button>
+        </PaginationItem>
+
         {pageNumbers.map((pageNumber, index) => (
           <PaginationItem key={`${pageNumber}-${index}`}>
             {pageNumber === 'ellipsis' ? (
@@ -126,6 +141,21 @@ function SimplePagination({ currentPage, totalPages, onPageChange }: SimplePagin
             )}
           </PaginationItem>
         ))}
+
+        <PaginationItem>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={currentPage >= totalPages}
+            onClick={() => onPageChange(currentPage + 1)}
+            aria-label="الصفحة التالية"
+            className="gap-1"
+          >
+            التالي
+            <ChevronLeft className="size-4" />
+          </Button>
+        </PaginationItem>
       </PaginationContent>
     </Pagination>
   );

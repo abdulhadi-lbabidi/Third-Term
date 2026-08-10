@@ -19,7 +19,7 @@ export type FundsListParams = {
 };
 
 export const fundsApi = {
-  getFunds: async ({ page = 1, perPage = 20, search, sort = 'user_name' }: FundsListParams = {}): Promise<FundsResponse> => {
+  getFunds: async ({ page = 1, perPage = 20, search, sort = '-created_at' }: FundsListParams = {}): Promise<FundsResponse> => {
     const response = await apiClient.get('/funds', { params: {
       paginate: true,
       page,
