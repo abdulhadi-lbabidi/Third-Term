@@ -8,22 +8,20 @@ import { InvoiceItemsTable } from './components/invoice-items.table';
 import { invoiceItemsApi } from './invoice-items.api';
 import type { InvoiceItemFormValues } from './schemas/invoice-items.schema';
 import type { CreateInvoiceItemPayload, InvoiceItem, InvoiceItemResponse } from './types';
-import { FileSpreadsheet, RotateCcw, SlidersHorizontal, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
 import { InvoiceItemsFilterForm } from './components/invoice-items-filter.form';
 import { cn } from '@/shared/lib/utils';
 
 export function InvoiceItemsPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fixedInvoiceId = Number(searchParams.get('invoiceId') || 0) || undefined;
-  const isWizard = searchParams.get('wizard') === 'true' && !!fixedInvoiceId;
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const perPage = 10;
-  const [dialogOpen, setDialogOpen] = useState(isWizard);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InvoiceItem | null>(null);
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -120,12 +118,6 @@ export function InvoiceItemsPage() {
         icon={FileSpreadsheet}
         action={
           <div className="flex flex-wrap gap-2">
-            {isWizard && (
-              <Button type="button" variant="outline" onClick={() => navigate(`/invoices/new?invoiceId=${fixedInvoiceId}`)}>
-                <ArrowRight className="ml-2 size-4" />
-                تعديل بيانات الفاتورة
-              </Button>
-            )}
             {(Object.values(appliedFilters).some(Boolean) || sort) ? (
               <Button
                 type="button"
@@ -159,12 +151,6 @@ export function InvoiceItemsPage() {
             >
               إضافة صنف جديد
             </Button>
-            {isWizard && (
-              <Button type="button" variant="secondary" onClick={() => navigate('/invoices')}>
-                <CheckCircle2 className="ml-2 size-4" />
-                إنهاء
-              </Button>
-            )}
           </div>
         }
       />

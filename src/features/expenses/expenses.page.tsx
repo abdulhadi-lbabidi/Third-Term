@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { expensesApi } from './expenses.api';
-import { useExpenses } from './expenses.hooks';
+import { useCreateExpense, useExpenses, useUpdateExpense } from './expenses.hooks';
 import { ExpensesTable } from './components/expenses.table';
+import { ExpensesDialog } from './components/expenses.dialog';
+import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
 import { ExpenseDetailsDialog } from './components/expense-details.dialog';
 import type { Expense } from './types';
 import { ReceiptText, SlidersHorizontal, RotateCcw } from 'lucide-react';
@@ -20,13 +21,17 @@ import { cn } from '@/shared/lib/utils';
 import { format } from 'date-fns';
 
 export function ExpensesPage() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
 
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const [invoiceExpenseId, setInvoiceExpenseId] = useState<number | null>(null);
+  const createExpense = useCreateExpense();
+  const updateExpense = useUpdateExpense();
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,7 +153,7 @@ export function ExpensesPage() {
               <SlidersHorizontal className="size-4" />
               فلترة متقدمة
             </Button>
-            <Button type="button" onClick={() => navigate('/expenses/new')}>
+            <Button type="button" onClick={() => { setExpenseToEdit(null); setExpenseDialogOpen(true); }}>
               إضافة مصروف جديد
             </Button>
           </div>
@@ -159,9 +164,9 @@ export function ExpensesPage() {
         data={expenses}
         loading={expensesQuery.isLoading}
         onView={handleView}
-        onEdit={(expense) => navigate(`/expenses/new?expenseId=${expense.id}`)}
+        onEdit={(expense) => { setExpenseToEdit(expense); setExpenseDialogOpen(true); }}
         onDelete={handleDelete}
-        onAddInvoice={(expense) => navigate(`/invoices/new?expenseId=${expense.id}`)}
+        onAddInvoice={(expense) => setInvoiceExpenseId(expense.id)}
         sort={sort}
         onSortChange={setSort}
       />
@@ -184,6 +189,23 @@ export function ExpensesPage() {
           if (!open) setSelectedExpenseId(null);
         }}
         expenseId={selectedExpenseId}
+      />
+
+      <ExpensesDialog
+        open={expenseDialogOpen}
+        onOpenChange={setExpenseDialogOpen}
+        defaultValues={expenseToEdit}
+        loading={createExpense.isPending || updateExpense.isPending}
+        onSubmit={async (payload) => {
+          if (expenseToEdit) await updateExpense.mutateAsync({ id: expenseToEdit.id, payload });
+          else await createExpense.mutateAsync(payload);
+        }}
+      />
+
+      <InvoicesDialog
+        isOpen={invoiceExpenseId !== null}
+        onClose={() => setInvoiceExpenseId(null)}
+        fixedValues={invoiceExpenseId ? { expense_id: invoiceExpenseId } : undefined}
       />
 
       <FilterDrawer

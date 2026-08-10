@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm, type Control } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -382,8 +381,7 @@ function ExpenseCurrencyField({ control, currencies, selectedCurrency, disabled,
   );
 }
 
-export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, onCancel, loading }: ExpensesFormProps) {
-  const navigate = useNavigate();
+export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, loading }: ExpensesFormProps) {
   const isUserFundFixed = Boolean(fixedValues?.user_fund_id);
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -1231,10 +1229,6 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         />
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel ?? (() => navigate(-1))}>
-            إلغاء
-          </Button>
-
           <Button type="submit" disabled={loading}>
             <Plus className='w-6 h-6' />
             {loading

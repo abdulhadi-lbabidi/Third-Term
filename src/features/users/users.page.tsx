@@ -20,6 +20,8 @@ import type {
 import { PageHeader } from '../components/page-header';
 import { Shield, User, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Users, Search, RotateCcw, Plus } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
+import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
+import { NewUserPage } from './new-user.page';
 
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
@@ -88,6 +90,7 @@ export function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<string | undefined>(undefined);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleSearchSubmit = () => {
     setSearch(searchQuery);
@@ -217,7 +220,7 @@ export function UsersPage() {
             <Button
               type="button"
               className="min-w-0 flex-1 sm:flex-none"
-              onClick={() => navigate(`/users/new${activeRole ? `?tab=${activeRole}` : ''}`)}
+              onClick={() => setCreateDialogOpen(true)}
             >
               <Plus className="size-4" />
               إضافة مستخدم
@@ -249,6 +252,14 @@ export function UsersPage() {
           />
         </>
       )}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-h-[90vh] !max-w-5xl overflow-y-auto p-0">
+          <DialogTitle className="sr-only">إضافة مستخدم</DialogTitle>
+          {createDialogOpen && (
+            <NewUserPage embedded createRole={activeRole} onClose={() => setCreateDialogOpen(false)} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

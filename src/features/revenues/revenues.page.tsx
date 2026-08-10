@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { RevenuesTable } from './components/revenues.table';
-import { useRevenues, useDeleteRevenue } from './revenues.hooks';
+import { useCreateRevenue, useRevenues, useDeleteRevenue, useUpdateRevenue } from './revenues.hooks';
+import { RevenuesDialog } from './components/revenues.dialog';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Revenue } from './types';
 import { TrendingUp, SlidersHorizontal, RotateCcw } from 'lucide-react';
@@ -17,7 +17,6 @@ import { cn } from '@/shared/lib/utils';
 import { format } from 'date-fns';
 
 export function RevenuesPage() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
@@ -37,6 +36,10 @@ export function RevenuesPage() {
 
   const [sort, setSort] = useState<string | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [revenueToEdit, setRevenueToEdit] = useState<Revenue | null>(null);
+  const createRevenue = useCreateRevenue();
+  const updateRevenue = useUpdateRevenue();
 
   const rangeValue = useMemo(() => {
     return {
@@ -88,11 +91,13 @@ export function RevenuesPage() {
   const deleteMutation = useDeleteRevenue();
 
   const handleAddClick = () => {
-    navigate('/revenues/new');
+    setRevenueToEdit(null);
+    setDialogOpen(true);
   };
 
-  const handleEditClick = async (revenue: Revenue) => {
-    navigate(`/revenues/new?revenueId=${revenue.id}`);
+  const handleEditClick = (revenue: Revenue) => {
+    setRevenueToEdit(revenue);
+    setDialogOpen(true);
   };
 
   const handleDelete = async (revenue: Revenue) => {
@@ -164,6 +169,17 @@ export function RevenuesPage() {
         limit={perPage}
         limitOptions={[5, 10, 20, 50, 100]}
         onLimitChange={setPerPage}
+      />
+
+      <RevenuesDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        defaultValues={revenueToEdit}
+        loading={createRevenue.isPending || updateRevenue.isPending}
+        onSubmit={async (payload) => {
+          if (revenueToEdit) await updateRevenue.mutateAsync({ id: revenueToEdit.id, payload });
+          else await createRevenue.mutateAsync(payload);
+        }}
       />
 
       <FilterDrawer

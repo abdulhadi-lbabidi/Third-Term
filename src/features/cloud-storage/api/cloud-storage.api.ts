@@ -54,14 +54,16 @@ export const cloudStorageApi = {
       .delete(`/directories/${id}`)
       .then(({ data }: any) => data?.data ?? data),
 
-  uploadFiles: (directoryId: number, files: File[]): Promise<CloudFile[]> => {
+  uploadFiles: (directoryId: number | null, files: File[]): Promise<CloudFile[]> => {
     const formData = new FormData();
     files.forEach((file, index) => {
       formData.append(`files[${index}]`, file);
     });
 
+    const targetDirectoryId = directoryId ?? 0;
+
     return apiClient
-      .post<CloudFile[]>(`/directories/${directoryId}/files`, formData, {
+      .post<CloudFile[]>(`/directories/${targetDirectoryId}/files`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then(({ data }: any) => data?.data ?? data);

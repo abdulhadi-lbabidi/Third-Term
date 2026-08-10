@@ -66,11 +66,13 @@ export const useUploadFiles = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ directoryId, files }: { directoryId: number; files: File[] }) =>
+    mutationFn: ({ directoryId, files }: { directoryId: number | null; files: File[] }) =>
       cloudStorageApi.uploadFiles(directoryId, files),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['directories'] });
-      void queryClient.invalidateQueries({ queryKey: ['directories', variables.directoryId] });
+      if (variables.directoryId !== null) {
+        void queryClient.invalidateQueries({ queryKey: ['directories', variables.directoryId] });
+      }
     },
   });
 };

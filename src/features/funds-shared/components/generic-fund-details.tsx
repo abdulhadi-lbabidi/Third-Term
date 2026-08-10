@@ -470,7 +470,6 @@ export function GenericFundDetails({
                 ...(expenseFilterId ? { 'filter[expense_id]': expenseFilterId } : {}),
               }}
               perPage={5}
-              editInDialog
               enabled={currentTab === 'invoices'}
             />
           </div>

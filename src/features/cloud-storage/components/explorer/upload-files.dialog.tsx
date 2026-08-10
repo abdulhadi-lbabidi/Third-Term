@@ -32,7 +32,7 @@ export function UploadFilesDialog({ open, onOpenChange, directoryId }: UploadFil
   };
 
   const handleUpload = () => {
-    if (!directoryId || files.length === 0) return;
+    if (files.length === 0) return;
 
     uploadFiles(
       { directoryId, files },
@@ -59,9 +59,9 @@ export function UploadFilesDialog({ open, onOpenChange, directoryId }: UploadFil
             قم بسحب وإفلات الملفات هنا أو انقر لاختيار الملفات لرفعها إلى المجلد الحالي.
           </DialogDescription>
         </DialogHeader>
-        
-        <div 
-          {...getRootProps()} 
+
+        <div
+          {...getRootProps()}
           className={`mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-colors cursor-pointer sm:p-10
             ${isDragActive ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400'}
           `}
@@ -90,10 +90,7 @@ export function UploadFilesDialog({ open, onOpenChange, directoryId }: UploadFil
         )}
 
         <div className="mt-4 flex flex-wrap justify-end gap-2 border-t pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            إلغاء
-          </Button>
-          <Button onClick={handleUpload} disabled={isPending || files.length === 0 || !directoryId} className="min-w-[120px] flex-1 sm:flex-none">
+          <Button onClick={handleUpload} disabled={isPending || files.length === 0} className="min-w-[120px] flex-1 sm:flex-none">
             {isPending ? 'جاري الرفع...' : `رفع (${files.length}) ملفات`}
           </Button>
         </div>

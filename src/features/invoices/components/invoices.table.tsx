@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
@@ -14,7 +13,6 @@ type InvoicesTableProps = {
   filters?: Record<string, any>;
   fixedValues?: Record<string, any>;
   perPage?: number;
-  editInDialog?: boolean;
   enabled?: boolean;
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
@@ -24,12 +22,10 @@ export function InvoicesTable({
   filters,
   fixedValues,
   perPage = 10,
-  editInDialog = false,
   enabled = true,
   sort,
   onSortChange,
 }: InvoicesTableProps = {}) {
-  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(perPage);
   const filterKey = JSON.stringify({ filters, fixedValues, perPage });
@@ -138,8 +134,7 @@ export function InvoicesTable({
         onSortChange={onSortChange}
         actions={{
           onEdit: (row) => {
-            if (editInDialog) setInvoiceToEditId(row.id);
-            else navigate(`/invoices/new?invoiceId=${row.id}`);
+            setInvoiceToEditId(row.id);
           },
           editLabel: 'تحديث الفاتورة',
           onDelete: async (invoice) => {

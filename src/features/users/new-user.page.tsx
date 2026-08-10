@@ -145,7 +145,13 @@ function mapRecordToFormValues(
   return { ...base, role: forcedRole };
 }
 
-export function NewUserPage() {
+type NewUserPageProps = {
+  embedded?: boolean;
+  createRole?: UserRole;
+  onClose?: () => void;
+};
+
+export function NewUserPage({ embedded = false, createRole, onClose }: NewUserPageProps = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useParams();
@@ -154,7 +160,7 @@ export function NewUserPage() {
   const role = params.role as UserRole | undefined;
   const id = params.id ? Number(params.id) : undefined;
   const returnRole = searchParams.get('returnRole') || (role ? role : undefined);
-  const initialRole = isUserRole(role) ? role : 'admin';
+  const initialRole = isUserRole(role) ? role : createRole ?? 'admin';
 
   const [isEditingMode, setIsEditingMode] = useState(false);
 
@@ -196,6 +202,8 @@ export function NewUserPage() {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
       if (editMode) {
         setIsEditingMode(false);
+      } else if (embedded) {
+        onClose?.();
       } else {
         navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`, { replace: true });
       }
@@ -235,7 +243,7 @@ export function NewUserPage() {
 
   if (!editMode) {
     return (
-      <Card className="min-w-0 overflow-hidden">
+      <Card className={embedded ? 'min-w-0 border-0 shadow-none' : 'min-w-0 overflow-hidden'}>
         <CardHeader className="px-4 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
@@ -244,14 +252,14 @@ export function NewUserPage() {
               </CardTitle>
               <p className="text-sm text-muted-foreground">إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه</p>
             </div>
-            <Button
+            {!embedded && <Button
               type="button"
               variant="outline"
               className="w-full sm:w-auto"
               onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
             >
               رجوع
-            </Button>
+            </Button>}
           </div>
         </CardHeader>
         <CardContent className="px-4 pb-4 pt-1 sm:px-6">
@@ -282,14 +290,6 @@ export function NewUserPage() {
               {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
               <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end lg:col-span-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
-                >
-                  إلغاء
-                </Button>
                 <Button type="submit" className="w-full sm:w-auto" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ المستخدم'}</Button>
               </div>
             </form>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, FileText, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
@@ -9,10 +8,11 @@ import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
 import { InvoicesFilterForm } from './components/invoices-filter.form';
 import { cn } from '@/shared/lib/utils';
 import { INVOICES_KEYS } from './invoices.hooks';
+import { InvoicesDialog } from './components/invoices.dialog';
 
 export function InvoicesPage() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +79,7 @@ export function InvoicesPage() {
               فلترة متقدمة
             </Button>
             <Button
-              onClick={() => navigate('/invoices/new')}
+              onClick={() => setInvoiceDialogOpen(true)}
               className="h-10 shrink-0 px-3 shadow-md sm:h-11 sm:px-6"
             >
               <Plus className="mr-2 size-4" />
@@ -103,6 +103,8 @@ export function InvoicesPage() {
           perPage={50}
         />
       </section>
+
+      <InvoicesDialog isOpen={invoiceDialogOpen} onClose={() => setInvoiceDialogOpen(false)} />
 
       <FilterDrawer
         open={filterDrawerOpen}

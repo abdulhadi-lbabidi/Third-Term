@@ -24,7 +24,6 @@ const NewExpensePage        = lazy(() => import('@/features/expenses/new-expense
 const ProjectStagesPage     = lazy(() => import('@/features/projects/project-stages/project-stages.page').then(m => ({ default: m.ProjectStagesPage })));
 const MaterialsPage         = lazy(() => import('@/features/materials/materials.page').then(m => ({ default: m.MaterialsPage })));
 const RevenuesPage          = lazy(() => import('@/features/revenues/revenues.page').then(m => ({ default: m.RevenuesPage })));
-const NewRevenuePage        = lazy(() => import('@/features/revenues/new-revenue.page').then(m => ({ default: m.NewRevenuePage })));
 const TransfersPage         = lazy(() => import('@/features/transfers/transfers.page').then(m => ({ default: m.TransfersPage })));
 const InvoiceItemsPage      = lazy(() => import('@/features/invoice-items/invoice-items.page').then(m => ({ default: m.InvoiceItemsPage })));
 const InvoicesPage          = lazy(() => import('@/features/invoices/invoices.page').then(m => ({ default: m.InvoicesPage })));
@@ -157,10 +156,6 @@ export const router = createBrowserRouter([
             element: <UsersPage />,
           },
           {
-            path: '/users/new',
-            element: <NewUserPage />,
-          },
-          {
             path: '/users/view/:role/:id',
             element: <NewUserPage />,
           },
@@ -217,10 +212,6 @@ export const router = createBrowserRouter([
             element: <ExpensesPage />,
           },
           {
-            path: '/expenses/new',
-            element: <NewExpensePage />,
-          },
-          {
             path: '/revenues',
             element: <RevenuesPage />,
           },
@@ -229,20 +220,12 @@ export const router = createBrowserRouter([
             element: <TransfersPage />,
           },
           {
-            path: '/revenues/new',
-            element: <NewRevenuePage />,
-          },
-          {
             path: '/invoices',
             element: <InvoicesPage />,
           },
           {
             path: '/re-invoices',
             element: <ReInvoicesPage />,
-          },
-          {
-            path: '/invoices/new',
-            element: <NewInvoicePage />,
           },
           {
             path: '/employees/:employeeId/:employeeName/payments',
