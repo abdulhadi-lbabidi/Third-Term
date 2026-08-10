@@ -4,7 +4,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { User, Wallet, BadgeDollarSign, Pencil, Mail, Phone, MapPin, Briefcase, DollarSign, Heart, Calendar, ShieldCheck } from 'lucide-react';
+import { User, Wallet, BadgeDollarSign, Pencil, Mail, Phone, MapPin, Briefcase, DollarSign, Heart, Calendar, ShieldCheck, Cloud } from 'lucide-react';
 import dayjs from 'dayjs';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
 import { PageHeader } from '@/features/components/page-header';
 import { FundsPage } from '@/features/funds/funds.page';
 import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
+import { UserCloudStorageTab } from './components/user-cloud-storage-tab';
 import { usersApi } from './api/users.api';
 import type {
   CreateUserPayload,
@@ -233,6 +234,7 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
     const tabs = [
       { value: 'details', label: 'التفاصيل', icon: <User className="size-4" /> },
       { value: 'funds', label: 'الصناديق', icon: <Wallet className="size-4" /> },
+      { value: 'cloud', label: 'التخزين السحابي', icon: <Cloud className="size-4" /> },
     ];
     if (isEmployee) {
       tabs.push({ value: 'payments', label: 'الرواتب', icon: <BadgeDollarSign className="size-4" /> });
@@ -241,7 +243,7 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
   }, [isEmployee]);
 
   const rawTab = searchParams.get('tab');
-  const activeTab = rawTab === 'funds' || rawTab === 'payments' ? rawTab : 'details';
+  const activeTab = rawTab === 'funds' || rawTab === 'payments' || rawTab === 'cloud' ? rawTab : 'details';
 
   if (!editMode) {
     return (
@@ -452,6 +454,10 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
         )}
 
         {activeTab === 'funds' && <FundsPage />}
+
+        {activeTab === 'cloud' && currentUserData?.user.id && (
+          <UserCloudStorageTab userId={currentUserData.user.id} />
+        )}
 
         {activeTab === 'payments' && isEmployee && <EmployeePaymentsPage />}
       </div>

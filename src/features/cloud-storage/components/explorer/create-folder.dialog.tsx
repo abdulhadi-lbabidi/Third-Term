@@ -29,9 +29,10 @@ interface CreateFolderDialogProps {
   onOpenChange: (open: boolean) => void;
   parentDirId?: number | null;
   projectId?: number | null;
+  userId?: number | null;
 }
 
-export function CreateFolderDialog({ open, onOpenChange, parentDirId, projectId }: CreateFolderDialogProps) {
+export function CreateFolderDialog({ open, onOpenChange, parentDirId, projectId, userId }: CreateFolderDialogProps) {
   const { mutate: createDirectory, isPending } = useCreateDirectory();
 
   const form = useForm<z.infer<typeof schema>>({
@@ -50,6 +51,7 @@ export function CreateFolderDialog({ open, onOpenChange, parentDirId, projectId 
         dir_path: `/${folderName}`,
         parent_dir_id: parentDirId ?? null,
         project_id: projectId ?? null,
+        user_id: userId ?? null,
       },
       {
         onSuccess: () => {

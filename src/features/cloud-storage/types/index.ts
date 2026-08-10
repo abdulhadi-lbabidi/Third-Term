@@ -17,6 +17,7 @@ export interface Directory {
   dir_path: string;
   parent_dir_id: number | null;
   project?: null | any;
+  user?: null | any;
   created_at: string;
   updated_at?: string;
   files?: CloudFile[];
@@ -30,6 +31,7 @@ export interface CreateDirectoryPayload {
   dir_path: string;
   parent_dir_id: number | null;
   project_id: number | null;
+  user_id: number | null;
 }
 
 export interface UpdateDirectoryPayload {
@@ -46,6 +48,7 @@ export interface DirectoryListParams {
   page?: number;
   'filter[search]'?: string;
   'filter[project_id]'?: number;
+  'filter[user_id]'?: number;
   sort?: DirectorySortField | `-${DirectorySortField}`;
 }
 

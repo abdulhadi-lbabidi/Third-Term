@@ -89,9 +89,10 @@ function flattenDirectories(directories: Directory[]): Directory[] {
 
 interface CloudStorageExplorerProps {
   projectId?: number | null;
+  userId?: number | null;
 }
 
-export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
+export function CloudStorageExplorer({ projectId, userId }: CloudStorageExplorerProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const dirIdParam = searchParams.get('dirId');
   const currentDirId = dirIdParam ? Number(dirIdParam) : null;
@@ -141,6 +142,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
     page: !currentDirId && isSearching ? undefined : page,
     per_page: !currentDirId && isSearching ? undefined : perPage,
     'filter[project_id]': projectId ?? appliedFilters.projectId,
+    'filter[user_id]': userId ?? undefined,
     sort: sortDirection === 'desc' ? `-${directorySortField}` : directorySortField,
   };
 
@@ -170,7 +172,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
 
   useEffect(() => {
     if (!currentDirId) setPage(1);
-  }, [currentDirId, debouncedSearch, projectId, appliedFilters, sortBy, sortDirection]);
+  }, [currentDirId, debouncedSearch, projectId, userId, appliedFilters, sortBy, sortDirection]);
 
   useEffect(() => {
     if (Array.isArray(rootData)) {
@@ -653,6 +655,7 @@ export function CloudStorageExplorer({ projectId }: CloudStorageExplorerProps) {
         onOpenChange={setIsCreateFolderOpen}
         parentDirId={actionTargetDirId}
         projectId={projectId}
+        userId={userId}
       />
 
       <RenameItemDialog
