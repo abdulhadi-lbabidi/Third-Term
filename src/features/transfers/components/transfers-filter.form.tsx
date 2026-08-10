@@ -121,9 +121,6 @@ export function TransfersFilterForm({
         <DateTimeRangePicker
           value={rangeValue}
           onChange={handleRangeChange}
-          popoverSide="bottom"
-          popoverAlign="end"
-          contentClassName="transfers"
         />
       </div>
     </div>

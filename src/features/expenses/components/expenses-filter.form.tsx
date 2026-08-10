@@ -202,8 +202,6 @@ export function ExpensesFilterForm({
         <DateTimeRangePicker
           value={rangeValue}
           onChange={handleRangeChange}
-          popoverSide="top"
-          popoverAlign="end"
         />
       </div>
     </div>
