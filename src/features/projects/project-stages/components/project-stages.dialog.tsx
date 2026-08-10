@@ -27,14 +27,12 @@ export function ProjectStagesDialog({
             {stage ? 'تعديل المرحلة' : 'إضافة مرحلة جديدة'}
           </DialogTitle>
         </DialogHeader>
-        {open && (
           <ProjectStagesForm
             projectId={projectId}
             stage={stage}
             onSubmit={onSubmit}
             loading={loading}
           />
-        )}
       </DialogContent>
     </Dialog>
   );

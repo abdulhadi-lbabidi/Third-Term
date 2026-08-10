@@ -6,7 +6,6 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 import { usersApi } from '@/features/users/api/users.api';
 import { projectsApi } from '../projects.api';
 import type { Project } from '../types';
-import { cn } from '@/shared/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 
 export type ProjectsFilterFormProps = {

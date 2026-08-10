@@ -28,14 +28,12 @@ export function StageTimelineDialog({
             {timeline ? 'تعديل التفصيل الزمني' : 'إضافة تفصيل زمني جديد'}
           </DialogTitle>
         </DialogHeader>
-        {open && (
           <StageTimelineForm
             projectStageId={projectStageId}
             timeline={timeline}
             onSubmit={onSubmit}
             loading={loading}
           />
-        )}
       </DialogContent>
     </Dialog>
   );

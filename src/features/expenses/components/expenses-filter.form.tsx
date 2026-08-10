@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/shared/compo
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
-import { format } from 'date-fns';
 
 const userRoles: UserRole[] = [
   'admin',

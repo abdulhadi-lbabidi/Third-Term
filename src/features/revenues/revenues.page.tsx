@@ -3,6 +3,7 @@ import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { RevenuesTable } from './components/revenues.table';
 import { useCreateRevenue, useRevenues, useDeleteRevenue, useUpdateRevenue } from './revenues.hooks';
+import { RevenuesDialog } from './components/revenues.dialog';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Revenue } from './types';
 import { TrendingUp, SlidersHorizontal, RotateCcw } from 'lucide-react';
@@ -192,6 +193,17 @@ export function RevenuesPage() {
         limit={perPage}
         limitOptions={[5, 10, 20, 50, 100]}
         onLimitChange={setPerPage}
+      />
+
+      <RevenuesDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        defaultValues={revenueToEdit}
+        loading={createRevenue.isPending || updateRevenue.isPending}
+        onSubmit={async (payload) => {
+          if (revenueToEdit) await updateRevenue.mutateAsync({ id: revenueToEdit.id, payload });
+          else await createRevenue.mutateAsync(payload);
+        }}
       />
     </div>
   );

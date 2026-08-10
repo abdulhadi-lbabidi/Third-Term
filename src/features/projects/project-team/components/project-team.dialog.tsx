@@ -29,7 +29,6 @@ export function ProjectTeamDialog({
             {member ? 'تعديل بيانات العضو' : 'إضافة عضو جديد لفريق المشروع'}
           </DialogTitle>
         </DialogHeader>
-        {open && (
           <ProjectTeamForm
             projectId={projectId}
             member={member}
@@ -37,7 +36,6 @@ export function ProjectTeamDialog({
             onSubmit={onSubmit}
             loading={loading}
           />
-        )}
       </DialogContent>
     </Dialog>
   );

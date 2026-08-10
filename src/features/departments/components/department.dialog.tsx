@@ -23,13 +23,11 @@ export function DepartmentDialog({ open, onOpenChange, department, onSubmit, loa
           <DialogTitle>{department ? 'تعديل القسم' : 'إضافة قسم جديد'}</DialogTitle>
         </DialogHeader>
         <div className="p-4 pt-0">
-          {open && (
             <DepartmentForm
               defaultValues={department || undefined}
               onSubmit={onSubmit}
               loading={loading}
             />
-          )}
         </div>
       </DialogContent>
     </Dialog>

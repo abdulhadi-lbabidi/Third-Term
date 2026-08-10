@@ -14,11 +14,9 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
-import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { expensesApi } from '../expenses.api';
 import { formatArabicDate } from '@/shared/lib/utils';
@@ -357,11 +355,6 @@ export function ExpenseDetailsDialog({ open, onOpenChange, expenseId }: ExpenseD
           ) : null}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border pt-3">
-          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
-            إغلاق
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

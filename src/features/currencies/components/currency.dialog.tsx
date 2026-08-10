@@ -23,7 +23,6 @@ export function CurrencyDialog({
         <DialogHeader>
           <DialogTitle>{currency ? 'تعديل عملة' : 'إضافة عملة جديدة'}</DialogTitle>
         </DialogHeader>
-        {open && (
           <CurrencyForm
             defaultValues={currency || undefined}
             onSubmit={async (data) => {
@@ -31,7 +30,6 @@ export function CurrencyDialog({
             }}
             loading={loading}
           />
-        )}
       </DialogContent>
     </Dialog>
   );

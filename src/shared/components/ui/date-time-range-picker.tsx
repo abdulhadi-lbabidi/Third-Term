@@ -18,7 +18,7 @@ import {
 } from "date-fns";
 
 import { useTranslation } from "react-i18next";
-import { ar, enUS, type Locale } from "date-fns/locale";
+import { ar, type Locale } from "date-fns/locale";
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";

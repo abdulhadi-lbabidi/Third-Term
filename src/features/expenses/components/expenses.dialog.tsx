@@ -54,7 +54,6 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
                 setFormKey((value) => value + 1);
                 onOpenChange(false);
               }}
-              onCancel={() => onOpenChange(false)}
               loading={loading}
             />
         </div>

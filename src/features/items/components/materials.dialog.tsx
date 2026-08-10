@@ -1,7 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import type { Item } from '../types';
 import dayjs from 'dayjs';
-import { Button } from '@/shared/components/ui/button';
 
 type MaterialsDialogProps = {
   open: boolean;
@@ -52,11 +51,6 @@ export function MaterialsDialog({ open, onOpenChange, item }: MaterialsDialogPro
           )}
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-slate-200/80 flex-none">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            إغلاق
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );

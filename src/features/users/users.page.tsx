@@ -85,7 +85,8 @@ export function UsersPage() {
     return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';
   });
 
-  const handleRoleChange = (value: string) => {
+  const handleRoleChange = (value: UserRole) => {
+    setActiveRole(value);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set('tab', value);
@@ -209,7 +210,7 @@ export function UsersPage() {
               handleSearchSubmit();
             }}
           >
-            <Select value={activeRole} onValueChange={handleRoleChange}>
+            <Select value={activeRole} onValueChange={(value) => value && handleRoleChange(value)}>
               <SelectTrigger className="h-10 w-full sm:w-48 shrink-0">
                 <SelectValue placeholder="اختر النوع">
                   {(() => {

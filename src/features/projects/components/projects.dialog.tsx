@@ -18,7 +18,7 @@ export function ProjectsDialog({ open, onOpenChange, project, departments, onSub
         <DialogHeader>
           <DialogTitle>{project ? 'تعديل المشروع' : 'إضافة مشروع جديد'}</DialogTitle>
         </DialogHeader>
-        {open && <ProjectsForm defaultValues={project} departments={departments} onSubmit={onSubmit} loading={loading} />}
+        <ProjectsForm defaultValues={project} departments={departments} onSubmit={onSubmit} loading={loading} />
       </DialogContent>
     </Dialog>
   );

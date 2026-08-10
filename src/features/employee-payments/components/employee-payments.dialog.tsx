@@ -28,7 +28,6 @@ export function EmployeePaymentsDialog({
         <DialogHeader>
           <DialogTitle>{employeePayment ? 'تعديل راتب الموظف' : 'إضافة راتب موظف'}</DialogTitle>
         </DialogHeader>
-        {open && (
           <EmployeePaymentsForm
             employees={employees}
             defaultValues={employeePayment}
@@ -36,7 +35,6 @@ export function EmployeePaymentsDialog({
             onSubmit={onSubmit}
             loading={loading}
           />
-        )}
       </DialogContent>
     </Dialog>
   );

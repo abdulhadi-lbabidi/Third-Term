@@ -26,14 +26,12 @@ export function InvoiceItemDialog({
         <DialogHeader>
           <DialogTitle>{invoiceItem ? 'تعديل صنف فاتورة' : 'إضافة صنف فاتورة'}</DialogTitle>
         </DialogHeader>
-        {open && (
           <InvoiceItemForm
             defaultValues={invoiceItem}
             fixedInvoiceId={fixedInvoiceId}
             onSubmit={onSubmit}
             loading={loading}
           />
-        )}
       </DialogContent>
     </Dialog>
   );

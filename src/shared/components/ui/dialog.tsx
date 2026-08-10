@@ -7,8 +7,25 @@ import { XIcon } from "lucide-react"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/components/ui/button"
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+function Dialog({
+  disablePointerDismissal = true,
+  onOpenChange,
+  ...props
+}: DialogPrimitive.Root.Props) {
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      disablePointerDismissal={disablePointerDismissal}
+      onOpenChange={(open, details) => {
+        if (!open && (details.reason === "outside-press" || details.reason === "escape-key")) {
+          details.preventUnmountOnClose()
+          return
+        }
+        onOpenChange?.(open, details)
+      }}
+      {...props}
+    />
+  )
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -43,7 +60,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  keepMounted = false,
+  keepMounted = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean

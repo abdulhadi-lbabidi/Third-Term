@@ -18,7 +18,7 @@ export function MaterialDialog({ open, onOpenChange, material, onSubmit, loading
         <DialogHeader>
           <DialogTitle>{material ? 'تعديل مادة' : 'إضافة مادة جديدة'}</DialogTitle>
         </DialogHeader>
-        {open && <MaterialForm defaultValues={material} onSubmit={onSubmit} loading={loading} />}
+        <MaterialForm defaultValues={material} onSubmit={onSubmit} loading={loading} />
       </DialogContent>
     </Dialog>
   );
