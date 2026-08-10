@@ -69,7 +69,7 @@ export function InvoicesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(
                 "h-10 shrink-0 px-3 sm:h-11 sm:px-4",
                 Object.values(appliedFilters).some(Boolean) && "border-primary text-primary",
@@ -89,21 +89,6 @@ export function InvoicesPage() {
         }
       />
 
-      <section className="surface-panel min-w-0 space-y-4 p-3 sm:p-5">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">سجل الفواتير</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            إدارة الفواتير المرتبطة بالمصروفات والموردين، وعرض أصناف كل فاتورة وتفاصيلها المالية.
-          </p>
-        </div>
-        <InvoicesTable
-          filters={appliedFilters}
-          sort={sort}
-          onSortChange={setSort}
-          perPage={50}
-        />
-      </section>
-
       <FilterDrawer
         open={filterDrawerOpen}
         onOpenChange={setFilterDrawerOpen}
@@ -121,6 +106,21 @@ export function InvoicesPage() {
           setItemId={setItemId}
         />
       </FilterDrawer>
+
+      <section className="surface-panel min-w-0 space-y-4 p-3 sm:p-5">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">سجل الفواتير</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            إدارة الفواتير المرتبطة بالمصروفات والموردين، وعرض أصناف كل فاتورة وتفاصيلها المالية.
+          </p>
+        </div>
+        <InvoicesTable
+          filters={appliedFilters}
+          sort={sort}
+          onSortChange={setSort}
+          perPage={50}
+        />
+      </section>
     </div>
   );
 }

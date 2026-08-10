@@ -80,7 +80,7 @@ export function AuditLogsPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.keys(appliedFilters).length > 0 && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -88,15 +88,6 @@ export function AuditLogsPage() {
             </Button>
           </div>
         }
-      />
-
-      <AuditLogsTable data={auditLogs} loading={isLoading} />
-
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        meta={meta}
       />
 
       <FilterDrawer
@@ -116,6 +107,15 @@ export function AuditLogsPage() {
           setUserId={setUserId}
         />
       </FilterDrawer>
+
+      <AuditLogsTable data={auditLogs} loading={isLoading} />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
+      />
     </div>
   );
 }

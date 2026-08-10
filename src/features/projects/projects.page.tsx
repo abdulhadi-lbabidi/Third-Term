@@ -166,7 +166,7 @@ export function ProjectsPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -176,6 +176,24 @@ export function ProjectsPage() {
           </div>
         }
       />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      >
+        <ProjectsFilterForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          clientId={clientId}
+          setClientId={setClientId}
+          departmentId={departmentId}
+          setDepartmentId={setDepartmentId}
+          status={status}
+          setStatus={setStatus}
+        />
+      </FilterDrawer>
 
       <ProjectsTable
         data={projects}
@@ -210,24 +228,6 @@ export function ProjectsPage() {
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
       />
-
-      <FilterDrawer
-        open={filterDrawerOpen}
-        onOpenChange={setFilterDrawerOpen}
-        onApply={handleApplyFilters}
-        onReset={handleResetFilters}
-      >
-        <ProjectsFilterForm
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          clientId={clientId}
-          setClientId={setClientId}
-          departmentId={departmentId}
-          setDepartmentId={setDepartmentId}
-          status={status}
-          setStatus={setStatus}
-        />
-      </FilterDrawer>
     </div>
   );
 }

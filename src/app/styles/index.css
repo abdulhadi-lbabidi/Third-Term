@@ -332,5 +332,13 @@
   font-family: 'Cairo', sans-serif !important;
 }
 [data-radix-popper-content-wrapper]:has(.transfers) {
-  top: 150px !important;
+  top: -150px !important;
+}
+
+[data-radix-popper-content-wrapper]:has(.expenses-date-picker) {
+  top: -150px !important;
+}
+
+[data-radix-popper-content-wrapper]:has(.revenues-date-picker) {
+  top: -150px !important;
 }

@@ -130,7 +130,7 @@ export function RevenuesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
             >
               <SlidersHorizontal className="size-4" />
@@ -145,25 +145,6 @@ export function RevenuesPage() {
             </Button>
           </div>
         }
-      />
-
-      <RevenuesTable
-        data={revenues}
-        loading={isLoading}
-        onEdit={handleEditClick}
-        onDelete={handleDelete}
-        sort={sort}
-        onSortChange={setSort}
-      />
-
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        meta={meta}
-        limit={perPage}
-        limitOptions={[5, 10, 20, 50, 100]}
-        onLimitChange={setPerPage}
       />
 
       <FilterDrawer
@@ -189,6 +170,25 @@ export function RevenuesPage() {
           handleRangeChange={handleRangeChange}
         />
       </FilterDrawer>
+
+      <RevenuesTable
+        data={revenues}
+        loading={isLoading}
+        onEdit={handleEditClick}
+        onDelete={handleDelete}
+        sort={sort}
+        onSortChange={setSort}
+      />
+
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        meta={meta}
+        limit={perPage}
+        limitOptions={[5, 10, 20, 50, 100]}
+        onLimitChange={setPerPage}
+      />
     </div>
   );
 }

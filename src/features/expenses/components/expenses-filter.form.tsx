@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/shared/compo
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
+import { format } from 'date-fns';
 
 const userRoles: UserRole[] = [
   'admin',
@@ -107,101 +108,96 @@ export function ExpensesFilterForm({
         </Select>
       </div>
 
-      <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-3">
-        <p className="text-xs font-semibold text-foreground">فلترة بالمستلم </p>
-        <div className="space-y-1.5">
-          <Label>نوع المستلم </Label>
-          <Select
-            value={userRole}
-            onValueChange={(val) => {
-              setUserRole(val as UserRole);
-              setUserId('');
-            }}
-          >
-            <SelectTrigger>
-              {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
-            </SelectTrigger>
-            <SelectContent>
-              {userRoles.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {roleLabels[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>المستلم</Label>
-          {roleUsersQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <SearchableSelect
-              value={userId || null}
-              onValueChange={(val) => setUserId(val ? Number(val) : '')}
-              disabled={!userRole}
-              placeholder="اختر المستخدم"
-              searchPlaceholder="البحث عن مستخدم..."
-              emptyMessage="لا يوجد مستخدمون."
-              options={roleUsers.map((item: any) => ({
-                value: item.user.id,
-                label: item.user.name,
-              }))}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-3">
-        <p className="text-xs font-semibold text-foreground">فلترة بـ أنشئ بواسطة</p>
-        <div className="space-y-1.5">
-          <Label>نوع المستخدم</Label>
-          <Select
-            value={creatorRole}
-            onValueChange={(val) => {
-              setCreatorRole(val as UserRole);
-              setCreatorId('');
-            }}
-          >
-            <SelectTrigger>
-              {creatorRole ? roleLabels[creatorRole] : 'اختر نوع المستخدم'}
-            </SelectTrigger>
-            <SelectContent>
-              {userRoles.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {roleLabels[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>أنشئ بواسطة</Label>
-          {creatorUsersQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <SearchableSelect
-              value={creatorId || null}
-              onValueChange={(val) => setCreatorId(val ? Number(val) : '')}
-              disabled={!creatorRole}
-              placeholder="اختر المستخدم"
-              searchPlaceholder="البحث عن مستخدم..."
-              emptyMessage="لا يوجد مستخدمون."
-              options={creatorUsers.map((item: any) => ({
-                value: item.user.id,
-                label: item.user.name,
-              }))}
-            />
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <Label>نوع المستلم </Label>
+        <Select
+          value={userRole}
+          onValueChange={(val) => {
+            setUserRole(val as UserRole);
+            setUserId('');
+          }}
+        >
+          <SelectTrigger>
+            {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
+          </SelectTrigger>
+          <SelectContent>
+            {userRoles.map((role) => (
+              <SelectItem key={role} value={role}>
+                {roleLabels[role]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5">
+        <Label>المستلم</Label>
+        {roleUsersQuery.isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <SearchableSelect
+            value={userId || null}
+            onValueChange={(val) => setUserId(val ? Number(val) : '')}
+            disabled={!userRole}
+            placeholder="اختر المستخدم"
+            searchPlaceholder="البحث عن مستخدم..."
+            emptyMessage="لا يوجد مستخدمون."
+            options={roleUsers.map((item: any) => ({
+              value: item.user.id,
+              label: item.user.name,
+            }))}
+          />
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>نوع المستخدم</Label>
+        <Select
+          value={creatorRole}
+          onValueChange={(val) => {
+            setCreatorRole(val as UserRole);
+            setCreatorId('');
+          }}
+        >
+          <SelectTrigger>
+            {creatorRole ? roleLabels[creatorRole] : 'اختر نوع المستخدم'}
+          </SelectTrigger>
+          <SelectContent>
+            {userRoles.map((role) => (
+              <SelectItem key={role} value={role}>
+                {roleLabels[role]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>أنشئ بواسطة</Label>
+        {creatorUsersQuery.isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <SearchableSelect
+            value={creatorId || null}
+            onValueChange={(val) => setCreatorId(val ? Number(val) : '')}
+            disabled={!creatorRole}
+            placeholder="اختر المستخدم"
+            searchPlaceholder="البحث عن مستخدم..."
+            emptyMessage="لا يوجد مستخدمون."
+            options={creatorUsers.map((item: any) => ({
+              value: item.user.id,
+              label: item.user.name,
+            }))}
+          />
+        )}
+      </div>
+
+      <div className="hidden sm:block space-y-1.5">
         <Label>مجال التاريخ والوقت</Label>
         <DateTimeRangePicker
           value={rangeValue}
           onChange={handleRangeChange}
+          contentClassName="expenses-date-picker"
         />
       </div>
     </div>

@@ -107,101 +107,96 @@ export function RevenuesFilterForm({
         </Select>
       </div>
 
-      <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-3">
-        <p className="text-xs font-semibold text-foreground">فلترة بالمستخدم</p>
-        <div className="space-y-1.5">
-          <Label>نوع المستخدم</Label>
-          <Select
-            value={userRole}
-            onValueChange={(val) => {
-              setUserRole(val as UserRole);
-              setUserId('');
-            }}
-          >
-            <SelectTrigger>
-              {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
-            </SelectTrigger>
-            <SelectContent>
-              {userRoles.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {roleLabels[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>المستخدم</Label>
-          {roleUsersQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <SearchableSelect
-              value={userId || null}
-              onValueChange={(val) => setUserId(val ? Number(val) : '')}
-              disabled={!userRole}
-              placeholder="اختر المستخدم"
-              searchPlaceholder="البحث عن مستخدم..."
-              emptyMessage="لا يوجد مستخدمون."
-              options={roleUsers.map((item: any) => ({
-                value: item.user.id,
-                label: item.user.name,
-              }))}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-3">
-        <p className="text-xs font-semibold text-foreground">فلترة بـ مستلم بواسطة</p>
-        <div className="space-y-1.5">
-          <Label>نوع المستلم</Label>
-          <Select
-            value={creatorRole}
-            onValueChange={(val) => {
-              setCreatorRole(val as UserRole);
-              setCreatorId('');
-            }}
-          >
-            <SelectTrigger>
-              {creatorRole ? roleLabels[creatorRole] : 'اختر نوع المستلم'}
-            </SelectTrigger>
-            <SelectContent>
-              {userRoles.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {roleLabels[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>مستلم بواسطة</Label>
-          {creatorUsersQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <SearchableSelect
-              value={creatorId || null}
-              onValueChange={(val) => setCreatorId(val ? Number(val) : '')}
-              disabled={!creatorRole}
-              placeholder="اختر المستلم"
-              searchPlaceholder="البحث عن مستلم..."
-              emptyMessage="لا يوجد مستلمون."
-              options={creatorUsers.map((item: any) => ({
-                value: item.user.id,
-                label: item.user.name,
-              }))}
-            />
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <Label>نوع المستخدم</Label>
+        <Select
+          value={userRole}
+          onValueChange={(val) => {
+            setUserRole(val as UserRole);
+            setUserId('');
+          }}
+        >
+          <SelectTrigger>
+            {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
+          </SelectTrigger>
+          <SelectContent>
+            {userRoles.map((role) => (
+              <SelectItem key={role} value={role}>
+                {roleLabels[role]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5">
+        <Label>المستخدم</Label>
+        {roleUsersQuery.isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <SearchableSelect
+            value={userId || null}
+            onValueChange={(val) => setUserId(val ? Number(val) : '')}
+            disabled={!userRole}
+            placeholder="اختر المستخدم"
+            searchPlaceholder="البحث عن مستخدم..."
+            emptyMessage="لا يوجد مستخدمون."
+            options={roleUsers.map((item: any) => ({
+              value: item.user.id,
+              label: item.user.name,
+            }))}
+          />
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>نوع المستلم</Label>
+        <Select
+          value={creatorRole}
+          onValueChange={(val) => {
+            setCreatorRole(val as UserRole);
+            setCreatorId('');
+          }}
+        >
+          <SelectTrigger>
+            {creatorRole ? roleLabels[creatorRole] : 'اختر نوع المستلم'}
+          </SelectTrigger>
+          <SelectContent>
+            {userRoles.map((role) => (
+              <SelectItem key={role} value={role}>
+                {roleLabels[role]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>مستلم بواسطة</Label>
+        {creatorUsersQuery.isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <SearchableSelect
+            value={creatorId || null}
+            onValueChange={(val) => setCreatorId(val ? Number(val) : '')}
+            disabled={!creatorRole}
+            placeholder="اختر المستلم"
+            searchPlaceholder="البحث عن مستلم..."
+            emptyMessage="لا يوجد مستلمون."
+            options={creatorUsers.map((item: any) => ({
+              value: item.user.id,
+              label: item.user.name,
+            }))}
+          />
+        )}
+      </div>
+
+      <div className="hidden sm:block space-y-1.5">
         <Label>مجال التاريخ والوقت</Label>
         <DateTimeRangePicker
           value={rangeValue}
           onChange={handleRangeChange}
+          contentClassName="revenues-date-picker"
         />
       </div>
     </div>
