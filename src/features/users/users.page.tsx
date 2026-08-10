@@ -85,7 +85,8 @@ export function UsersPage() {
     return userRoles.includes(initialRole as UserRole) ? (initialRole as UserRole) : 'admin';
   });
 
-  const handleRoleChange = (value: UserRole) => {
+  const handleRoleChange = (value: UserRole | null) => {
+    if (!value) return;
     setActiveRole(value);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);

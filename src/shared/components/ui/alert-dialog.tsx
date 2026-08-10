@@ -5,8 +5,20 @@ import { XIcon } from "lucide-react"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/components/ui/button"
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+function AlertDialog({ onOpenChange, ...props }: AlertDialogPrimitive.Root.Props) {
+  return (
+    <AlertDialogPrimitive.Root
+      data-slot="alert-dialog"
+      onOpenChange={(open, details) => {
+        if (!open && (details.reason === "outside-press" || details.reason === "escape-key")) {
+          details.preventUnmountOnClose()
+          return
+        }
+        onOpenChange?.(open, details)
+      }}
+      {...props}
+    />
+  )
 }
 
 function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
@@ -42,13 +54,15 @@ function AlertDialogContent({
   size = "default",
   children,
   showCloseButton = true,
+  keepMounted = true,
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: "default" | "sm"
   showCloseButton?: boolean
+  keepMounted?: boolean
 }) {
   return (
-    <AlertDialogPortal>
+    <AlertDialogPortal keepMounted={keepMounted}>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"

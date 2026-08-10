@@ -3,7 +3,6 @@ import { Button } from '@/shared/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -93,7 +92,6 @@ export function RevenueCard({ revenue, onEdit, onDelete }: RevenueCardProps) {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => onDelete(revenue)}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

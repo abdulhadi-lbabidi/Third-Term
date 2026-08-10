@@ -1,7 +1,6 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -56,7 +55,6 @@ export function DeleteItemDialog({ item, type, open, onOpenChange, currentDirId 
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-end">
-          <AlertDialogCancel disabled={isPending}>إلغاء</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
