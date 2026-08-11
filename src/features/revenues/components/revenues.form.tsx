@@ -199,7 +199,10 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     queryFn: () => companyFundsApi.getCompanyFunds(),
     enabled: source === 'company_fund',
   });
-  const companyFunds: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+  const companyFunds = useMemo(() => {
+    const list: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [companyFundsQuery.data]);
 
   const derivedCompanyFundId = useMemo(() => {
     if (companyFundId) return companyFundId;
@@ -234,7 +237,10 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     queryFn: async () => (await projectFundsApi.getProjectFunds({ projectId: fixedValues?.project_id, perPage: 1000 })).data,
     enabled: source === 'project_fund',
   });
-  const allProjectFunds = allProjectFundsQuery.data ?? [];
+  const allProjectFunds = useMemo(() => {
+    const list = allProjectFundsQuery.data ?? [];
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [allProjectFundsQuery.data]);
 
   const fundRoleUsersQuery = useQuery<RoleUser[]>({
     queryKey: ['revenues', 'fund-role-users', fundUserRole] as const,
@@ -325,11 +331,15 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     }
   }, [derivedProjectFundId, derivedProjectId, form, projectFundId, selectedProjectId, source]);
 
-  const { data: allUserFunds = [] } = useQuery<Fund[]>({
+  const { data: rawUserFunds = [] } = useQuery<Fund[]>({
     queryKey: ['revenues', 'all-user-funds'] as const,
     queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data,
     enabled: source === 'user_fund' && Boolean(fundUserId || userFundId || defaultValues?.id),
   });
+
+  const allUserFunds = useMemo(() => {
+    return [...rawUserFunds].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [rawUserFunds]);
 
   const derivedUserFundId = useMemo(() => {
     if (userFundId) return userFundId;
@@ -647,7 +657,10 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(selectedFundUserRecord?.user.funds ?? []).map((fund) => (
+                          {(() => {
+                            const list = selectedFundUserRecord?.user.funds ?? [];
+                            return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+                          })().map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
                               {getFundLabel(fund)}
                             </SelectItem>

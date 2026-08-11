@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -52,7 +52,10 @@ export function EmployeePaymentsForm({
     queryKey: ['company-funds'],
     queryFn: () => companyFundsApi.getCompanyFunds(),
   });
-  const companyFunds = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+  const companyFunds = useMemo(() => {
+    const list = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [companyFundsQuery.data]);
   const isLoadingCompanyFunds = companyFundsQuery.isLoading;
 
   const form = useForm<EmployeePaymentFormValues>({

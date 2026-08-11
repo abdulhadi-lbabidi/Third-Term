@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Eye, WalletMinimal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Badge } from '@/shared/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import type { Project } from '../types';
 import dayjs from 'dayjs';
 
@@ -18,6 +20,7 @@ type ProjectsTableProps = {
 };
 
 export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView, sort, onSortChange }: ProjectsTableProps) {
+  const [activeDepartments, setActiveDepartments] = useState<any[] | null>(null);
   const statusLabels: Record<Project['status'], string> = {
     pending: 'قيد الانتظار',
     in_progress: 'قيد التنفيذ',
@@ -73,13 +76,13 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
             : [];
 
         return departments.length ? (
-          <div className="flex max-w-72 flex-wrap gap-1.5">
-            {departments.map((department) => (
-              <Badge key={department.id} variant="secondary">
-                {department.name}
-              </Badge>
-            ))}
-          </div>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer transition-colors hover:bg-slate-100 hover:text-slate-900 font-semibold"
+            onClick={() => setActiveDepartments(departments)}
+          >
+            {departments.length}
+          </Badge>
         ) : <span className="text-muted-foreground">-</span>;
       },
     },
@@ -119,6 +122,7 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
   ];
 
   return (
+    <>
       <DataTable
         columns={columns}
         data={data}
@@ -155,5 +159,26 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
             : undefined,
         }}
       />
+
+      <Dialog open={!!activeDepartments} onOpenChange={(open) => !open && setActiveDepartments(null)}>
+        <DialogContent className="max-w-md bg-white border border-border text-foreground">
+          <DialogHeader>
+            <DialogTitle>أقسام المشروع</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto pr-1">
+            {activeDepartments?.map((dep) => (
+              <div key={dep.id} className="flex flex-col gap-1 rounded-lg border border-slate-200/80 p-3 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <span className="font-semibold text-slate-800 text-sm">{dep.name}</span>
+                {dep.main_manager && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="font-medium text-slate-600">المدير:</span> {dep.main_manager}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

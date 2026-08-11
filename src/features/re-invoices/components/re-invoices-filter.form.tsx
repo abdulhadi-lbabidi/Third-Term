@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Label } from '@/shared/components/ui/label';
 import { Input } from '@/shared/components/ui/input';
@@ -25,13 +26,16 @@ export function ReInvoicesFilterForm({ value, onChange }: Props) {
   const companyFunds = useQuery({ queryKey: ['re-invoices-filter', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds({ perPage: 1000 })).data, enabled: value.fundSource === 'company' });
   const userFunds = useQuery({ queryKey: ['re-invoices-filter', 'user-funds'], queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data, enabled: value.fundSource === 'user' });
 
-  const fundRows: any[] = value.fundSource === 'project'
-    ? (projectFunds.data ?? [])
-    : value.fundSource === 'company'
-      ? (companyFunds.data ?? [])
-      : value.fundSource === 'user'
-        ? (userFunds.data ?? [])
-        : [];
+  const fundRows = useMemo(() => {
+    const list: any[] = value.fundSource === 'project'
+      ? (projectFunds.data ?? [])
+      : value.fundSource === 'company'
+        ? (companyFunds.data ?? [])
+        : value.fundSource === 'user'
+          ? (userFunds.data ?? [])
+          : [];
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [value.fundSource, projectFunds.data, companyFunds.data, userFunds.data]);
 
   return <div className="space-y-4">
     <div className="space-y-1.5"><Label>البحث</Label><Input value={value.search} onChange={(event) => setField('search', event.target.value)} placeholder="رقم المرتجع، البند أو المزوّد..." /></div>

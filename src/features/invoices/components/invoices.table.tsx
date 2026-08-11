@@ -8,6 +8,7 @@ import { InvoiceDetailsDialog } from './invoice-details.dialog';
 import { InvoicesDialog } from './invoices.dialog';
 import type { Invoice } from '../types';
 import { SimplePagination } from '@/components/ui/pagination';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 
 type InvoicesTableProps = {
   filters?: Record<string, any>;
@@ -16,6 +17,9 @@ type InvoicesTableProps = {
   enabled?: boolean;
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
+  showSelection?: boolean;
+  selectedIds?: number[];
+  onSelectionChange?: (ids: number[]) => void;
 };
 
 export function InvoicesTable({
@@ -25,6 +29,9 @@ export function InvoicesTable({
   enabled = true,
   sort,
   onSortChange,
+  showSelection = false,
+  selectedIds = [],
+  onSelectionChange,
 }: InvoicesTableProps = {}) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(perPage);
@@ -53,7 +60,46 @@ export function InvoicesTable({
   const totalPages = meta?.last_page ?? 1;
   const currentPage = meta?.current_page ?? page;
 
+  const isAllSelected = invoices.length > 0 && invoices.every((row) => selectedIds.includes(row.id));
+
+  const selectionColumn: DataTableColumn<Invoice> = {
+    header: (
+      <Checkbox
+        checked={isAllSelected}
+        onCheckedChange={(checked) => {
+          if (checked) {
+            const pageIds = invoices.map((row) => row.id);
+            const nextSelected = [...selectedIds];
+            pageIds.forEach((id) => {
+              if (!nextSelected.includes(id)) {
+                nextSelected.push(id);
+              }
+            });
+            onSelectionChange?.(nextSelected);
+          } else {
+            const pageIds = invoices.map((row) => row.id);
+            onSelectionChange?.(selectedIds.filter((id) => !pageIds.includes(id)));
+          }
+        }}
+      />
+    ),
+    cell: (row: Invoice) => (
+      <Checkbox
+        checked={selectedIds.includes(row.id)}
+        onCheckedChange={(checked) => {
+          if (checked) {
+            onSelectionChange?.([...selectedIds, row.id]);
+          } else {
+            onSelectionChange?.(selectedIds.filter((id) => id !== row.id));
+          }
+        }}
+      />
+    ),
+    className: 'w-10 px-2',
+  };
+
   const columns: DataTableColumn<Invoice>[] = [
+    ...(showSelection ? [selectionColumn] : []),
     {
       header: 'رقم الفاتورة',
       sortable: true,

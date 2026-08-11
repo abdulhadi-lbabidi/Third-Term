@@ -25,7 +25,7 @@ const getColumnClassName = (className?: string) =>
   `${DEFAULT_COLUMN_CLASS_NAME} ${className ?? ''}`.trim();
 
 export type DataTableColumn<T> = {
-  header: string;
+  header: ReactNode;
   accessorKey?: keyof T;
   cell?: (row: T) => ReactNode;
   className?: string;
@@ -122,7 +122,7 @@ export function DataTable<T>({
             <TableRow className="hover:bg-transparent">
               {renderExpandedRow ? <TableHead className="w-10" /> : null}
               {actionCount > 0 ? <TableHead className="w-14" /> : null}
-              {columns.map((column) => {
+              {columns.map((column, colIndex) => {
                 const key = column.sortKey || String(column.accessorKey || '');
                 
                 const sortedItem = sortItems.find(item => item.key === key);
@@ -154,7 +154,7 @@ export function DataTable<T>({
                 };
 
                 return (
-                  <TableHead key={column.header} className={getColumnClassName(column.className)}>
+                  <TableHead key={column.sortKey || String(column.accessorKey || '') || colIndex} className={getColumnClassName(column.className)}>
                     {column.sortable && key ? (
                       <div
                         onClick={handleHeaderClick}
@@ -295,8 +295,8 @@ export function DataTable<T>({
                         </DropdownMenu>
                       </TableCell>
                     ) : null}
-                    {columns.map((column) => (
-                      <TableCell key={column.header} className={getColumnClassName(column.className)}>
+                    {columns.map((column, colIndex) => (
+                      <TableCell key={column.sortKey || String(column.accessorKey || '') || colIndex} className={getColumnClassName(column.className)}>
                         <div
                           className="line-clamp-2 min-w-0 max-w-full whitespace-normal break-words leading-5"
                           title={column.accessorKey ? String(row[column.accessorKey] ?? '') : undefined}

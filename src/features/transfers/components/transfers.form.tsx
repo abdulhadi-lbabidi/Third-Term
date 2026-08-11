@@ -488,7 +488,10 @@ export function TransfersForm({
     queryFn: () => companyFundsApi.getCompanyFunds(),
     enabled: morphToType === 'App\\Models\\CompanyFundCurrency' || morphFromType === 'App\\Models\\CompanyFundCurrency',
   });
-  const companyFunds: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+  const companyFunds = useMemo(() => {
+    const list: CompanyFund[] = companyFundsQuery.data?.data ?? (Array.isArray(companyFundsQuery.data) ? companyFundsQuery.data : []);
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [companyFundsQuery.data]);
 
   const derivedCompanyFundId = useMemo(() => {
     if (companyFundId) {
@@ -599,7 +602,8 @@ export function TransfersForm({
 
   const projectFunds: ProjectFund[] = useMemo(() => {
     if (morphToType !== 'App\\Models\\ProjectFundCurrency' || !selectedProjectId) return [];
-    return selectedProjectDetails?.funds ?? [];
+    const list = selectedProjectDetails?.funds ?? [];
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }, [selectedProjectDetails?.funds, selectedProjectId, morphToType]);
 
   const derivedProjectFundId = useMemo(() => {
@@ -647,7 +651,8 @@ export function TransfersForm({
 
   const fromProjectFunds = useMemo(() => {
     if (morphFromType !== 'App\\Models\\ProjectFundCurrency' || !selectedFromProjectId) return [];
-    return selectedFromProjectDetails?.funds ?? [];
+    const list = selectedFromProjectDetails?.funds ?? [];
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }, [selectedFromProjectDetails?.funds, selectedFromProjectId, morphFromType]);
 
   const selectedFromCompanyFund = useMemo(() => {
@@ -1250,7 +1255,10 @@ export function TransfersForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(selectedFromUserRecord?.user.funds ?? []).map((fund) => (
+                          {(() => {
+                            const list = selectedFromUserRecord?.user.funds ?? [];
+                            return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+                          })().map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
                               {getFundLabel(fund)}
                             </SelectItem>
@@ -1602,7 +1610,10 @@ export function TransfersForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(selectedFundUserRecord?.user.funds ?? []).map((fund) => (
+                        {(() => {
+                          const list = selectedFundUserRecord?.user.funds ?? [];
+                          return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+                        })().map((fund) => (
                           <SelectItem key={fund.id} value={String(fund.id)}>
                             {getFundLabel(fund)}
                           </SelectItem>

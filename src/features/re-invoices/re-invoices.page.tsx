@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, RotateCcw, SlidersHorizontal, Undo2 } from 'lucide-react';
 import { PageHeader } from '@/features/components/page-header';
@@ -46,7 +46,10 @@ export function ReInvoicesPage() {
   const projectFunds = useQuery({ queryKey: ['re-invoices', 'project-funds'], queryFn: async () => (await projectFundsApi.getProjectFunds({ perPage: 1000 })).data, enabled: fundPickerOpen && source === 'project' });
   const companyFunds = useQuery({ queryKey: ['re-invoices', 'company-funds'], queryFn: async () => (await companyFundsApi.getCompanyFunds({ perPage: 1000 })).data, enabled: fundPickerOpen && source === 'company' });
   const userFunds = useQuery({ queryKey: ['re-invoices', 'user-funds'], queryFn: async () => (await fundsApi.getFunds({ perPage: 1000 })).data, enabled: fundPickerOpen && source === 'user' });
-  const funds: any[] = source === 'project' ? (projectFunds.data ?? EMPTY_ROWS) : source === 'company' ? (companyFunds.data ?? EMPTY_ROWS) : (userFunds.data ?? EMPTY_ROWS);
+  const funds = useMemo(() => {
+    const list: any[] = source === 'project' ? (projectFunds.data ?? EMPTY_ROWS) : source === 'company' ? (companyFunds.data ?? EMPTY_ROWS) : (userFunds.data ?? EMPTY_ROWS);
+    return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [source, projectFunds.data, companyFunds.data, userFunds.data]);
   const selectedFund = funds.find((fund) => fund.id === fundId);
   const fundLoading = projectFunds.isLoading || companyFunds.isLoading || userFunds.isLoading;
   const meta = query.data?.meta;

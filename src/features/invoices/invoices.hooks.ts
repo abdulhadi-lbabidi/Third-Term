@@ -83,3 +83,21 @@ export const useDeleteInvoice = () => {
     },
   });
 };
+
+export const useBulkUpdateInvoiceIsPosted = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: invoicesApi.bulkUpdateIsPosted,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: INVOICES_KEYS.lists(),
+        refetchType: 'all',
+      });
+      toast.success('تم ترحيل الفواتير المحددة بنجاح');
+    },
+    onError: () => {
+      toast.error('حدث خطأ أثناء ترحيل الفواتير');
+    },
+  });
+};

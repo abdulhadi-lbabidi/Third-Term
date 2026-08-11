@@ -27,6 +27,7 @@ const RevenuesPage          = lazy(() => import('@/features/revenues/revenues.pa
 const TransfersPage         = lazy(() => import('@/features/transfers/transfers.page').then(m => ({ default: m.TransfersPage })));
 const InvoiceItemsPage      = lazy(() => import('@/features/invoice-items/invoice-items.page').then(m => ({ default: m.InvoiceItemsPage })));
 const InvoicesPage          = lazy(() => import('@/features/invoices/invoices.page').then(m => ({ default: m.InvoicesPage })));
+const UnpostedInvoicesPage  = lazy(() => import('@/features/invoices/unposted-invoices.page').then(m => ({ default: m.UnpostedInvoicesPage })));
 const NewInvoicePage        = lazy(() => import('@/features/invoices/new-invoice.page').then(m => ({ default: m.NewInvoicePage })));
 const AuditLogsPage         = lazy(() => import('@/features/audit-logs/audit-logs.page').then(m => ({ default: m.AuditLogsPage })));
 const PublicProjectsPage    = lazy(() => import('@/features/public-projects/public-projects.page').then(m => ({ default: m.PublicProjectsPage })));
@@ -222,6 +223,10 @@ export const router = createBrowserRouter([
           {
             path: '/invoices',
             element: <InvoicesPage />,
+          },
+          {
+            path: '/unposted-invoices',
+            element: <UnpostedInvoicesPage />,
           },
           {
             path: '/re-invoices',

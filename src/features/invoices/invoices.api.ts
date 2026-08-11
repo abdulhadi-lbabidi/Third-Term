@@ -57,4 +57,15 @@ export const invoicesApi = {
     });
     return response.data;
   },
+
+  bulkUpdateIsPosted: async (payload: { ids: number[]; is_posted: boolean }) => {
+    const response = await apiClient.patch<{ message?: string }>(
+      `${BASE_URL}/bulk-update-is-posted`,
+      payload,
+      {
+        headers: { 'x-success-message': 'تم ترحيل الفواتير بنجاح' },
+      }
+    );
+    return response.data;
+  },
 };
