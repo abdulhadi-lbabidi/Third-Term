@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
+
 import {
   Select,
   SelectContent,
@@ -274,6 +274,11 @@ function getCurrencyLabel(currency: { currency: string; balance: string }) {
       <span className={colorClass}>({currency.balance})</span>
     </span>
   );
+}
+
+function formatFundCurrencies(currencies?: { currency: string; balance: string }[]) {
+  if (!currencies || currencies.length === 0) return '';
+  return `(${currencies.map(c => `${c.currency}: ${Number(c.balance).toLocaleString()}`).join(', ')})`;
 }
 
 function getCurrencyExpenseableId(currency: { id: number; expenseable_id?: number; pivot?: { id: number } }) {
@@ -955,35 +960,38 @@ export function TransfersForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-semibold text-slate-800">نوع صندوق المصدر</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue('morph_from_id', undefined as any);
-                        form.setValue('from_company_fund_id', undefined);
-                        form.setValue('from_user_role', '');
-                        form.setValue('from_user_id', undefined);
-                        form.setValue('from_user_fund_id', undefined);
-                        form.setValue('from_project_fund_id', undefined);
-                        form.setValue('from_project_id', undefined);
-                      }}
-                      className="grid gap-3 md:grid-cols-3"
-                    >
-                      <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
-                        <RadioGroupItem className="border-none !p-1" value={'App\\Models\\CompanyFundCurrency'} />
-                        <span>صندوق الشركة</span>
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
-                        <RadioGroupItem className="border-none !p-1" value={'App\\Models\\ProjectFundCurrency'} />
-                        <span>صندوق المشروع</span>
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
-                        <RadioGroupItem className="border-none !p-1" value={'App\\Models\\CurrencyFund'} />
-                        <span>صندوق مستخدم</span>
-                      </label>
-                    </RadioGroup>
-                  </FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('morph_from_id', undefined as any);
+                      form.setValue('from_company_fund_id', undefined);
+                      form.setValue('from_user_role', '');
+                      form.setValue('from_user_id', undefined);
+                      form.setValue('from_user_fund_id', undefined);
+                      form.setValue('from_project_fund_id', undefined);
+                      form.setValue('from_project_id', undefined);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 bg-white">
+                        <SelectValue placeholder="اختر نوع صندوق المصدر">
+                          {field.value ? (
+                            <span>
+                              {String(field.value).includes('CompanyFundCurrency') && 'صندوق الشركة'}
+                              {String(field.value).includes('ProjectFundCurrency') && 'صندوق المشروع'}
+                              {String(field.value).includes('CurrencyFund') && 'صندوق مستخدم'}
+                            </span>
+                          ) : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={'App\\Models\\CompanyFundCurrency'}>صندوق الشركة</SelectItem>
+                      <SelectItem value={'App\\Models\\ProjectFundCurrency'}>صندوق المشروع</SelectItem>
+                      <SelectItem value={'App\\Models\\CurrencyFund'}>صندوق مستخدم</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1006,15 +1014,19 @@ export function TransfersForm({
                       >
                         <FormControl>
                           <SelectTrigger>
-                            {field.value
-                              ? (selectedFromCompanyFund?.name || 'اختر صندوق الشركة')
-                              : <SelectValue placeholder="اختر صندوق الشركة" />}
+                            {field.value ? (
+                              <span>
+                                {selectedFromCompanyFund?.name} {formatFundCurrencies(selectedFromCompanyFund?.currencies)}
+                              </span>
+                            ) : (
+                              <SelectValue placeholder="اختر صندوق الشركة" />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {companyFunds.map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
-                              {getCompanyFundLabel(fund)}
+                              {getCompanyFundLabel(fund)} {formatFundCurrencies(fund.currencies)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1114,15 +1126,19 @@ export function TransfersForm({
                       >
                         <FormControl>
                           <SelectTrigger disabled={!selectedFromProjectId}>
-                            {field.value
-                              ? (fromProjectFunds.find(f => f.id === field.value)?.name || 'اختر صندوق المشروع')
-                              : <SelectValue placeholder="اختر صندوق المشروع" />}
+                            {field.value ? (
+                              <span>
+                                {fromProjectFunds.find(f => f.id === field.value)?.name} {formatFundCurrencies(fromProjectFunds.find(f => f.id === field.value)?.currencies)}
+                              </span>
+                            ) : (
+                              <SelectValue placeholder="اختر صندوق المشروع" />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {fromProjectFunds.map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
-                              {fund.name}
+                              {fund.name} {formatFundCurrencies(fund.currencies)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1249,9 +1265,13 @@ export function TransfersForm({
                       >
                         <FormControl>
                           <SelectTrigger disabled={!fromUserId}>
-                            {field.value
-                              ? (selectedFromUserFund ? getFundLabel(selectedFromUserFund) : 'اختر صندوق المستخدم')
-                              : <SelectValue placeholder="اختر صندوق المستخدم" />}
+                            {field.value ? (
+                              <span>
+                                {selectedFromUserFund ? getFundLabel(selectedFromUserFund) : ''} {formatFundCurrencies(selectedFromUserFund?.currencies)}
+                              </span>
+                            ) : (
+                              <SelectValue placeholder="اختر صندوق المستخدم" />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1260,7 +1280,7 @@ export function TransfersForm({
                             return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
                           })().map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
-                              {getFundLabel(fund)}
+                              {getFundLabel(fund)} {formatFundCurrencies(fund.currencies)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1318,35 +1338,38 @@ export function TransfersForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-sm font-semibold text-slate-800">نوع صندوق الوجهة</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      form.setValue('morph_to_id', undefined as any);
-                      form.setValue('company_fund_id', undefined);
-                      form.setValue('fund_user_role', '');
-                      form.setValue('fund_user_id', undefined);
-                      form.setValue('user_fund_id', undefined);
-                      form.setValue('project_fund_id', undefined);
-                      form.setValue('project_id', undefined);
-                    }}
-                    className="grid gap-3 md:grid-cols-3"
-                  >
-                    <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
-                      <RadioGroupItem className="border-none !p-1" value={'App\\Models\\CompanyFundCurrency'} />
-                      <span>صندوق الشركة</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
-                      <RadioGroupItem className="border-none !p-1" value={'App\\Models\\ProjectFundCurrency'} />
-                      <span>صندوق المشروع</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent">
-                      <RadioGroupItem className="border-none !p-1" value={'App\\Models\\CurrencyFund'} />
-                      <span>صندوق مستخدم</span>
-                    </label>
-                  </RadioGroup>
-                </FormControl>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('morph_to_id', undefined as any);
+                    form.setValue('company_fund_id', undefined);
+                    form.setValue('fund_user_role', '');
+                    form.setValue('fund_user_id', undefined);
+                    form.setValue('user_fund_id', undefined);
+                    form.setValue('project_fund_id', undefined);
+                    form.setValue('project_id', undefined);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11 bg-white">
+                      <SelectValue placeholder="اختر نوع صندوق الوجهة">
+                        {field.value ? (
+                          <span>
+                            {String(field.value).includes('CompanyFundCurrency') && 'صندوق الشركة'}
+                            {String(field.value).includes('ProjectFundCurrency') && 'صندوق المشروع'}
+                            {String(field.value).includes('CurrencyFund') && 'صندوق مستخدم'}
+                          </span>
+                        ) : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={'App\\Models\\CompanyFundCurrency'}>صندوق الشركة</SelectItem>
+                    <SelectItem value={'App\\Models\\ProjectFundCurrency'}>صندوق المشروع</SelectItem>
+                    <SelectItem value={'App\\Models\\CurrencyFund'}>صندوق مستخدم</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -1369,15 +1392,19 @@ export function TransfersForm({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          {field.value
-                            ? (selectedCompanyFundName || 'اختر صندوق الشركة')
-                            : <SelectValue placeholder="اختر صندوق الشركة" />}
+                          {field.value ? (
+                            <span>
+                              {selectedCompanyFundName} {formatFundCurrencies(selectedCompanyFund?.currencies)}
+                            </span>
+                          ) : (
+                            <SelectValue placeholder="اختر صندوق الشركة" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {companyFunds.map((fund) => (
                           <SelectItem key={fund.id} value={String(fund.id)}>
-                            {getCompanyFundLabel(fund)}
+                            {getCompanyFundLabel(fund)} {formatFundCurrencies(fund.currencies)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1472,15 +1499,19 @@ export function TransfersForm({
                     >
                       <FormControl>
                         <SelectTrigger disabled={!selectedProjectId}>
-                          {field.value
-                            ? (selectedProjectFundName || 'اختر صندوق المشروع')
-                            : <SelectValue placeholder="اختر صندوق المشروع" />}
+                          {field.value ? (
+                            <span>
+                              {selectedProjectFundName} {formatFundCurrencies(selectedProjectFund?.currencies)}
+                            </span>
+                          ) : (
+                            <SelectValue placeholder="اختر صندوق المشروع" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {projectFunds.map((fund) => (
                           <SelectItem key={fund.id} value={String(fund.id)}>
-                            {fund.name}
+                            {fund.name} {formatFundCurrencies(fund.currencies)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1604,9 +1635,13 @@ export function TransfersForm({
                     >
                       <FormControl>
                         <SelectTrigger disabled={!fundUserId}>
-                          {field.value
-                            ? (selectedUserFundName || 'اختر صندوق المستخدم')
-                            : <SelectValue placeholder="اختر صندوق المستخدم" />}
+                          {field.value ? (
+                            <span>
+                              {selectedUserFundName} {formatFundCurrencies(selectedUserFund?.currencies)}
+                            </span>
+                          ) : (
+                            <SelectValue placeholder="اختر صندوق المستخدم" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -1615,7 +1650,7 @@ export function TransfersForm({
                           return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
                         })().map((fund) => (
                           <SelectItem key={fund.id} value={String(fund.id)}>
-                            {getFundLabel(fund)}
+                            {getFundLabel(fund)} {formatFundCurrencies(fund.currencies)}
                           </SelectItem>
                         ))}
                       </SelectContent>

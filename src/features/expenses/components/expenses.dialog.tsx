@@ -49,7 +49,7 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent keepMounted className="max-h-[calc(100dvh-1rem)] !max-w-4xl !overflow-x-hidden !overflow-y-auto overscroll-contain sm:max-h-[90dvh]">
+      <DialogContent keepMounted className="max-h-[calc(100dvh-1rem)] !max-w-5xl !overflow-x-hidden !overflow-y-auto overscroll-contain sm:max-h-[90dvh]">
         {step === 'expense' && <DialogHeader>
           {!defaultValues && (
             <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/40 p-1">

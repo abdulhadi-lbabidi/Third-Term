@@ -36,7 +36,7 @@ export function TransfersDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto overscroll-contain p-4 !max-w-5xl sm:max-h-[90dvh] sm:p-6">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto overscroll-contain p-4 !max-w-7xl sm:max-h-[90dvh] sm:p-6">
         <DialogHeader className="pe-6">
           <DialogTitle>{defaultValues ? 'تعديل عملية التحويل' : 'إجراء عملية تحويل مالي'}</DialogTitle>
         </DialogHeader>

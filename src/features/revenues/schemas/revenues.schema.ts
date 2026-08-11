@@ -17,18 +17,10 @@ export const revenueFormSchema = z
     statement: z.string().min(1, 'الرجاء إدخال البيان'),
     amount: z.coerce.number().min(0.01, 'الرجاء إدخال مبلغ صحيح أكبر من الصفر'),
     is_posted: z.boolean(),
-    received_by_role: z.string().optional(),
-    received_by: z.coerce.number().optional(),
+    note: z.string().optional(),
+    received_by: z.number().optional(),
   })
   .superRefine((values, ctx) => {
-
-    if (!values.received_by_role && values.received_by) {
-      ctx.addIssue({ code: 'custom', path: ['received_by_role'], message: 'الرجاء اختيار نوع المستلم' });
-    }
-
-    if (values.received_by_role && !values.received_by) {
-      ctx.addIssue({ code: 'custom', path: ['received_by'], message: 'الرجاء اختيار المستلم' });
-    }
 
     if (values.source === 'company_fund' && !values.company_fund_id && !values.revenueable_id) {
       ctx.addIssue({ code: 'custom', path: ['company_fund_id'], message: 'الرجاء اختيار صندوق الشركة' });

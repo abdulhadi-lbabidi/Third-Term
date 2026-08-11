@@ -17,10 +17,12 @@ import {
   X,
   AlertTriangle,
   Undo2,
+  Loader2,
 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -241,6 +243,18 @@ export function GenericFundDetails({
     return transfersQuery.data?.data ?? [];
   }, [transfersQuery.data?.data]);
 
+  const checkRevenuesQuery = useRevenues(1, 1, filters, !!fundId);
+  const checkExpensesQuery = useExpenses(1, 1, filters, !!fundId);
+  const checkTransfersQuery = useTransfers(1, 1, transfersFilters, !!fundId);
+
+  const isCheckingTransactions = checkRevenuesQuery.isLoading || checkExpensesQuery.isLoading || checkTransfersQuery.isLoading;
+  const hasRevenues = (checkRevenuesQuery.data?.data ?? []).length > 0;
+  const hasExpenses = (checkExpensesQuery.data?.data ?? []).length > 0;
+  const hasTransfers = (checkTransfersQuery.data?.data ?? []).length > 0;
+  const hasReInvoices = (reInvoicesQuery.data?.data ?? []).length > 0;
+
+  const hasFinancialTransactions = hasRevenues || hasExpenses || hasTransfers || hasReInvoices;
+
   return (
     <div className="flex min-w-0 flex-col space-y-5 rounded-xl bg-white p-0 sm:space-y-6 sm:p-4">
       <div className="flex min-w-0 flex-col gap-4 pb-3 sm:flex-row sm:items-start sm:justify-between sm:pb-5">
@@ -305,17 +319,42 @@ export function GenericFundDetails({
                 <TooltipContent>حذف الصندوق</TooltipContent>
               </Tooltip>
               <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    هل أنت متأكد من حذف صندوق "{fundName}"؟ لا يمكن التراجع عن هذا الإجراء.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    حذف
-                  </AlertDialogAction>
-                </AlertDialogFooter>
+                {isCheckingTransactions ? (
+                  <div className="flex flex-col items-center justify-center p-6 space-y-2">
+                    <Loader2 className="size-6 animate-spin text-primary" />
+                    <span className="text-xs text-slate-500">جاري التحقق من العمليات المالية...</span>
+                  </div>
+                ) : hasFinancialTransactions ? (
+                  <>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                        <AlertTriangle className="size-5" />
+                        تعذر الحذف
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-slate-600 text-right">
+                        لا يمكن حذف صندوق "{fundName}" لأنه يحتوي على عمليات مالية مسجلة (إيرادات، مصروفات، تحويلات، أو مرتجعات). يرجى مراجعة العمليات وحذفها أولاً إن أمكن.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-slate-950 text-white hover:bg-slate-900 hover:text-white">حسناً</AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </>
+                ) : (
+                  <>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                      <AlertDialogDescription className="text-right">
+                        هل أنت متأكد من حذف صندوق "{fundName}"؟ لا يمكن التراجع عن هذا الإجراء.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                      <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        حذف
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </>
+                )}
               </AlertDialogContent>
             </AlertDialog>
           </div>

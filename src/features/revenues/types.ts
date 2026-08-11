@@ -25,7 +25,7 @@ export type Revenue = {
   is_posted?: boolean;
   user_id?: number;
   received_by_role?: string;
-  received_by?: number | {
+  received_by?: number | string | {
     id?: number;
     name?: string;
     role_type?: string;
@@ -33,6 +33,7 @@ export type Revenue = {
     user?: { id?: number; name?: string; role_type?: string; role?: string };
   };
   created_at?: string;
+  note?: string;
 };
 
 export type CreateRevenuePayload = {
@@ -42,7 +43,8 @@ export type CreateRevenuePayload = {
   amount: number;
   is_posted: boolean;
   user_id?: number;
-  received_by?: number;
+  received_by?: number | string;
+  note?: string;
 };
 
 export type UpdateRevenuePayload = Partial<CreateRevenuePayload>;

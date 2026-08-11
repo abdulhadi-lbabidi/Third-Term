@@ -64,7 +64,7 @@ export function ExpensesTable({
         );
       }
     },
-    { header: 'المستخدم', sortable: true, sortKey: 'user_name', cell: (row) => <UserLink user={(row as ExpenseRow).user} /> },
+    { header: 'الملاحظات', cell: (row) => row.note ?? '-' },
     { header: 'نوع الصرف', cell: (row) => <FundLink type={row.expenseable_type} info={row.expenseable_info} fundTab="expenses" fallbackUser={(row as ExpenseRow).user} /> },
     {
       header: 'تم الترحيل',

@@ -232,29 +232,6 @@ export function ExpensesPage() {
         fixedValues={invoiceExpenseId ? { expense_id: invoiceExpenseId } : undefined}
       />
 
-      <FilterDrawer
-        open={filterDrawerOpen}
-        onOpenChange={setFilterDrawerOpen}
-        onApply={handleApplyFilters}
-        onReset={handleResetFilters}
-      >
-        <ExpensesFilterForm
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          isPosted={isPosted}
-          setIsPosted={setIsPosted}
-          userRole={userRole}
-          setUserRole={setUserRole}
-          userId={userId}
-          setUserId={setUserId}
-          creatorRole={creatorRole}
-          setCreatorRole={setCreatorRole}
-          creatorId={creatorId}
-          setCreatorId={setCreatorId}
-          rangeValue={rangeValue}
-          handleRangeChange={handleRangeChange}
-        />
-      </FilterDrawer>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { User, Wallet, Shield, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, L
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
@@ -22,7 +22,7 @@ import { projectFundsApi } from '@/features/projects/project-funds/project-funds
 import type { ProjectFund } from '@/features/projects/project-funds/project-funds.types';
 import { usersApi } from '@/features/users/api/users.api';
 import type { UserRole } from '@/features/users/types';
-import { revenueFormSchema, revenueSourceLabels, type RevenueFormValues, type RevenueFormInput } from '../schemas/revenues.schema';
+import { revenueFormSchema, type RevenueFormValues, type RevenueFormInput } from '../schemas/revenues.schema';
 import type { CreateRevenuePayload, Revenue, RevenueSource, RevenueableType } from '../types';
 
 type RevenuesFormProps = {
@@ -140,26 +140,29 @@ function getCurrencyLabel(currency: { currency: string; balance: string }) {
   return `${currency.currency} - ${currency.balance}`;
 }
 
+function formatFundCurrencies(currencies?: { currency: string; balance: string }[]) {
+  if (!currencies || currencies.length === 0) return '';
+  return `(${currencies.map(c => `${c.currency}: ${Number(c.balance).toLocaleString()}`).join(', ')})`;
+}
+
 function getRoleLabel(role: UserRole | '') {
   return role ? roleLabels[role] : '';
 }
 
+function getRevenueReceivedById(revenue?: Revenue | null): number {
+  if (typeof revenue?.received_by === 'number') {
+    return revenue.received_by;
+  }
+
+  if (revenue?.received_by && typeof revenue.received_by === 'object') {
+    return revenue.received_by.id ?? revenue.received_by.user?.id ?? 1;
+  }
+
+  return 1;
+}
+
 export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: RevenuesFormProps) {
-  const defaultReceiver = defaultValues?.received_by;
-  const defaultReceiverId = typeof defaultReceiver === 'object'
-    ? Number(defaultReceiver.user?.id ?? defaultReceiver.id ?? 0) || undefined
-    : Number(defaultReceiver ?? 0) || undefined;
-  const [assignReceiver, setAssignReceiver] = useState(() => Boolean(defaultReceiverId));
-  const receiverRoleCandidates = [
-    defaultValues?.received_by_role,
-    typeof defaultReceiver === 'object' ? defaultReceiver.user?.role : undefined,
-    typeof defaultReceiver === 'object' ? defaultReceiver.user?.role_type : undefined,
-    typeof defaultReceiver === 'object' ? defaultReceiver.role : undefined,
-    typeof defaultReceiver === 'object' ? defaultReceiver.role_type : undefined,
-  ];
-  const defaultReceiverRole = receiverRoleCandidates.find(
-    (role): role is UserRole => userRoles.includes(role as UserRole)
-  ) ?? '';
+  const defaultNoteValue = defaultValues?.note ?? '';
 
   const form = useForm<RevenueFormInput, any, RevenueFormValues>({
     resolver: zodResolver(revenueFormSchema),
@@ -170,8 +173,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       company_fund_id: fixedValues?.company_fund_id ?? undefined,
       user_role: defaultValues?.user_role ?? ((defaultValues as any)?.user?.role_type) ?? '',
       user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
-      received_by_role: defaultReceiverRole,
-      received_by: defaultReceiverId,
+      note: defaultNoteValue,
+      received_by: getRevenueReceivedById(defaultValues),
       fund_user_role: fixedValues?.fund_user_role ?? (defaultValues?.revenueable_info?.user_info as any)?.role_type ?? (defaultValues?.revenueable_info?.user_info as any)?.role ?? '',
       fund_user_id: (defaultValues?.revenueable_info?.user_info as any)?.user_id ?? (defaultValues?.revenueable_info?.user_info as any)?.id ?? fixedValues?.user_id ?? undefined,
       user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
@@ -180,7 +183,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
       statement: defaultValues?.statement ?? '',
       amount: defaultValues ? Number(defaultValues.amount ?? 0) : '' as any,
       is_posted: Boolean(defaultValues?.is_posted ?? true),
-      // received_by: defaultValues?.received_by ? Number(defaultValues.received_by) : 1,
     },
   });
 
@@ -192,7 +194,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   const userFundId = form.watch('user_fund_id') as number | undefined;
   const projectFundId = form.watch('project_fund_id') as number | undefined;
   const selectedProjectId = form.watch('project_id') as number | undefined;
-  const receivedByRole = form.watch('received_by_role') as UserRole | '';
 
   const companyFundsQuery = useQuery({
     queryKey: ['revenues', 'company-funds'] as const,
@@ -253,41 +254,6 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'user_fund' && Boolean(fundUserRole),
   });
   const fundRoleUsers = fundRoleUsersQuery.data ?? [];
-
-  const receiverRoleUsersQuery = useQuery<RoleUser[]>({
-    queryKey: ['revenues', 'receiver-role-users', receivedByRole] as const,
-    queryFn: async () => {
-      if (!receivedByRole) return [];
-      const res = await usersApi.getUsersByRole(receivedByRole);
-      const list = (res as any)?.data ?? res;
-      return list as RoleUser[];
-    },
-    enabled: assignReceiver && Boolean(receivedByRole),
-  });
-  const receiverRoleUsers = receiverRoleUsersQuery.data ?? [];
-
-  const receiverRoleDetectionQuery = useQuery<UserRole | ''>({
-    queryKey: ['revenues', 'detect-receiver-role', defaultReceiverId] as const,
-    queryFn: async () => {
-      if (!defaultReceiverId) return '';
-      const results = await Promise.all(
-        userRoles.map(async (role) => ({ role, response: await usersApi.getUsersByRole(role, 1, 1000) })),
-      );
-      return results.find(({ response }) =>
-        response.data.some((record: any) =>
-          Number(record.user?.id ?? record.id) === defaultReceiverId
-        )
-      )?.role ?? '';
-    },
-    enabled: assignReceiver && Boolean(defaultReceiverId) && !Boolean(receivedByRole),
-  });
-
-  useEffect(() => {
-    if (!receivedByRole && receiverRoleDetectionQuery.data) {
-      form.setValue('received_by_role', receiverRoleDetectionQuery.data);
-      form.setValue('received_by', defaultReceiverId);
-    }
-  }, [defaultReceiverId, form, receivedByRole, receiverRoleDetectionQuery.data]);
 
   const fundUserRecordQuery = useQuery<FundUserRecord | null>({
     queryKey: ['revenues', 'fund-user-record', fundUserRole, fundUserId] as const,
@@ -375,16 +341,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     enabled: source === 'project_fund' && Boolean(derivedProjectFundId),
   });
 
-  const receiverOptions = useMemo(() => {
-    const options = receiverRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
-    if (defaultReceiverId && !options.some(o => o.value === defaultReceiverId)) {
-      const val = typeof defaultReceiver === 'object'
-        ? defaultReceiver.user?.name ?? defaultReceiver.name ?? `مستلم ${defaultReceiverId}`
-        : `مستلم ${defaultReceiverId}`;
-      options.push({ value: defaultReceiverId, label: val });
-    }
-    return options;
-  }, [receiverRoleUsers, defaultReceiver, defaultReceiverId]);
+
 
   const fundUserOptions = fundRoleUsers.map(ru => ({ value: ru.user.id, label: ru.user.name }));
 
@@ -488,7 +445,8 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               amount: values.amount,
               is_posted: values.is_posted,
               user_id: values.user_id ?? 1,
-              ...(assignReceiver && values.received_by ? { received_by: values.received_by } : {}),
+              note: values.note || undefined,
+              received_by: values.received_by ?? 1,
             });
           },
           (errors) => {
@@ -505,38 +463,44 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>نوع الصندوق</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={(value) => {
-                        const nextSource = value as RevenueSource;
-                        const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
-                        field.onChange(nextSource);
-                        form.setValue('revenueable_type', nextRevenueableType);
-                        form.setValue('revenueable_id', undefined);
-                        form.setValue('company_fund_id', undefined);
-                        form.setValue('fund_user_role', '');
-                        form.setValue('fund_user_id', undefined);
-                        form.setValue('user_fund_id', undefined);
-                        form.setValue('project_fund_id', undefined);
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      const nextSource = value as RevenueSource;
+                      const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
+                      field.onChange(nextSource);
+                      form.setValue('revenueable_type', nextRevenueableType);
+                      form.setValue('revenueable_id', undefined);
+                      form.setValue('company_fund_id', undefined);
+                      form.setValue('fund_user_role', '');
+                      form.setValue('fund_user_id', undefined);
+                      form.setValue('user_fund_id', undefined);
+                      form.setValue('project_fund_id', undefined);
 
-                        if (nextSource !== 'project_fund') {
-                          form.setValue('project_id', undefined);
-                        }
-                      }}
-                      className="grid gap-3 md:grid-cols-3"
-                    >
-                      {(Object.keys(revenueSourceLabels) as RevenueSource[]).map((item) => (
-                        <label
-                          key={item}
-                          className="flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors has-[:checked]:border-primary has-[:checked]:bg-accent"
-                        >
-                          <RadioGroupItem className="border-none !p-1" value={item} />
-                          <span>{revenueSourceLabels[item]}</span>
-                        </label>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
+                      if (nextSource !== 'project_fund') {
+                        form.setValue('project_id', undefined);
+                      }
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 bg-white">
+                        <SelectValue placeholder="اختر نوع الصندوق">
+                          {field.value ? (
+                            <span>
+                              {field.value === 'company_fund' && 'صندوق الشركة'}
+                              {field.value === 'project_fund' && 'صندوق المشروع'}
+                              {field.value === 'user_fund' && 'صندوق مستخدم'}
+                            </span>
+                          ) : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="company_fund">صندوق الشركة</SelectItem>
+                      <SelectItem value="project_fund">صندوق المشروع</SelectItem>
+                      <SelectItem value="user_fund">صندوق مستخدم</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -648,11 +612,16 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                         <FormControl>
                           <SelectTrigger className="h-11 bg-white">
                             <SelectValue placeholder="اختر صندوق المستخدم">
-                              {field.value ? (
-                                <span>
-                                  {selectedFundUserRecord?.user.funds?.find((f) => f.id === field.value)?.name ?? allUserFunds.find(f => f.id === field.value)?.name ?? ''}
-                                </span>
-                              ) : null}
+                              {(() => {
+                                const list = selectedFundUserRecord?.user.funds ?? [];
+                                const fund = list.find((f) => f.id === field.value) ?? allUserFunds.find(f => f.id === field.value);
+                                if (!fund) return null;
+                                return (
+                                  <span>
+                                    {getFundLabel(fund)} {formatFundCurrencies(fund.currencies)}
+                                  </span>
+                                );
+                              })()}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
@@ -662,7 +631,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                             return [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
                           })().map((fund) => (
                             <SelectItem key={fund.id} value={String(fund.id)}>
-                              {getFundLabel(fund)}
+                              {getFundLabel(fund)} {formatFundCurrencies(fund.currencies)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -676,76 +645,25 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         )}
 
-
-        {/* Receiver Fields (المستلم) */}
-        <div className={assignReceiver ? 'space-y-4 px-2' : 'hidden'}>
-          <h3 className="font-semibold text-slate-800">تفاصيل المستلم</h3>
-          <div className="grid gap-4 md:grid-cols-2 items-start">
-            <FormField
-              control={form.control}
-              name="received_by_role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>نوع المستلم</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      field.onChange(val);
-                      form.setValue('received_by', undefined);
-                    }}
-                    value={field.value ?? ''}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="اختر نوع المستلم">
-                          {field.value ? (
-                            <div className="flex items-center gap-2">
-                              {(() => {
-                                const Icon = roleIcons[field.value as UserRole] || User;
-                                return <Icon className="size-4 text-slate-500" />;
-                              })()}
-                              <span>{getRoleLabel(field.value as UserRole)}</span>
-                            </div>
-                          ) : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {userRoles.map((role) => {
-                        const Icon = roleIcons[role] || User;
-                        return (
-                          <SelectItem key={role} value={role}>
-                            <div className="flex items-center gap-2">
-                              <Icon className="size-4 text-slate-500" />
-                              <span>{roleLabels[role]}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="received_by"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="mb-1">المستلم</FormLabel>
-                  <SearchableSelect
-                    options={receiverOptions}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    placeholder="اختر المستلم..."
-                    disabled={!receivedByRole}
+        <div className="space-y-4 px-2">
+          <FormField
+            control={form.control}
+            name="note"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الملاحظات</FormLabel>
+                <FormControl>
+                  <Input
+                    className="h-11 bg-white"
+                    placeholder="ادخل الملاحظات..."
+                    value={field.value ? String(field.value) : ''}
+                    onChange={(e) => field.onChange(e.target.value)}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
 
@@ -778,12 +696,16 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                         <FormControl>
                           <SelectTrigger className="h-11">
                             <SelectValue placeholder="اختر صندوق الشركة">
-                              {field.value ? (
-                                <div className="flex items-center gap-2">
-                                  <Wallet className="size-4 text-slate-500" />
-                                  <span>{companyFunds.find((f: any) => f.id === field.value)?.name ?? ''}</span>
-                                </div>
-                              ) : null}
+                              {(() => {
+                                const fund = companyFunds.find((f: any) => f.id === field.value);
+                                if (!fund) return null;
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <Wallet className="size-4 text-slate-500" />
+                                    <span>{fund.name} {formatFundCurrencies(fund.currencies)}</span>
+                                  </div>
+                                );
+                              })()}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
@@ -792,7 +714,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                             <SelectItem key={fund.id} value={String(fund.id)}>
                               <div className="flex items-center gap-2">
                                 <Wallet className="size-4 text-slate-500" />
-                                <span>{getCompanyFundLabel(fund)}</span>
+                                <span>{getCompanyFundLabel(fund)} {formatFundCurrencies(fund.currencies)}</span>
                               </div>
                             </SelectItem>
                           ))}
@@ -869,16 +791,22 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
                             <FormControl>
                               <SelectTrigger className="h-11">
                                 <SelectValue placeholder="اختر صندوق المشروع">
-                                  {field.value ? (
-                                    <span>{projectFunds.find(f => f.id === field.value)?.name ?? ''}</span>
-                                  ) : null}
+                                  {(() => {
+                                    const fund = projectFunds.find(f => f.id === field.value);
+                                    if (!fund) return null;
+                                    return (
+                                      <span>
+                                        {fund.name} {formatFundCurrencies(fund.currencies)}
+                                      </span>
+                                    );
+                                  })()}
                                 </SelectValue>
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {projectFunds.map((fund) => (
                                 <SelectItem key={fund.id} value={String(fund.id)}>
-                                  {fund.name}
+                                  {fund.name} {formatFundCurrencies(fund.currencies)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -912,54 +840,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-2 pt-2">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={assignReceiver}
-            onClick={() => {
-              const next = !assignReceiver;
-              setAssignReceiver(next);
-              if (!next) {
-                form.setValue('received_by_role', '');
-                form.setValue('received_by', undefined);
-                form.clearErrors(['received_by_role', 'received_by']);
-              }
-            }}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${assignReceiver ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-          >
-            <span className={`absolute top-0.5 size-5 rounded-full border border-border bg-white shadow-sm transition-all ${assignReceiver ? 'start-[22px]' : 'start-0.5'}`} />
-          </button>
-          <div>
-            <p className="text-sm font-medium">ربط الإيراد بمستلم</p>
-            <p className="text-xs text-muted-foreground">فعّل هذا الخيار إذا كان الإيراد مرتبطًا بمستلم محدد.</p>
-          </div>
-        </div>
 
-        <FormField
-          control={form.control}
-          name="is_posted"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md bg-muted/10 rtl:space-x-reverse">
-              <FormControl>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-                </label>
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="text-sm font-medium text-slate-700 cursor-pointer">
-                  مرحل (إرسال الإيراد للصندوق المباشر)
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
 
         <div className="flex items-center justify-end gap-3 pt-2">
           <Button type="submit" disabled={loading}>

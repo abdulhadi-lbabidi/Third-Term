@@ -1,6 +1,7 @@
-import { Banknote, Wallet } from 'lucide-react';
+import { Banknote, Wallet, Lock } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { formatArabicDate, cn } from '@/shared/lib/utils';
 
 export type GenericFundCurrency = {
   id: number;
@@ -15,7 +16,11 @@ type GenericFundCardProps = {
   name: string;
   subtitle?: string;
   currencies: GenericFundCurrency[];
-  createdAt?: string;
+  created_at?: string;
+  is_locked?: boolean | number;
+  status?: 'pending' | 'complete' | 'cancelled';
+  description?: string;
+  threshold?: number;
   onClick: (fundId: number) => void;
   onMoreCurrenciesClick?: (fundId: number) => void;
 };
@@ -45,23 +50,48 @@ export function GenericFundCardSkeleton() {
     </Card>
   );
 }
+const statusLabels = {
+  pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
+  complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
+  cancelled: { label: 'ملغى', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
+};
 
 export function GenericFundCard({
   fundId,
   name,
   subtitle,
   currencies,
+  created_at,
+  is_locked,
+  status,
+  description,
+  threshold,
   onClick,
   onMoreCurrenciesClick,
 }: GenericFundCardProps) {
+  const isLocked = is_locked === true || is_locked === 1;
+
   return (
     <Card
       role="button"
       tabIndex={0}
-      onClick={() => onClick(fundId)}
-      className="group relative flex min-w-0 w-full cursor-pointer flex-col overflow-hidden transition-all hover:border-primary hover:shadow-md focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+      onClick={() => {
+        if (isLocked) return;
+        onClick(fundId);
+      }}
+      className={cn(
+        "group relative flex min-w-0 w-full flex-col overflow-hidden transition-all focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+        isLocked
+          ? "opacity-65 cursor-not-allowed border-slate-200 bg-slate-50/50"
+          : "cursor-pointer hover:border-primary hover:shadow-md"
+      )}
     >
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-200 to-slate-100 transition-colors group-hover:from-primary/70 group-hover:to-primary" />
+      <div className={cn(
+        "absolute inset-x-0 top-0 h-1 transition-colors",
+        isLocked
+          ? "bg-slate-200"
+          : "bg-gradient-to-r from-slate-200 to-slate-100 group-hover:from-primary/70 group-hover:to-primary"
+      )} />
       <CardContent className="flex flex-1 flex-col justify-between p-5 !py-0">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
@@ -74,7 +104,32 @@ export function GenericFundCard({
                 <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
               </div>
             </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              {isLocked && (
+                <div className="flex items-center gap-1 rounded-md bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                  <Lock className="size-3" />
+                  <span>مغلق</span>
+                </div>
+              )}
+              {!isLocked && status && (
+                <span className={cn(
+                  "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold",
+                  statusLabels[status]?.className
+                )}>
+                  {statusLabels[status]?.label}
+                </span>
+              )}
+
+            </div>
           </div>
+
+          {description && (
+            <p className="text-xs text-slate-500 line-clamp-2 mt-1 font-normal leading-relaxed" title={description}>
+              {description}
+            </p>
+          )}
+
+
 
           <div>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">
@@ -116,14 +171,15 @@ export function GenericFundCard({
           </div>
         </div>
 
-        {/* <div className="flex size-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
-          <ChevronLeft className="size-4" />
-        </div> */}
+        <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400">
+          <span>الحد الأدنى للرصيد:</span>
+          <span className="font-semibold text-slate-700">{threshold ?? 0}</span>
+        </div>
 
-        {/* <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400">
-          <span>تم الإنشاء:</span>
-          <span>{createdAt ?? '-'}</span>
-        </div> */}
+        <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400">
+          <span>تاريخ الإنشاء:</span>
+          <span>{created_at ? formatArabicDate(created_at) : '-'}</span>
+        </div>
       </CardContent>
     </Card>
   );

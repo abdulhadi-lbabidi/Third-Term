@@ -13,7 +13,7 @@ import { GenericFundDialog } from '@/features/funds-shared/components/generic-fu
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
-import type { CompanyFund, CompanyFundCurrency } from './types';
+import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
 import { PageHeader } from '../components/page-header';
 import { cn } from '@/shared/lib/utils';
 import { SimplePagination } from '@/components/ui/pagination';
@@ -86,9 +86,9 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const currentFund = fundDetailsQuery.data || companyFunds.find((f) => f.id === selectedFundId) || null;
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { name: string }) => {
+    mutationFn: async (payload: CreateCompanyFundPayload) => {
       if (selectedCompanyFund) {
-        return companyFundsApi.updateCompanyFund(selectedCompanyFund.id, { name: payload.name });
+        return companyFundsApi.updateCompanyFund(selectedCompanyFund.id, payload);
       }
       return companyFundsApi.createCompanyFund(payload);
     },
@@ -138,9 +138,15 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     },
   });
 
-  const handleSubmit = async (payload: { name: string }) => {
+  const handleSubmit = async (payload: CreateCompanyFundPayload) => {
     await saveMutation.mutateAsync(payload);
     toast.success(selectedCompanyFund ? 'تم تعديل صندوق الشركة بنجاح' : 'تم إنشاء صندوق الشركة بنجاح');
+    if (payload.is_locked) {
+      setSearchParams((prev) => {
+        prev.delete('fundId');
+        return prev;
+      });
+    }
   };
 
   const handleDelete = async (fund: CompanyFund) => {
@@ -239,7 +245,11 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                       symbol: c.symbol,
                       balance: c.balance
                     }))}
-                    createdAt={fund.created_at}
+                    created_at={fund.created_at}
+                    is_locked={fund.is_locked}
+                    status={fund.status}
+                    description={fund.description}
+                    threshold={fund.threshold}
                     onClick={(id) => {
                       setSearchParams((prev) => {
                         prev.set('fundId', id.toString());

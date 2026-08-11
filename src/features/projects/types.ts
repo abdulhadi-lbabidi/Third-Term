@@ -18,6 +18,10 @@ export type ProjectFund = {
   name: string;
   currencies?: ProjectFundCurrency[];
   created_at?: string;
+  is_locked?: boolean | number;
+  status?: 'pending' | 'complete' | 'cancelled';
+  description?: string;
+  threshold?: number;
 };
 
 export type Project = {

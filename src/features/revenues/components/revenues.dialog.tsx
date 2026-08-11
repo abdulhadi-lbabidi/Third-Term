@@ -33,7 +33,7 @@ export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues,
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent keepMounted className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent keepMounted className="!max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'تعديل الإيراد' : 'إضافة إيراد جديد'}</DialogTitle>
         </DialogHeader>

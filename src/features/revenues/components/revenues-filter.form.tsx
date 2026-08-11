@@ -52,10 +52,10 @@ export function RevenuesFilterForm({
   setSearchQuery,
   isPosted,
   setIsPosted,
-  userRole,
-  setUserRole,
-  userId,
-  setUserId,
+  userRole: _userRole,
+  setUserRole: _setUserRole,
+  userId: _userId,
+  setUserId: _setUserId,
   creatorRole,
   setCreatorRole,
   creatorId,
@@ -63,12 +63,7 @@ export function RevenuesFilterForm({
   rangeValue,
   handleRangeChange,
 }: RevenuesFilterFormProps) {
-  const roleUsersQuery = useQuery({
-    queryKey: ['revenues-filter-users', userRole] as const,
-    queryFn: () => usersApi.getUsersByRole(userRole as UserRole, 1, 1000),
-    enabled: Boolean(userRole),
-  });
-  const roleUsers = roleUsersQuery.data?.data ?? [];
+
 
   const creatorUsersQuery = useQuery({
     queryKey: ['revenues-filter-creators', creatorRole] as const,
@@ -84,7 +79,7 @@ export function RevenuesFilterForm({
         <Input
           id="filter-search"
           type="text"
-          placeholder="البحث بالبيان..."
+          placeholder="البحث بالبيان أو الملاحظات..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -107,47 +102,7 @@ export function RevenuesFilterForm({
         </Select>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>نوع المستخدم</Label>
-        <Select
-          value={userRole}
-          onValueChange={(val) => {
-            setUserRole(val as UserRole);
-            setUserId('');
-          }}
-        >
-          <SelectTrigger>
-            {userRole ? roleLabels[userRole] : 'اختر نوع المستخدم'}
-          </SelectTrigger>
-          <SelectContent>
-            {userRoles.map((role) => (
-              <SelectItem key={role} value={role}>
-                {roleLabels[role]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      <div className="space-y-1.5">
-        <Label>المستخدم</Label>
-        {roleUsersQuery.isLoading ? (
-          <Skeleton className="h-10 w-full" />
-        ) : (
-          <SearchableSelect
-            value={userId || null}
-            onValueChange={(val) => setUserId(val ? Number(val) : '')}
-            disabled={!userRole}
-            placeholder="اختر المستخدم"
-            searchPlaceholder="البحث عن مستخدم..."
-            emptyMessage="لا يوجد مستخدمون."
-            options={roleUsers.map((item: any) => ({
-              value: item.user.id,
-              label: item.user.name,
-            }))}
-          />
-        )}
-      </div>
 
       <div className="space-y-1.5">
         <Label>نوع المستلم</Label>

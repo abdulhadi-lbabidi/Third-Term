@@ -7,6 +7,7 @@ export function toExpenseApiPayload(input: {
   description: string;
   amount: number;
   is_posted: boolean;
+  note?: string;
   user_id?: number;
   created_by: number;
 }): CreateExpensePayload {
@@ -16,6 +17,7 @@ export function toExpenseApiPayload(input: {
     description: String(input.description),
     amount: Number(input.amount),
     is_posted: Boolean(input.is_posted),
+    ...(input.note ? { note: String(input.note) } : {}),
     ...(input.user_id ? { user_id: Number(input.user_id) } : {}),
     created_by: Number(input.created_by),
   };

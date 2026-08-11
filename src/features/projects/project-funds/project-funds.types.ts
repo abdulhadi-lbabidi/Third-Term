@@ -20,15 +20,27 @@ export type ProjectFund = {
   };
   currencies?: ProjectFundCurrency[];
   created_at?: string;
+  is_locked?: boolean | number;
+  status?: 'pending' | 'complete' | 'cancelled';
+  description?: string;
+  threshold?: number;
 };
 
 export type CreateProjectFundPayload = {
   project_id: number;
   name: string;
+  is_locked?: boolean | number;
+  status?: 'pending' | 'complete' | 'cancelled';
+  description?: string;
+  threshold?: number;
 };
 
 export type UpdateProjectFundPayload = {
   name: string;
+  is_locked?: boolean | number;
+  status?: 'pending' | 'complete' | 'cancelled';
+  description?: string;
+  threshold?: number;
 };
 
 export type ProjectFundCurrencyAttachPayload = {

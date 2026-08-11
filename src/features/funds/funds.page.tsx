@@ -114,10 +114,14 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const currentFund = fundDetailsQuery.data || visibleFunds.find((f) => f.id === effectiveFundId) || null;
 
   const saveFundMutation = useMutation({
-    mutationFn: async (payload: { name: string; user_id?: number }) => {
+    mutationFn: async (payload: any) => {
       const apiPayload: CreateFundPayload = {
         name: payload.name,
         user_id: hasUserContext ? resolvedUserId : payload.user_id || resolvedUserId || 0,
+        is_locked: payload.is_locked,
+        status: payload.status,
+        description: payload.description,
+        threshold: payload.threshold,
       };
 
       if (selectedFund) {
@@ -254,7 +258,11 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
                     symbol: c.symbol,
                     balance: c.balance
                   }))}
-                  createdAt={fund.created_at}
+                  created_at={fund.created_at}
+                  is_locked={fund.is_locked}
+                  status={fund.status}
+                  description={fund.description}
+                  threshold={fund.threshold}
                   onClick={(id) => {
                     setSearchParams((prev) => {
                       prev.set('fundId', id.toString());
@@ -336,7 +344,15 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
           name: selectedFund?.name ?? '',
           user_id: selectedFund?.user?.id ?? resolvedUserId,
         }}
-        onSubmit={async (values) => { await saveFundMutation.mutateAsync(values); }}
+        onSubmit={async (values) => {
+          await saveFundMutation.mutateAsync(values);
+          if (values.is_locked) {
+            setSearchParams((prev) => {
+              prev.delete('fundId');
+              return prev;
+            });
+          }
+        }}
         loading={saveFundMutation.isPending}
         hideUserSelection={hasUserContext}
       />

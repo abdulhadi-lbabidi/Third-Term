@@ -115,14 +115,24 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
     : availableFunds;
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { name: string; project_id?: number }) => {
+    mutationFn: async (payload: any) => {
       const apiPayload: CreateProjectFundPayload = {
         name: payload.name,
         project_id: payload.project_id || projectId || 0,
+        is_locked: payload.is_locked,
+        status: payload.status,
+        description: payload.description,
+        threshold: payload.threshold,
       };
 
       if (selectedProjectFund) {
-        return projectFundsApi.updateProjectFund(selectedProjectFund.id, { name: apiPayload.name });
+        return projectFundsApi.updateProjectFund(selectedProjectFund.id, {
+          name: apiPayload.name,
+          is_locked: apiPayload.is_locked,
+          status: apiPayload.status,
+          description: apiPayload.description,
+          threshold: apiPayload.threshold,
+        });
       }
       return projectFundsApi.createProjectFund(apiPayload);
     },
@@ -291,7 +301,11 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
                     symbol: c.symbol,
                     balance: c.balance
                   }))}
-                  createdAt={fund.created_at}
+                  created_at={fund.created_at}
+                  is_locked={fund.is_locked}
+                  status={fund.status}
+                  description={fund.description}
+                  threshold={fund.threshold}
                   onClick={(id) => {
                     setSearchParams((prev) => {
                       prev.set('fundId', id.toString());
@@ -404,7 +418,15 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
           name: selectedProjectFund?.name ?? '',
           project_id: selectedProjectFund?.project?.id ?? projectId,
         }}
-        onSubmit={async (values) => { await saveMutation.mutateAsync(values); }}
+        onSubmit={async (values) => {
+          await saveMutation.mutateAsync(values);
+          if (values.is_locked) {
+            setSearchParams((prev) => {
+              prev.delete('fundId');
+              return prev;
+            });
+          }
+        }}
         loading={saveMutation.isPending}
         hideProjectSelection={!!projectId}
       />

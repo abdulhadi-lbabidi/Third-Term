@@ -113,6 +113,7 @@ export type Expense = {
   created_by?: number | ExpenseUser;
   created_at?: string;
   invoices_count?: number;
+  note?: string;
 };
 
 export type CreateExpensePayload = {
@@ -121,8 +122,10 @@ export type CreateExpensePayload = {
   description: string;
   amount: number;
   is_posted: boolean;
+  user?: string;
   user_id?: number;
   created_by: number;
+  note?: string;
 };
 
 export type UpdateExpensePayload = CreateExpensePayload;
