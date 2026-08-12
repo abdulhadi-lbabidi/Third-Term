@@ -24,13 +24,13 @@ export function MaterialsDialog({ open, onOpenChange, item }: MaterialsDialogPro
               لا توجد مواد تابعة لهذا البند
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-200/80">
+            <div className="overflow-x-auto overflow-y-auto rounded-lg border border-slate-200/80 max-h-[268px]">
               <table className="min-w-[620px] w-full border-collapse text-right">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="px-4 py-3">اسم المادة</th>
-                    <th className="px-4 py-3">البيان</th>
-                    <th className="px-4 py-3">تاريخ الإنشاء</th>
+                  <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="sticky top-0 bg-slate-50 z-10 px-4 py-3 border-b border-slate-200/80">اسم المادة</th>
+                    <th className="sticky top-0 bg-slate-50 z-10 px-4 py-3 border-b border-slate-200/80">البيان</th>
+                    <th className="sticky top-0 bg-slate-50 z-10 px-4 py-3 border-b border-slate-200/80">تاريخ الإنشاء</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">

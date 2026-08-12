@@ -57,6 +57,9 @@ export function MaterialForm({ defaultValues, onSubmit, loading }: MaterialFormP
         className="space-y-4"
         onSubmit={form.handleSubmit(async (values) => {
           await onSubmit(values);
+          if (!defaultValues) {
+            form.reset();
+          }
         })}
       >
         <FormField

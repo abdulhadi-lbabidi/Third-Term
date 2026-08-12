@@ -53,6 +53,7 @@ export function GenericFundCardSkeleton() {
     </Card>
   );
 }
+
 const statusLabels = {
   pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
   complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
