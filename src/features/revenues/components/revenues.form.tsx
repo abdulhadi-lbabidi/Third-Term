@@ -186,6 +186,27 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      source: fixedValues?.source ?? (defaultValues ? getSourceFromType(defaultValues.revenueable_type) : 'company_fund'),
+      revenueable_type: defaultValues?.revenueable_type ?? sourceToRevenueableType[fixedValues?.source ?? 'company_fund'],
+      revenueable_id: defaultValues?.revenueable_id ? Number(defaultValues.revenueable_id) : undefined,
+      company_fund_id: fixedValues?.company_fund_id ?? undefined,
+      user_role: defaultValues?.user_role ?? ((defaultValues as any)?.user?.role_type) ?? '',
+      user_id: defaultValues?.user_id ? Number(defaultValues.user_id) : ((defaultValues as any)?.user?.id ? Number((defaultValues as any).user.id) : (fixedValues?.user_id ?? undefined)),
+      note: defaultValues?.note ?? '',
+      received_by: getRevenueReceivedById(defaultValues),
+      fund_user_role: fixedValues?.fund_user_role ?? (defaultValues?.revenueable_info?.user_info as any)?.role_type ?? (defaultValues?.revenueable_info?.user_info as any)?.role ?? '',
+      fund_user_id: (defaultValues?.revenueable_info?.user_info as any)?.user_id ?? (defaultValues?.revenueable_info?.user_info as any)?.id ?? fixedValues?.user_id ?? undefined,
+      user_fund_id: defaultValues?.revenueable_info?.details?.fund_id ?? defaultValues?.revenueable_info?.details?.fund?.id ?? fixedValues?.user_fund_id ?? undefined,
+      project_fund_id: fixedValues?.project_fund_id ?? undefined,
+      project_id: fixedValues?.project_id ?? undefined,
+      statement: defaultValues?.statement ?? '',
+      amount: defaultValues ? Number(defaultValues.amount ?? 0) : '' as any,
+      is_posted: Boolean(defaultValues?.is_posted ?? true),
+    });
+  }, [defaultValues, fixedValues, form]);
+
   const source = form.watch('source') as RevenueSource;
   const companyFundId = form.watch('company_fund_id') as number | undefined;
   const selectedRevenueableId = form.watch('revenueable_id') as number | undefined;
@@ -651,11 +672,11 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
             name="note"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>الملاحظات</FormLabel>
+                <FormLabel>المستلم بيد</FormLabel>
                 <FormControl>
                   <Input
                     className="h-11 bg-white"
-                    placeholder="ادخل الملاحظات..."
+                    placeholder="ادخل المستلم بيد..."
                     value={field.value ? String(field.value) : ''}
                     onChange={(e) => field.onChange(e.target.value)}
                   />

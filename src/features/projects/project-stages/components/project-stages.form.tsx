@@ -48,7 +48,7 @@ const statusOptions = [
   { value: 'pending', label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
   { value: 'in_progress', label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-info' },
   { value: 'completed', label: 'مكتمل', icon: CheckCircle2, color: 'text-success' },
-  { value: 'cancelled', label: 'ملغى', icon: XCircle, color: 'text-destructive' },
+  { value: 'canceled', label: 'ملغى', icon: XCircle, color: 'text-destructive' },
 ] as const;
 
 export function ProjectStagesForm({ projectId, stage, onSubmit, loading }: ProjectStagesFormProps) {
@@ -181,35 +181,36 @@ export function ProjectStagesForm({ projectId, stage, onSubmit, loading }: Proje
             render={({ field }) => {
               const selectedStatus = statusOptions.find((option) => option.value === field.value);
               return (
-              <FormItem>
-                <FormLabel>حالة المرحلة</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="h-10">
-                      <SelectValue placeholder="اختر الحالة">
-                        {selectedStatus && (
+                <FormItem>
+                  <FormLabel>حالة المرحلة</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="اختر الحالة">
+                          {selectedStatus && (
+                            <span className="flex items-center gap-2">
+                              <selectedStatus.icon className={`size-4 ${selectedStatus.color}`} />
+                              {selectedStatus.label}
+                            </span>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
                           <span className="flex items-center gap-2">
-                            <selectedStatus.icon className={`size-4 ${selectedStatus.color}`} />
-                            {selectedStatus.label}
+                            <option.icon className={`size-4 ${option.color}`} />
+                            {option.label}
                           </span>
-                        )}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <span className="flex items-center gap-2">
-                          <option.icon className={`size-4 ${option.color}`} />
-                          {option.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
           />
 
           <FormField

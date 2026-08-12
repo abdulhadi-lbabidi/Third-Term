@@ -16,6 +16,7 @@ import type { Project } from '../types';
 import { GenericFundDetails } from '@/features/funds-shared/components/generic-fund-details';
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
+import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
@@ -62,6 +63,8 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
   const [currencyEditDialogOpen, setCurrencyEditDialogOpen] = useState(false);
 
   const [selectedProjectFund, setSelectedProjectFund] = useState<ProjectFund | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [fundToDelete, setFundToDelete] = useState<ProjectFund | null>(null);
   const [selectedProjectFundForView, setSelectedProjectFundForView] = useState<ProjectFund | null>(null);
   const [selectedProjectFundCurrency, setSelectedProjectFundCurrency] = useState<ProjectFundCurrency | null>(null);
 
@@ -317,6 +320,14 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
                     setSelectedProjectFundForView(fund);
                     setCurrenciesDialogOpen(true);
                   }}
+                  onEdit={() => {
+                    setSelectedProjectFund(fund);
+                    setDialogOpen(true);
+                  }}
+                  onDelete={() => {
+                    setFundToDelete(fund);
+                    setDeleteConfirmOpen(true);
+                  }}
                 />
               ))}
             </div>
@@ -469,6 +480,25 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
         currency={selectedProjectFundCurrency as any}
         onSubmit={async (payload) => { await updateCurrencyMutation.mutateAsync({ ...payload, balance: payload.balance.toString() }); }}
         loading={updateCurrencyMutation.isPending}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setFundToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (fundToDelete) {
+            await deleteMutation.mutateAsync(fundToDelete);
+            toast.success('تم حذف صندوق المشروع بنجاح');
+            setDeleteConfirmOpen(false);
+            setFundToDelete(null);
+          }
+        }}
+        isDeleting={deleteMutation.isPending}
+        title="تأكيد حذف صندوق المشروع"
+        description={`هل أنت متأكد من حذف صندوق "${fundToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
     </div>
   );

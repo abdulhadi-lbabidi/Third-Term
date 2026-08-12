@@ -28,7 +28,7 @@ const PROJECT_STATUS = {
   pending: { label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
   in_progress: { label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-info' },
   completed: { label: 'مكتمل', icon: CheckCircle2, color: 'text-success' },
-  cancelled: { label: 'ملغى', icon: XCircle, color: 'text-destructive' },
+  canceled: { label: 'ملغى', icon: XCircle, color: 'text-destructive' },
 } as const;
 
 export function ProjectDetailsPage() {

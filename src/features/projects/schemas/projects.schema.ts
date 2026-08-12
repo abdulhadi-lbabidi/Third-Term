@@ -4,7 +4,7 @@ export const projectFormSchema = z.object({
   client_id: z.coerce.number().int().positive('العميل مطلوب'),
   name: z.string().trim().min(1, 'اسم المشروع مطلوب'),
   expected_cost: z.coerce.number().nonnegative('التكلفة المتوقعة يجب أن تكون 0 أو أكثر'),
-  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'canceled']),
 });
 
 export const projectFundFormSchema = z.object({

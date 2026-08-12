@@ -1,6 +1,6 @@
 import type { ClientRecord } from '@/features/users/types';
 
-export type ProjectStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type ProjectStatus = 'pending' | 'in_progress' | 'completed' | 'canceled';
 
 export type ProjectFundCurrency = {
   id: number;
@@ -19,7 +19,7 @@ export type ProjectFund = {
   currencies?: ProjectFundCurrency[];
   created_at?: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };

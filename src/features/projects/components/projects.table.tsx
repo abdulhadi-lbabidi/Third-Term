@@ -25,7 +25,7 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
     pending: 'قيد الانتظار',
     in_progress: 'قيد التنفيذ',
     completed: 'مكتمل',
-    cancelled: 'ملغي',
+    canceled: 'ملغي',
   };
 
   const statusStyles: Record<
@@ -47,7 +47,7 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
       bg: 'bg-emerald-50',
       border: 'border-emerald-200',
     },
-    cancelled: {
+    canceled: {
       text: 'text-rose-700',
       bg: 'bg-rose-50',
       border: 'border-rose-200',

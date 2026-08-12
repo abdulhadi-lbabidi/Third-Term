@@ -1,7 +1,7 @@
 import type { StageTimeline } from '../stage-timelines/stage-timelines.types';
 import type { Project } from '../types';
 
-export type ProjectStageStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type ProjectStageStatus = 'pending' | 'in_progress' | 'completed' | 'canceled';
 
 export type ProjectStage = {
   id: number;

@@ -187,29 +187,30 @@ export function StageTimelineForm({
                 pending: 'قيد الانتظار',
                 in_progress: 'قيد التنفيذ',
                 completed: 'مكتمل',
-                cancelled: 'ملغى',
+                canceled: 'ملغى',
               };
               return (
-              <FormItem>
-                <FormLabel>الحالة</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="h-10">
-                      <SelectValue placeholder="اختر الحالة">
-                        {field.value ? statusLabels[field.value] : null}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="pending">قيد الانتظار</SelectItem>
-                    <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
-                    <SelectItem value="completed">مكتمل</SelectItem>
-                    <SelectItem value="cancelled">ملغى</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}}
+                <FormItem>
+                  <FormLabel>الحالة</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="اختر الحالة">
+                          {field.value ? statusLabels[field.value] : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="pending">قيد الانتظار</SelectItem>
+                      <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
+                      <SelectItem value="completed">مكتمل</SelectItem>
+                      <SelectItem value="canceled">ملغى</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
           />
 
           <FormField

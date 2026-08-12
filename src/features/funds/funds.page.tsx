@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users, Wallet } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 import { PageHeader } from '../components/page-header';
@@ -15,6 +16,7 @@ import { usersApi } from '@/features/users/api/users.api';
 import { GenericFundDetails } from '@/features/funds-shared/components/generic-fund-details';
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
+import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { SimplePagination } from '@/components/ui/pagination';
@@ -59,6 +61,8 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const [currenciesDialogOpen, setCurrenciesDialogOpen] = useState(false);
 
   const [selectedFund, setSelectedFund] = useState<Fund | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [fundToDelete, setFundToDelete] = useState<Fund | null>(null);
   const [selectedFundForView, setSelectedFundForView] = useState<Fund | null>(null);
 
   const userRecordQuery = useQuery<UserRecord | null>({
@@ -274,6 +278,14 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
                     setSelectedFundForView(fund);
                     setCurrenciesDialogOpen(true);
                   }}
+                  onEdit={() => {
+                    setSelectedFund(fund);
+                    setDialogOpen(true);
+                  }}
+                  onDelete={() => {
+                    setFundToDelete(fund);
+                    setDeleteConfirmOpen(true);
+                  }}
                 />
               ))}
             </div>
@@ -384,6 +396,25 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
           if (!open) setSelectedFundForView(null);
         }}
         fund={selectedFundForView as any}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setFundToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (fundToDelete) {
+            await deleteFundMutation.mutateAsync(fundToDelete);
+            toast.success('تم حذف صندوق المستخدم بنجاح');
+            setDeleteConfirmOpen(false);
+            setFundToDelete(null);
+          }
+        }}
+        isDeleting={deleteFundMutation.isPending}
+        title="تأكيد حذف صندوق المستخدم"
+        description={`هل أنت متأكد من حذف صندوق "${fundToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
     </div>
   );

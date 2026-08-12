@@ -1,6 +1,7 @@
-import { Banknote, Wallet, Lock } from 'lucide-react';
+import { Wallet, Lock, Banknote, Edit2, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Button } from '@/shared/components/ui/button';
 import { formatArabicDate, cn } from '@/shared/lib/utils';
 
 export type GenericFundCurrency = {
@@ -18,11 +19,13 @@ type GenericFundCardProps = {
   currencies: GenericFundCurrency[];
   created_at?: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
   onClick: (fundId: number) => void;
   onMoreCurrenciesClick?: (fundId: number) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
 export function GenericFundCardSkeleton() {
@@ -53,7 +56,7 @@ export function GenericFundCardSkeleton() {
 const statusLabels = {
   pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
   complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
-  cancelled: { label: 'ملغى', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
+  canceled: { label: 'ملغى', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
 };
 
 export function GenericFundCard({
@@ -68,8 +71,10 @@ export function GenericFundCard({
   threshold,
   onClick,
   onMoreCurrenciesClick,
+  onEdit,
+  onDelete,
 }: GenericFundCardProps) {
-  const isLocked = is_locked === true || is_locked === 1;
+  const isLocked = is_locked === true || is_locked === 1 || status === 'complete' || status === 'canceled';
 
   return (
     <Card
@@ -104,22 +109,61 @@ export function GenericFundCard({
                 <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-              {isLocked && (
-                <div className="flex items-center gap-1 rounded-md bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
-                  <Lock className="size-3" />
-                  <span>مغلق</span>
+            <div className="flex items-start gap-2 shrink-0">
+              {(onEdit || onDelete) && (
+                <div className="flex items-center gap-1 border border-slate-200/60 rounded-lg p-0.5 bg-slate-50/50">
+                  {onEdit && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="size-7 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit();
+                      }}
+                    >
+                      <Edit2 className="size-3.5" />
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="size-7 rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete();
+                      }}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
                 </div>
               )}
-              {!isLocked && status && (
-                <span className={cn(
-                  "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold",
-                  statusLabels[status]?.className
-                )}>
-                  {statusLabels[status]?.label}
-                </span>
-              )}
-
+              <div className="flex flex-col items-end gap-1.5">
+                {isLocked && (
+                  <div className="flex items-center gap-1 rounded-md bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                    <Lock className="size-3" />
+                    <span>
+                      {status === 'complete'
+                        ? 'مغلق (مكتمل)'
+                        : status === 'canceled'
+                        ? 'مغلق (ملغى)'
+                        : 'مغلق'}
+                    </span>
+                  </div>
+                )}
+                {!isLocked && status && (
+                  <span className={cn(
+                    "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold",
+                    statusLabels[status]?.className
+                  )}>
+                    {statusLabels[status]?.label}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -146,7 +190,10 @@ export function GenericFundCard({
                   <button
                     key={currency.id}
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors",
+                      isLocked ? "cursor-not-allowed" : "hover:bg-sky-100"
+                    )}
                   >
                     <span>
                       {currency.currency} {currency.symbol}
@@ -159,9 +206,13 @@ export function GenericFundCard({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (isLocked) return;
                       onMoreCurrenciesClick?.(fundId);
                     }}
-                    className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                    className={cn(
+                      "inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors",
+                      isLocked ? "cursor-not-allowed" : "hover:bg-slate-100"
+                    )}
                   >
                     +{currencies.length - 3} المزيد
                   </button>

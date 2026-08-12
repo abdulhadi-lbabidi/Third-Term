@@ -60,7 +60,7 @@ export function RevenuesTable({
         </span>
       ),
     },
-    { header: 'الملاحظات', cell: (row) => row.note ?? '-' },
+    { header: 'المستلم بيد', cell: (row) => row.note ?? '-' },
     { header: 'مستلم بواسطة', sortable: true, sortKey: 'receiver_name', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
     { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ?? '-' },
   ];

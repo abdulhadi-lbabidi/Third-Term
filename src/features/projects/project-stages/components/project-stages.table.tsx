@@ -19,7 +19,7 @@ const statusMap: Record<string, { label: string; color: string }> = {
   pending: { label: 'قيد الانتظار', color: 'bg-slate-100 text-slate-800' },
   in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-800' },
   completed: { label: 'مكتمل', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'ملغى', color: 'bg-red-100 text-red-800' },
+  canceled: { label: 'ملغى', color: 'bg-red-100 text-red-800' },
 };
 
 export function ProjectStagesTable({

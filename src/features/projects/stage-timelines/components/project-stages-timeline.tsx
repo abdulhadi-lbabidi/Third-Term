@@ -22,7 +22,7 @@ const statusConfig: Record<string, { icon: React.ElementType; color: string; bg:
   pending: { icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted', line: 'bg-border' },
   in_progress: { icon: PlayCircle, color: 'text-info', bg: 'bg-info/10', line: 'bg-info/30' },
   completed: { icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10', line: 'bg-success/40' },
-  cancelled: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/10', line: 'bg-destructive/30' },
+  canceled: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/10', line: 'bg-destructive/30' },
 };
 
 function formatDateRange(start: string, end: string) {
@@ -226,24 +226,24 @@ export function ProjectStagesTimeline({
 
                 <div className="flex min-w-0 flex-col gap-2 sm:items-stretch lg:flex-row lg:items-center lg:gap-3">
                   <div className="max-w-full overflow-x-auto pb-1">
-                  <div className="flex w-max items-center rounded-lg border border-border bg-muted/50 p-1">
-                    <button
-                      onClick={() => setFilterStatus('all')}
-                      className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors", filterStatus === 'all' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-                    >
-                      الكل
-                    </button>
-                    {Object.entries(statusConfig).map(([key, conf]) => (
+                    <div className="flex w-max items-center rounded-lg border border-border bg-muted/50 p-1">
                       <button
-                        key={key}
-                        onClick={() => setFilterStatus(key)}
-                        className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5", filterStatus === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        onClick={() => setFilterStatus('all')}
+                        className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors", filterStatus === 'all' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                       >
-                        <conf.icon className="size-3" />
-                        {key === 'pending' ? 'بالانتظار' : key === 'in_progress' ? 'قيد التنفيذ' : key === 'completed' ? 'مكتمل' : 'ملغى'}
+                        الكل
                       </button>
-                    ))}
-                  </div></div>
+                      {Object.entries(statusConfig).map(([key, conf]) => (
+                        <button
+                          key={key}
+                          onClick={() => setFilterStatus(key)}
+                          className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5", filterStatus === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        >
+                          <conf.icon className="size-3" />
+                          {key === 'pending' ? 'بالانتظار' : key === 'in_progress' ? 'قيد التنفيذ' : key === 'completed' ? 'مكتمل' : 'ملغى'}
+                        </button>
+                      ))}
+                    </div></div>
                   {canManage && (
                     <Button onClick={() => onAddTimeline(selectedStage)} className="w-full gap-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 lg:w-auto">
                       <Plus className="size-4" />

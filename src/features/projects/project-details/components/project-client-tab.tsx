@@ -10,7 +10,7 @@ const projectStatusMap: Record<ProjectStatus, { label: string; color: string }> 
   pending: { label: 'قيد الانتظار', color: 'status-badge-warning' },
   in_progress: { label: 'قيد التنفيذ', color: 'status-badge-info' },
   completed: { label: 'مكتمل', color: 'status-badge-success' },
-  cancelled: { label: 'ملغى', color: 'status-badge-danger' },
+  canceled: { label: 'ملغى', color: 'status-badge-danger' },
 };
 
 export function ProjectClientTab({ project }: { project: Project | null }) {

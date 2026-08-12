@@ -76,7 +76,7 @@ export function ProjectStagesTab({ projectId }: ProjectStagesTabProps) {
     if (rawStages.some((stage) => stage.id === selectedStageId)) return;
 
     const preferredStage = rawStages.find(
-      (stage) => stage.status !== 'completed' && stage.status !== 'cancelled'
+      (stage) => stage.status !== 'completed' && stage.status !== 'canceled'
     );
     setSelectedStageId((preferredStage ?? rawStages[0]).id);
   }, [stagesQuery.data, projectId, selectedStageId]);

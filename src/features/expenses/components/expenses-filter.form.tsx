@@ -79,7 +79,7 @@ export function ExpensesFilterForm({
         <Input
           id="filter-search"
           type="text"
-          placeholder="البحث بالبيان أو الملاحظات..."
+          placeholder="البحث بالبيان أو المستلم بيد..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />

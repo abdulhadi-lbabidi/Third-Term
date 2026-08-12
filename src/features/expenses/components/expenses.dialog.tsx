@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ExpensesForm } from './expenses.form';
 import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
 import { FileText, PackageOpen, ReceiptText } from 'lucide-react';
+import { expensesApi } from '../expenses.api';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { CreateExpensePayload, Expense } from '../types';
 
 type ExpensesDialogProps = {
@@ -32,6 +35,12 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
   const [formKey, setFormKey] = useState(0);
   const [step, setStep] = useState<'expense' | 'invoice'>('expense');
   const [createdExpenseId, setCreatedExpenseId] = useState<number | null>(null);
+
+  const { data: fetchedExpense, isLoading: isFetchingExpense } = useQuery({
+    queryKey: ['expenses', 'detail', defaultValues?.id] as const,
+    queryFn: () => expensesApi.getExpenseById(defaultValues!.id),
+    enabled: open && Boolean(defaultValues?.id),
+  });
 
   const resetWorkflow = () => {
     setFormKey((value) => value + 1);
@@ -68,24 +77,32 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
         </DialogHeader>}
         <div className="py-4">
           {step === 'expense' ? (
-            <ExpensesForm
-              key={formKey}
-              defaultValues={defaultValues}
-              fixedValues={fixedValues}
-              fixedFundCurrencies={fixedFundCurrencies}
-              onSubmit={async (data) => {
-                await onSubmit(data);
-                resetWorkflow();
-                onOpenChange(false);
-              }}
-              onSubmitWithInvoice={!defaultValues ? async (data) => {
-                const expense = await onSubmit(data);
-                if (!expense?.id) return;
-                setCreatedExpenseId(expense.id);
-                setStep('invoice');
-              } : undefined}
-              loading={loading}
-            />
+            isFetchingExpense ? (
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+              <ExpensesForm
+                key={formKey}
+                defaultValues={fetchedExpense || defaultValues}
+                fixedValues={fixedValues}
+                fixedFundCurrencies={fixedFundCurrencies}
+                onSubmit={async (data) => {
+                  await onSubmit(data);
+                  resetWorkflow();
+                  onOpenChange(false);
+                }}
+                onSubmitWithInvoice={!defaultValues ? async (data) => {
+                  const expense = await onSubmit(data);
+                  if (!expense?.id) return;
+                  setCreatedExpenseId(expense.id);
+                  setStep('invoice');
+                } : undefined}
+                loading={loading}
+              />
+            )
           ) : createdExpenseId ? (
             <InvoicesDialog
               isOpen={open}

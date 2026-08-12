@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +27,7 @@ const genericFundSchema = z.object({
   user_id: z.number().optional(),
   type: z.enum(['company', 'project', 'user']).optional(),
   is_locked: z.boolean(),
-  status: z.enum(['pending', 'complete', 'cancelled']),
+  status: z.enum(['pending', 'complete', 'canceled']),
   description: z.string().optional(),
   threshold: z.coerce.number().min(0, 'يجب أن يكون الحد الأدنى 0 أو أكثر'),
 }).superRefine((val, ctx) => {
@@ -57,7 +58,7 @@ type GenericFundFormProps = {
     project_id?: number;
     user_id?: number;
     is_locked?: boolean | number;
-    status?: 'pending' | 'complete' | 'cancelled';
+    status?: 'pending' | 'complete' | 'canceled';
     description?: string;
     threshold?: number | string;
   } | null;
@@ -79,6 +80,7 @@ export function GenericFundDialog({
   hideUserSelection,
 }: GenericFundFormProps) {
   const isEditing = !!defaultValues?.id;
+  const [, setSearchParams] = useSearchParams();
 
   const form = useForm<any>({
     resolver: zodResolver(genericFundSchema),
@@ -136,6 +138,13 @@ export function GenericFundDialog({
     if (fundType === 'user') payload.user_id = values.user_id;
 
     await onSubmit(payload);
+
+    if (values.is_locked || values.status === 'complete' || values.status === 'canceled') {
+      setSearchParams((prev) => {
+        prev.delete('fundId');
+        return prev;
+      });
+    }
   };
 
   return (
@@ -256,9 +265,9 @@ export function GenericFundDialog({
                       </Button>
                       <Button
                         type="button"
-                        variant={field.value === 'cancelled' ? 'default' : 'outline'}
-                        className={field.value === 'cancelled' ? 'bg-rose-600 text-white hover:bg-rose-700 border border-rose-600 shadow-sm shadow-rose-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'}
-                        onClick={() => field.onChange('cancelled')}
+                        variant={field.value === 'canceled' ? 'default' : 'outline'}
+                        className={field.value === 'canceled' ? 'bg-rose-600 text-white hover:bg-rose-700 border border-rose-600 shadow-sm shadow-rose-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'}
+                        onClick={() => field.onChange('canceled')}
                       >
                         ملغى
                       </Button>

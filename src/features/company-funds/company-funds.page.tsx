@@ -10,6 +10,7 @@ import { companyFundsApi } from './company-funds.api';
 import { GenericFundDetails } from '@/features/funds-shared/components/generic-fund-details';
 import { GenericFundCard, GenericFundCardSkeleton } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
+import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
@@ -49,6 +50,8 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const [currencyEditDialogOpen, setCurrencyEditDialogOpen] = useState(false);
 
   const [selectedCompanyFund, setSelectedCompanyFund] = useState<CompanyFund | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [fundToDelete, setFundToDelete] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundForCurrency, setSelectedCompanyFundForCurrency] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundForView, setSelectedCompanyFundForView] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundCurrency, setSelectedCompanyFundCurrency] = useState<CompanyFundCurrency | null>(null);
@@ -261,6 +264,14 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                       setSelectedCompanyFundForView(fund);
                       setCurrenciesDialogOpen(true);
                     }}
+                    onEdit={() => {
+                      setSelectedCompanyFund(fund);
+                      setDialogOpen(true);
+                    }}
+                    onDelete={() => {
+                      setFundToDelete(fund);
+                      setDeleteConfirmOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -368,6 +379,24 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
           toast.success('تم تعديل العملة بنجاح');
         }}
         loading={updateCurrencyMutation.isPending}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setFundToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (fundToDelete) {
+            await handleDelete(fundToDelete);
+            setDeleteConfirmOpen(false);
+            setFundToDelete(null);
+          }
+        }}
+        isDeleting={deleteMutation.isPending}
+        title="تأكيد حذف صندوق الشركة"
+        description={`هل أنت متأكد من حذف صندوق "${fundToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
     </div>
   );

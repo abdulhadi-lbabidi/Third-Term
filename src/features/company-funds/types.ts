@@ -15,7 +15,7 @@ export type CompanyFund = {
   currencies?: CompanyFundCurrency[];
   created_at?: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };
@@ -23,7 +23,7 @@ export type CompanyFund = {
 export type CreateCompanyFundPayload = {
   name: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };
@@ -31,7 +31,7 @@ export type CreateCompanyFundPayload = {
 export type UpdateCompanyFundPayload = {
   name: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };

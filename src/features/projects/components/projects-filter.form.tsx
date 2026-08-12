@@ -33,7 +33,7 @@ const statuses: { value: Project['status']; label: string }[] = [
     label: 'مكتمل',
   },
   {
-    value: 'cancelled',
+    value: 'canceled',
     label: 'ملغي',
   },
 ];

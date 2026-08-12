@@ -29,14 +29,14 @@ const formSchema = z.object({
   client_id: z.number().min(1, 'الرجاء اختيار العميل'),
   name: z.string().min(1, 'اسم المشروع مطلوب'),
   expected_cost: z.number().min(0, 'التكلفة يجب أن تكون أكبر من أو تساوي صفر'),
-  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled'] as const),
+  status: z.enum(['pending', 'in_progress', 'completed', 'canceled'] as const),
 });
 
 const statusOptions: { value: ProjectStatus; label: string; icon: React.ElementType; color: string }[] = [
   { value: 'pending', label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
   { value: 'in_progress', label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-blue-500' },
   { value: 'completed', label: 'مكتمل', icon: CheckCircle2, color: 'text-emerald-500' },
-  { value: 'cancelled', label: 'ملغى', icon: XCircle, color: 'text-red-500' },
+  { value: 'canceled', label: 'ملغى', icon: XCircle, color: 'text-red-500' },
 ];
 
 export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {

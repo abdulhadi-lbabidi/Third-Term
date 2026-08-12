@@ -22,7 +22,7 @@ export function ProjectMetadataSidebar({
         return { label: 'مكتمل', className: 'status-badge-success' };
       case 'in_progress':
         return { label: 'قيد التنفيذ', className: 'status-badge-info' };
-      case 'cancelled':
+      case 'canceled':
         return { label: 'ملغي', className: 'status-badge-danger' };
       default:
         return { label: 'قيد الانتظار', className: 'status-badge-warning' };

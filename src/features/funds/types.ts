@@ -29,7 +29,7 @@ export type Fund = {
   currencies?: FundCurrency[];
   created_at?: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };
@@ -38,7 +38,7 @@ export type CreateFundPayload = {
   user_id: number;
   name: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };
@@ -47,7 +47,7 @@ export type UpdateFundPayload = {
   user_id: number;
   name: string;
   is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'cancelled';
+  status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
 };

@@ -238,21 +238,8 @@ function getExpenseProjectFundId(expense?: Expense | null): number | undefined {
 }
 
 function getExpenseableCurrencyId(expense?: Expense | null): number | undefined {
-  if (expense?.expenseable_id) {
-    return expense.expenseable_id;
-  }
-
-  const projectDetails = getExpenseProjectFundDetails(expense);
-  if (projectDetails?.id) {
-    return projectDetails.id;
-  }
-
-  const userFundDetails = getExpenseUserFundDetails(expense);
-  if (userFundDetails?.id) {
-    return userFundDetails.id;
-  }
-
-  return expense?.expenseable_info?.id;
+  const details = expense?.expenseable_info?.details as { id?: number } | undefined;
+  return expense?.expenseable_id ?? details?.id ?? expense?.expenseable_info?.id;
 }
 
 function normalizeRole(role?: string): string {
@@ -262,12 +249,10 @@ function normalizeRole(role?: string): string {
 }
 
 function getFundUserRole(expense?: Expense | null): string {
-  // مستخدم الصندوق فقط من expenseable_info.user_info
   return normalizeRole(getExpenseUserFundUserInfo(expense)?.role_type);
 }
 
 function getFundUserId(expense?: Expense | null): number | undefined {
-  // معرّف سجل الدور لمستخدم الصندوق من expenseable_info.user_info فقط
   const userInfo = getExpenseUserFundUserInfo(expense);
   if (!userInfo) {
     return undefined;
@@ -380,7 +365,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
       source: fixedValues?.source ?? getInitialSource(defaultValues),
       expenseable_type: defaultValues?.expenseable_type ?? (fixedValues?.source ? sourceToExpenseableType[fixedValues.source] : sourceToExpenseableType.company_fund),
       expenseable_id: getExpenseableCurrencyId(defaultValues),
-      company_fund_id: fixedValues?.company_fund_id ?? defaultValues?.expenseable_info?.company_fund_id ?? undefined,
+      company_fund_id: fixedValues?.company_fund_id ?? (defaultValues?.expenseable_info?.details as { company_fund_id?: number } | undefined)?.company_fund_id ?? defaultValues?.expenseable_info?.company_fund_id ?? undefined,
       note: defaultValues?.note ?? '',
       fund_user_role: fixedValues?.fund_user_role ?? getFundUserRole(defaultValues),
       fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
@@ -388,34 +373,30 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
       project_fund_id: fixedValues?.project_fund_id ?? getExpenseProjectFundId(defaultValues),
       project_id: fixedValues?.project_id ?? getExpenseProjectId(defaultValues),
       description: defaultValues?.description ?? '',
-      amount: Number(defaultValues?.amount ?? 0),
+      amount: defaultValues ? Number(defaultValues.amount ?? 0) : '' as any,
       is_posted: Boolean(defaultValues?.is_posted ?? true),
       created_by: getExpenseCreatedById(defaultValues),
     },
   });
 
   useEffect(() => {
-    if (!defaultValues) {
-      return;
-    }
-
     form.reset({
-      source: getInitialSource(defaultValues),
-      expenseable_type: defaultValues.expenseable_type ?? sourceToExpenseableType.company_fund,
+      source: fixedValues?.source ?? getInitialSource(defaultValues),
+      expenseable_type: defaultValues?.expenseable_type ?? (fixedValues?.source ? sourceToExpenseableType[fixedValues.source] : sourceToExpenseableType.company_fund),
       expenseable_id: getExpenseableCurrencyId(defaultValues),
-      company_fund_id: fixedValues?.company_fund_id ?? defaultValues.expenseable_info?.company_fund_id ?? undefined,
-      note: defaultValues.note ?? '',
+      company_fund_id: fixedValues?.company_fund_id ?? (defaultValues?.expenseable_info?.details as { company_fund_id?: number } | undefined)?.company_fund_id ?? defaultValues?.expenseable_info?.company_fund_id ?? undefined,
+      note: defaultValues?.note ?? '',
       fund_user_role: fixedValues?.fund_user_role ?? getFundUserRole(defaultValues),
       fund_user_id: fixedValues?.user_id ?? getFundUserId(defaultValues),
       user_fund_id: fixedValues?.user_fund_id ?? getUserFundId(defaultValues),
-      project_fund_id: getExpenseProjectFundId(defaultValues),
-      project_id: getExpenseProjectId(defaultValues),
-      description: defaultValues.description ?? '',
-      amount: Number(defaultValues.amount ?? 0),
-      is_posted: Boolean(defaultValues.is_posted ?? true),
+      project_fund_id: fixedValues?.project_fund_id ?? getExpenseProjectFundId(defaultValues),
+      project_id: fixedValues?.project_id ?? getExpenseProjectId(defaultValues),
+      description: defaultValues?.description ?? '',
+      amount: defaultValues ? Number(defaultValues.amount ?? 0) : '' as any,
+      is_posted: Boolean(defaultValues?.is_posted ?? true),
       created_by: getExpenseCreatedById(defaultValues),
     });
-  }, [defaultValues, form]);
+  }, [defaultValues, fixedValues, form]);
 
   const source = form.watch('source');
   const companyFundId = form.watch('company_fund_id');
@@ -481,7 +462,6 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
   });
   const projects: Project[] = projectsQuery.data?.data ?? (Array.isArray(projectsQuery.data) ? projectsQuery.data : []);
 
-  // عند اختيار مشروع: نجلب تفاصيله مع الصناديق والعملات من /projects/:id
   const selectedProjectDetailsQuery = useQuery<Project | null>({
     queryKey: ['expenses', 'project-details', selectedProjectId] as const,
     queryFn: async () => {
@@ -597,7 +577,6 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
     form.setValue('user_fund_id', derivedUserFundId);
   }, [derivedUserFundId, form, source, userFundId]);
 
-  // إذا جاء user_info.user_id بدون معرّف سجل الدور، نطابقه من قائمة الدور
   useEffect(() => {
     if (source !== 'user_fund' || fundUserId || !fundUserRole || !fundRoleUsers.length) {
       return;
@@ -724,7 +703,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
 
 
   const initialSource = useMemo(() => getInitialSource(defaultValues), [defaultValues]);
-  const initialCompanyFundId = useMemo(() => defaultValues?.expenseable_info?.company_fund_id ?? defaultValues?.expenseable_info?.id, [defaultValues]);
+  const initialCompanyFundId = useMemo(() => (defaultValues?.expenseable_info?.details as { company_fund_id?: number } | undefined)?.company_fund_id ?? defaultValues?.expenseable_info?.company_fund_id ?? defaultValues?.expenseable_info?.id, [defaultValues]);
   const initialUserFundId = useMemo(() => getUserFundId(defaultValues), [defaultValues]);
   const initialProjectFundId = useMemo(() => getExpenseProjectFundId(defaultValues), [defaultValues]);
 
@@ -756,14 +735,14 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
         onSubmit={form.handleSubmit(
           async (values) => {
             const payload = toExpenseApiPayload({
-                expenseable_type: sourceToExpenseableType[values.source],
-                expenseable_id: values.expenseable_id ?? 0,
-                description: values.description,
-                amount: values.amount,
-                is_posted: values.is_posted,
-                note: values.note || undefined,
-                created_by: values.created_by ?? 1,
-              });
+              expenseable_type: sourceToExpenseableType[values.source],
+              expenseable_id: values.expenseable_id ?? 0,
+              description: values.description,
+              amount: values.amount,
+              is_posted: values.is_posted,
+              note: values.note || undefined,
+              created_by: values.created_by ?? 1,
+            });
             if (submitModeRef.current === 'invoice' && onSubmitWithInvoice) {
               await onSubmitWithInvoice(payload);
             } else {
@@ -1100,11 +1079,11 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
             name="note"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>الملاحظات</FormLabel>
+                <FormLabel>المستلم بيد</FormLabel>
                 <FormControl>
                   <Input
                     className="h-11 bg-white"
-                    placeholder="ادخل الملاحظات..."
+                    placeholder="ادخل المستلم بيد..."
                     value={field.value ? String(field.value) : ''}
                     onChange={(e) => field.onChange(e.target.value)}
                   />
