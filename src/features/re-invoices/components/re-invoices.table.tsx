@@ -2,7 +2,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { ReInvoice } from '../types';
 
-export function ReInvoicesTable({ data, loading, onDelete, onView, onEdit, sort, onSortChange }: { data: ReInvoice[]; loading?: boolean; onDelete: (row: ReInvoice) => Promise<void>; onView: (row: ReInvoice) => void; onEdit?: (row: ReInvoice) => void; sort?: string; onSortChange?: (sort: string | undefined) => void }) {
+export function ReInvoicesTable({ data, loading, onDelete, onView, onEdit, sort, onSortChange }: { data: ReInvoice[]; loading?: boolean; onDelete?: (row: ReInvoice) => Promise<void>; onView: (row: ReInvoice) => void; onEdit?: (row: ReInvoice) => void; sort?: string; onSortChange?: (sort: string | undefined) => void }) {
   const columns: DataTableColumn<ReInvoice>[] = [
     { header: 'ID', sortable: true, sortKey: 'id', cell: (row) => <span className="finance-num">#{row.id}</span> },
     { header: 'المرتجع', sortable: true, sortKey: 'reinvoice_number', cell: (row) => row.reinvoice_number ?? row.invoice_number ?? `#${row.id}` },

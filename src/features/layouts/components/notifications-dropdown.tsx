@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell } from 'lucide-react';
 import {
@@ -105,16 +106,24 @@ export function NotificationsDropdown() {
       <DropdownMenuContent align="end" className="w-80 p-2 space-y-2">
         <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
           <span className="font-semibold text-sm">الإشعارات</span>
-          {unreadCount > 0 ? (
-            <button
-              type="button"
-              onClick={() => markAllReadMutation.mutate()}
-              className="text-xs text-primary hover:underline font-medium"
-              disabled={markAllReadMutation.isPending}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/notifications"
+              className="text-[11px] bg-primary text-primary-foreground hover:bg-primary/90 px-2.5 py-0.5 rounded font-medium transition-colors shadow-sm"
             >
-              تحديد الكل كمقروء
-            </button>
-          ) : null}
+              كل الإشعارات
+            </Link>
+            {unreadCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => markAllReadMutation.mutate()}
+                className="text-xs text-primary hover:underline font-medium"
+                disabled={markAllReadMutation.isPending}
+              >
+                تحديد الكل كمقروء
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="max-h-80 overflow-y-auto space-y-1">
           {notifications.length === 0 ? (

@@ -7,10 +7,10 @@ import { ProjectsDialog } from '../../components/projects.dialog';
 import type { Project, CreateProjectPayload, ProjectStatus } from '../../types';
 
 const projectStatusMap: Record<ProjectStatus, { label: string; color: string }> = {
-  pending: { label: 'قيد الانتظار', color: 'status-badge-warning' },
+  pending: { label: 'مقترح', color: 'status-badge-warning' },
   in_progress: { label: 'قيد التنفيذ', color: 'status-badge-info' },
-  completed: { label: 'مكتمل', color: 'status-badge-success' },
-  canceled: { label: 'ملغى', color: 'status-badge-danger' },
+  completed: { label: 'منتهي', color: 'status-badge-success' },
+  canceled: { label: 'متوقف', color: 'status-badge-danger' },
 };
 
 export function ProjectClientTab({ project }: { project: Project | null }) {

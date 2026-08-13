@@ -184,10 +184,10 @@ export function StageTimelineForm({
             name="status"
             render={({ field }) => {
               const statusLabels: Record<string, string> = {
-                pending: 'قيد الانتظار',
+                pending: 'مقترح',
                 in_progress: 'قيد التنفيذ',
-                completed: 'مكتمل',
-                canceled: 'ملغى',
+                completed: 'منتهي',
+                canceled: 'متوقف',
               };
               return (
                 <FormItem>
@@ -201,10 +201,10 @@ export function StageTimelineForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="pending">قيد الانتظار</SelectItem>
+                      <SelectItem value="pending">مقترح</SelectItem>
                       <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
-                      <SelectItem value="completed">مكتمل</SelectItem>
-                      <SelectItem value="canceled">ملغى</SelectItem>
+                      <SelectItem value="completed">منتهي</SelectItem>
+                      <SelectItem value="canceled">متوقف</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { apiClient } from '@/shared/api/axios.instance';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -26,6 +27,7 @@ type LoginFormValues = {
 };
 
 export function LoginPage() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,10 +51,17 @@ export function LoginPage() {
       const token = response.data?.token;
       if (token) {
         localStorage.setItem(AUTH_TOKEN_KEY, token);
-        const user = response.data?.user;
+        let user = response.data?.user;
+        try {
+          const meResponse = await apiClient.get('/me');
+          user = meResponse.data?.data ?? meResponse.data ?? user;
+        } catch {
+        }
         if (user) {
           localStorage.setItem('user_info', JSON.stringify(user));
+          queryClient.setQueryData(['me'], user);
         }
+        await queryClient.invalidateQueries({ queryKey: ['me'] });
         toast.success('تم تسجيل الدخول بنجاح');
 
         if (user?.role_type && ['client', 'engineer', 'employee'].includes(user.role_type)) {

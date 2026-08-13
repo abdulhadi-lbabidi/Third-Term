@@ -18,8 +18,9 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { cn } from '@/shared/lib/utils';
 
-const DEFAULT_COLUMN_CLASS_NAME = 'max-w-64';
+const DEFAULT_COLUMN_CLASS_NAME = 'max-w-64 text-center';
 
 const getColumnClassName = (className?: string) =>
   `${DEFAULT_COLUMN_CLASS_NAME} ${className ?? ''}`.trim();
@@ -63,6 +64,7 @@ type DataTableProps<T> = {
   renderExpandedRow?: (row: T) => ReactNode;
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTable<T>({
@@ -78,6 +80,7 @@ export function DataTable<T>({
   renderExpandedRow,
   sort,
   onSortChange,
+  onRowClick,
 }: DataTableProps<T>) {
   const [pendingDelete, setPendingDelete] = useState<T | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -121,7 +124,6 @@ export function DataTable<T>({
           <TableHeader className="sticky top-0 z-10">
             <TableRow className="hover:bg-transparent">
               {renderExpandedRow ? <TableHead className="w-10" /> : null}
-              {actionCount > 0 ? <TableHead className="w-14" /> : null}
               {columns.map((column, colIndex) => {
                 const key = column.sortKey || String(column.accessorKey || '');
                 
@@ -158,7 +160,7 @@ export function DataTable<T>({
                     {column.sortable && key ? (
                       <div
                         onClick={handleHeaderClick}
-                        className="flex items-center gap-1.5 cursor-pointer select-none group/sort"
+                        className="flex items-center justify-center gap-1.5 cursor-pointer select-none group/sort"
                       >
                         <span>{column.header}</span>
                         {isSortedAsc ? (
@@ -175,6 +177,7 @@ export function DataTable<T>({
                   </TableHead>
                 );
               })}
+              {actionCount > 0 ? <TableHead className="w-14" /> : null}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -201,7 +204,16 @@ export function DataTable<T>({
             ) : displayData.length ? (
               displayData.map((row, rowIndex) => (
                 <React.Fragment key={rowIndex}>
-                  <TableRow className="group">
+                  <TableRow
+                    className={cn("group", onRowClick && "cursor-pointer hover:bg-muted/50")}
+                    onClick={onRowClick ? (event) => {
+                      const target = event.target as HTMLElement;
+                      if (target.closest('button, a, [role="button"]')) {
+                        return;
+                      }
+                      onRowClick(row);
+                    } : undefined}
+                  >
                     {renderExpandedRow ? (
                       <TableCell className="w-10 px-2">
                         <button
@@ -218,6 +230,20 @@ export function DataTable<T>({
                         </button>
                       </TableCell>
                     ) : null}
+                    {columns.map((column, colIndex) => (
+                      <TableCell key={column.sortKey || String(column.accessorKey || '') || colIndex} className={getColumnClassName(column.className)}>
+                        <div
+                          className="line-clamp-2 min-w-0 max-w-full whitespace-normal break-words leading-5 text-center"
+                          title={column.accessorKey ? String(row[column.accessorKey] ?? '') : undefined}
+                        >
+                          {column.cell
+                            ? column.cell(row)
+                            : column.accessorKey
+                              ? String(row[column.accessorKey] ?? '')
+                              : null}
+                        </div>
+                      </TableCell>
+                    ))}
                     {actionCount > 0 ? (
                       <TableCell className="w-14">
                         <DropdownMenu>
@@ -230,7 +256,7 @@ export function DataTable<T>({
                               <MoreVertical className="size-4" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
+                          <DropdownMenuContent align="end" className="w-48">
                             {actions?.extraActions?.length
                               ? actions.extraActions.filter((action) => !action.hidden?.(row)).map((action, actionIndex) => (
                                 <DropdownMenuItem
@@ -295,20 +321,6 @@ export function DataTable<T>({
                         </DropdownMenu>
                       </TableCell>
                     ) : null}
-                    {columns.map((column, colIndex) => (
-                      <TableCell key={column.sortKey || String(column.accessorKey || '') || colIndex} className={getColumnClassName(column.className)}>
-                        <div
-                          className="line-clamp-2 min-w-0 max-w-full whitespace-normal break-words leading-5"
-                          title={column.accessorKey ? String(row[column.accessorKey] ?? '') : undefined}
-                        >
-                          {column.cell
-                            ? column.cell(row)
-                            : column.accessorKey
-                              ? String(row[column.accessorKey] ?? '')
-                              : null}
-                        </div>
-                      </TableCell>
-                    ))}
                   </TableRow>
                   {renderExpandedRow && expandedRows.has(rowIndex) ? (
                     <TableRow className="bg-muted/30 hover:bg-muted/30">

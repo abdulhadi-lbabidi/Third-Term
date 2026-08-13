@@ -68,6 +68,23 @@ export function ProjectStagesTimeline({
     }
   };
 
+  const currentIndex = stages.findIndex((s) => s.id === selectedStageId);
+
+  const handleArrowClick = (direction: 'right' | 'left') => {
+    scroll(direction);
+    if (currentIndex === -1) return;
+
+    if (direction === 'left') {
+      if (currentIndex < stages.length - 1) {
+        onSelectStage(stages[currentIndex + 1].id);
+      }
+    } else {
+      if (currentIndex > 0) {
+        onSelectStage(stages[currentIndex - 1].id);
+      }
+    }
+  };
+
   if (!stages.length) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -84,8 +101,9 @@ export function ProjectStagesTimeline({
       {/* Horizontal Timeline */}
       <div className="group relative min-w-0 sm:px-4">
         <button
-          onClick={() => scroll('right')}
-          className="absolute right-0 top-8 z-20 hidden size-8 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-md transition-all hover:bg-muted/50 hover:text-foreground group-hover:opacity-100 sm:flex"
+          onClick={() => handleArrowClick('right')}
+          disabled={currentIndex <= 0}
+          className="absolute right-0 top-8 z-20 hidden size-8 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition-all hover:bg-muted/50 hover:text-foreground disabled:opacity-30 disabled:pointer-events-none sm:flex"
         >
           <ChevronRight className="size-5" />
         </button>
@@ -134,7 +152,7 @@ export function ProjectStagesTimeline({
                       </p>
                       <div className="mt-1.5 flex justify-center">
                         <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[9px] font-semibold tracking-wide', config.bg, config.color)}>
-                          {stage.status === 'pending' ? 'قيد الانتظار' : stage.status === 'in_progress' ? 'قيد التنفيذ' : stage.status === 'completed' ? 'مكتمل' : 'ملغى'}
+                          {stage.status === 'pending' ? 'مقترح' : stage.status === 'in_progress' ? 'قيد التنفيذ' : stage.status === 'completed' ? 'منتهي' : 'متوقف'}
                         </span>
                       </div>
                     </div>
@@ -146,8 +164,9 @@ export function ProjectStagesTimeline({
         </div>
 
         <button
-          onClick={() => scroll('left')}
-          className="absolute left-0 top-8 z-20 hidden size-8 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-md transition-all hover:bg-muted/50 hover:text-foreground group-hover:opacity-100 sm:flex"
+          onClick={() => handleArrowClick('left')}
+          disabled={currentIndex >= stages.length - 1}
+          className="absolute left-0 top-8 z-20 hidden size-8 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition-all hover:bg-muted/50 hover:text-foreground disabled:opacity-30 disabled:pointer-events-none sm:flex"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -240,7 +259,7 @@ export function ProjectStagesTimeline({
                           className={cn("px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5", filterStatus === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                         >
                           <conf.icon className="size-3" />
-                          {key === 'pending' ? 'بالانتظار' : key === 'in_progress' ? 'قيد التنفيذ' : key === 'completed' ? 'مكتمل' : 'ملغى'}
+                          {key === 'pending' ? 'بالانتظار' : key === 'in_progress' ? 'قيد التنفيذ' : key === 'completed' ? 'مكتمل' : 'منتهي'}
                         </button>
                       ))}
                     </div></div>
@@ -314,7 +333,7 @@ export function ProjectStagesTimeline({
                           {/* Status */}
                           <div className="shrink-0 self-end pl-1 sm:self-auto">
                             <span className={cn('px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap', tlConfig.bg, tlConfig.color)}>
-                              {tl.status === 'pending' ? 'بالانتظار' : tl.status === 'in_progress' ? 'قيد التنفيذ' : tl.status === 'completed' ? 'مكتمل' : 'ملغى'}
+                              {tl.status === 'pending' ? 'بالانتظار' : tl.status === 'in_progress' ? 'قيد التنفيذ' : tl.status === 'completed' ? 'مكتمل' : 'منتهي'}
                             </span>
                           </div>
                         </div>

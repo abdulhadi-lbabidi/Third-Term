@@ -135,7 +135,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
 
               <div className="grid grid-cols-1 gap-4 rounded-lg border-t bg-slate-50 p-4 pt-4 sm:grid-cols-2">
                 <div>
-                  <span className="text-sm text-slate-500">الخصم:</span>
+                  <span className="text-sm text-slate-500">الحسم:</span>
                   <p className="mr-1 inline font-medium text-slate-900">{Number(invoice.discount || 0).toLocaleString()} {currencyLabel}</p>
                 </div>
                 <div>
@@ -201,7 +201,7 @@ export function InvoiceDetailsDialog({ isOpen, onClose, invoiceId }: InvoiceDeta
                       })}
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-primary/5 px-3 py-2 text-sm">
-                      <span>مجموع الأصناف قبل الخصم</span>
+                      <span>مجموع الأصناف قبل الحسم</span>
                       <span className="finance-num font-bold">{itemsTotal.toLocaleString()} {currencyLabel}</span>
                     </div>
                   </div>

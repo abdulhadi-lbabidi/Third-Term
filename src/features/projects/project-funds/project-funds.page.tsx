@@ -297,7 +297,6 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
                   key={fund.id}
                   fundId={fund.id}
                   name={fund.name}
-                  subtitle={fund.project?.name ?? 'بدون مشروع'}
                   currencies={(fund.currencies ?? []).map(c => ({
                     id: c.id,
                     currency: c.currency,
@@ -305,14 +304,13 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
                     balance: c.balance
                   }))}
                   created_at={fund.created_at}
-                  is_locked={fund.is_locked}
                   status={fund.status}
                   description={fund.description}
                   threshold={fund.threshold}
                   onClick={(id) => {
                     setSearchParams((prev) => {
                       prev.set('fundId', id.toString());
-                      if (!prev.has('fundTab')) prev.set('fundTab', 'revenues');
+                      if (!prev.has('fundTab')) prev.set('fundTab', 'transactions');
                       return prev;
                     });
                   }}
@@ -382,6 +380,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
           <GenericFundDetails
             fundId={currentFund.id}
             fundName={currentFund.name}
+            fundStatus={currentFund.status}
             fundCurrencies={(currentFund.currencies ?? []).map(c => ({
               id: c.id,
               expenseable_id: c.expenseable_id,
@@ -424,19 +423,19 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         fundType="project"
-        defaultValues={{
-          id: selectedProjectFund?.id,
-          name: selectedProjectFund?.name ?? '',
-          project_id: selectedProjectFund?.project?.id ?? projectId,
+        defaultValues={selectedProjectFund ? {
+          id: selectedProjectFund.id,
+          name: selectedProjectFund.name ?? '',
+          project_id: selectedProjectFund.project?.id ?? projectId,
+          status: selectedProjectFund.status,
+          description: selectedProjectFund.description,
+          threshold: selectedProjectFund.threshold,
+        } : {
+          name: '',
+          project_id: projectId || 0,
         }}
         onSubmit={async (values) => {
           await saveMutation.mutateAsync(values);
-          if (values.is_locked) {
-            setSearchParams((prev) => {
-              prev.delete('fundId');
-              return prev;
-            });
-          }
         }}
         loading={saveMutation.isPending}
         hideProjectSelection={!!projectId}

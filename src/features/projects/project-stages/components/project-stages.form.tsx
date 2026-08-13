@@ -45,10 +45,10 @@ type ProjectStagesFormProps = {
 };
 
 const statusOptions = [
-  { value: 'pending', label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
+  { value: 'pending', label: 'مقترح', icon: Clock, color: 'text-muted-foreground' },
   { value: 'in_progress', label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-info' },
-  { value: 'completed', label: 'مكتمل', icon: CheckCircle2, color: 'text-success' },
-  { value: 'canceled', label: 'ملغى', icon: XCircle, color: 'text-destructive' },
+  { value: 'completed', label: 'منتهي', icon: CheckCircle2, color: 'text-success' },
+  { value: 'canceled', label: 'متوقف', icon: XCircle, color: 'text-destructive' },
 ] as const;
 
 export function ProjectStagesForm({ projectId, stage, onSubmit, loading }: ProjectStagesFormProps) {

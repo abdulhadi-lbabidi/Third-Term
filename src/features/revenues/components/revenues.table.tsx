@@ -1,6 +1,5 @@
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import {
-  getBooleanLabel,
   getCurrencyStringFromInfo,
   UserLink,
   FundLink,
@@ -50,16 +49,6 @@ export function RevenuesTable({
       }
     },
     { header: 'نوع الإيراد', cell: (row) => <FundLink type={row.revenueable_type} info={row.revenueable_info} fundTab="revenues" fallbackUser={(row as RevenueRow).user} /> },
-    {
-      header: 'تم الترحيل',
-      sortable: true,
-      sortKey: 'is_posted',
-      cell: (row) => (
-        <span className={row.is_posted ? 'font-medium bg-emerald-100 border border-emerald-200 rounded p-2 text-emerald-800' : 'font-medium text-rose-600'}>
-          {getBooleanLabel(row.is_posted)}
-        </span>
-      ),
-    },
     { header: 'المستلم بيد', cell: (row) => row.note ?? '-' },
     { header: 'مستلم بواسطة', sortable: true, sortKey: 'receiver_name', cell: (row) => <UserLink user={(row as RevenueRow).received_by} /> },
     { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ?? '-' },

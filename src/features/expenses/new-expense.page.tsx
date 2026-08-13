@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '../components/page-header';
 import { ExpensesForm } from './components/expenses.form';
 import { expensesApi } from './expenses.api';
@@ -154,21 +153,6 @@ export function NewExpensePage() {
         badge="المصروفات"
         title={isEditMode ? 'تعديل مصروف' : 'إضافة مصروف'}
         icon={ReceiptText}
-        action={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              if (isClientPath) {
-                navigate(projectId ? `/public/projects/${projectId}?tab=expenses` : '/public/projects');
-              } else {
-                navigate('/expenses');
-              }
-            }}
-          >
-            رجوع
-          </Button>
-        }
       />
 
       <div className="surface-panel p-5 sm:p-6">

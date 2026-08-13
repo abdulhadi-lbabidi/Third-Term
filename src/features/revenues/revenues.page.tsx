@@ -23,7 +23,6 @@ export function RevenuesPage() {
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isPosted, setIsPosted] = useState<string>('');
 
   const [userRole, setUserRole] = useState<UserRole | ''>('');
   const [userId, setUserId] = useState<number | ''>('');
@@ -56,7 +55,6 @@ export function RevenuesPage() {
   const handleApplyFilters = () => {
     setAppliedFilters({
       'filter[search]': searchQuery || undefined,
-      'filter[is_posted]': isPosted === 'true' ? true : isPosted === 'false' ? false : undefined,
       'filter[user_id]': userId || undefined,
       'filter[received_by]': creatorId || undefined,
       'filter[date_from]': dateFrom || undefined,
@@ -67,7 +65,6 @@ export function RevenuesPage() {
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setIsPosted('');
     setUserRole('');
     setUserId('');
     setCreatorRole('');
@@ -161,8 +158,6 @@ export function RevenuesPage() {
         <RevenuesFilterForm
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          isPosted={isPosted}
-          setIsPosted={setIsPosted}
           userRole={userRole}
           setUserRole={setUserRole}
           userId={userId}

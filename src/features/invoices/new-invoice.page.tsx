@@ -1,6 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/shared/components/ui/button';
 import { PageHeader } from '@/features/components/page-header';
 import { FileText } from 'lucide-react';
 import { InvoicesForm } from './components/invoices.form';
@@ -25,21 +24,6 @@ export function NewInvoicePage() {
         badge="الفواتير"
         title={isEditMode ? 'تحديث الفاتورة' : 'إضافة فاتورة جديدة'}
         icon={FileText}
-        action={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              if (isPublicPath) {
-                navigate(projectId ? `/public/projects/${projectId}?tab=invoices` : '/public/projects');
-              } else {
-                navigate('/invoices');
-              }
-            }}
-          >
-            رجوع
-          </Button>
-        }
       />
 
       <div className="surface-panel p-5 sm:p-6">

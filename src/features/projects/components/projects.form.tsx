@@ -33,10 +33,10 @@ const formSchema = z.object({
 });
 
 const statusOptions: { value: ProjectStatus; label: string; icon: React.ElementType; color: string }[] = [
-  { value: 'pending', label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
+  { value: 'pending', label: 'مقترح', icon: Clock, color: 'text-muted-foreground' },
   { value: 'in_progress', label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-blue-500' },
-  { value: 'completed', label: 'مكتمل', icon: CheckCircle2, color: 'text-emerald-500' },
-  { value: 'canceled', label: 'ملغى', icon: XCircle, color: 'text-red-500' },
+  { value: 'completed', label: 'منتهي', icon: CheckCircle2, color: 'text-emerald-500' },
+  { value: 'canceled', label: 'متوقف', icon: XCircle, color: 'text-red-500' },
 ];
 
 export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: ProjectsFormProps) {
@@ -89,29 +89,50 @@ export function ProjectsForm({ defaultValues, departments, onSubmit, loading }: 
         <FormField
           control={form.control}
           name="department_ids"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الأقسام</FormLabel>
-              <FormControl>
-                <SearchableSelect
-                  multiple
-                  value={field.value ?? []}
-                  onValueChange={(value) => {
-                    const departmentIds = value.map(Number);
-                    field.onChange(departmentIds);
-                    form.setValue('department_id', departmentIds[0] ?? 0, { shouldValidate: true });
-                  }}
-                  options={departments.map((department) => ({
-                    value: department.id,
-                    label: department.name,
-                  }))}
-                  searchPlaceholder="ابحث عن قسم..."
-                  emptyMessage="لا توجد أقسام"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            const isEdit = !!defaultValues?.id;
+            return (
+              <FormItem>
+                <FormLabel>{isEdit ? 'الأقسام' : 'القسم'}</FormLabel>
+                <FormControl>
+                  {isEdit ? (
+                    <SearchableSelect
+                      multiple
+                      value={field.value ?? []}
+                      onValueChange={(value) => {
+                        const departmentIds = value.map(Number);
+                        field.onChange(departmentIds);
+                        form.setValue('department_id', departmentIds[0] ?? 0, { shouldValidate: true });
+                      }}
+                      options={departments.map((department) => ({
+                        value: department.id,
+                        label: department.name,
+                      }))}
+                      searchPlaceholder="ابحث عن قسم..."
+                      emptyMessage="لا توجد أقسام"
+                    />
+                  ) : (
+                    <SearchableSelect
+                      value={field.value?.[0] || null}
+                      onValueChange={(value) => {
+                        const departmentId = Number(value);
+                        field.onChange(departmentId ? [departmentId] : []);
+                        form.setValue('department_id', departmentId || 0, { shouldValidate: true });
+                      }}
+                      options={departments.map((department) => ({
+                        value: department.id,
+                        label: department.name,
+                      }))}
+                      placeholder="اختر القسم"
+                      searchPlaceholder="ابحث عن قسم..."
+                      emptyMessage="لا توجد أقسام"
+                    />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Client */}

@@ -10,7 +10,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { PageHeader } from '@/features/components/page-header';
 import { FundsPage } from '@/features/funds/funds.page';
 import { EmployeePaymentsPage } from '@/features/employee-payments/employee-payments.page';
@@ -256,14 +256,7 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
               </CardTitle>
               <p className="text-sm text-muted-foreground">إنشاء مستخدم جديد مع الحقول المرتبطة بنوعه</p>
             </div>
-            {!embedded && <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
-            >
-              رجوع
-            </Button>}
+
           </div>
         </CardHeader>
         <CardContent className="px-4 pb-4 pt-1 sm:px-6">
@@ -273,26 +266,33 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
               <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>كلمة المرور</FormLabel><FormControl><Input {...field} type="password" className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 sm:col-span-2"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-
               <FormField control={form.control} name="role" render={({ field }) => (
-                <FormItem className="rounded-lg border border-border bg-muted/40 p-3.5 sm:col-span-2 lg:col-span-3">
-                  <FormLabel className="mb-3 block">نوع المستخدم</FormLabel>
-                  <FormControl>
-                    <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                <FormItem className="space-y-1.5">
+                  <FormLabel>نوع المستخدم</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="اختر نوع المستخدم">
+                          {field.value ? userRoleLabels[field.value] : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
                       {userRoles.map((item) => (
-                        <RadioGroupItem key={item} value={item}>
+                        <SelectItem key={item} value={item}>
                           {userRoleLabels[item]}
-                        </RadioGroupItem>
+                        </SelectItem>
                       ))}
-                    </RadioGroup>
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />
-              {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-              {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-              {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
+
+              {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} /> : null}
+              {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} /> : null}
+              {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} /> : null}
               <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end lg:col-span-3">
                 <Button type="submit" className="w-full sm:w-auto" disabled={saveMutation.isPending}>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ المستخدم'}</Button>
               </div>
@@ -333,16 +333,7 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
         title={userName}
         tabs={USER_TABS}
         defaultTab="details"
-        action={
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => navigate(`/users${returnRole ? `?tab=${returnRole}` : ''}`)}
-          >
-            رجوع
-          </Button>
-        }
+
       />
 
       <div className="surface-panel min-w-0 overflow-hidden p-3 sm:p-5">
@@ -433,9 +424,9 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
                   <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>رقم الهاتف</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="space-y-1.5 sm:col-span-2 lg:col-span-3"><FormLabel>العنوان</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} />
-                  {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-                  {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
-                  {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  {roleFields.investor ? <FormField control={form.control} name="investment_ratio" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>نسبة الاستثمار</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  {roleFields.employee || roleFields.engineer ? <FormField control={form.control} name="job_title" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>المسمى الوظيفي</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} /> : null}
+                  {roleFields.engineer ? <FormField control={form.control} name="base_salary" render={({ field }) => (<FormItem className="space-y-1.5"><FormLabel>الراتب الأساسي</FormLabel><FormControl><Input {...field} className="h-10" /></FormControl><FormMessage /></FormItem>)} /> : null}
                   <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end lg:col-span-3">
                     <Button
                       type="button"

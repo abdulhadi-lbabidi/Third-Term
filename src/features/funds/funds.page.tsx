@@ -255,7 +255,6 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
                   key={fund.id}
                   fundId={fund.id}
                   name={fund.name}
-                  subtitle={hasUserContext ? undefined : (fund.user?.name ?? 'بدون مستخدم')}
                   currencies={(fund.currencies ?? []).map(c => ({
                     id: c.id,
                     currency: c.currency,
@@ -263,14 +262,13 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
                     balance: c.balance
                   }))}
                   created_at={fund.created_at}
-                  is_locked={fund.is_locked}
                   status={fund.status}
                   description={fund.description}
                   threshold={fund.threshold}
                   onClick={(id) => {
                     setSearchParams((prev) => {
                       prev.set('fundId', id.toString());
-                      if (!prev.has('fundTab')) prev.set('fundTab', 'revenues');
+                      if (!prev.has('fundTab')) prev.set('fundTab', 'transactions');
                       return prev;
                     });
                   }}
@@ -307,6 +305,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
           <GenericFundDetails
             fundId={currentFund.id}
             fundName={currentFund.name}
+            fundStatus={currentFund.status}
             fundCurrencies={(currentFund.currencies ?? []).map(c => ({
               id: c.id,
               expenseable_id: c.expenseable_id,
@@ -351,19 +350,19 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         fundType="user"
-        defaultValues={{
-          id: selectedFund?.id,
-          name: selectedFund?.name ?? '',
-          user_id: selectedFund?.user?.id ?? resolvedUserId,
+        defaultValues={selectedFund ? {
+          id: selectedFund.id,
+          name: selectedFund.name ?? '',
+          user_id: selectedFund.user?.id ?? resolvedUserId,
+          status: selectedFund.status,
+          description: selectedFund.description,
+          threshold: selectedFund.threshold,
+        } : {
+          name: '',
+          user_id: resolvedUserId,
         }}
         onSubmit={async (values) => {
           await saveFundMutation.mutateAsync(values);
-          if (values.is_locked) {
-            setSearchParams((prev) => {
-              prev.delete('fundId');
-              return prev;
-            });
-          }
         }}
         loading={saveFundMutation.isPending}
         hideUserSelection={hasUserContext}

@@ -115,8 +115,35 @@ export function TransfersTable({
   sort,
   onSortChange,
 }: TransfersTableProps) {
+  const isSent = (row: Transfer) => {
+    if (!currentFund) return false;
+    const details = row.morph_from_info?.details;
+    if (!details) return false;
+    if (currentFund.type === 'company_fund') {
+      return details.company_fund_id === currentFund.id;
+    }
+    if (currentFund.type === 'project_fund') {
+      return details.project_fund_id === currentFund.id;
+    }
+    return details.fund_id === currentFund.id;
+  };
+
   const columns: DataTableColumn<Transfer>[] = [
     { header: 'البيان', sortable: true, sortKey: 'name', cell: (row) => row.name },
+    ...(currentFund ? [{
+      header: 'نوع التحويل',
+      cell: (row: Transfer) => {
+        const sent = isSent(row);
+        return (
+          <span className={sent
+            ? 'inline-flex text-nowrap items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60'
+            : 'inline-flex  text-nowrap items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+          }>
+            {sent ? 'تحويل مرسل' : 'تحويل وارد'}
+          </span>
+        );
+      }
+    }] : []),
     {
       header: 'المبلغ',
       sortable: true,
@@ -127,7 +154,7 @@ export function TransfersTable({
         </span>
       ),
     },
-    ...(!currentFund ? [{ header: 'من صندوق', cell: (row: Transfer) => renderFundLink(row.morph_from_info) }] : []),
+    { header: 'من صندوق', cell: (row: Transfer) => renderFundLink(row.morph_from_info, currentFund) },
     { header: 'إلى صندوق', cell: (row) => renderFundLink(row.morph_to_info, currentFund) },
     { header: 'أنشئ بواسطة', sortable: true, sortKey: 'creator_name', cell: (row) => getTextLabel(row.created_by) },
     { header: 'تاريخ التحويل', sortable: true, sortKey: 'created_at', cell: (row) => row.created_at ?? '-' },

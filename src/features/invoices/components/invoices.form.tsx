@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/
 import { Calendar } from '@/shared/components/ui/calendar';
 import { cn } from '@/shared/lib/utils';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { Input } from '@/shared/components/ui/input';
 
 import { useCreateInvoice, useUpdateInvoice } from '../invoices.hooks';
 import type { Invoice, CreateInvoicePayload } from '../types';
@@ -36,13 +37,14 @@ const invoiceSchema = z.object({
   expense_id: z.number().min(1, 'المصروف مطلوب'),
   supplier_id: z.number().optional(),
   date: z.date(),
-  discount: z.number().min(0, 'الخصم يجب أن يكون 0 أو أكثر'),
+  amount: z.number().min(0, 'مبلغ الفاتورة يجب أن يكون 0 أو أكثر'),
+  discount: z.number().min(0, 'الحسم يجب أن يكون 0 أو أكثر'),
   final_total: z.number().min(0, 'الإجمالي لا يمكن أن يكون سالباً'),
   is_posted: z.boolean(),
   is_visible_to_client: z.boolean(),
-}).refine((values) => values.discount <= values.final_total, {
+}).refine((values) => values.discount <= values.amount, {
   path: ['discount'],
-  message: 'الخصم يجب أن يساوي الإجمالي أو يكون أقل منه',
+  message: 'الحسم يجب أن يساوي مبلغ الفاتورة أو يكون أقل منه',
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
@@ -75,6 +77,7 @@ export function InvoicesForm({
       supplier_id: Number(fixedValues?.supplier_id ?? defaultValues?.supplier_id ?? 0),
       date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
       discount: Number(defaultValues?.discount ?? 0),
+      amount: Number(defaultValues?.final_total ?? 0) + Number(defaultValues?.discount ?? 0),
       final_total: Number(defaultValues?.final_total ?? 0),
       is_posted: Boolean(defaultValues?.is_posted ?? false),
       is_visible_to_client: Boolean(defaultValues?.is_visible_to_client ?? true),
@@ -136,15 +139,15 @@ export function InvoicesForm({
   const moneyStep = currencyCode === 'SYP' ? 100 : currencyCode === 'TRY' ? 20 : 1;
 
   useEffect(() => {
-    if (!defaultValues) return;
+    if (!defaultValues && !fixedValues) return;
 
-    const itemName = typeof defaultValues.item === 'string'
+    const itemName = typeof defaultValues?.item === 'string'
       ? defaultValues.item
-      : defaultValues.item?.name;
-    const supplierRelation = typeof defaultValues.supplier === 'object'
-      ? defaultValues.supplier as any
+      : defaultValues?.item?.name;
+    const supplierRelation = typeof defaultValues?.supplier === 'object'
+      ? defaultValues?.supplier as any
       : undefined;
-    const supplierName = typeof defaultValues.supplier === 'string'
+    const supplierName = typeof defaultValues?.supplier === 'string'
       ? defaultValues.supplier
       : supplierRelation?.user?.name ?? supplierRelation?.name;
     const supplierRelationId = Number(supplierRelation?.id ?? 0) || undefined;
@@ -153,7 +156,7 @@ export function InvoicesForm({
     const matchedItem = itemName
       ? items.find((item: any) => item.name?.trim() === itemName.trim())
       : undefined;
-    const requestedSupplierId = Number(fixedValues?.supplier_id ?? defaultValues.supplier_id ?? 0) || undefined;
+    const requestedSupplierId = Number(fixedValues?.supplier_id ?? defaultValues?.supplier_id ?? 0) || undefined;
     const matchedSupplier = suppliers.find((supplier: any) =>
       (requestedSupplierId && Number(supplier.id) === requestedSupplierId)
       || (requestedSupplierId && Number(supplier.user?.id) === requestedSupplierId)
@@ -164,24 +167,33 @@ export function InvoicesForm({
     const matchedSupplierId = matchedSupplier?.id;
 
     form.reset({
-      item_id: Number(fixedValues?.item_id ?? defaultValues.item_id ?? matchedItem?.id ?? 0),
+      item_id: Number(fixedValues?.item_id ?? defaultValues?.item_id ?? matchedItem?.id ?? 0),
       expense_id: Number(
-        fixedValues?.expense_id ?? defaultValues.expense_id ?? defaultValues.expense?.id ?? 0
+        fixedValues?.expense_id ?? defaultValues?.expense_id ?? defaultValues?.expense?.id ?? 0
       ),
       supplier_id: Number(
         matchedSupplierId
         ?? fixedValues?.supplier_id
-        ?? defaultValues.supplier_id
+        ?? defaultValues?.supplier_id
         ?? supplierRelationId
         ?? 0
       ),
-      date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
-      discount: Number(defaultValues.discount ?? 0),
-      final_total: Number(defaultValues.final_total ?? 0),
-      is_posted: Boolean(defaultValues.is_posted ?? false),
-      is_visible_to_client: Boolean(defaultValues.is_visible_to_client ?? true),
+      date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
+      discount: Number(defaultValues?.discount ?? 0),
+      amount: Number(defaultValues?.final_total ?? 0) + Number(defaultValues?.discount ?? 0),
+      final_total: Number(defaultValues?.final_total ?? 0),
+      is_posted: Boolean(defaultValues?.is_posted ?? false),
+      is_visible_to_client: Boolean(defaultValues?.is_visible_to_client ?? true),
     });
   }, [defaultValues, fixedValues, form, items, suppliers]);
+
+  const watchedAmount = form.watch('amount');
+  const watchedDiscount = form.watch('discount');
+
+  useEffect(() => {
+    const finalTotal = Math.max(0, (watchedAmount || 0) - (watchedDiscount || 0));
+    form.setValue('final_total', finalTotal, { shouldValidate: true });
+  }, [watchedAmount, watchedDiscount, form]);
 
   const itemOptions = useMemo(() => {
     return items?.map((item: any) => ({
@@ -224,9 +236,22 @@ export function InvoicesForm({
     }
   };
 
+  const onError = (errors: any) => {
+    console.error('Invoice form validation errors:', errors);
+    const messages = Object.entries(errors).map(([key, err]: any) => {
+      let label = key;
+      if (key === 'item_id') label = 'البند';
+      if (key === 'expense_id') label = 'المصروف';
+      if (key === 'final_total') label = 'الإجمالي النهائي';
+      if (key === 'discount') label = 'الحسم';
+      return `${label}: ${err.message}`;
+    });
+    toast.error(`تعذر الحفظ: ${messages.join(', ')}`);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+      <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-3">
         <div className="grid gap-4 md:grid-cols-2 items-start">
           {!fixedValues?.item_id && (
             <FormField
@@ -239,7 +264,7 @@ export function InvoicesForm({
                     <SearchableSelect
                       options={itemOptions}
                       value={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => field.onChange(val ? Number(val) : 0)}
                       placeholder="اختر البند..."
                       bottomAction={
                         <Button
@@ -271,7 +296,7 @@ export function InvoicesForm({
                   <SearchableSelect
                     options={expenseOptions}
                     value={field.value}
-                    onValueChange={field.onChange}
+                    onValueChange={(val) => field.onChange(val ? Number(val) : 0)}
                     placeholder="اختر المصروف..."
                     bottomAction={
                       <Button
@@ -303,7 +328,7 @@ export function InvoicesForm({
                     <SearchableSelect
                       options={supplierOptions}
                       value={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => field.onChange(val ? Number(val) : 0)}
                       placeholder="اختر المورد..."
                     />
                   </FormControl>
@@ -315,10 +340,24 @@ export function InvoicesForm({
 
           <FormField
             control={form.control as any}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>مبلغ الفاتورة</FormLabel>
+                <FormControl>
+                  <NumberStepper value={field.value} onChange={field.onChange} step={moneyStep} min={0} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control as any}
             name="discount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>الخصم</FormLabel>
+                <FormLabel>الحسم</FormLabel>
                 <FormControl>
                   <NumberStepper value={field.value} onChange={field.onChange} step={moneyStep} min={0} />
                 </FormControl>
@@ -334,7 +373,12 @@ export function InvoicesForm({
               <FormItem>
                 <FormLabel>الإجمالي النهائي</FormLabel>
                 <FormControl>
-                  <NumberStepper value={field.value} onChange={field.onChange} step={moneyStep} min={0} />
+                  <Input
+                    type="text"
+                    disabled
+                    value={Number(field.value || 0).toLocaleString()}
+                    className="bg-slate-50 font-medium"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -37,6 +37,7 @@ export function UsersTable<T>({
       deleteLabel="حذف"
       sort={sort}
       onSortChange={onSortChange}
+      onRowClick={onView}
       actions={{
         onDelete,
         onView,

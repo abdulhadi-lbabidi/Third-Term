@@ -25,10 +25,10 @@ const PROJECT_TABS = [
 ];
 
 const PROJECT_STATUS = {
-  pending: { label: 'قيد الانتظار', icon: Clock, color: 'text-muted-foreground' },
+  pending: { label: 'مقترح', icon: Clock, color: 'text-muted-foreground' },
   in_progress: { label: 'قيد التنفيذ', icon: PlayCircle, color: 'text-info' },
-  completed: { label: 'مكتمل', icon: CheckCircle2, color: 'text-success' },
-  canceled: { label: 'ملغى', icon: XCircle, color: 'text-destructive' },
+  completed: { label: 'منتهي', icon: CheckCircle2, color: 'text-success' },
+  canceled: { label: 'متوقف', icon: XCircle, color: 'text-destructive' },
 } as const;
 
 export function ProjectDetailsPage() {

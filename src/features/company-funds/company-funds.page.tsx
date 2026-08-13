@@ -241,7 +241,6 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                     key={fund.id}
                     fundId={fund.id}
                     name={fund.name}
-                    subtitle="صندوق شركة"
                     currencies={(fund.currencies ?? []).map(c => ({
                       id: c.id,
                       currency: c.currency,
@@ -249,14 +248,13 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                       balance: c.balance
                     }))}
                     created_at={fund.created_at}
-                    is_locked={fund.is_locked}
                     status={fund.status}
                     description={fund.description}
                     threshold={fund.threshold}
                     onClick={(id) => {
                       setSearchParams((prev) => {
                         prev.set('fundId', id.toString());
-                        if (!prev.has('fundTab')) prev.set('fundTab', 'revenues');
+                        if (!prev.has('fundTab')) prev.set('fundTab', 'transactions');
                         return prev;
                       });
                     }}
@@ -294,6 +292,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
           <GenericFundDetails
             fundId={currentFund.id}
             fundName={currentFund.name}
+            fundStatus={currentFund.status}
             fundCurrencies={(currentFund.currencies ?? []).map(c => ({
               id: c.id,
               expenseable_id: c.expenseable_id,

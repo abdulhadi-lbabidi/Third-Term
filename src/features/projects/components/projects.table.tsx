@@ -22,10 +22,10 @@ type ProjectsTableProps = {
 export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView, sort, onSortChange }: ProjectsTableProps) {
   const [activeDepartments, setActiveDepartments] = useState<any[] | null>(null);
   const statusLabels: Record<Project['status'], string> = {
-    pending: 'قيد الانتظار',
+    pending: 'مقترح',
     in_progress: 'قيد التنفيذ',
-    completed: 'مكتمل',
-    canceled: 'ملغي',
+    completed: 'منتهي',
+    canceled: 'متوقف',
   };
 
   const statusStyles: Record<

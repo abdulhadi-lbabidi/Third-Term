@@ -28,12 +28,12 @@ const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'empl
 const USER_TABS = [
   { value: 'admin', label: 'المدراء', icon: <Shield className="h-4 w-4" /> },
   { value: 'client', label: 'العملاء', icon: <User className="h-4 w-4" /> },
-  { value: 'investor', label: 'المستثمرون', icon: <TrendingUp className="h-4 w-4" /> },
-  { value: 'craftsman', label: 'الحرفيون', icon: <Hammer className="h-4 w-4" /> },
-  { value: 'employee', label: 'الموظفون', icon: <BadgeCheck className="h-4 w-4" /> },
-  { value: 'engineer', label: 'المهندسون', icon: <HardHat className="h-4 w-4" /> },
-  { value: 'supplier', label: 'الموردون', icon: <Truck className="h-4 w-4" /> },
-  { value: 'trustee', label: 'الأمنات', icon: <Lock className="h-4 w-4" /> },
+  { value: 'investor', label: 'المستثمرين', icon: <TrendingUp className="h-4 w-4" /> },
+  { value: 'craftsman', label: 'الحرفيين', icon: <Hammer className="h-4 w-4" /> },
+  { value: 'employee', label: 'الموظفين', icon: <BadgeCheck className="h-4 w-4" /> },
+  { value: 'engineer', label: 'المهندسين', icon: <HardHat className="h-4 w-4" /> },
+  { value: 'supplier', label: 'الموردين', icon: <Truck className="h-4 w-4" /> },
+  { value: 'trustee', label: 'الأمانات', icon: <Lock className="h-4 w-4" /> },
 ];
 
 type UsersTabRecord =
@@ -164,7 +164,7 @@ export function UsersPage() {
           <button
             type="button"
             onClick={() => handleFunds(row)}
-            className="block max-w-52 truncate text-start font-medium text-primary hover:underline"
+            className="mx-auto block max-w-52 truncate text-center font-medium text-primary hover:underline"
           >
             {row.user.name}
           </button>
@@ -172,7 +172,7 @@ export function UsersPage() {
       },
       { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-center">{row.user.email}</span> },
       { header: 'الهاتف', className: 'min-w-36', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
-      { header: 'العنوان', className: 'min-w-52 max-w-64', cell: (row: UsersTabRecord) => <span className="block max-w-64 truncate">{row.user.address || '-'}</span> },
+      { header: 'العنوان', className: 'min-w-52 max-w-64', cell: (row: UsersTabRecord) => <span className="mx-auto block max-w-64 truncate text-center">{row.user.address || '-'}</span> },
       activeRole === 'investor'
         ? { header: 'نسبة الاستثمار', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-') }
         : null,
@@ -197,11 +197,23 @@ export function UsersPage() {
   const totalPages = meta?.last_page ?? 1;
   const currentPage = meta?.current_page ?? page;
 
+  const currentTab = USER_TABS.find((tab) => tab.value === activeRole);
+  const activeTitle = currentTab?.label || 'المستخدمون';
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4">
       <PageHeader
         badge="المستخدمون"
-        title="المستخدمون"
+        title={
+          <div className="flex items-center gap-2">
+            <span>{activeTitle}</span>
+            {meta?.total !== undefined && (
+              <span className="inline-flex items-center justify-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                {meta.total}
+              </span>
+            )}
+          </div>
+        }
         icon={Users}
         action={
           <form
@@ -226,7 +238,7 @@ export function UsersPage() {
                   })()}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent alignItemWithTrigger={false}>
                 {USER_TABS.map((tab) => (
                   <SelectItem key={tab.value} value={tab.value}>
                     <div className="flex items-center gap-2">

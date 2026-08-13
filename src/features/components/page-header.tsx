@@ -123,7 +123,7 @@ export function PageHeader({
         </div>
         <div className="flex min-w-0 w-full flex-col gap-3 lg:ms-auto lg:w-auto lg:shrink-0 lg:flex-row lg:items-center lg:justify-end">
           {stats?.length ? (
-            <div className="flex max-w-full items-center overflow-x-auto divide-x divide-border pb-1 lg:pb-0">
+            <div className="flex max-w-full items-center overflow-hidden divide-x divide-border pb-1 lg:pb-0">
               {stats.map((stat) => (
                 <div key={stat.label} className="flex shrink-0 items-center gap-2 px-3 first:ps-0 last:pe-0">
                   {stat.icon ? <span className="text-muted-foreground">{stat.icon}</span> : null}

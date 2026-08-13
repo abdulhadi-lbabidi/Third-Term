@@ -22,7 +22,7 @@ export type ProjectsFilterFormProps = {
 const statuses: { value: Project['status']; label: string }[] = [
   {
     value: 'pending',
-    label: 'قيد الانتظار',
+    label: 'مقترح',
   },
   {
     value: 'in_progress',
@@ -30,11 +30,11 @@ const statuses: { value: Project['status']; label: string }[] = [
   },
   {
     value: 'completed',
-    label: 'مكتمل',
+    label: 'منتهي',
   },
   {
     value: 'canceled',
-    label: 'ملغي',
+    label: 'متوقف',
   },
 ];
 

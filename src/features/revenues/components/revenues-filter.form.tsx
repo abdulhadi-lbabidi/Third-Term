@@ -33,8 +33,6 @@ const roleLabels: Record<UserRole, string> = {
 export type RevenuesFilterFormProps = {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
-  isPosted: string;
-  setIsPosted: (val: string) => void;
   userRole: UserRole | '';
   setUserRole: (val: UserRole | '') => void;
   userId: number | '';
@@ -50,8 +48,6 @@ export type RevenuesFilterFormProps = {
 export function RevenuesFilterForm({
   searchQuery,
   setSearchQuery,
-  isPosted,
-  setIsPosted,
   userRole: _userRole,
   setUserRole: _setUserRole,
   userId: _userId,
@@ -85,22 +81,7 @@ export function RevenuesFilterForm({
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="filter-is-posted">حالة الترحيل</Label>
-        <Select
-          value={isPosted}
-          onValueChange={(val) => setIsPosted(val ?? '')}
-        >
-          <SelectTrigger id="filter-is-posted">
-            {isPosted === 'true' ? 'مرحل' : isPosted === 'false' ? 'غير مرحل' : 'الكل'}
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">الكل</SelectItem>
-            <SelectItem value="true">مرحل</SelectItem>
-            <SelectItem value="false">غير مرحل</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+
 
 
 

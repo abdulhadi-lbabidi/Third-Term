@@ -1,4 +1,4 @@
-import { Wallet, Lock, Banknote, Edit2, Trash2 } from 'lucide-react';
+import { Wallet, Banknote, Edit2, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Button } from '@/shared/components/ui/button';
@@ -15,10 +15,8 @@ export type GenericFundCurrency = {
 type GenericFundCardProps = {
   fundId: number;
   name: string;
-  subtitle?: string;
   currencies: GenericFundCurrency[];
   created_at?: string;
-  is_locked?: boolean | number;
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
@@ -57,16 +55,14 @@ export function GenericFundCardSkeleton() {
 const statusLabels = {
   pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
   complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
-  canceled: { label: 'ملغى', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
+  canceled: { label: 'منتهي', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
 };
 
 export function GenericFundCard({
   fundId,
   name,
-  subtitle,
   currencies,
   created_at,
-  is_locked,
   status,
   description,
   threshold,
@@ -75,29 +71,14 @@ export function GenericFundCard({
   onEdit,
   onDelete,
 }: GenericFundCardProps) {
-  const isLocked = is_locked === true || is_locked === 1 || status === 'complete' || status === 'canceled';
-
   return (
     <Card
       role="button"
       tabIndex={0}
-      onClick={() => {
-        if (isLocked) return;
-        onClick(fundId);
-      }}
-      className={cn(
-        "group relative flex min-w-0 w-full flex-col overflow-hidden transition-all focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-        isLocked
-          ? "opacity-65 cursor-not-allowed border-slate-200 bg-slate-50/50"
-          : "cursor-pointer hover:border-primary hover:shadow-md"
-      )}
+      onClick={() => onClick(fundId)}
+      className="group relative flex min-w-0 w-full flex-col overflow-hidden transition-all focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 cursor-pointer hover:border-primary hover:shadow-md"
     >
-      <div className={cn(
-        "absolute inset-x-0 top-0 h-1 transition-colors",
-        isLocked
-          ? "bg-slate-200"
-          : "bg-gradient-to-r from-slate-200 to-slate-100 group-hover:from-primary/70 group-hover:to-primary"
-      )} />
+      <div className="absolute inset-x-0 top-0 h-1 transition-colors bg-gradient-to-r from-slate-200 to-slate-100 group-hover:from-primary/70 group-hover:to-primary" />
       <CardContent className="flex flex-1 flex-col justify-between p-5 !py-0">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
@@ -107,11 +88,11 @@ export function GenericFundCard({
               </div>
               <div className="min-w-0">
                 <h3 className="truncate font-semibold text-foreground" title={name}>{name}</h3>
-                <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+                {/* <p className="truncate text-xs text-muted-foreground">{subtitle}</p> */}
               </div>
             </div>
             <div className="flex items-start gap-2 shrink-0">
-              {(onEdit || onDelete) && (
+              {(onEdit || (onDelete && status !== 'canceled')) && (
                 <div className="flex items-center gap-1 border border-slate-200/60 rounded-lg p-0.5 bg-slate-50/50">
                   {onEdit && (
                     <Button
@@ -127,7 +108,7 @@ export function GenericFundCard({
                       <Edit2 className="size-3.5" />
                     </Button>
                   )}
-                  {onDelete && (
+                  {onDelete && status !== 'canceled' && (
                     <Button
                       type="button"
                       size="icon"
@@ -144,19 +125,7 @@ export function GenericFundCard({
                 </div>
               )}
               <div className="flex flex-col items-end gap-1.5">
-                {isLocked && (
-                  <div className="flex items-center gap-1 rounded-md bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
-                    <Lock className="size-3" />
-                    <span>
-                      {status === 'complete'
-                        ? 'مغلق (مكتمل)'
-                        : status === 'canceled'
-                        ? 'مغلق (ملغى)'
-                        : 'مغلق'}
-                    </span>
-                  </div>
-                )}
-                {!isLocked && status && (
+                {status && (
                   <span className={cn(
                     "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold",
                     statusLabels[status]?.className
@@ -174,8 +143,6 @@ export function GenericFundCard({
             </p>
           )}
 
-
-
           <div>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">
               الأرصدة المتوفرة
@@ -191,10 +158,7 @@ export function GenericFundCard({
                   <button
                     key={currency.id}
                     type="button"
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors",
-                      isLocked ? "cursor-not-allowed" : "hover:bg-sky-100"
-                    )}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
                   >
                     <span>
                       {currency.currency} {currency.symbol}
@@ -207,13 +171,9 @@ export function GenericFundCard({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (isLocked) return;
                       onMoreCurrenciesClick?.(fundId);
                     }}
-                    className={cn(
-                      "inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors",
-                      isLocked ? "cursor-not-allowed" : "hover:bg-slate-100"
-                    )}
+                    className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                   >
                     +{currencies.length - 3} المزيد
                   </button>
