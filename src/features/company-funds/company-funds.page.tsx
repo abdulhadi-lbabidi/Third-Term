@@ -251,6 +251,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                     status={fund.status}
                     description={fund.description}
                     threshold={fund.threshold}
+                    type={fund.type}
                     onClick={(id) => {
                       setSearchParams((prev) => {
                         prev.set('fundId', id.toString());
@@ -303,6 +304,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
             modelType="App\\Models\\CompanyFundCurrency"
             sourceType="company_fund"
             fundIdField="company_fund_id"
+            type={currentFund.type}
             onBack={() => {
               setSearchParams((prev) => {
                 prev.delete('fundId');

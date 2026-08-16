@@ -32,6 +32,7 @@ export function RevenuesTable({
   onSortChange,
 }: RevenuesTableProps) {
   const allColumns: DataTableColumn<Revenue>[] = [
+    { header: 'رقم السند', cell: (row) => row.voucher_number || '-' },
     { header: 'البيان', cell: (row) => row.statement },
     {
       header: 'المبلغ',

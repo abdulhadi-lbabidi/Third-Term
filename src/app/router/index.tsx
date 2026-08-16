@@ -17,6 +17,7 @@ const ProjectFundsPage      = lazy(() => import('@/features/projects/project-fun
 const ProjectTeamPage       = lazy(() => import('@/features/projects/project-team/project-team.page').then(m => ({ default: m.ProjectTeamPage })));
 const ItemsPage             = lazy(() => import('@/features/items/items.page').then(m => ({ default: m.ItemsPage })));
 const EmployeePaymentsPage  = lazy(() => import('@/features/employee-payments/employee-payments.page').then(m => ({ default: m.EmployeePaymentsPage })));
+const IncrementsPage        = lazy(() => import('@/features/increments/increments.page').then(m => ({ default: m.IncrementsPage })));
 const DepartmentsPage       = lazy(() => import('@/features/departments/departments.page').then(m => ({ default: m.DepartmentsPage })));
 const CloudStoragePage      = lazy(() => import('@/features/cloud-storage/cloud-storage.page').then(m => ({ default: m.CloudStoragePage })));
 const ExpensesPage          = lazy(() => import('@/features/expenses/expenses.page').then(m => ({ default: m.ExpensesPage })));
@@ -30,9 +31,11 @@ const InvoicesPage          = lazy(() => import('@/features/invoices/invoices.pa
 const UnpostedInvoicesPage  = lazy(() => import('@/features/invoices/unposted-invoices.page').then(m => ({ default: m.UnpostedInvoicesPage })));
 const NewInvoicePage        = lazy(() => import('@/features/invoices/new-invoice.page').then(m => ({ default: m.NewInvoicePage })));
 const AuditLogsPage         = lazy(() => import('@/features/audit-logs/audit-logs.page').then(m => ({ default: m.AuditLogsPage })));
+const MoneyExchangesPage    = lazy(() => import('@/features/money-exchanges/money-exchanges.page').then(m => ({ default: m.MoneyExchangesPage })));
 const PublicProjectsPage    = lazy(() => import('@/features/public-projects/public-projects.page').then(m => ({ default: m.PublicProjectsPage })));
 const PublicProjectDetailsPage = lazy(() => import('@/features/public-projects/public-project-details.page').then(m => ({ default: m.PublicProjectDetailsPage })));
 const ReInvoicesPage        = lazy(() => import('@/features/re-invoices/re-invoices.page').then(m => ({ default: m.ReInvoicesPage })));
+const NotificationsPage     = lazy(() => import('@/features/notifications/notifications.page').then(m => ({ default: m.NotificationsPage })));
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
 
@@ -209,6 +212,10 @@ export const router = createBrowserRouter([
             element: <EmployeePaymentsPage />,
           },
           {
+            path: '/increments',
+            element: <IncrementsPage />,
+          },
+          {
             path: '/expenses',
             element: <ExpensesPage />,
           },
@@ -237,13 +244,19 @@ export const router = createBrowserRouter([
             element: <EmployeePaymentsPage />,
           },
           {
+            path: '/employees/:employeeId/:employeeName/increments',
+            element: <IncrementsPage />,
+          },
+          {
             path: '/',
             element: <RootRedirect />,
           },
+          { path: '/money-exchanges', element: <MoneyExchangesPage /> },
           { path: '/currencies', element: <CurrenciesPage /> },
           { path: '/departments', element: <DepartmentsPage /> },
           { path: '/cloud-storage', element: <CloudStoragePage /> },
           { path: '/audit-logs', element: <AuditLogsPage /> },
+          { path: '/notifications', element: <NotificationsPage /> },
         ],
       },
     ],

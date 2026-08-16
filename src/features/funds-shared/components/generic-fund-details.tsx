@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/shared/lib/utils';
 import { useSearchParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs';
@@ -37,6 +37,7 @@ import { RevenuesTable } from '@/features/revenues/components/revenues.table';
 import { RevenuesDialog } from '@/features/revenues/components/revenues.dialog';
 
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from '@/features/expenses/expenses.hooks';
+import { getNextVoucherNumberFromRecords } from '@/shared/lib/voucher-number';
 import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
 import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
@@ -54,6 +55,9 @@ import { ReInvoiceDialog } from '@/features/re-invoices/components/re-invoice.di
 import { ReInvoiceItemsDialog } from '@/features/re-invoices/components/re-invoice-items.dialog';
 import type { ReInvoice } from '@/features/re-invoices/types';
 import { getCurrencyStringFromInfo } from '@/features/components/table-helpers';
+import { toast } from 'sonner';
+import { fundsApi } from '@/features/funds/funds.api';
+import { MoneyExchangeDialog } from './money-exchange.dialog';
 
 const statusLabels = {
   pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
@@ -82,6 +86,7 @@ type GenericFundDetailsProps = {
   fundIdField: 'company_fund_id' | 'project_fund_id' | 'user_fund_id';
   extraDetails?: React.ReactNode;
   extraFixedValues?: Record<string, any>;
+  type?: string;
 };
 
 export function GenericFundDetails({
@@ -98,6 +103,7 @@ export function GenericFundDetails({
   fundIdField,
   extraDetails,
   extraFixedValues,
+  type,
 }: GenericFundDetailsProps) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -174,6 +180,60 @@ export function GenericFundDetails({
   const [reInvoiceDialogOpen, setReInvoiceDialogOpen] = useState(false);
   const [selectedReInvoice, setSelectedReInvoice] = useState<ReInvoice | null>(null);
   const [reInvoiceItemsId, setReInvoiceItemsId] = useState<number>();
+  const [moneyExchangeOpen, setMoneyExchangeOpen] = useState(false);
+  const [currencyToDelete, setCurrencyToDelete] = useState<{ id: number; expenseableId: number; name: string } | null>(null);
+
+  const detachCurrencyMutation = useMutation({
+    mutationFn: (currencyId: number) =>
+      fundsApi.detachCurrency(fundId, { currency_id: currencyId }, sourceType),
+    onSuccess: async () => {
+      if (fundIdField === 'user_fund_id') {
+        await queryClient.invalidateQueries({ queryKey: ['funds', 'detail', fundId] });
+        await queryClient.invalidateQueries({ queryKey: ['funds'] });
+      } else if (fundIdField === 'project_fund_id') {
+        await queryClient.invalidateQueries({ queryKey: ['project-funds', 'detail', fundId] });
+        await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+        const projectId = Number(extraFixedValues?.project_id);
+        if (Number.isFinite(projectId) && projectId > 0) {
+          await queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
+        }
+      } else if (fundIdField === 'company_fund_id') {
+        await queryClient.invalidateQueries({ queryKey: ['company-funds', fundId] });
+        await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      }
+      await queryClient.invalidateQueries({ queryKey: ['money-exchanges'] });
+      toast.success('تم حذف العملة بنجاح');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف العملة');
+    },
+  });
+
+  const exchangeMoneyMutation = useMutation({
+    mutationFn: (payload: {
+      exchangeable_type: string;
+      exchangeable_id: number;
+      from_currency: number;
+      to_currency: number;
+      amount: number;
+      exchange_rate: number;
+      operation: 'multiply' | 'divide';
+    }) => fundsApi.exchangeMoney(payload),
+    onSuccess: async () => {
+      if (fundIdField === 'user_fund_id') {
+        await queryClient.invalidateQueries({ queryKey: ['funds', 'detail', fundId] });
+      } else if (fundIdField === 'project_fund_id') {
+        await queryClient.invalidateQueries({ queryKey: ['project-funds', 'detail', fundId] });
+      } else if (fundIdField === 'company_fund_id') {
+        await queryClient.invalidateQueries({ queryKey: ['company-funds', fundId] });
+      }
+      toast.success('تم تصريف العملة بنجاح');
+      setMoneyExchangeOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تصريف العملة');
+    },
+  });
 
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
@@ -209,6 +269,14 @@ export function GenericFundDetails({
   const expensesQuery = useExpenses(1, 1000, filters, hasCurrencies);
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
+  const nextRevenueVoucherNumber = useMemo(
+    () => getNextVoucherNumberFromRecords(fundRevenues),
+    [fundRevenues],
+  );
+  const nextExpenseVoucherNumber = useMemo(
+    () => getNextVoucherNumberFromRecords(fundExpenses, 'exp'),
+    [fundExpenses],
+  );
   const filteredExpense = expenseFilterId
     ? fundExpenses.find((expense) => expense.id === expenseFilterId) ?? null
     : null;
@@ -414,16 +482,38 @@ export function GenericFundDetails({
           )}
           <div className="min-w-0 space-y-3">
             <div>
-              <h2 className="break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{fundName}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{fundName}</h2>
+                {type && (
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
+                    {type}
+                  </span>
+                )}
+              </div>
               {extraDetails && <div>{extraDetails}</div>}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {fundCurrencies.length > 0 ? (
                 fundCurrencies.map((currency) => (
-                  <div key={currency.id} className="flex min-w-0 max-w-full flex-wrap items-center gap-2 rounded-md bg-slate-100 px-3.5 py-1.5 text-base font-medium">
+                  <div key={currency.id} className="flex min-w-0 max-w-full items-center gap-2 rounded-md bg-slate-100 px-3.5 py-1.5 text-base font-medium">
                     <span className={Number(currency.balance) > 0 ? 'text-lg font-bold text-success' : 'text-lg font-bold text-destructive'}>{currency.balance}</span>
                     <span className="text-sm text-slate-500">{currency.currency} {currency.symbol}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrencyToDelete({
+                          id: currency.id,
+                          expenseableId: currency.expenseable_id ?? fundId,
+                          name: currency.currency,
+                        });
+                      }}
+                      className="text-destructive hover:text-destructive/80 transition-colors p-0.5 rounded hover:bg-slate-200"
+                      disabled={detachCurrencyMutation.isPending}
+                      title="حذف العملة من الصندوق"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </div>
                 ))
               ) : (
@@ -448,6 +538,15 @@ export function GenericFundDetails({
             )}
             {canEdit && (
               <>
+                {fundCurrencies.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger render={<Button type="button" variant="secondary" size="sm" onClick={() => setMoneyExchangeOpen(true)} aria-label="تصريف عملة" className="size-9 bg-slate-100 px-0 hover:bg-slate-200 sm:h-8 sm:w-auto sm:px-3" />}>
+                      <ArrowLeftRight className="size-4 sm:ml-2" />
+                      <span className="hidden sm:inline">تصريف عملة</span>
+                    </TooltipTrigger>
+                    <TooltipContent>تصريف عملة</TooltipContent>
+                  </Tooltip>
+                )}
                 <Tooltip>
                   <TooltipTrigger render={<Button type="button" variant="secondary" size="sm" onClick={onAttachCurrency} aria-label="إرفاق عملة" className="size-9 bg-slate-100 px-0 hover:bg-slate-200 sm:h-8 sm:w-auto sm:px-3" />}>
                     <Banknote className="size-4 sm:ml-2" />
@@ -847,6 +946,7 @@ export function GenericFundDetails({
             [fundIdField]: fundId,
             ...extraFixedValues,
           }}
+          nextVoucherNumber={nextRevenueVoucherNumber}
         />
       )}
 
@@ -866,6 +966,7 @@ export function GenericFundDetails({
             ...extraFixedValues,
           }}
           fixedFundCurrencies={fundCurrencies}
+          nextVoucherNumber={nextExpenseVoucherNumber}
         />
       )}
 
@@ -914,6 +1015,46 @@ export function GenericFundDetails({
           loading={createTransferMutation.isPending || updateTransferMutation.isPending}
         />
       )}
+
+      {moneyExchangeOpen && (
+        <MoneyExchangeDialog
+          open={moneyExchangeOpen}
+          onOpenChange={setMoneyExchangeOpen}
+          fundCurrencies={fundCurrencies}
+          loading={exchangeMoneyMutation.isPending}
+          onSubmit={async (values) => {
+            await exchangeMoneyMutation.mutateAsync({
+              ...values,
+              exchangeable_type: modelType.replace(/\\\\/g, '\\'),
+            });
+          }}
+        />
+      )}
+
+      <AlertDialog open={!!currencyToDelete} onOpenChange={(open) => { if (!open) setCurrencyToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف العملة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف العملة {currencyToDelete?.name} من هذا الصندوق؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (currencyToDelete) {
+                  await detachCurrencyMutation.mutateAsync(currencyToDelete.id);
+                  setCurrencyToDelete(null);
+                }
+              }}
+              className="bg-destructive hover:bg-destructive/90 text-white border-none"
+            >
+              {detachCurrencyMutation.isPending ? 'جاري الحذف...' : 'حذف'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );

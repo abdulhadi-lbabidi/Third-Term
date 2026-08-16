@@ -18,9 +18,10 @@ type RevenuesDialogProps = {
   };
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   loading?: boolean;
+  nextVoucherNumber?: string;
 };
 
-export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading }: RevenuesDialogProps) {
+export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading, nextVoucherNumber }: RevenuesDialogProps) {
   const [formKey, setFormKey] = useState(0);
 
   return (
@@ -42,6 +43,7 @@ export function RevenuesDialog({ open, onOpenChange, defaultValues, fixedValues,
               key={formKey}
               defaultValues={defaultValues}
               fixedValues={fixedValues}
+              nextVoucherNumber={nextVoucherNumber}
               onSubmit={async (data) => {
                 await onSubmit(data);
                 setFormKey((value) => value + 1);

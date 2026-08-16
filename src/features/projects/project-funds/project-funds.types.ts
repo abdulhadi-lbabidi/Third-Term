@@ -6,6 +6,7 @@ export type ProjectFundCurrency = {
   balance: string;
   user?: null;
   created_at?: string;
+  pivot?: { id: number };
 };
 
 export type ProjectFund = {
@@ -24,6 +25,7 @@ export type ProjectFund = {
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
+  type?: string;
 };
 
 export type CreateProjectFundPayload = {

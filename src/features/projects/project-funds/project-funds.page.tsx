@@ -307,6 +307,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
                   status={fund.status}
                   description={fund.description}
                   threshold={fund.threshold}
+                  type={fund.type}
                   onClick={(id) => {
                     setSearchParams((prev) => {
                       prev.set('fundId', id.toString());
@@ -391,6 +392,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
             modelType="App\\Models\\ProjectFundCurrency"
             sourceType="project_fund"
             fundIdField="project_fund_id"
+            type={currentFund.type}
             onBack={() => {
               setSearchParams((prev) => {
                 prev.delete('fundId');

@@ -1,29 +1,34 @@
 import { useState, useMemo } from 'react';
-import { Button } from '@/shared/components/ui/button';
+import { toast } from 'sonner';
+import { ArrowLeftRight, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { PageHeader } from '../components/page-header';
-import { RevenuesTable } from './components/revenues.table';
-import { useCreateRevenue, useRevenues, useDeleteRevenue, useUpdateRevenue } from './revenues.hooks';
-import { RevenuesDialog } from './components/revenues.dialog';
-import { useQueryClient } from '@tanstack/react-query';
-import type { Revenue } from './types';
-import { TrendingUp, SlidersHorizontal, RotateCcw } from 'lucide-react';
-import { SimplePagination } from '@/components/ui/pagination';
-
-import { type DateTimeRangeValue } from '@/shared/components/ui/date-time-range-picker';
+import { Button } from '@/shared/components/ui/button';
 import { FilterDrawer } from '@/shared/components/ui/filter-drawer';
-import { RevenuesFilterForm } from './components/revenues-filter.form';
+import { SimplePagination } from '@/components/ui/pagination';
+import { MoneyExchangesTable } from './components/money-exchanges.table';
+import { MoneyExchangesDialog } from './components/money-exchanges.dialog';
+import { MoneyExchangesFilterForm } from './components/money-exchanges-filter.form';
+import { useMoneyExchanges, useCreateMoneyExchange, useDeleteMoneyExchange, useUpdateMoneyExchange } from './money-exchanges.hooks';
+import type { MoneyExchange } from './types';
 import type { UserRole } from '@/features/users/types';
-import { cn } from '@/shared/lib/utils';
+import { type DateTimeRangeValue } from '@/shared/components/ui/date-time-range-picker';
 import { format } from 'date-fns';
-import { getNextVoucherNumberFromRecords } from '@/shared/lib/voucher-number';
 
-export function RevenuesPage() {
-  const queryClient = useQueryClient();
+export function MoneyExchangesPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingExchange, setEditingExchange] = useState<MoneyExchange | null>(null);
+  const createMoneyExchange = useCreateMoneyExchange();
+  const updateMoneyExchange = useUpdateMoneyExchange();
+  const deleteMoneyExchange = useDeleteMoneyExchange();
+
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [operation, setOperation] = useState('');
+  const [fromCurrency, setFromCurrency] = useState('');
+  const [toCurrency, setToCurrency] = useState('');
 
   const [userRole, setUserRole] = useState<UserRole | ''>('');
   const [userId, setUserId] = useState<number | ''>('');
@@ -36,10 +41,6 @@ export function RevenuesPage() {
 
   const [sort, setSort] = useState<string | undefined>(undefined);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [revenueToEdit, setRevenueToEdit] = useState<Revenue | null>(null);
-  const createRevenue = useCreateRevenue();
-  const updateRevenue = useUpdateRevenue();
 
   const rangeValue = useMemo(() => {
     return {
@@ -56,8 +57,11 @@ export function RevenuesPage() {
   const handleApplyFilters = () => {
     setAppliedFilters({
       'filter[search]': searchQuery || undefined,
+      'filter[operation]': operation || undefined,
+      'filter[from_currency]': fromCurrency || undefined,
+      'filter[to_currency]': toCurrency || undefined,
       'filter[user_id]': userId || undefined,
-      'filter[received_by]': creatorId || undefined,
+      'filter[created_by]': creatorId || undefined,
       'filter[date_from]': dateFrom || undefined,
       'filter[date_to]': dateTo || undefined,
     });
@@ -66,6 +70,9 @@ export function RevenuesPage() {
 
   const handleResetFilters = () => {
     setSearchQuery('');
+    setOperation('');
+    setFromCurrency('');
+    setToCurrency('');
     setUserRole('');
     setUserId('');
     setCreatorRole('');
@@ -74,52 +81,37 @@ export function RevenuesPage() {
     setDateTo('');
     setAppliedFilters({});
     setPage(1);
-    queryClient.invalidateQueries({
-      queryKey: ['revenues', 1, perPage, { sort: sort || undefined }],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ['revenues', 1, perPage, { sort: undefined }],
-    });
   };
 
-  const { data: response, isLoading } = useRevenues(page, perPage, {
+  const moneyExchangesQuery = useMoneyExchanges(page, perPage, {
     ...appliedFilters,
     sort: sort || undefined,
   });
-  const deleteMutation = useDeleteRevenue();
 
-  const handleAddClick = () => {
-    setRevenueToEdit(null);
+  const handleDelete = async (exchange: MoneyExchange) => {
+    await deleteMoneyExchange.mutateAsync(exchange.id);
+    toast.success('تم حذف عملية تصريف العملة بنجاح');
+  };
+
+  const handleEdit = (exchange: MoneyExchange) => {
+    setEditingExchange(exchange);
     setDialogOpen(true);
   };
 
-  const handleEditClick = (revenue: Revenue) => {
-    setRevenueToEdit(revenue);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async (revenue: Revenue) => {
-    await deleteMutation.mutateAsync(revenue.id);
-  };
-
-  const revenues = response?.data ?? [];
-  const nextVoucherNumber = useMemo(
-    () => getNextVoucherNumberFromRecords(revenues),
-    [revenues],
-  );
-  const meta = response?.meta;
+  const data = moneyExchangesQuery.data?.data ?? [];
+  const meta = moneyExchangesQuery.data?.meta;
   const totalPages = meta?.last_page ?? 1;
   const currentPage = meta?.current_page ?? page;
 
   return (
     <div className="flex flex-col flex-1 space-y-4">
       <PageHeader
-        badge="الإيرادات"
-        title="الإيرادات"
-        icon={TrendingUp}
+        badge="الإدارة المالية"
+        title="تصريف العملات"
+        icon={ArrowLeftRight}
         action={
           <div className="flex shrink-0 items-center gap-3">
-            {(Object.values(appliedFilters).some(Boolean) || sort) ? (
+            {Object.values(appliedFilters).some(Boolean) || sort ? (
               <Button
                 type="button"
                 variant="outline"
@@ -138,17 +130,13 @@ export function RevenuesPage() {
               type="button"
               variant="outline"
               onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
-              className={cn(Object.values(appliedFilters).some(Boolean) && "border-primary text-primary")}
+              className="flex items-center gap-2"
             >
               <SlidersHorizontal className="size-4" />
-              فلترة متقدمة
+              <span>تصفية</span>
             </Button>
-            <Button
-              type="button"
-              onClick={handleAddClick}
-              className="h-11 rounded-lg px-5 text-sm font-semibold shadow-sm"
-            >
-              إضافة إيراد جديد
+            <Button type="button" onClick={() => setDialogOpen(true)}>
+              إضافة تصريف
             </Button>
           </div>
         }
@@ -157,12 +145,21 @@ export function RevenuesPage() {
       <FilterDrawer
         open={filterDrawerOpen}
         onOpenChange={setFilterDrawerOpen}
-        onApply={handleApplyFilters}
+        onApply={() => {
+          handleApplyFilters();
+          setFilterDrawerOpen(false);
+        }}
         onReset={handleResetFilters}
       >
-        <RevenuesFilterForm
+        <MoneyExchangesFilterForm
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          operation={operation}
+          setOperation={setOperation}
+          fromCurrency={fromCurrency}
+          setFromCurrency={setFromCurrency}
+          toCurrency={toCurrency}
+          setToCurrency={setToCurrency}
           userRole={userRole}
           setUserRole={setUserRole}
           userId={userId}
@@ -176,10 +173,10 @@ export function RevenuesPage() {
         />
       </FilterDrawer>
 
-      <RevenuesTable
-        data={revenues}
-        loading={isLoading}
-        onEdit={handleEditClick}
+      <MoneyExchangesTable
+        data={data}
+        loading={moneyExchangesQuery.isLoading}
+        onEdit={handleEdit}
         onDelete={handleDelete}
         sort={sort}
         onSortChange={setSort}
@@ -195,17 +192,26 @@ export function RevenuesPage() {
         onLimitChange={setPerPage}
       />
 
-      <RevenuesDialog
+      <MoneyExchangesDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultValues={revenueToEdit}
-        nextVoucherNumber={nextVoucherNumber}
-        loading={createRevenue.isPending || updateRevenue.isPending}
-        onSubmit={async (payload) => {
-          if (revenueToEdit) await updateRevenue.mutateAsync({ id: revenueToEdit.id, payload });
-          else await createRevenue.mutateAsync(payload);
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setEditingExchange(null);
+        }}
+        defaultValues={editingExchange}
+        loading={createMoneyExchange.isPending || updateMoneyExchange.isPending}
+        onSubmit={async (values) => {
+          if (editingExchange) {
+            await updateMoneyExchange.mutateAsync({ id: editingExchange.id, payload: values });
+            toast.success('تم تعديل عملية تصريف العملة بنجاح');
+          } else {
+            await createMoneyExchange.mutateAsync(values);
+            toast.success('تم إضافة عملية تصريف العملة بنجاح');
+          }
+          setDialogOpen(false);
         }}
       />
     </div>
   );
 }
+export default MoneyExchangesPage;

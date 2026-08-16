@@ -7,6 +7,7 @@ export type CompanyFundCurrency = {
   balance: string;
   user?: null;
   created_at?: string;
+  pivot?: { id: number };
 };
 
 export type CompanyFund = {
@@ -18,6 +19,7 @@ export type CompanyFund = {
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
+  type?: string;
 };
 
 export type CreateCompanyFundPayload = {

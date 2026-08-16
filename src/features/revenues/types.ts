@@ -34,6 +34,7 @@ export type Revenue = {
   };
   created_at?: string;
   note?: string;
+  voucher_number?: string | null;
 };
 
 export type CreateRevenuePayload = {

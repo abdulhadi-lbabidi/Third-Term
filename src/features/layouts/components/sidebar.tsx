@@ -22,6 +22,8 @@ import {
   Undo2,
   X,
   FileX,
+  Bell,
+  ArrowUpCircle,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -45,9 +47,11 @@ type NavGroup = {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'المستخدمون والأقسام',
+    label: 'المستخدمون',
     items: [
       { to: '/users', label: 'المستخدمون', icon: Users },
+      { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
+      { to: '/increments', label: 'الزيادات', icon: ArrowUpCircle },
     ],
   },
   {
@@ -63,7 +67,6 @@ const navGroups: NavGroup[] = [
       { to: '/expenses', label: 'المصروفات', icon: ReceiptText },
       { to: '/revenues', label: 'الإيرادات', icon: TrendingUp },
       { to: '/transfers', label: 'التحويلات', icon: ArrowLeftRight },
-      { to: '/employee-payments', label: 'رواتب الموظفين', icon: BadgeDollarSign },
       { to: '/invoices', label: 'الفواتير', icon: FileText },
       { to: '/unposted-invoices', label: 'الفواتير الغير مرحلة', icon: FileX },
       { to: '/re-invoices', label: 'المرتجعات', icon: Undo2 },
@@ -74,6 +77,7 @@ const navGroups: NavGroup[] = [
     label: 'الصناديق والعملات',
     items: [
       { to: '/funds', label: 'إدارة الصناديق', icon: Wallet },
+      { to: '/money-exchanges', label: 'تصريف العملات', icon: ArrowLeftRight },
       { to: '/currencies', label: 'العملات', icon: Banknote },
     ],
   },
@@ -89,6 +93,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/cloud-storage', label: 'التخزين السحابي', icon: Cloud },
       { to: '/audit-logs', label: 'سجل العمليات', icon: History },
+      { to: '/notifications', label: 'الإشعارات', icon: Bell },
     ],
   },
 ];

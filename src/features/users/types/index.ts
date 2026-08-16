@@ -16,6 +16,8 @@ export interface BaseUserProfile {
   address: string;
   funds?: unknown[];
   created_at?: string;
+  images?: string[] | { url: string }[] | string | null;
+  all_images?: { id: number; url: string; name: string }[] | null;
 }
 
 export type UserEntity<TExtra = Record<string, unknown>> = {
@@ -37,13 +39,28 @@ export interface CraftsmanRecord extends UserEntity<{
   job_title: string;
 }> { }
 
+export type EmployeeLastPayment = {
+  id: number;
+  amount: number;
+  bonuses: number;
+  deductions: number;
+  payment_date: string;
+  created_at?: string;
+};
+
 export interface EmployeeRecord extends UserEntity<{
   job_title: string;
+  status?: 'active' | 'retired' | 'resigned';
+  department_id?: number | null;
+  department?: { id: number; name: string; main_manager?: string } | null;
+  last_payment?: EmployeeLastPayment | null;
 }> { }
 
 export interface EngineerRecord extends UserEntity<{
   job_title: string;
   base_salary: string;
+  department_id?: number | null;
+  department?: { id: number; name: string } | null;
 }> { }
 
 export interface SupplierRecord extends UserEntity { }
@@ -65,6 +82,7 @@ export interface CreateUserBasePayload {
   phone_number: string;
   address: string;
   role: UserRole;
+  images?: File[];
 }
 
 export interface CreateInvestorPayload extends CreateUserBasePayload {
@@ -75,12 +93,15 @@ export interface CreateInvestorPayload extends CreateUserBasePayload {
 export interface CreateEmployeePayload extends CreateUserBasePayload {
   role: 'employee';
   job_title: string;
+  status?: 'active' | 'retired' | 'resigned';
+  department_id?: number | null;
 }
 
 export interface CreateEngineerPayload extends CreateUserBasePayload {
   role: 'engineer';
   job_title: string;
   base_salary: string;
+  department_id?: number | null;
 }
 
 export interface CreateTrusteePayload extends CreateUserBasePayload {

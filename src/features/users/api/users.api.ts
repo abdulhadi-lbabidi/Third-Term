@@ -89,14 +89,77 @@ export const usersApi = {
 
   createUser: (payload: CreateUserPayload): Promise<unknown> => {
     const endpoint = endpointByRole[payload.role];
+    if (payload.images && payload.images.length > 0) {
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, val]) => {
+        if (key === 'images') {
+          const files = val as File[];
+          if (files.length === 1) {
+            formData.append('image', files[0]);
+            formData.append('images[]', files[0]);
+          } else {
+            files.forEach((file) => {
+              formData.append('images[]', file);
+            });
+          }
+        } else if (val !== undefined && val !== null) {
+          formData.append(key, val as any);
+        }
+      });
+      return apiClient.post<any>(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then(res => res.data);
+    }
     return apiClient.post<any>(endpoint, payload).then(res => res.data);
   },
 
-  updateUserByRole: (role: UserRole, id: number, payload: Partial<CreateUserPayload>): Promise<unknown> => {
-    return apiClient.patch<any>(`${endpointByRole[role]}/${id}`, payload).then(res => res.data);
+  updateUserByRole: (
+    role: UserRole,
+    id: number,
+    payload: Partial<CreateUserPayload> & { deleted_media_ids?: number[] }
+  ): Promise<unknown> => {
+    const endpoint = `${endpointByRole[role]}/${id}`;
+    const hasImages = payload.images && payload.images.length > 0;
+    const hasDeletedImages = payload.deleted_media_ids && payload.deleted_media_ids.length > 0;
+    if (hasImages || hasDeletedImages) {
+      const formData = new FormData();
+      formData.append('_method', 'PATCH');
+      Object.entries(payload).forEach(([key, val]) => {
+        if (key === 'images') {
+          const files = val as File[];
+          if (files.length === 1) {
+            formData.append('image', files[0]);
+            formData.append('images[]', files[0]);
+          } else {
+            files.forEach((file) => {
+              formData.append('images[]', file);
+            });
+          }
+        } else if (key === 'deleted_media_ids') {
+          const ids = val as number[];
+          ids.forEach((imgId, idx) => {
+            formData.append(`deleted_media_ids[${idx}]`, String(imgId));
+          });
+        } else if (val !== undefined && val !== null) {
+          formData.append(key, val as any);
+        }
+      });
+      return apiClient.post<any>(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then(res => res.data);
+    }
+    return apiClient.patch<any>(endpoint, payload).then(res => res.data);
   },
 
   deleteUserByRole: (role: UserRole, id: number): Promise<void> => {
     return apiClient.delete(`${endpointByRole[role]}/${id}`).then(() => { });
+  },
+
+  updatePassword: (payload: {
+    email: string;
+    password: string;
+    password_confirmation: string;
+  }): Promise<unknown> => {
+    return apiClient.post('/update-password', payload).then(res => res.data);
   },
 };

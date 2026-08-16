@@ -20,6 +20,7 @@ type GenericFundCardProps = {
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
+  type?: string;
   onClick: (fundId: number) => void;
   onMoreCurrenciesClick?: (fundId: number) => void;
   onEdit?: () => void;
@@ -66,6 +67,7 @@ export function GenericFundCard({
   status,
   description,
   threshold,
+  type,
   onClick,
   onMoreCurrenciesClick,
   onEdit,
@@ -87,8 +89,14 @@ export function GenericFundCard({
                 <Wallet className="size-5" />
               </div>
               <div className="min-w-0">
-                <h3 className="truncate font-semibold text-foreground" title={name}>{name}</h3>
-                {/* <p className="truncate text-xs text-muted-foreground">{subtitle}</p> */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <h3 className="truncate font-semibold text-foreground" title={name}>{name}</h3>
+                  {type && (
+                    <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200/80">
+                      {type}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-start gap-2 shrink-0">

@@ -12,6 +12,7 @@ export type FundCurrency = {
     phone_number?: string;
   };
   created_at?: string;
+  pivot?: { id: number };
 };
 
 export type Fund = {
@@ -32,6 +33,7 @@ export type Fund = {
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
+  type?: string;
 };
 
 export type CreateFundPayload = {
@@ -55,4 +57,14 @@ export type UpdateFundPayload = {
 export type FundCurrencyAttachPayload = {
   currency_id: number;
   balance: string;
+};
+
+export type MoneyExchangePayload = {
+  exchangeable_type: string;
+  exchangeable_id: number;
+  from_currency: number;
+  to_currency: number;
+  amount: number;
+  exchange_rate: number;
+  operation: 'multiply' | 'divide';
 };

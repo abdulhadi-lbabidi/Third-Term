@@ -23,6 +23,7 @@ import { SimplePagination } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
 import { NewUserPage } from './new-user.page';
+import { ImageLightbox } from './components/image-lightbox';
 const userRoles: UserRole[] = ['admin', 'client', 'investor', 'craftsman', 'employee', 'engineer', 'supplier', 'trustee'];
 
 const USER_TABS = [
@@ -101,6 +102,9 @@ export function UsersPage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<string | undefined>(undefined);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleSearchSubmit = () => {
     setSearch(searchQuery);
@@ -156,6 +160,41 @@ export function UsersPage() {
   const columns = useMemo(
     () => [
       {
+        header: 'الصورة',
+        className: 'min-w-20 max-w-28',
+        cell: (row: UsersTabRecord) => {
+          const images = row.user.all_images || [];
+          if (images.length === 0) return <span>-</span>;
+          return (
+            <div className="flex items-center justify-center gap-1">
+              {images.slice(0, 2).map((img, idx) => {
+                const isLastAndMore = idx === 1 && images.length > 2;
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxImages(images.map((i) => i.url));
+                      setLightboxIndex(idx);
+                      setLightboxOpen(true);
+                    }}
+                    className="relative size-8 shrink-0 cursor-pointer overflow-hidden rounded-md border border-slate-200 transition-all hover:scale-105 p-0 bg-transparent"
+                  >
+                    <img src={img.url} alt={img.name} className="h-full w-full object-cover" />
+                    {isLastAndMore && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-[10px] font-bold text-white">
+                        +{images.length - 2}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        },
+      },
+      {
         header: 'الاسم',
         sortable: true,
         sortKey: 'user_name',
@@ -171,19 +210,53 @@ export function UsersPage() {
         ),
       },
       { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-center">{row.user.email}</span> },
-      { header: 'الهاتف', className: 'min-w-36', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
-      { header: 'العنوان', className: 'min-w-52 max-w-64', cell: (row: UsersTabRecord) => <span className="mx-auto block max-w-64 truncate text-center">{row.user.address || '-'}</span> },
+      { header: 'الهاتف', className: 'min-w-28', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
+      { header: 'العنوان', className: 'min-w-36 max-w-48', cell: (row: UsersTabRecord) => <span className="mx-auto block max-w-64 truncate text-center">{row.user.address || '-'}</span> },
       activeRole === 'investor'
         ? { header: 'نسبة الاستثمار', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-') }
         : null,
       activeRole === 'employee'
-        ? { header: 'المسمى الوظيفي', className: 'min-w-40', cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-') }
+        ? { header: 'المسمى الوظيفي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-') }
+        : null,
+      activeRole === 'employee'
+        ? {
+            header: 'الحالة',
+            className: 'min-w-24',
+            cell: (row: UsersTabRecord) => {
+              const status = (row as EmployeeRecord).status || 'active';
+              const statusLabels: Record<string, string> = {
+                active: 'على رأس عمله',
+                retired: 'متقاعد',
+                resigned: 'مستقيل',
+              };
+              const statusColors: Record<string, string> = {
+                active: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+                retired: 'bg-amber-50 text-amber-700 border-amber-200/60',
+                resigned: 'bg-rose-50 text-rose-700 border-rose-200/60',
+              };
+              return (
+                <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${statusColors[status] || 'bg-slate-50 text-slate-700 border-slate-200/60'}`}>
+                  {statusLabels[status] || status}
+                </span>
+              );
+            }
+          }
         : null,
       activeRole === 'engineer'
-        ? { header: 'المسمى الوظيفي', className: 'min-w-40', cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-') }
+        ? { header: 'المسمى الوظيفي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-') }
         : null,
       activeRole === 'engineer'
         ? { header: 'الراتب الأساسي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
+        : null,
+      activeRole === 'employee' || activeRole === 'engineer'
+        ? {
+            header: 'القسم',
+            className: 'min-w-40',
+            cell: (row: UsersTabRecord) => {
+              const dept = 'department' in row ? (row as any).department : null;
+              return dept?.name || '-';
+            }
+          }
         : null,
 
       { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', className: 'min-w-32', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
@@ -320,6 +393,12 @@ export function UsersPage() {
           )}
         </DialogContent>
       </Dialog>
+      <ImageLightbox
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+      />
     </div>
   );
 }

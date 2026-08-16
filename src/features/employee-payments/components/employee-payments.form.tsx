@@ -100,7 +100,12 @@ export function EmployeePaymentsForm({
           control={form.control}
           name="employee_id"
           render={({ field }) => {
-            const employeesList = Array.isArray(employees) ? employees : (employees as any)?.data ?? [];
+            const rawList = Array.isArray(employees) ? employees : (employees as any)?.data ?? [];
+            const employeesList = rawList.filter((emp: any) => {
+              const isActive = !emp.status || emp.status === 'active';
+              const isSelected = String(emp.id) === String(field.value);
+              return isActive || isSelected;
+            });
             const selectedEmployeeLabel = (() => {
               if (!field.value) return null;
               const found = employeesList.find((emp: any) => String(emp.id) === String(field.value));

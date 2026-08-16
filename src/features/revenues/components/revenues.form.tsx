@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { User, Wallet, Shield, TrendingUp, Hammer, BadgeCheck, HardHat, Truck, Lock, Plus } from 'lucide-react';
+import { VoucherNumberHint } from '@/shared/components/voucher-number-hint';
+import { resolveVoucherHint } from '@/shared/lib/voucher-number';
 import { Button } from '@/shared/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
@@ -39,6 +41,7 @@ type RevenuesFormProps = {
   onSubmit: (data: CreateRevenuePayload) => Promise<void>;
   onCancel?: () => void;
   loading?: boolean;
+  nextVoucherNumber?: string;
 };
 
 type RoleUser = {
@@ -161,7 +164,7 @@ function getRevenueReceivedById(revenue?: Revenue | null): number {
   return 1;
 }
 
-export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: RevenuesFormProps) {
+export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading, nextVoucherNumber }: RevenuesFormProps) {
   const defaultNoteValue = defaultValues?.note ?? '';
 
   const form = useForm<RevenueFormInput, any, RevenueFormValues>({
@@ -456,7 +459,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
   return (
     <Form {...form}>
       <form
-        className="space-y-3"
+        className="relative space-y-3"
         onSubmit={form.handleSubmit(
           async (values) => {
             await onSubmit({
@@ -476,57 +479,64 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading }: 
           }
         )}
       >
-        {!fixedValues?.source && (
-          <div>
-            <FormField
-              control={form.control}
-              name="source"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>نوع الصندوق</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      const nextSource = value as RevenueSource;
-                      const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
-                      field.onChange(nextSource);
-                      form.setValue('revenueable_type', nextRevenueableType);
-                      form.setValue('revenueable_id', undefined);
-                      form.setValue('company_fund_id', undefined);
-                      form.setValue('fund_user_role', '');
-                      form.setValue('fund_user_id', undefined);
-                      form.setValue('user_fund_id', undefined);
-                      form.setValue('project_fund_id', undefined);
+        <VoucherNumberHint
+          className="absolute left-0 top-0"
+          value={resolveVoucherHint({
+            isEditMode: Boolean(defaultValues?.id),
+            voucherNumber: defaultValues?.voucher_number,
+            nextVoucherNumber,
+          })}
+        />
 
-                      if (nextSource !== 'project_fund') {
-                        form.setValue('project_id', undefined);
-                      }
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11 bg-white">
-                        <SelectValue placeholder="اختر نوع الصندوق">
-                          {field.value ? (
-                            <span>
-                              {field.value === 'company_fund' && 'صندوق الشركة'}
-                              {field.value === 'project_fund' && 'صندوق المشروع'}
-                              {field.value === 'user_fund' && 'صندوق مستخدم'}
-                            </span>
-                          ) : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="company_fund">صندوق الشركة</SelectItem>
-                      <SelectItem value="project_fund">صندوق المشروع</SelectItem>
-                      <SelectItem value="user_fund">صندوق مستخدم</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        {!fixedValues?.source && (
+          <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>نوع الصندوق</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    const nextSource = value as RevenueSource;
+                    const nextRevenueableType: RevenueableType = sourceToRevenueableType[nextSource];
+                    field.onChange(nextSource);
+                    form.setValue('revenueable_type', nextRevenueableType);
+                    form.setValue('revenueable_id', undefined);
+                    form.setValue('company_fund_id', undefined);
+                    form.setValue('fund_user_role', '');
+                    form.setValue('fund_user_id', undefined);
+                    form.setValue('user_fund_id', undefined);
+                    form.setValue('project_fund_id', undefined);
+
+                    if (nextSource !== 'project_fund') {
+                      form.setValue('project_id', undefined);
+                    }
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11 bg-white">
+                      <SelectValue placeholder="اختر نوع الصندوق">
+                        {field.value ? (
+                          <span>
+                            {field.value === 'company_fund' && 'صندوق الشركة'}
+                            {field.value === 'project_fund' && 'صندوق المشروع'}
+                            {field.value === 'user_fund' && 'صندوق مستخدم'}
+                          </span>
+                        ) : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="company_fund">صندوق الشركة</SelectItem>
+                    <SelectItem value="project_fund">صندوق المشروع</SelectItem>
+                    <SelectItem value="user_fund">صندوق مستخدم</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
 
         {/* User Fund Fields */}

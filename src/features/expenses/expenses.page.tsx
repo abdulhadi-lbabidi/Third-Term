@@ -19,6 +19,7 @@ import { ExpensesFilterForm } from './components/expenses-filter.form';
 import type { UserRole } from '@/features/users/types';
 import { cn } from '@/shared/lib/utils';
 import { format } from 'date-fns';
+import { getNextVoucherNumberFromRecords } from '@/shared/lib/voucher-number';
 
 export function ExpensesPage() {
   const queryClient = useQueryClient();
@@ -117,6 +118,10 @@ export function ExpensesPage() {
   };
 
   const expenses = expensesQuery.data?.data ?? [];
+  const nextVoucherNumber = useMemo(
+    () => getNextVoucherNumberFromRecords(expenses, 'exp'),
+    [expenses],
+  );
   const meta = expensesQuery.data?.meta;
   const totalPages = meta?.last_page ?? 1;
   const currentPage = meta?.current_page ?? page;
@@ -219,6 +224,7 @@ export function ExpensesPage() {
         open={expenseDialogOpen}
         onOpenChange={setExpenseDialogOpen}
         defaultValues={expenseToEdit}
+        nextVoucherNumber={nextVoucherNumber}
         loading={createExpense.isPending || updateExpense.isPending}
         onSubmit={async (payload) => {
           if (expenseToEdit) return updateExpense.mutateAsync({ id: expenseToEdit.id, payload });

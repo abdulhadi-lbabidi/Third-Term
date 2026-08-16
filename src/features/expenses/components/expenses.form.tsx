@@ -34,6 +34,8 @@ import { expenseFormSchema, type ExpenseFormValues } from '../schemas/expenses.s
 import { toExpenseApiPayload } from '../expenses.payload';
 import type { CreateExpensePayload, Expense, ExpenseProjectFundCurrencyDetails, ExpenseSource, ExpenseUserFundCurrencyDetails, ExpenseableType } from '../types';
 import { Plus } from 'lucide-react';
+import { VoucherNumberHint } from '@/shared/components/voucher-number-hint';
+import { resolveVoucherHint } from '@/shared/lib/voucher-number';
 
 type ExpensesFormProps = {
   defaultValues?: Expense | null;
@@ -57,6 +59,7 @@ type ExpensesFormProps = {
   onSubmitWithInvoice?: (data: CreateExpensePayload) => Promise<void>;
   onCancel?: () => void;
   loading?: boolean;
+  nextVoucherNumber?: string;
 };
 
 type RoleUser = {
@@ -356,7 +359,7 @@ function ExpenseCurrencyField({ control, currencies, selectedCurrency, disabled,
   );
 }
 
-export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, onSubmitWithInvoice, loading }: ExpensesFormProps) {
+export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, onSubmit, onSubmitWithInvoice, loading, nextVoucherNumber }: ExpensesFormProps) {
   const submitModeRef = useRef<'expense' | 'invoice'>('expense');
   const isUserFundFixed = Boolean(fixedValues?.user_fund_id);
   const form = useForm<ExpenseFormValues>({
@@ -731,7 +734,7 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="relative space-y-4"
         onSubmit={form.handleSubmit(
           async (values) => {
             const payload = toExpenseApiPayload({
@@ -754,6 +757,15 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
           }
         )}
       >
+        <VoucherNumberHint
+          className="absolute left-0 top-0"
+          value={resolveVoucherHint({
+            isEditMode: Boolean(defaultValues?.id),
+            voucherNumber: defaultValues?.voucher_number,
+            nextVoucherNumber,
+          })}
+        />
+
         {!fixedValues?.source && (
           <FormField
             control={form.control}

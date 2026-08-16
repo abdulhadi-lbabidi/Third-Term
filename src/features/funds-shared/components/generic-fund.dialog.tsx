@@ -24,23 +24,24 @@ const genericFundSchema = z.object({
   name: z.string().min(1, 'اسم الصندوق مطلوب'),
   project_id: z.number().optional(),
   user_id: z.number().optional(),
-  type: z.enum(['company', 'project', 'user']).optional(),
+  fundCategory: z.enum(['company', 'project', 'user']).optional(),
   status: z.enum(['pending', 'complete', 'canceled']).optional(),
   description: z.string().min(1, 'الوصف مطلوب'),
+  type: z.string().optional(),
   threshold: z.string()
     .min(1, 'الحد الأدنى لرصيد الصندوق مطلوب')
     .refine((val) => !isNaN(Number(val)), 'يجب إدخال رقم صحيح')
     .transform((val) => Number(val))
     .refine((val) => val >= 0, 'يجب أن يكون الحد الأدنى 0 أو أكثر'),
 }).superRefine((val, ctx) => {
-  if (val.type === 'project' && !val.project_id) {
+  if (val.fundCategory === 'project' && !val.project_id) {
     ctx.addIssue({
       code: 'custom',
       path: ['project_id'],
       message: 'الرجاء اختيار المشروع',
     });
   }
-  if (val.type === 'user' && !val.user_id) {
+  if (val.fundCategory === 'user' && !val.user_id) {
     ctx.addIssue({
       code: 'custom',
       path: ['user_id'],
@@ -62,6 +63,7 @@ type GenericFundFormProps = {
     status?: 'pending' | 'complete' | 'canceled';
     description?: string;
     threshold?: number | string;
+    type?: string;
   } | null;
   fundType: 'company' | 'project' | 'user';
   onSubmit: (values: any) => Promise<void>;
@@ -83,15 +85,22 @@ export function GenericFundDialog({
   const isEditing = !!defaultValues?.id;
   const [, setSearchParams] = useSearchParams();
 
+  const getInitialTypeText = (val?: string) => {
+    if (!val) return '';
+    if (['company', 'project', 'user'].includes(val)) return '';
+    return val;
+  };
+
   const form = useForm<any>({
     resolver: zodResolver(genericFundSchema),
     defaultValues: {
       name: defaultValues?.name || '',
       project_id: defaultValues?.project_id || 0,
       user_id: defaultValues?.user_id || 0,
-      type: fundType,
+      fundCategory: fundType,
       status: defaultValues?.status || 'pending',
       description: defaultValues?.description || '',
+      type: getInitialTypeText(defaultValues?.type),
       threshold: defaultValues?.threshold !== undefined && defaultValues?.threshold !== null ? String(defaultValues.threshold) : '',
     },
   });
@@ -102,9 +111,10 @@ export function GenericFundDialog({
         name: defaultValues?.name || '',
         project_id: defaultValues?.project_id || 0,
         user_id: defaultValues?.user_id || 0,
-        type: fundType,
+        fundCategory: fundType,
         status: defaultValues?.status || 'pending',
         description: defaultValues?.description || '',
+        type: getInitialTypeText(defaultValues?.type),
         threshold: defaultValues?.threshold !== undefined && defaultValues?.threshold !== null ? String(defaultValues.threshold) : '',
       });
     }
@@ -129,6 +139,7 @@ export function GenericFundDialog({
       name: values.name,
       description: values.description,
       threshold: values.threshold,
+      type: values.type || null,
     };
     if (isEditing) {
       payload.status = values.status;
@@ -164,6 +175,19 @@ export function GenericFundDialog({
                   <FormLabel>اسم الصندوق</FormLabel>
                   <FormControl>
                     <Input placeholder="أدخل اسم الصندوق" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نوع الصندوق</FormLabel>
+                  <FormControl>
+                    <Input placeholder="مثال: الرئيسي، فرعي..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

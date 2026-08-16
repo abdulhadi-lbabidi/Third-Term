@@ -209,6 +209,9 @@ export function ProjectsPage() {
         onView={(project) => {
           navigate(`/projects/${project.id}`);
         }}
+        onRowClick={(project) => {
+          navigate(`/projects/${project.id}`);
+        }}
         sort={sort}
         onSortChange={setSort}
       />

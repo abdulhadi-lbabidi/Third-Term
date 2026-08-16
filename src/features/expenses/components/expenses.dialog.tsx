@@ -29,9 +29,10 @@ type ExpensesDialogProps = {
   }[];
   onSubmit: (data: CreateExpensePayload) => Promise<Expense | void>;
   loading?: boolean;
+  nextVoucherNumber?: string;
 };
 
-export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading, fixedFundCurrencies }: ExpensesDialogProps) {
+export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues, onSubmit, loading, fixedFundCurrencies, nextVoucherNumber }: ExpensesDialogProps) {
   const [formKey, setFormKey] = useState(0);
   const [step, setStep] = useState<'expense' | 'invoice'>('expense');
   const [createdExpenseId, setCreatedExpenseId] = useState<number | null>(null);
@@ -86,9 +87,10 @@ export function ExpensesDialog({ open, onOpenChange, defaultValues, fixedValues,
             ) : (
               <ExpensesForm
                 key={formKey}
-                defaultValues={fetchedExpense || defaultValues}
+                defaultValues={defaultValues?.id ? (fetchedExpense ?? defaultValues) : null}
                 fixedValues={fixedValues}
                 fixedFundCurrencies={fixedFundCurrencies}
+                nextVoucherNumber={nextVoucherNumber}
                 onSubmit={async (data) => {
                   await onSubmit(data);
                   resetWorkflow();

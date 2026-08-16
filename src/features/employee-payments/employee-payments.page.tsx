@@ -110,6 +110,12 @@ export function EmployeePaymentsPage() {
     return employeesList.find((emp: any) => emp.id === targetEmployeeId) ?? null;
   }, [employeesList, isProfileView, params.id]);
 
+  const isEmployeeActive = useMemo(() => {
+    if (!isProfileView) return true;
+    if (!profileEmployee) return true;
+    return !profileEmployee.status || profileEmployee.status === 'active';
+  }, [isProfileView, profileEmployee]);
+
 
 
   useEffect(() => {
@@ -217,16 +223,18 @@ export function EmployeePaymentsPage() {
               <SlidersHorizontal className="size-4" />
               فلترة متقدمة
             </Button>
-            <Button
-              className="min-w-0 flex-1 sm:flex-none"
-              onClick={() => {
-                setSelectedPayment(null);
-                setDialogOpen(true);
-              }}
-            >
-              <Plus className="size-4" />
-              <span className="truncate">إضافة راتب جديد</span>
-            </Button>
+            {isEmployeeActive && (
+              <Button
+                className="min-w-0 flex-1 sm:flex-none"
+                onClick={() => {
+                  setSelectedPayment(null);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="size-4" />
+                <span className="truncate">إضافة راتب جديد</span>
+              </Button>
+            )}
           </div>
         }
       />

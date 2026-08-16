@@ -48,6 +48,7 @@ export function ExpensesTable({
   onSortChange,
 }: ExpensesTableProps) {
   const allColumns: DataTableColumn<Expense>[] = [
+    { header: 'رقم السند', cell: (row) => row.voucher_number || '-' },
     { header: 'البيان', cell: (row) => row.description },
     {
       header: 'المبلغ',

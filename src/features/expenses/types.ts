@@ -114,6 +114,7 @@ export type Expense = {
   created_at?: string;
   invoices_count?: number;
   note?: string;
+  voucher_number?: string | null;
 };
 
 export type CreateExpensePayload = {

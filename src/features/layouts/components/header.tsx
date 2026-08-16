@@ -35,6 +35,7 @@ const ROOT_PATHS = [
   '/materials',
   '/invoice-items',
   '/employee-payments',
+  '/increments',
   '/expenses',
   '/revenues',
   '/transfers',

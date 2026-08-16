@@ -13,7 +13,8 @@ export const projectsApi = {
       if (Array.isArray(data)) return { data };
       return { data: data?.data ?? [], meta: data?.meta };
     }),
-  getDepartments: () => apiClient.get<{ id: number; name: string }[]>('/departments').then(({ data }: any) => data?.data ?? data),
+  getDepartments: (): Promise<{ id: number; name: string }[]> =>
+    apiClient.get('/departments').then(({ data }: any) => data?.data ?? data),
   getProjectById: (id: number) => apiClient.get<Project>(`/projects/${id}`).then(({ data }: any) => data?.data ?? data),
   createProject: (payload: CreateProjectPayload) => apiClient.post<Project>('/projects', payload).then(({ data }: any) => data?.data ?? data),
   attachDepartments: (projectId: number, departmentIds: number[]): Promise<void> =>

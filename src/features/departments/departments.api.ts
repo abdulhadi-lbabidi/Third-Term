@@ -23,4 +23,5 @@ export const departmentsApi = {
   create: (payload: CreateDepartmentPayload) => apiClient.post<Department>('/departments', payload),
   update: (id: number, payload: UpdateDepartmentPayload) => apiClient.patch<Department>(`/departments/${id}`, payload),
   delete: (id: number) => apiClient.delete(`/departments/${id}`),
+  getById: (id: number): Promise<Department> => apiClient.get<any>(`/departments/${id}`).then(({ data }: any) => data?.data ?? data),
 };

@@ -3,6 +3,9 @@ export type Department = {
   name: string;
   main_manager: string;
   created_at?: string;
+  employees?: any[];
+  engineers?: any[];
+  projects?: any[];
 };
 
 export type CreateDepartmentPayload = {

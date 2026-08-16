@@ -15,11 +15,12 @@ type ProjectsTableProps = {
   onDelete?: (project: Project) => void;
   onAddFund?: (project: Project) => void;
   onView?: (project: Project) => void;
+  onRowClick?: (project: Project) => void;
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
 };
 
-export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView, sort, onSortChange }: ProjectsTableProps) {
+export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onView, onRowClick, sort, onSortChange }: ProjectsTableProps) {
   const [activeDepartments, setActiveDepartments] = useState<any[] | null>(null);
   const statusLabels: Record<Project['status'], string> = {
     pending: 'مقترح',
@@ -127,6 +128,7 @@ export function ProjectsTable({ data, loading, onEdit, onDelete, onAddFund, onVi
         columns={columns}
         data={data}
         loading={loading}
+        onRowClick={onRowClick}
         emptyLabel="لا توجد مشاريع"
         loadingLabel={
           <div className="flex flex-col gap-2 p-4">
