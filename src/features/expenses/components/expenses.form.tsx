@@ -294,6 +294,16 @@ function getExpenseCreatedById(expense?: Expense | null): number {
     return expense.created_by.id;
   }
 
+  try {
+    const raw = localStorage.getItem('user_info');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id) return parsed.id;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
   return 1;
 }
 
@@ -715,6 +725,57 @@ export function ExpensesForm({ defaultValues, fixedValues, fixedFundCurrencies, 
       form.setValue('project_fund_id', projectFunds[0].id);
     }
   }, [source, selectedProjectId, projectFunds, projectFundId, form]);
+
+  useEffect(() => {
+    if (defaultValues) return;
+
+    if (source === 'project_fund') {
+      if (selectedProjectId && projectFunds.length > 0 && !projectFundId) {
+        form.setValue('project_fund_id', projectFunds[0].id);
+      }
+      if (selectedProjectFundCurrencies.length > 0 && !selectedExpenseableId) {
+        const usd = selectedProjectFundCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (selectedProjectFundCurrencies[0].expenseable_id ?? selectedProjectFundCurrencies[0].pivot?.id ?? selectedProjectFundCurrencies[0].id);
+        form.setValue('expenseable_id', selectedId);
+      }
+    } else if (source === 'company_fund') {
+      if (companyFunds.length > 0 && !companyFundId) {
+        form.setValue('company_fund_id', companyFunds[0].id);
+      }
+      if (selectedCompanyFund?.currencies && selectedCompanyFund.currencies.length > 0 && !selectedExpenseableId) {
+        const usd = selectedCompanyFund.currencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? getCurrencyExpenseableId(usd as any) : getCurrencyExpenseableId(selectedCompanyFund.currencies[0] as any);
+        form.setValue('expenseable_id', selectedId);
+      }
+    } else if (source === 'user_fund') {
+      if (fundUserId && userFunds.length > 0 && !userFundId) {
+        form.setValue('user_fund_id', userFunds[0].id);
+      }
+      if (userFundCurrencies.length > 0 && !selectedExpenseableId) {
+        const usd = userFundCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? getCurrencyExpenseableId(usd as any) : getCurrencyExpenseableId(userFundCurrencies[0] as any);
+        form.setValue('expenseable_id', selectedId);
+      }
+    }
+  }, [
+    defaultValues,
+    source,
+    projects,
+    selectedProjectId,
+    projectFunds,
+    projectFundId,
+    selectedProjectFundCurrencies,
+    selectedExpenseableId,
+    companyFunds,
+    companyFundId,
+    selectedCompanyFund,
+    fundRoleUsers,
+    fundUserId,
+    userFunds,
+    userFundId,
+    userFundCurrencies,
+    form
+  ]);
 
   useEffect(() => {
     if (!defaultValues) {

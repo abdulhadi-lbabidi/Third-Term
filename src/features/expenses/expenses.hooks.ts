@@ -21,12 +21,31 @@ export function useCreateExpense() {
 
   return useMutation({
     mutationFn: (payload: CreateExpensePayload) => expensesApi.createExpense(payload),
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: expensesQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['funds'] });
       toast.success('تم إضافة المصروف بنجاح');
+
+      const details = data?.expenseable_info?.details as any;
+      if (details) {
+        const fund = details.project_fund || details.company_fund || details.fund;
+        const threshold = fund?.threshold;
+        const balance = details.balance;
+        const currencySymbol = details.currency?.symbol || details.currency?.currency || '';
+        const fundName = fund?.name || '';
+
+        if (threshold !== undefined && balance !== undefined) {
+          const numBalance = Number(balance);
+          const numThreshold = Number(threshold);
+          if (numBalance < numThreshold) {
+            toast.error(`تنبيه: رصيد الصندوق "${fundName}" أصبح أقل من الحد الأدنى المسموح به (${numThreshold.toLocaleString()} ${currencySymbol})! الرصيد الحالي: ${numBalance.toLocaleString()} ${currencySymbol}`, {
+              duration: 8000,
+            });
+          }
+        }
+      }
     },
     onError: () => {
       toast.error('حدث خطأ أثناء إضافة المصروف');

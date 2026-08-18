@@ -319,10 +319,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
             fundIdField="user_fund_id"
             type={currentFund.type}
             onBack={() => {
-              setSearchParams((prev) => {
-                prev.delete('fundId');
-                return prev;
-              });
+              setSearchParams(new URLSearchParams());
             }}
             onEdit={() => {
               setSelectedFund(currentFund);
@@ -344,6 +341,7 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
               user_fund_id: currentFund.id,
               fund_user_role: userRole ?? undefined,
             }}
+            threshold={currentFund.threshold}
           />
         )
       )}

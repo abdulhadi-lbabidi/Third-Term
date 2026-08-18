@@ -412,7 +412,7 @@ export function TransfersForm({
       name: defaultValues?.name ?? '',
       amount: defaultValues?.amount ? Number(defaultValues.amount) : 0,
       morph_from_type: initialFromType,
-      morph_from_id: defaultValues?.morph_from_id ?? fixedFromCurrencies[0]?.id,
+      morph_from_id: defaultValues?.morph_from_id ?? (fixedFromCurrencies.find(c => c.currency.toUpperCase() === 'USD' || c.symbol === '$')?.id ?? fixedFromCurrencies[0]?.id),
       morph_to_type: initialToType,
       morph_to_id: defaultValues?.morph_to_id ?? undefined,
       company_fund_id: initialToType === 'App\\Models\\CompanyFundCurrency'
@@ -745,33 +745,124 @@ export function TransfersForm({
     }
   }, [morphFromType, selectedFromCompanyFund, selectedFromProjectFund, selectedFromUserFund, selectedMorphFromId, form]);
 
+  // Default values logic for TransfersForm
   useEffect(() => {
-    if (morphToType === 'App\\Models\\ProjectFundCurrency' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
-      form.setValue('project_fund_id', projectFunds[0].id);
-    }
-  }, [morphToType, selectedProjectId, projectFunds, projectFundId, form]);
+    if (defaultValues) return;
 
-  useEffect(() => {
-    if (morphToType === 'App\\Models\\CompanyFundCurrency' && companyFunds.length === 1 && !companyFundId) {
-      form.setValue('company_fund_id', companyFunds[0].id);
+    // 1. Source Side (General Mode)
+    if (isGeneral) {
+      if (morphFromType === 'App\\Models\\ProjectFundCurrency') {
+        if (projects.length > 0 && !selectedFromProjectId) {
+          form.setValue('from_project_id', projects[0].id);
+        }
+        if (fromProjectFunds.length > 0 && !fromProjectFundId) {
+          form.setValue('from_project_fund_id', fromProjectFunds[0].id);
+        }
+        const pCurrencies = selectedFromProjectFund?.currencies ?? [];
+        if (pCurrencies.length > 0 && !selectedMorphFromId) {
+          const usd = pCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+          const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (pCurrencies[0].expenseable_id ?? pCurrencies[0].pivot?.id ?? pCurrencies[0].id);
+          form.setValue('morph_from_id', selectedId);
+        }
+      } else if (morphFromType === 'App\\Models\\CompanyFundCurrency') {
+        if (companyFunds.length > 0 && !fromCompanyFundId) {
+          form.setValue('from_company_fund_id', companyFunds[0].id);
+        }
+        const cCurrencies = selectedFromCompanyFund?.currencies ?? [];
+        if (cCurrencies.length > 0 && !selectedMorphFromId) {
+          const usd = cCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+          const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (cCurrencies[0].expenseable_id ?? cCurrencies[0].pivot?.id ?? cCurrencies[0].id);
+          form.setValue('morph_from_id', selectedId);
+        }
+      } else if (morphFromType === 'App\\Models\\CurrencyFund') {
+        if (fromRoleUsers.length > 0 && !fromUserId) {
+          form.setValue('from_user_id', fromRoleUsers[0].id);
+        }
+        const userFunds = selectedFromUserRecord?.user.funds ?? [];
+        if (userFunds.length > 0 && !fromUserFundId) {
+          form.setValue('from_user_fund_id', userFunds[0].id);
+        }
+        const uCurrencies = selectedFromUserFund?.currencies ?? [];
+        if (uCurrencies.length > 0 && !selectedMorphFromId) {
+          const usd = uCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+          const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (uCurrencies[0].expenseable_id ?? uCurrencies[0].pivot?.id ?? uCurrencies[0].id);
+          form.setValue('morph_from_id', selectedId);
+        }
+      }
     }
-  }, [morphToType, companyFunds, companyFundId, form]);
 
-  useEffect(() => {
-    let currencies: any[] = [];
-    if (morphToType === 'App\\Models\\CompanyFundCurrency') {
-      currencies = selectedCompanyFund?.currencies ?? [];
-    } else if (morphToType === 'App\\Models\\ProjectFundCurrency') {
-      currencies = selectedProjectFundCurrencies;
+    // 2. Destination Side
+    if (morphToType === 'App\\Models\\ProjectFundCurrency') {
+      if (projects.length > 0 && !selectedProjectId) {
+        form.setValue('project_id', projects[0].id);
+      }
+      if (projectFunds.length > 0 && !projectFundId) {
+        form.setValue('project_fund_id', projectFunds[0].id);
+      }
+      const pCurrencies = selectedProjectFund?.currencies ?? [];
+      if (pCurrencies.length > 0 && !selectedMorphToId) {
+        const usd = pCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (pCurrencies[0].expenseable_id ?? pCurrencies[0].pivot?.id ?? pCurrencies[0].id);
+        form.setValue('morph_to_id', selectedId);
+      }
+    } else if (morphToType === 'App\\Models\\CompanyFundCurrency') {
+      if (companyFunds.length > 0 && !companyFundId) {
+        form.setValue('company_fund_id', companyFunds[0].id);
+      }
+      const cCurrencies = selectedCompanyFund?.currencies ?? [];
+      if (cCurrencies.length > 0 && !selectedMorphToId) {
+        const usd = cCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (cCurrencies[0].expenseable_id ?? cCurrencies[0].pivot?.id ?? cCurrencies[0].id);
+        form.setValue('morph_to_id', selectedId);
+      }
     } else if (morphToType === 'App\\Models\\CurrencyFund') {
-      currencies = selectedUserFund?.currencies ?? [];
+      if (fundRoleUsers.length > 0 && !fundUserId) {
+        form.setValue('fund_user_id', fundRoleUsers[0].id);
+      }
+      const userFunds = selectedFundUserRecord?.user.funds ?? [];
+      if (userFunds.length > 0 && !userFundId) {
+        form.setValue('user_fund_id', userFunds[0].id);
+      }
+      const uCurrencies = selectedUserFund?.currencies ?? [];
+      if (uCurrencies.length > 0 && !selectedMorphToId) {
+        const usd = uCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (uCurrencies[0].expenseable_id ?? uCurrencies[0].pivot?.id ?? uCurrencies[0].id);
+        form.setValue('morph_to_id', selectedId);
+      }
     }
-
-    if (currencies.length === 1 && !selectedMorphToId) {
-      const val = getCurrencyExpenseableId(currencies[0]);
-      if (val) form.setValue('morph_to_id', val);
-    }
-  }, [morphToType, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund, selectedMorphToId, form]);
+  }, [
+    defaultValues,
+    isGeneral,
+    morphFromType,
+    morphToType,
+    projects,
+    selectedFromProjectId,
+    fromProjectFunds,
+    fromProjectFundId,
+    selectedFromProjectFund,
+    selectedMorphFromId,
+    companyFunds,
+    fromCompanyFundId,
+    selectedFromCompanyFund,
+    fromRoleUsers,
+    fromUserId,
+    selectedFromUserRecord,
+    fromUserFundId,
+    selectedFromUserFund,
+    selectedProjectId,
+    projectFunds,
+    projectFundId,
+    selectedProjectFund,
+    selectedMorphToId,
+    companyFundId,
+    selectedCompanyFund,
+    fundRoleUsers,
+    fundUserId,
+    selectedFundUserRecord,
+    userFundId,
+    selectedUserFund,
+    form
+  ]);
 
   const selectedProjectName = useMemo(() => {
     if (!selectedProjectId) return '';
@@ -863,7 +954,18 @@ export function TransfersForm({
             name: values.name,
             amount: values.amount,
             created_by: (() => {
-              if (!defaultValues?.created_by) return 1;
+              if (!defaultValues?.created_by) {
+                try {
+                  const raw = localStorage.getItem('user_info');
+                  if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed?.id) return parsed.id;
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+                return 1;
+              }
               const val = typeof defaultValues.created_by === 'object'
                 ? (defaultValues.created_by as any).id
                 : defaultValues.created_by;

@@ -26,7 +26,7 @@ const genericFundSchema = z.object({
   user_id: z.number().optional(),
   fundCategory: z.enum(['company', 'project', 'user']).optional(),
   status: z.enum(['pending', 'complete', 'canceled']).optional(),
-  description: z.string().min(1, 'الوصف مطلوب'),
+  description: z.string().optional(),
   type: z.string().optional(),
   threshold: z.string()
     .min(1, 'الحد الأدنى لرصيد الصندوق مطلوب')
@@ -118,7 +118,8 @@ export function GenericFundDialog({
         threshold: defaultValues?.threshold !== undefined && defaultValues?.threshold !== null ? String(defaultValues.threshold) : '',
       });
     }
-  }, [open, defaultValues, form, fundType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, form, fundType]);
 
   const projectsQuery = useQuery({
     queryKey: ['projects'] as const,
@@ -277,7 +278,7 @@ export function GenericFundDialog({
                           className={field.value === 'pending' ? 'bg-amber-500 text-white hover:bg-amber-600 border border-amber-500 shadow-sm shadow-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'}
                           onClick={() => field.onChange('pending')}
                         >
-                          قيد الانتظار
+                          قيد العمل
                         </Button>
                         <Button
                           type="button"

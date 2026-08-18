@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import type { Transfer } from '../types';
 import { Link } from 'react-router-dom';
@@ -115,6 +116,12 @@ export function TransfersTable({
   sort,
   onSortChange,
 }: TransfersTableProps) {
+  const navigate = useNavigate();
+
+  const handleRowClick = (row: Transfer) => {
+    navigate(`/transfers/${row.id}`);
+  };
+
   const isSent = (row: Transfer) => {
     if (!currentFund) return false;
     const details = row.morph_from_info?.details;
@@ -173,9 +180,12 @@ export function TransfersTable({
       deleteLabel="حذف"
       sort={sort}
       onSortChange={onSortChange}
+      onRowClick={handleRowClick}
       actions={{
         onEdit,
         onDelete,
+        onView: (row) => navigate(`/transfers/${row.id}`),
+        hideEdit: (row) => !isSent(row),
       }}
     />
   );

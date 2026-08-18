@@ -41,6 +41,7 @@ export function DepartmentTable({
       deleteLabel="حذف"
       sort={sort}
       onSortChange={onSortChange}
+      onRowClick={onView}
       actions={{
         extraActions: onView
           ? [

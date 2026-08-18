@@ -35,6 +35,7 @@ export type CreateProjectFundPayload = {
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
+  type?: string;
 };
 
 export type UpdateProjectFundPayload = {
@@ -43,6 +44,7 @@ export type UpdateProjectFundPayload = {
   status?: 'pending' | 'complete' | 'canceled';
   description?: string;
   threshold?: number;
+  type?: string;
 };
 
 export type ProjectFundCurrencyAttachPayload = {

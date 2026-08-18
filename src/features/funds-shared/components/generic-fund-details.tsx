@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/shared/lib/utils';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
@@ -40,7 +40,6 @@ import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } fro
 import { getNextVoucherNumberFromRecords } from '@/shared/lib/voucher-number';
 import { ExpensesTable } from '@/features/expenses/components/expenses.table';
 import { ExpensesDialog } from '@/features/expenses/components/expenses.dialog';
-import { ExpenseDetailsDialog } from '@/features/expenses/components/expense-details.dialog';
 import { InvoicesTable } from '@/features/invoices/components/invoices.table';
 import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
 import { useInvoices } from '@/features/invoices/invoices.hooks';
@@ -60,7 +59,7 @@ import { fundsApi } from '@/features/funds/funds.api';
 import { MoneyExchangeDialog } from './money-exchange.dialog';
 
 const statusLabels = {
-  pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
+  pending: { label: 'قيد العمل', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
   complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
   canceled: { label: 'منتهي', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
 };
@@ -87,6 +86,7 @@ type GenericFundDetailsProps = {
   extraDetails?: React.ReactNode;
   extraFixedValues?: Record<string, any>;
   type?: string;
+  threshold?: number;
 };
 
 export function GenericFundDetails({
@@ -104,9 +104,14 @@ export function GenericFundDetails({
   extraDetails,
   extraFixedValues,
   type,
+  threshold,
 }: GenericFundDetailsProps) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+
+
   const currentTab = searchParams.get('fundTab') || 'transactions';
   const expenseFilterId = Number(searchParams.get('expenseId') || 0) || null;
   const hasCurrencies = fundCurrencies.length > 0;
@@ -162,7 +167,7 @@ export function GenericFundDetails({
     setSearchParams((prev) => {
       prev.set('fundTab', value);
       return prev;
-    });
+    }, { replace: true });
   };
 
   const [revenueDialogOpen, setRevenueDialogOpen] = useState(false);
@@ -170,8 +175,6 @@ export function GenericFundDetails({
 
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
-  const [expenseDetailsOpen, setExpenseDetailsOpen] = useState(false);
-  const [selectedExpenseForView, setSelectedExpenseForView] = useState<number | null>(null);
   const [invoiceCreateOpen, setInvoiceCreateOpen] = useState(false);
   const [selectedExpenseForInvoiceCreate, setSelectedExpenseForInvoiceCreate] = useState<any | null>(null);
 
@@ -182,6 +185,8 @@ export function GenericFundDetails({
   const [reInvoiceItemsId, setReInvoiceItemsId] = useState<number>();
   const [moneyExchangeOpen, setMoneyExchangeOpen] = useState(false);
   const [currencyToDelete, setCurrencyToDelete] = useState<{ id: number; expenseableId: number; name: string } | null>(null);
+
+
 
   const detachCurrencyMutation = useMutation({
     mutationFn: (currencyId: number) =>
@@ -306,6 +311,15 @@ export function GenericFundDetails({
       savedExpense = await updateExpenseMutation.mutateAsync({ id: selectedExpense.id, payload: data });
     } else {
       savedExpense = await createExpenseMutation.mutateAsync(data);
+      const currency = fundCurrencies.find(c => Number(c.expenseable_id) === Number(data.expenseable_id) || Number(c.id) === Number(data.expenseable_id));
+      if (currency && threshold !== undefined) {
+        const newBalance = Number(currency.balance) - Number(data.amount);
+        if (newBalance < Number(threshold)) {
+          toast.error(`تنبيه: رصيد الصندوق "${fundName}" أصبح أقل من الحد الأدنى المسموح به (${Number(threshold).toLocaleString()} ${currency.symbol})! الرصيد الحالي المتوقع: ${newBalance.toLocaleString()} ${currency.symbol}`, {
+            duration: 8000,
+          });
+        }
+      }
     }
 
     const projectId = Number(extraFixedValues?.project_id);
@@ -629,7 +643,7 @@ export function GenericFundDetails({
           onDragStart={(event) => event.preventDefault()}
         >
           <TabsList className="flex h-auto w-max min-w-full justify-start [&_[data-slot=tabs-trigger]]:h-9 [&_[data-slot=tabs-trigger]]:shrink-0">
-            <TabsTrigger value="transactions" disabled={!hasCurrencies} className="text-sky-600 hover:text-sky-700 hover:bg-sky-50/30 data-active:bg-sky-50 data-active:text-sky-700">
+            <TabsTrigger value="transactions" disabled={!hasCurrencies} className="text-purple-600 hover:text-purple-700 hover:bg-purple-50/30 data-active:bg-purple-50 data-active:text-purple-700">
               <Banknote className="ml-2 size-4" />
               حركات الصندوق
             </TabsTrigger>
@@ -645,8 +659,8 @@ export function GenericFundDetails({
               <ReceiptText className="ml-2 size-4" />
               الفواتير
             </TabsTrigger>
-            <TabsTrigger value="returns" disabled={!hasCurrencies} className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/30 data-active:bg-emerald-50 data-active:text-emerald-700"><Undo2 className="ml-2 size-4" />المرتجعات</TabsTrigger>
-            <TabsTrigger value="transfers" disabled={!hasCurrencies}>
+            <TabsTrigger value="returns" disabled={!hasCurrencies} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50/30 data-active:bg-blue-50 data-active:text-blue-700"><Undo2 className="ml-2 size-4" />المرتجعات</TabsTrigger>
+            <TabsTrigger value="transfers" disabled={!hasCurrencies} className="text-orange-600 hover:text-orange-700 hover:bg-orange-50/30 data-active:bg-orange-50 data-active:text-orange-700">
               <ArrowLeftRight className="ml-2 size-4" />
               التحويلات
             </TabsTrigger>
@@ -779,8 +793,7 @@ export function GenericFundDetails({
             loading={isLoadingExpenses}
             hideTypeColumn={true}
             onView={(expense) => {
-              setSelectedExpenseForView(expense.id);
-              setExpenseDetailsOpen(true);
+              navigate(`/expenses/${expense.id}`);
             }}
             onEdit={canAddTransaction ? (expense) => {
               setSelectedExpense(expense);
@@ -970,17 +983,6 @@ export function GenericFundDetails({
         />
       )}
 
-      {expenseDetailsOpen && selectedExpenseForView && (
-        <ExpenseDetailsDialog
-          open={expenseDetailsOpen}
-          onOpenChange={(open) => {
-            setExpenseDetailsOpen(open);
-            if (!open) setSelectedExpenseForView(null);
-          }}
-          expenseId={selectedExpenseForView}
-        />
-      )}
-
       {invoiceCreateOpen && (
         <InvoicesDialog
           isOpen={invoiceCreateOpen}
@@ -1010,6 +1012,24 @@ export function GenericFundDetails({
               await updateTransferMutation.mutateAsync({ id: selectedTransfer.id, payload: data });
             } else {
               await createTransferMutation.mutateAsync(data);
+              const outgoingCurrency = fundCurrencies.find(c => Number(c.expenseable_id) === Number(data.morph_from_id) || Number(c.id) === Number(data.morph_from_id));
+              const incomingCurrency = fundCurrencies.find(c => Number(c.expenseable_id) === Number(data.morph_to_id) || Number(c.id) === Number(data.morph_to_id));
+
+              if (outgoingCurrency && threshold !== undefined) {
+                const newBalance = Number(outgoingCurrency.balance) - Number(data.amount);
+                if (newBalance < Number(threshold)) {
+                  toast.error(`تنبيه: رصيد الصندوق "${fundName}" أصبح أقل من الحد الأدنى المسموح به (${Number(threshold).toLocaleString()} ${outgoingCurrency.symbol})! الرصيد الحالي المتوقع: ${newBalance.toLocaleString()} ${outgoingCurrency.symbol}`, {
+                    duration: 8000,
+                  });
+                }
+              } else if (incomingCurrency && threshold !== undefined) {
+                const newBalance = Number(incomingCurrency.balance) + Number(data.amount);
+                if (newBalance < Number(threshold)) {
+                  toast.error(`تنبيه: رصيد الصندوق "${fundName}" أصبح أقل من الحد الأدنى المسموح به (${Number(threshold).toLocaleString()} ${incomingCurrency.symbol})! الرصيد الحالي المتوقع: ${newBalance.toLocaleString()} ${incomingCurrency.symbol}`, {
+                    duration: 8000,
+                  });
+                }
+              }
             }
           }}
           loading={createTransferMutation.isPending || updateTransferMutation.isPending}
@@ -1055,6 +1075,7 @@ export function GenericFundDetails({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
 
     </div>
   );

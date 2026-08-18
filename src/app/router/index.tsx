@@ -21,13 +21,17 @@ const IncrementsPage        = lazy(() => import('@/features/increments/increment
 const DepartmentsPage       = lazy(() => import('@/features/departments/departments.page').then(m => ({ default: m.DepartmentsPage })));
 const CloudStoragePage      = lazy(() => import('@/features/cloud-storage/cloud-storage.page').then(m => ({ default: m.CloudStoragePage })));
 const ExpensesPage          = lazy(() => import('@/features/expenses/expenses.page').then(m => ({ default: m.ExpensesPage })));
+const ExpenseDetailsPage    = lazy(() => import('@/features/expenses/expense-details.page').then(m => ({ default: m.ExpenseDetailsPage })));
 const NewExpensePage        = lazy(() => import('@/features/expenses/new-expense.page').then(m => ({ default: m.NewExpensePage })));
 const ProjectStagesPage     = lazy(() => import('@/features/projects/project-stages/project-stages.page').then(m => ({ default: m.ProjectStagesPage })));
 const MaterialsPage         = lazy(() => import('@/features/materials/materials.page').then(m => ({ default: m.MaterialsPage })));
 const RevenuesPage          = lazy(() => import('@/features/revenues/revenues.page').then(m => ({ default: m.RevenuesPage })));
+const RevenueDetailsPage    = lazy(() => import('@/features/revenues/revenue-details.page').then(m => ({ default: m.RevenueDetailsPage })));
 const TransfersPage         = lazy(() => import('@/features/transfers/transfers.page').then(m => ({ default: m.TransfersPage })));
+const TransferDetailsPage   = lazy(() => import('@/features/transfers/transfer-details.page').then(m => ({ default: m.TransferDetailsPage })));
 const InvoiceItemsPage      = lazy(() => import('@/features/invoice-items/invoice-items.page').then(m => ({ default: m.InvoiceItemsPage })));
 const InvoicesPage          = lazy(() => import('@/features/invoices/invoices.page').then(m => ({ default: m.InvoicesPage })));
+const InvoiceDetailsPage    = lazy(() => import('@/features/invoices/invoice-details.page').then(m => ({ default: m.InvoiceDetailsPage })));
 const UnpostedInvoicesPage  = lazy(() => import('@/features/invoices/unposted-invoices.page').then(m => ({ default: m.UnpostedInvoicesPage })));
 const NewInvoicePage        = lazy(() => import('@/features/invoices/new-invoice.page').then(m => ({ default: m.NewInvoicePage })));
 const AuditLogsPage         = lazy(() => import('@/features/audit-logs/audit-logs.page').then(m => ({ default: m.AuditLogsPage })));
@@ -35,6 +39,7 @@ const MoneyExchangesPage    = lazy(() => import('@/features/money-exchanges/mone
 const PublicProjectsPage    = lazy(() => import('@/features/public-projects/public-projects.page').then(m => ({ default: m.PublicProjectsPage })));
 const PublicProjectDetailsPage = lazy(() => import('@/features/public-projects/public-project-details.page').then(m => ({ default: m.PublicProjectDetailsPage })));
 const ReInvoicesPage        = lazy(() => import('@/features/re-invoices/re-invoices.page').then(m => ({ default: m.ReInvoicesPage })));
+const ReInvoiceDetailsPage  = lazy(() => import('@/features/re-invoices/re-invoice-details.page').then(m => ({ default: m.ReInvoiceDetailsPage })));
 const NotificationsPage     = lazy(() => import('@/features/notifications/notifications.page').then(m => ({ default: m.NotificationsPage })));
 
 const AUTH_TOKEN_KEY = 'token_finance_nouh';
@@ -220,16 +225,32 @@ export const router = createBrowserRouter([
             element: <ExpensesPage />,
           },
           {
+            path: '/expenses/:expenseId',
+            element: <ExpenseDetailsPage />,
+          },
+          {
             path: '/revenues',
             element: <RevenuesPage />,
+          },
+          {
+            path: '/revenues/:revenueId',
+            element: <RevenueDetailsPage />,
           },
           {
             path: '/transfers',
             element: <TransfersPage />,
           },
           {
+            path: '/transfers/:transferId',
+            element: <TransferDetailsPage />,
+          },
+          {
             path: '/invoices',
             element: <InvoicesPage />,
+          },
+          {
+            path: '/invoices/:invoiceId',
+            element: <InvoiceDetailsPage />,
           },
           {
             path: '/unposted-invoices',
@@ -238,6 +259,10 @@ export const router = createBrowserRouter([
           {
             path: '/re-invoices',
             element: <ReInvoicesPage />,
+          },
+          {
+            path: '/re-invoices/:reinvoiceId',
+            element: <ReInvoiceDetailsPage />,
           },
           {
             path: '/employees/:employeeId/:employeeName/payments',

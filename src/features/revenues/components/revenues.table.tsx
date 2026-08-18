@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import {
   getCurrencyStringFromInfo,
@@ -31,6 +32,12 @@ export function RevenuesTable({
   sort,
   onSortChange,
 }: RevenuesTableProps) {
+  const navigate = useNavigate();
+
+  const handleRowClick = (row: Revenue) => {
+    navigate(`/revenues/${row.id}`);
+  };
+
   const allColumns: DataTableColumn<Revenue>[] = [
     { header: 'رقم السند', cell: (row) => row.voucher_number || '-' },
     { header: 'البيان', cell: (row) => row.statement },
@@ -70,9 +77,11 @@ export function RevenuesTable({
       deleteLabel="حذف"
       sort={sort}
       onSortChange={onSortChange}
+      onRowClick={handleRowClick}
       actions={{
         onEdit,
         onDelete,
+        onView: (row) => navigate(`/revenues/${row.id}`),
         extraActions: undefined,
       }}
     />

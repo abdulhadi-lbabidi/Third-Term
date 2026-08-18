@@ -306,10 +306,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
             fundIdField="company_fund_id"
             type={currentFund.type}
             onBack={() => {
-              setSearchParams((prev) => {
-                prev.delete('fundId');
-                return prev;
-              });
+              setSearchParams(new URLSearchParams());
             }}
             onEdit={() => {
               setSelectedCompanyFund(currentFund);
@@ -325,6 +322,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
             extraFixedValues={{
               company_fund_id: currentFund.id,
             }}
+            threshold={currentFund.threshold}
           />
         )
       )}

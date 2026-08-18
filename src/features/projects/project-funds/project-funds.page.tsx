@@ -44,6 +44,7 @@ const projectFundsQueryKeys = {
 export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boolean; projectData?: Project | null }) {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+
   const selectedFundId = searchParams.get('fundId') ? Number(searchParams.get('fundId')) : null;
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const perPage = Math.max(1, Number(searchParams.get('perPage')) || 20);
@@ -126,6 +127,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
         status: payload.status,
         description: payload.description,
         threshold: payload.threshold,
+        type: payload.type,
       };
 
       if (selectedProjectFund) {
@@ -135,14 +137,22 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
           status: apiPayload.status,
           description: apiPayload.description,
           threshold: apiPayload.threshold,
+          type: apiPayload.type,
         });
       }
       return projectFundsApi.createProjectFund(apiPayload);
     },
     onSuccess: async (_fund, variables) => {
       const affectedProjectId = variables.project_id || projectData?.id || projectId;
+      
+      // Close the modal/dialog first
+      setDialogOpen(false);
+      setSelectedProjectFund(null);
+      
+      // Invalidate queries to trigger fetches after modal is closed
       await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
+      
       if (Number.isFinite(affectedProjectId) && affectedProjectId > 0) {
         await queryClient.invalidateQueries({
           queryKey: ['projects', affectedProjectId],
@@ -151,8 +161,6 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
         });
       }
       await queryClient.invalidateQueries({ queryKey: ['projects'], exact: true });
-      setDialogOpen(false);
-      setSelectedProjectFund(null);
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حفظ الصندوق');
@@ -396,6 +404,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
             onBack={() => {
               setSearchParams((prev) => {
                 prev.delete('fundId');
+                prev.delete('fundTab');
                 return prev;
               });
             }}
@@ -417,6 +426,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
             extraFixedValues={{
               project_id: currentFund.project?.id,
             }}
+            threshold={currentFund.threshold}
           />
         )
       )}
@@ -432,6 +442,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
           status: selectedProjectFund.status,
           description: selectedProjectFund.description,
           threshold: selectedProjectFund.threshold,
+          type: selectedProjectFund.type,
         } : {
           name: '',
           project_id: projectId || 0,

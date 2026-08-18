@@ -20,11 +20,7 @@ import type { ReInvoice, ReInvoicePayload } from '../types';
 type Currency = { id: number; expenseable_id?: number; currency: string; symbol: string; balance: string };
 type Props = { open: boolean; onClose: () => void; value?: ReInvoice | null; currencies: Currency[]; modelType: string; onSubmit: (payload: ReInvoicePayload) => Promise<ReInvoice | void>; loading?: boolean; headerFields?: ReactNode; submitDisabled?: boolean };
 const EMPTY_ROWS: any[] = [];
-const REINVOICEABLE_TYPES = [
-  'App\\Models\\CurrencyFund',
-  'App\\Models\\CompanyFundCurrency',
-  'App\\Models\\ProjectFundCurrency',
-] as const;
+
 
 export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, onSubmit, loading, headerFields, submitDisabled }: Props) {
   const form = useForm<ReInvoicePayload>();
@@ -71,10 +67,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
           || 'المزوّد المحدد غير صالح';
       },
     });
-    form.register('reinvoiceable_type', {
-      validate: (type) => REINVOICEABLE_TYPES.includes(type as typeof REINVOICEABLE_TYPES[number])
-        || 'نوع الصندوق غير صالح',
-    });
+    form.register('reinvoiceable_type');
     form.register('reinvoiceable_id', {
       validate: (id) => {
         const currencyId = Number(id);
@@ -259,7 +252,11 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
             />
           )}
         </div>
-        <div className="flex justify-end gap-2 sm:col-span-2"><Button type="submit" disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : value ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
+        <div className="flex justify-end gap-2 sm:col-span-2"><Button type="submit" onClick={() => {
+          if (Object.keys(form.formState.errors).length > 0) {
+            console.log('ReInvoice form validation errors:', form.formState.errors);
+          }
+        }} disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : value ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
       </form></TabsContent>
       <TabsContent value="items" className="pt-4">{activeId && <ReInvoiceItemsPanel reInvoiceId={activeId} onBack={() => setStep('details')} onDone={onClose} />}</TabsContent>
     </Tabs>

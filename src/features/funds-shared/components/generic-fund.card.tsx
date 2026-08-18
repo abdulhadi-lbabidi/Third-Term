@@ -54,7 +54,7 @@ export function GenericFundCardSkeleton() {
 }
 
 const statusLabels = {
-  pending: { label: 'قيد الانتظار', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
+  pending: { label: 'قيد العمل', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
   complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
   canceled: { label: 'منتهي', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
 };
@@ -100,38 +100,6 @@ export function GenericFundCard({
               </div>
             </div>
             <div className="flex items-start gap-2 shrink-0">
-              {(onEdit || (onDelete && status !== 'canceled')) && (
-                <div className="flex items-center gap-1 border border-slate-200/60 rounded-lg p-0.5 bg-slate-50/50">
-                  {onEdit && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-7 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit();
-                      }}
-                    >
-                      <Edit2 className="size-3.5" />
-                    </Button>
-                  )}
-                  {onDelete && status !== 'canceled' && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-7 rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete();
-                      }}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  )}
-                </div>
-              )}
               <div className="flex flex-col items-end gap-1.5">
                 {status && (
                   <span className={cn(
@@ -197,8 +165,44 @@ export function GenericFundCard({
         </div>
 
         <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400">
-          <span>تاريخ الإنشاء:</span>
-          <span>{created_at ? formatArabicDate(created_at) : '-'}</span>
+          <div className="flex items-center gap-1.5">
+            <span>تاريخ الإنشاء:</span>
+            <span className="font-semibold text-slate-700">{created_at ? formatArabicDate(created_at) : '-'}</span>
+          </div>
+          <div>
+            {(onEdit || (onDelete && status !== 'canceled')) && (
+              <div className="flex items-center gap-1 border border-slate-200/60 rounded-lg p-0.5 bg-slate-50/50">
+                {onEdit && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-7 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }}
+                  >
+                    <Edit2 className="size-3.5" />
+                  </Button>
+                )}
+                {onDelete && status !== 'canceled' && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-7 rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

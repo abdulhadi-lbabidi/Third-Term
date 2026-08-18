@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Eye, FilePlus2, Loader2, ReceiptText } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
@@ -47,6 +48,12 @@ export function ExpensesTable({
   sort,
   onSortChange,
 }: ExpensesTableProps) {
+  const navigate = useNavigate();
+
+  const handleRowClick = (row: Expense) => {
+    navigate(`/expenses/${row.id}`);
+  };
+
   const allColumns: DataTableColumn<Expense>[] = [
     { header: 'رقم السند', cell: (row) => row.voucher_number || '-' },
     { header: 'البيان', cell: (row) => row.description },
@@ -106,9 +113,11 @@ export function ExpensesTable({
       deleteLabel="حذف"
       sort={sort}
       onSortChange={onSortChange}
+      onRowClick={handleRowClick}
       actions={{
         onEdit,
         onDelete,
+        onView: (row) => navigate(`/expenses/${row.id}`),
         extraActions: [
           ...(onView
             ? [

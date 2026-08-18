@@ -26,6 +26,11 @@ export const revenuesApi = {
     return response.data;
   },
 
+  getRevenueById: async (id: number): Promise<Revenue> => {
+    const response = await apiClient.get(`/revenues/${id}`);
+    return response.data;
+  },
+
   createRevenue: async (payload: CreateRevenuePayload): Promise<Revenue> => {
     const response = await apiClient.post('/revenues', payload, {
       headers: { 'x-success-message': 'تم إضافة الإيراد بنجاح' },

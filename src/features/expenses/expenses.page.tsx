@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
@@ -8,7 +9,6 @@ import { useCreateExpense, useExpenses, useUpdateExpense } from './expenses.hook
 import { ExpensesTable } from './components/expenses.table';
 import { ExpensesDialog } from './components/expenses.dialog';
 import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
-import { ExpenseDetailsDialog } from './components/expense-details.dialog';
 import type { Expense } from './types';
 import { ReceiptText, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
@@ -23,11 +23,10 @@ import { getNextVoucherNumberFromRecords } from '@/shared/lib/voucher-number';
 
 export function ExpensesPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
 
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [invoiceExpenseId, setInvoiceExpenseId] = useState<number | null>(null);
@@ -112,11 +111,6 @@ export function ExpensesPage() {
     toast.success('تم حذف المصروف بنجاح');
   };
 
-  const handleView = (expense: Expense) => {
-    setSelectedExpenseId(expense.id);
-    setDetailsOpen(true);
-  };
-
   const expenses = expensesQuery.data?.data ?? [];
   const nextVoucherNumber = useMemo(
     () => getNextVoucherNumberFromRecords(expenses, 'exp'),
@@ -192,7 +186,7 @@ export function ExpensesPage() {
       <ExpensesTable
         data={expenses}
         loading={expensesQuery.isLoading}
-        onView={handleView}
+        onView={(expense) => navigate(`/expenses/${expense.id}`)}
         onEdit={(expense) => { setExpenseToEdit(expense); setExpenseDialogOpen(true); }}
         onDelete={handleDelete}
         onAddInvoice={(expense) => setInvoiceExpenseId(expense.id)}
@@ -209,15 +203,6 @@ export function ExpensesPage() {
         limit={perPage}
         limitOptions={[5, 10, 20, 50, 100]}
         onLimitChange={setPerPage}
-      />
-
-      <ExpenseDetailsDialog
-        open={detailsOpen}
-        onOpenChange={(open) => {
-          setDetailsOpen(open);
-          if (!open) setSelectedExpenseId(null);
-        }}
-        expenseId={selectedExpenseId}
       />
 
       <ExpensesDialog

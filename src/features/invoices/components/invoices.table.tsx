@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { useInvoices, useDeleteInvoice } from '../invoices.hooks';
-import { InvoiceDetailsDialog } from './invoice-details.dialog';
 import { InvoicesDialog } from './invoices.dialog';
 import type { Invoice } from '../types';
 import { SimplePagination } from '@/components/ui/pagination';
@@ -38,10 +38,11 @@ export function InvoicesTable({
   const filterKey = JSON.stringify({ filters, fixedValues, perPage });
 
   useEffect(() => {
-    setPage(1);
-    setLimit(perPage);
+    setPage((prevPage) => (prevPage !== 1 ? 1 : prevPage));
+    setLimit((prevLimit) => (prevLimit !== perPage ? perPage : prevLimit));
   }, [filterKey, perPage]);
 
+  const navigate = useNavigate();
   const { data: response, isLoading } = useInvoices({
     paginate: true,
     per_page: limit,
@@ -52,7 +53,6 @@ export function InvoicesTable({
   }, enabled);
   const { mutateAsync: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
-  const [invoiceToViewId, setInvoiceToViewId] = useState<number | null>(null);
   const [invoiceToEditId, setInvoiceToEditId] = useState<number | null>(null);
 
   const invoices = response?.data || [];
@@ -178,6 +178,7 @@ export function InvoicesTable({
         deleteLabel="حذف"
         sort={sort}
         onSortChange={onSortChange}
+        onRowClick={(row) => navigate(`/invoices/${row.id}`)}
         actions={{
           onEdit: (row) => {
             setInvoiceToEditId(row.id);
@@ -190,7 +191,7 @@ export function InvoicesTable({
             {
               label: 'عرض التفاصيل',
               icon: <Eye className="size-4" />,
-              onClick: (row) => setInvoiceToViewId(row.id),
+              onClick: (row) => navigate(`/invoices/${row.id}`),
             }
           ]
         }}
@@ -204,12 +205,6 @@ export function InvoicesTable({
         limit={limit}
         limitOptions={[5, 10, 25, 50]}
         onLimitChange={setLimit}
-      />
-
-      <InvoiceDetailsDialog
-        isOpen={!!invoiceToViewId}
-        onClose={() => setInvoiceToViewId(null)}
-        invoiceId={invoiceToViewId}
       />
 
       <InvoicesDialog

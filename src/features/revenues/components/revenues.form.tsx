@@ -379,27 +379,65 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading, ne
   const projectCurrencyOptions = (allProjectFunds.find(f => f.id === derivedProjectFundId)?.currencies || selectedProjectFund?.currencies)?.map(toCurrencyOption) || [];
   const userCurrencyOptions = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies?.map(toCurrencyOption) || [];
 
+  // Default values logic for first fund and USD currency in RevenuesForm
   useEffect(() => {
-    if (source === 'project_fund' && selectedProjectId && projectFunds.length === 1 && !projectFundId) {
-      form.setValue('project_fund_id', projectFunds[0].id);
-    }
-  }, [source, selectedProjectId, projectFunds, projectFundId, form]);
+    if (defaultValues) return;
 
-  useEffect(() => {
-    if (source === 'company_fund' && companyFunds.length === 1 && !companyFundId) {
-      form.setValue('company_fund_id', companyFunds[0].id);
+    if (source === 'project_fund') {
+      if (selectedProjectId && projectFunds.length > 0 && !projectFundId) {
+        form.setValue('project_fund_id', projectFunds[0].id);
+      }
+      const pCurrencies = allProjectFunds.find(f => f.id === derivedProjectFundId)?.currencies || selectedProjectFund?.currencies || [];
+      if (pCurrencies.length > 0 && !selectedRevenueableId) {
+        const usd = pCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? getCurrencyRevenueableId(usd) : getCurrencyRevenueableId(pCurrencies[0]);
+        form.setValue('revenueable_id', selectedId);
+      }
+    } else if (source === 'company_fund') {
+      if (companyFunds.length > 0 && !companyFundId) {
+        form.setValue('company_fund_id', companyFunds[0].id);
+      }
+      const cCurrencies = companyFunds.find(f => f.id === derivedCompanyFundId)?.currencies || selectedCompanyFund?.currencies || [];
+      if (cCurrencies.length > 0 && !selectedRevenueableId) {
+        const usd = cCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? getCurrencyRevenueableId(usd) : getCurrencyRevenueableId(cCurrencies[0]);
+        form.setValue('revenueable_id', selectedId);
+      }
+    } else if (source === 'user_fund') {
+      const uFunds = selectedFundUserRecord?.user.funds ?? [];
+      if (fundUserId && uFunds.length > 0 && !userFundId) {
+        form.setValue('user_fund_id', uFunds[0].id);
+      }
+      const uCurrencies = (selectedFundUserRecord?.user.funds?.find(f => f.id === derivedUserFundId) || allUserFunds.find(f => f.id === derivedUserFundId))?.currencies || [];
+      if (uCurrencies.length > 0 && !selectedRevenueableId) {
+        const usd = uCurrencies.find(c => c.currency.toUpperCase() === 'USD');
+        const selectedId = usd ? getCurrencyRevenueableId(usd) : getCurrencyRevenueableId(uCurrencies[0]);
+        form.setValue('revenueable_id', selectedId);
+      }
     }
-  }, [source, companyFunds, companyFundId, form]);
-
-  useEffect(() => {
-    const options = source === 'company_fund' ? companyCurrencyOptions
-      : source === 'project_fund' ? projectCurrencyOptions
-        : userCurrencyOptions;
-
-    if (options.length === 1 && !selectedRevenueableId) {
-      form.setValue('revenueable_id', options[0].value);
-    }
-  }, [source, companyCurrencyOptions, projectCurrencyOptions, userCurrencyOptions, selectedRevenueableId, form]);
+  }, [
+    defaultValues,
+    source,
+    projects,
+    selectedProjectId,
+    projectFunds,
+    projectFundId,
+    allProjectFunds,
+    derivedProjectFundId,
+    selectedProjectFund,
+    selectedRevenueableId,
+    companyFunds,
+    companyFundId,
+    derivedCompanyFundId,
+    selectedCompanyFund,
+    fundRoleUsers,
+    fundUserId,
+    userFundId,
+    selectedFundUserRecord,
+    allUserFunds,
+    derivedUserFundId,
+    form
+  ]);
 
   const amountField = (
     <FormField

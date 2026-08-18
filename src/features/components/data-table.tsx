@@ -47,6 +47,8 @@ type DataTableActions<T> = {
   onEdit?: (row: T) => void;
   editLabel?: string;
   onDelete?: (row: T) => void;
+  hideEdit?: (row: T) => boolean;
+  hideDelete?: (row: T) => boolean;
   extraActions?: ExtraAction<T>[];
 };
 
@@ -215,7 +217,7 @@ export function DataTable<T>({
                     } : undefined}
                   >
                     {renderExpandedRow ? (
-                      <TableCell className="w-10 px-2">
+                      <TableCell className="w-10 px-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => toggleRow(rowIndex)}
@@ -245,7 +247,7 @@ export function DataTable<T>({
                       </TableCell>
                     ))}
                     {actionCount > 0 ? (
-                      <TableCell className="w-14">
+                      <TableCell className="w-14" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
@@ -286,7 +288,7 @@ export function DataTable<T>({
                               </DropdownMenuItem>
                             ) : null}
 
-                            {actions?.onEdit ? (
+                            {actions?.onEdit && !actions?.hideEdit?.(row) ? (
                               <DropdownMenuItem
                                 onSelect={() => {
                                   setTimeout(() => {
@@ -299,9 +301,9 @@ export function DataTable<T>({
                               </DropdownMenuItem>
                             ) : null}
 
-                            {actions?.onDelete ? (
+                            {actions?.onDelete && !actions?.hideDelete?.(row) ? (
                               <>
-                                {actions?.onView || actions?.onEdit || actions?.extraActions?.length ? (
+                                {(actions?.onView || (actions?.onEdit && !actions?.hideEdit?.(row)) || actions?.extraActions?.length) ? (
                                   <DropdownMenuSeparator />
                                 ) : null}
                                 <DropdownMenuItem

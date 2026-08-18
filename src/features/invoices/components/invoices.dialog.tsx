@@ -228,10 +228,6 @@ export function InvoicesDialog({ isOpen, onClose, invoiceId, fixedValues, embedd
                       (document.getElementById('invoice-item-dialog-form') as HTMLFormElement | null)?.requestSubmit();
                       return;
                     }
-                    if (!invoiceItems.length) {
-                      toast.error('أضف صنفًا واحدًا على الأقل قبل إرسال الفاتورة');
-                      return;
-                    }
                     completeDialog();
                   }}
                 >
