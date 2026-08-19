@@ -18,11 +18,11 @@ import { ReInvoiceItemsPanel } from './re-invoice-items.panel';
 import type { ReInvoice, ReInvoicePayload } from '../types';
 
 type Currency = { id: number; expenseable_id?: number; currency: string; symbol: string; balance: string };
-type Props = { open: boolean; onClose: () => void; value?: ReInvoice | null; currencies: Currency[]; modelType: string; onSubmit: (payload: ReInvoicePayload) => Promise<ReInvoice | void>; loading?: boolean; headerFields?: ReactNode; submitDisabled?: boolean };
+type Props = { open: boolean; onClose: () => void; value?: ReInvoice | Partial<ReInvoicePayload> | null; currencies: Currency[]; modelType: string; onSubmit: (payload: ReInvoicePayload) => Promise<ReInvoice | void>; loading?: boolean; headerFields?: ReactNode; submitDisabled?: boolean; sourceInvoiceItems?: any[]; disablePrefilledFields?: boolean };
 const EMPTY_ROWS: any[] = [];
 
 
-export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, onSubmit, loading, headerFields, submitDisabled }: Props) {
+export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, onSubmit, loading, headerFields, submitDisabled, sourceInvoiceItems, disablePrefilledFields }: Props) {
   const form = useForm<ReInvoicePayload>();
   const initialValueRef = useRef(value);
   const initialModelTypeRef = useRef(modelType);
@@ -30,7 +30,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
   initialModelTypeRef.current = modelType;
   const { errors } = form.formState;
   const [step, setStep] = useState<'details' | 'items'>('details');
-  const [activeId, setActiveId] = useState<number | undefined>(value?.id);
+  const [activeId, setActiveId] = useState<number | undefined>((value as ReInvoice)?.id);
   const items = useQuery({ queryKey: ['items'], queryFn: () => itemsApi.getItems(1, 1000), enabled: open && step === 'details' });
   const suppliers = useQuery({ queryKey: ['users', 'supplier'], queryFn: () => usersApi.getUsersByRole('supplier', 1, 1000), enabled: open && step === 'details' });
   const itemRows = items.data?.data ?? EMPTY_ROWS;
@@ -90,10 +90,9 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
       return;
     }
 
-    // تهيئة واحدة لكل جلسة إنشاء/تعديل. تحميل القوائم لاحقًا لا يعيد ضبط النموذج.
     setStep('details');
     const initialValue = initialValueRef.current;
-    setActiveId(initialValue?.id);
+    setActiveId((initialValue as ReInvoice)?.id);
     form.reset({
       item_id: Number(initialValue?.item_id ?? 0),
       supplier_id: Number(initialValue?.supplier_id ?? 0) || undefined,
@@ -105,7 +104,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
       is_posted: Boolean(initialValue?.is_posted),
       is_visible_to_client: initialValue?.is_visible_to_client ?? true,
     });
-  }, [form, open, value?.id]);
+  }, [form, open, value]);
 
   useEffect(() => {
     if (!open) return;
@@ -117,17 +116,17 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
 
     if (availableCurrencyIds.length === 1 && !currentCurrencyIsAvailable) {
       form.setValue('reinvoiceable_id', availableCurrencyIds[0], { shouldValidate: true });
-    } else if (availableCurrencyIds.length > 1 && currentCurrencyId > 0 && !currentCurrencyIsAvailable && !value?.id) {
+    } else if (availableCurrencyIds.length > 1 && currentCurrencyId > 0 && !currentCurrencyIsAvailable && !(value as ReInvoice)?.id) {
       form.setValue('reinvoiceable_id', 0, { shouldValidate: true });
     }
-  }, [currencyKey, form, modelType, open, value?.id]);
+  }, [currencyKey, form, modelType, open, value]);
 
   useEffect(() => {
     if (!open || !value || !itemRows.length || form.formState.dirtyFields.item_id) return;
     const currentItemId = Number(form.getValues('item_id'));
     if (itemRows.some((item: any) => Number(item.id) === currentItemId)) return;
 
-    const itemName = typeof value.item === 'string' ? value.item : value.item?.name;
+    const itemName = typeof (value as any).item === 'string' ? (value as any).item : (value as any).item?.name;
     const matchedItem = itemName
       ? itemRows.find((item: any) => item.name?.trim() === itemName.trim())
       : undefined;
@@ -136,11 +135,11 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
 
   useEffect(() => {
     if (!open || !value || !supplierRows.length || form.formState.dirtyFields.supplier_id) return;
-    const supplierRelation = typeof value.supplier === 'object' ? value.supplier : undefined;
-    const supplierName = typeof value.supplier === 'string'
-      ? value.supplier
+    const supplierRelation = typeof (value as any).supplier === 'object' ? (value as any).supplier : undefined;
+    const supplierName = typeof (value as any).supplier === 'string'
+      ? (value as any).supplier
       : supplierRelation?.user?.name ?? supplierRelation?.name;
-    const requestedSupplierId = Number(value.supplier_id ?? 0) || undefined;
+    const requestedSupplierId = Number((value as any).supplier_id ?? 0) || undefined;
     const matchedSupplier = supplierRows.find((supplier: any) =>
       (requestedSupplierId && Number(supplier.id) === requestedSupplierId)
       || (requestedSupplierId && Number(supplier.user?.id) === requestedSupplierId)
@@ -151,7 +150,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
     if (matchedSupplier) form.setValue('supplier_id', Number(matchedSupplier.id), { shouldValidate: true });
   }, [form, open, supplierRows, value]);
 
-  return <Dialog open={open} onOpenChange={(next) => !next && onClose()}><DialogContent className="!max-w-3xl !overflow-y-auto"><DialogHeader><DialogTitle>{value ? 'تحديث المرتجع' : 'إنشاء مرتجع'}</DialogTitle></DialogHeader>
+  return <Dialog open={open} onOpenChange={(next) => !next && onClose()}><DialogContent className="!max-w-3xl !overflow-y-auto"><DialogHeader><DialogTitle>{(value as ReInvoice)?.id ? 'تحديث المرتجع' : 'إنشاء مرتجع'}</DialogTitle></DialogHeader>
     <Tabs value={step} onValueChange={(next) => setStep(next as 'details' | 'items')}>
       <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="details"><FileText className="ml-2 size-4" />بيانات المرتجع</TabsTrigger><TabsTrigger value="items" disabled={!activeId || form.formState.isDirty}><PackageOpen className="ml-2 size-4" />الأصناف</TabsTrigger></TabsList>
       <TabsContent value="details" className="pt-4"><form className="grid gap-4 sm:grid-cols-2" onSubmit={form.handleSubmit(async (payload) => {
@@ -178,7 +177,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         }
 
         const saved: any = await onSubmit(payload);
-        const id = Number(saved?.id ?? saved?.data?.id ?? saved?.re_invoice?.id ?? saved?.reInvoice?.id ?? value?.id);
+        const id = Number(saved?.id ?? saved?.data?.id ?? saved?.re_invoice?.id ?? saved?.reInvoice?.id ?? (value as ReInvoice)?.id);
         if (Number.isInteger(id) && id > 0) {
           form.reset(payload);
           setActiveId(id);
@@ -186,9 +185,9 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         }
       })}>
         {headerFields}
-        <label className="space-y-1"><span>البند</span><SearchableSelect loading={items.isLoading} options={itemRows.map((row: any) => ({ value: row.id, label: row.name }))} value={form.watch('item_id')} onValueChange={selectItem} placeholder="اختر البند" />{errors.item_id && <p className="text-sm text-destructive">{errors.item_id.message}</p>}</label>
-        <label className="space-y-1"><span>المزوّد <span className="text-xs text-muted-foreground">(اختياري)</span></span><SearchableSelect loading={suppliers.isLoading} options={supplierRows.map((row: any) => ({ value: row.id, label: row.user?.name ?? row.name }))} value={form.watch('supplier_id')} onValueChange={(id) => form.setValue('supplier_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر المزوّد" bottomAction={form.watch('supplier_id') ? <Button type="button" variant="ghost" size="sm" className="w-full justify-start" onClick={() => form.setValue('supplier_id', undefined, { shouldDirty: true, shouldValidate: true })}>بدون مزوّد</Button> : undefined} />{errors.supplier_id && <p className="text-sm text-destructive">{errors.supplier_id.message}</p>}</label>
-        <label className="space-y-1"><span>عملة الصندوق</span><SearchableSelect options={currencies.map((row) => ({ value: row.expenseable_id ?? row.id, label: `${row.currency} ${row.symbol} — ${Number(row.balance).toLocaleString()}`, className: Number(row.balance) > 0 ? 'text-success' : 'text-destructive' }))} value={form.watch('reinvoiceable_id')} onValueChange={(id) => form.setValue('reinvoiceable_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر العملة" />{errors.reinvoiceable_id && <p className="text-sm text-destructive">{errors.reinvoiceable_id.message}</p>}</label>
+        <label className="space-y-1"><span>البند</span><SearchableSelect disabled={disablePrefilledFields} loading={items.isLoading} options={itemRows.map((row: any) => ({ value: row.id, label: row.name }))} value={form.watch('item_id')} onValueChange={selectItem} placeholder="اختر البند" />{errors.item_id && <p className="text-sm text-destructive">{errors.item_id.message}</p>}</label>
+        <label className="space-y-1"><span>المزوّد <span className="text-xs text-muted-foreground">(اختياري)</span></span><SearchableSelect disabled={disablePrefilledFields} loading={suppliers.isLoading} options={supplierRows.map((row: any) => ({ value: row.id, label: row.user?.name ?? row.name }))} value={form.watch('supplier_id')} onValueChange={(id) => form.setValue('supplier_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر المزوّد" bottomAction={form.watch('supplier_id') && !disablePrefilledFields ? <Button type="button" variant="ghost" size="sm" className="w-full justify-start" onClick={() => form.setValue('supplier_id', undefined, { shouldDirty: true, shouldValidate: true })}>بدون مزوّد</Button> : undefined} />{errors.supplier_id && <p className="text-sm text-destructive">{errors.supplier_id.message}</p>}</label>
+        <label className="space-y-1"><span>عملة الصندوق</span><SearchableSelect disabled={disablePrefilledFields} options={currencies.map((row) => ({ value: row.expenseable_id ?? row.id, label: `${row.currency} ${row.symbol} — ${Number(row.balance).toLocaleString()}`, className: Number(row.balance) > 0 ? 'text-success' : 'text-destructive' }))} value={form.watch('reinvoiceable_id')} onValueChange={(id) => form.setValue('reinvoiceable_id', Number(id), { shouldDirty: true, shouldValidate: true })} placeholder="اختر العملة" />{errors.reinvoiceable_id && <p className="text-sm text-destructive">{errors.reinvoiceable_id.message}</p>}</label>
         <label className="space-y-1 flex flex-col"><span>التاريخ</span>
           <Popover>
             <PopoverTrigger>
@@ -205,7 +204,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         </label>
         <label className="space-y-1"          >
           <span>الخصم</span>
-          <Input type="number" min={0} max={form.watch('final_total') ?? undefined} step="any" {...form.register('discount', {
+          <Input type="number" min={0} max={form.watch('final_total') ?? undefined} step="any" disabled={disablePrefilledFields} {...form.register('discount', {
             valueAsNumber: true,
             validate: (discount) => {
               const discountValue = Number(discount ?? 0);
@@ -217,7 +216,7 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
         </label>
         <label className="space-y-1">
           <span>الإجمالي</span>
-          <Input type="number" min={0} step="any" {...form.register('final_total', {
+          <Input type="number" min={0} step="any" disabled={disablePrefilledFields} {...form.register('final_total', {
             valueAsNumber: true,
             validate: (total) => {
               const totalValue = Number(total);
@@ -256,9 +255,9 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
           if (Object.keys(form.formState.errors).length > 0) {
             console.log('ReInvoice form validation errors:', form.formState.errors);
           }
-        }} disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : value ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
+        }} disabled={loading || items.isFetching || submitDisabled}>{loading || items.isFetching ? 'جاري التحقق...' : (value as ReInvoice)?.id ? 'حفظ التعديلات والانتقال للأصناف' : 'إنشاء والانتقال للأصناف'}</Button></div>
       </form></TabsContent>
-      <TabsContent value="items" className="pt-4">{activeId && <ReInvoiceItemsPanel reInvoiceId={activeId} onBack={() => setStep('details')} onDone={onClose} />}</TabsContent>
+      <TabsContent value="items" className="pt-4">{activeId && <ReInvoiceItemsPanel reInvoiceId={activeId} onBack={() => setStep('details')} onDone={onClose} sourceInvoiceItems={sourceInvoiceItems} disablePrefilledFields={disablePrefilledFields} />}</TabsContent>
     </Tabs>
   </DialogContent></Dialog>;
 }

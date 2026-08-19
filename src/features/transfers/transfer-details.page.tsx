@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -7,10 +7,8 @@ import {
   Wallet,
   FileText,
   Calendar,
-  ArrowRight,
   TrendingDown,
 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { PageHeader } from '../components/page-header';
 import { transfersApi } from './transfers.api';
@@ -118,7 +116,7 @@ function TransferDetailsContent({ transfer }: { transfer: Transfer }) {
             <Calendar className="size-3.5" />
             {transfer.created_at ? formatArabicDate(transfer.created_at) : '-'}
           </span>
-          <span className="status-badge-neutral">#{transfer.id}</span>
+        
         </div>
       </div>
 
@@ -185,7 +183,6 @@ function TransferDetailsContent({ transfer }: { transfer: Transfer }) {
 
 export function TransferDetailsPage() {
   const { transferId } = useParams<{ transferId: string }>();
-  const navigate = useNavigate();
   const id = Number(transferId);
 
   const transferQuery = useQuery<Transfer>({
@@ -200,12 +197,7 @@ export function TransferDetailsPage() {
         badge="التحويلات"
         title="تفاصيل التحويل المالي"
         icon={TrendingDown}
-        action={
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            <ArrowRight className="ml-2 size-4" />
-            رجوع
-          </Button>
-        }
+        
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto">

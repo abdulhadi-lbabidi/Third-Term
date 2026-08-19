@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -11,10 +11,8 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
-  ArrowRight,
   TrendingDown,
 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { PageHeader } from '../components/page-header';
 import { expensesApi } from './expenses.api';
@@ -169,7 +167,7 @@ function ExpenseDetailsContent({ expense }: { expense: Expense }) {
             <Calendar className="size-3.5" />
             {expense.created_at ? formatArabicDate(expense.created_at) : '-'}
           </span>
-          <span className="status-badge-neutral">#{expense.id}</span>
+        
         </div>
       </div>
 
@@ -320,7 +318,6 @@ import { useInvoices } from '@/features/invoices/invoices.hooks';
 
 export function ExpenseDetailsPage() {
   const { expenseId } = useParams<{ expenseId: string }>();
-  const navigate = useNavigate();
 
   const expenseQuery = useQuery<Expense>({
     queryKey: ['expenses', 'details', Number(expenseId)] as const,
@@ -338,12 +335,7 @@ export function ExpenseDetailsPage() {
         badge="المصروفات"
         title="تفاصيل المصروف"
         icon={TrendingDown}
-        action={
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            <ArrowRight className="ml-2 size-4" />
-            رجوع
-          </Button>
-        }
+       
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto space-y-4">

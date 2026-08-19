@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -8,12 +8,10 @@ import {
   Banknote,
   FileText,
   Calendar,
-  ArrowRight,
   TrendingDown,
   ChevronLeft,
   PackageOpen,
 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { PageHeader } from '../components/page-header';
 import { reInvoicesApi } from './re-invoices.api';
@@ -154,7 +152,7 @@ function ReInvoiceDetailsContent({ reinvoice }: { reinvoice: ReInvoice }) {
             <Calendar className="size-3.5" />
             {reinvoice.date ? formatArabicDate(reinvoice.date) : '-'}
           </span>
-          <span className="status-badge-neutral">#{reinvoice.id}</span>
+        
         </div>
       </div>
 
@@ -276,7 +274,6 @@ function ReInvoiceDetailsContent({ reinvoice }: { reinvoice: ReInvoice }) {
 
 export function ReInvoiceDetailsPage() {
   const { reinvoiceId } = useParams<{ reinvoiceId: string }>();
-  const navigate = useNavigate();
   const id = Number(reinvoiceId);
 
   const reinvoiceQuery = useQuery<ReInvoice>({
@@ -302,12 +299,7 @@ export function ReInvoiceDetailsPage() {
         badge="المرتجعات"
         title={reinvoiceQuery.isLoading ? 'تفاصيل المرتجع' : `تفاصيل المرتجع - ${reinvoice?.reinvoice_number || `#${reinvoice?.id}`}`}
         icon={TrendingDown}
-        action={
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            <ArrowRight className="ml-2 size-4" />
-            رجوع
-          </Button>
-        }
+       
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto space-y-4">

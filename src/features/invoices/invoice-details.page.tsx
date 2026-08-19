@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
-  ArrowRight,
   ChevronLeft,
   PackageOpen,
   PlusCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -17,15 +17,25 @@ import { expensesApi } from '@/features/expenses/expenses.api';
 import { invoiceItemsApi } from '@/features/invoice-items/invoice-items.api';
 import { InvoiceItemDialog } from '@/features/invoice-items/components/invoice-item.dialog';
 import type { InvoiceItemFormValues } from '@/features/invoice-items/schemas/invoice-items.schema';
+import { ReInvoiceDialog } from '@/features/re-invoices/components/re-invoice.dialog';
+import { useSaveReInvoice } from '@/features/re-invoices/re-invoices.hooks';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+function getReinvoiceableType(type?: string) {
+  if (!type) return 'App\\Models\\ProjectFundCurrency';
+  if (type.includes('CompanyFundCurrency') || type === 'company_fund') return 'App\\Models\\CompanyFundCurrency';
+  if (type.includes('CurrencyFund') || type === 'currency_fund' || type === 'user_fund') return 'App\\Models\\CurrencyFund';
+  return 'App\\Models\\ProjectFundCurrency';
+}
 
 export function InvoiceDetailsPage() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const id = Number(invoiceId);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [reInvoiceDialogOpen, setReInvoiceDialogOpen] = useState(false);
+  const saveReInvoice = useSaveReInvoice();
 
   const { data: invoice, isLoading, isError } = useQuery({
     queryKey: ['invoices', 'detail', id],
@@ -60,6 +70,38 @@ export function InvoiceDetailsPage() {
     0,
   );
 
+  const rawItemId = invoice?.item_id ?? (typeof invoice?.item === 'object' ? invoice?.item?.id : 0);
+  const rawSupplierId = invoice?.supplier_id ?? (typeof invoice?.supplier === 'object' ? invoice?.supplier?.id : undefined);
+  const reinvoiceableType = getReinvoiceableType(expenseQuery.data?.expenseable_type ?? expenseQuery.data?.expenseable_info?.type);
+  const reinvoiceableId = expenseQuery.data?.expenseable_id ?? (expenseQuery.data?.expenseable_info?.details as any)?.id ?? 0;
+
+  const prefilledReInvoiceValue = useMemo(() => {
+    if (!invoice) return null;
+    return {
+      item_id: Number(rawItemId),
+      supplier_id: rawSupplierId ? Number(rawSupplierId) : undefined,
+      reinvoiceable_type: reinvoiceableType,
+      reinvoiceable_id: Number(reinvoiceableId),
+      date: invoice.date ? invoice.date.slice(0, 10) : format(new Date(), 'yyyy-MM-dd'),
+      discount: Number(invoice.discount ?? 0),
+      final_total: Number(invoice.final_total ?? 0),
+      is_posted: false,
+      is_visible_to_client: invoice.is_visible_to_client ?? true,
+    };
+  }, [invoice, rawItemId, rawSupplierId, reinvoiceableType, reinvoiceableId]);
+
+  const expenseDetails = (expenseQuery.data?.expenseable_info as any)?.details;
+  const reInvoiceCurrencies = useMemo(() => {
+    if (!reinvoiceableId) return [];
+    return [{
+      id: Number(reinvoiceableId),
+      expenseable_id: Number(reinvoiceableId),
+      currency: expenseCurrency?.currency ?? '',
+      symbol: expenseCurrency?.symbol ?? '',
+      balance: String(expenseDetails?.balance ?? 0),
+    }];
+  }, [reinvoiceableId, expenseCurrency, expenseDetails?.balance]);
+
   const createItemMutation = useMutation({
     mutationFn: (values: InvoiceItemFormValues) => invoiceItemsApi.createInvoiceItem(values),
     onSuccess: async () => {
@@ -76,10 +118,12 @@ export function InvoiceDetailsPage() {
         title={isLoading ? 'تفاصيل الفاتورة' : `تفاصيل الفاتورة - ${invoice?.invoice_number || `#${invoice?.id}`}`}
         icon={FileText}
         action={
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            <ArrowRight className="ml-2 size-4" />
-            رجوع
-          </Button>
+          invoice ? (
+            <Button type="button" onClick={() => setReInvoiceDialogOpen(true)}>
+              <RotateCcw className="ml-2 size-4" />
+              عمل مرتجع
+            </Button>
+          ) : undefined
         }
       />
 
@@ -263,6 +307,21 @@ export function InvoiceDetailsPage() {
           await createItemMutation.mutateAsync(values);
         }}
         loading={createItemMutation.isPending}
+      />
+
+      <ReInvoiceDialog
+        open={reInvoiceDialogOpen}
+        onClose={() => setReInvoiceDialogOpen(false)}
+        value={prefilledReInvoiceValue}
+        currencies={reInvoiceCurrencies}
+        modelType={reinvoiceableType}
+        loading={saveReInvoice.isPending}
+        sourceInvoiceItems={invoiceItems}
+        disablePrefilledFields={true}
+        onSubmit={async (payload) => {
+          const saved = await saveReInvoice.mutateAsync({ payload });
+          return saved;
+        }}
       />
     </div>
   );

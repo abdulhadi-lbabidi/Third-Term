@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -8,10 +8,8 @@ import {
   Banknote,
   FileText,
   Calendar,
-  ArrowRight,
   TrendingUp,
 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { PageHeader } from '../components/page-header';
 import { revenuesApi } from './revenues.api';
@@ -146,7 +144,7 @@ function RevenueDetailsContent({ revenue }: { revenue: Revenue }) {
             <Calendar className="size-3.5" />
             {revenue.created_at ? formatArabicDate(revenue.created_at) : '-'}
           </span>
-          <span className="status-badge-neutral">#{revenue.id}</span>
+        
         </div>
       </div>
 
@@ -273,7 +271,6 @@ function RevenueDetailsContent({ revenue }: { revenue: Revenue }) {
 
 export function RevenueDetailsPage() {
   const { revenueId } = useParams<{ revenueId: string }>();
-  const navigate = useNavigate();
 
   const revenueQuery = useQuery<Revenue>({
     queryKey: ['revenues', 'details', Number(revenueId)] as const,
@@ -287,12 +284,7 @@ export function RevenueDetailsPage() {
         badge="الإيرادات"
         title="تفاصيل الإيراد"
         icon={TrendingUp}
-        action={
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            <ArrowRight className="ml-2 size-4" />
-            رجوع
-          </Button>
-        }
+        
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto">

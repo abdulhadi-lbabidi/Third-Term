@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Trash2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
@@ -8,7 +8,7 @@ import { materialsApi } from '@/features/materials/materials.api';
 import { reInvoicesApi } from '../re-invoices.api';
 import type { ReInvoiceItem } from '../types';
 
-export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoiceId: number; onBack?: () => void; onDone?: () => void }) {
+export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone, sourceInvoiceItems, disablePrefilledFields }: { reInvoiceId: number; onBack?: () => void; onDone?: () => void; sourceInvoiceItems?: any[]; disablePrefilledFields?: boolean }) {
   const client = useQueryClient();
   const [editingItem, setEditingItem] = useState<ReInvoiceItem | null>(null);
   const [materialId, setMaterialId] = useState(0); const [unit, setUnit] = useState(''); const [quantity, setQuantity] = useState(0); const [price, setPrice] = useState(0); const [description, setDescription] = useState('');
@@ -20,8 +20,51 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
   const save = useMutation({ mutationFn: () => { const payload = { reinvoice_id: reInvoiceId, material_id: materialId, unit: unit.trim(), quantity, unit_price: price, item_description: description.trim() }; return editingItem ? reInvoicesApi.updateItem(editingItem.id, payload) : reInvoicesApi.createItem(payload); }, onSuccess: async () => { await client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }); reset(); } });
   const remove = useMutation({ mutationFn: reInvoicesApi.deleteItem, onSuccess: async () => client.invalidateQueries({ queryKey: ['re-invoice-items', reInvoiceId] }) });
   const materialRows = materials.data ?? [];
+
+  useEffect(() => {
+    if (sourceInvoiceItems && sourceInvoiceItems.length > 0 && !materialId && !editingItem) {
+      const first = sourceInvoiceItems[0];
+      const mId = Number(first.material_id ?? first.material?.id ?? 0);
+      setMaterialId(mId);
+      setUnit(first.unit ?? '');
+      setQuantity(Number(first.quantity ?? 1));
+      setPrice(Number(first.unit_price ?? 0));
+      setDescription(first.item_description || `إرجاع ${first.material?.name ?? ''}`);
+    }
+  }, [sourceInvoiceItems, materialId, editingItem]);
+
   return (
     <div className="space-y-4">
+      {sourceInvoiceItems && sourceInvoiceItems.length > 0 && (
+        <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground">أصناف الفاتورة الأصلية (تعبئة سريعة):</p>
+          <div className="flex flex-wrap gap-2">
+            {sourceInvoiceItems.map((invItem) => {
+              const matName = invItem.material?.name ?? `مادة #${invItem.material_id}`;
+              return (
+                <Button
+                  key={invItem.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const mId = Number(invItem.material_id ?? invItem.material?.id ?? 0);
+                    setMaterialId(mId);
+                    setUnit(invItem.unit ?? '');
+                    setQuantity(Number(invItem.quantity ?? 1));
+                    setPrice(Number(invItem.unit_price ?? 0));
+                    setDescription(invItem.item_description || `إرجاع ${matName}`);
+                    setFieldErrors({});
+                  }}
+                >
+                  {matName} ({invItem.quantity} {invItem.unit} × {Number(invItem.unit_price).toLocaleString()})
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
         e.preventDefault();
         const errors = {
@@ -37,6 +80,7 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
         <label className="space-y-1">
           <span>المادة</span>
           <SearchableSelect
+            disabled={disablePrefilledFields && !editingItem}
             loading={materials.isLoading}
             options={materialRows.map((m) => ({ value: m.id, label: m.name }))}
             value={materialId || undefined}
@@ -56,7 +100,7 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
         </label>
         <label className="space-y-1">
           <span>الوحدة</span>
-          <Input value={unit} onChange={(e) => { setUnit(e.target.value); setFieldErrors((errors) => ({ ...errors, unit: undefined })); }} aria-invalid={Boolean(fieldErrors.unit)} />
+          <Input disabled={disablePrefilledFields && !editingItem} value={unit} onChange={(e) => { setUnit(e.target.value); setFieldErrors((errors) => ({ ...errors, unit: undefined })); }} aria-invalid={Boolean(fieldErrors.unit)} />
           {fieldErrors.unit && <p className="text-sm text-destructive">{fieldErrors.unit}</p>}
         </label>
         <label className="space-y-1">
@@ -66,11 +110,11 @@ export function ReInvoiceItemsPanel({ reInvoiceId, onBack, onDone }: { reInvoice
         </label>
         <label className="space-y-1">
           <span>سعر الوحدة</span>
-          <Input type="number" min={0} step="any" value={price} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setPrice(Number(e.target.value))} />
+          <Input type="number" min={0} step="any" disabled={disablePrefilledFields && !editingItem} value={price} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setPrice(Number(e.target.value))} />
         </label>
         <label className="space-y-1 sm:col-span-2">
           <span>سبب المرتجع</span>
-          <Input value={description} onChange={(e) => { setDescription(e.target.value); setFieldErrors((errors) => ({ ...errors, description: undefined })); }} aria-invalid={Boolean(fieldErrors.description)} />
+          <Input disabled={disablePrefilledFields && !editingItem} value={description} onChange={(e) => { setDescription(e.target.value); setFieldErrors((errors) => ({ ...errors, description: undefined })); }} aria-invalid={Boolean(fieldErrors.description)} />
           {fieldErrors.description && <p className="text-sm text-destructive">{fieldErrors.description}</p>}
         </label>
         <div className="flex items-center justify-between sm:col-span-2">
