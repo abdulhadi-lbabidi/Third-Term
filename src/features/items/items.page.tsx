@@ -1,11 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { itemsApi, type ItemResponse } from './items.api';
 import { ItemsDialog } from './components/items.dialog';
 import { ItemsTable } from './components/items.table';
-import { MaterialsDialog } from './components/materials.dialog';
 import type { CreateItemPayload, Item } from './types';
 import { PageHeader } from '../components/page-header';
 import { ListChecks, Search, RotateCcw } from 'lucide-react';
@@ -13,13 +13,12 @@ import { SimplePagination } from '@/components/ui/pagination';
 
 export function ItemsPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const perPage = 50;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [materialsDialogOpen, setMaterialsDialogOpen] = useState(false);
-  const [materialsItem, setMaterialsItem] = useState<Item | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [search, setSearch] = useState('');
@@ -148,8 +147,7 @@ export function ItemsPage() {
           }}
           onDelete={handleDelete}
           onShowMaterials={(item) => {
-            setMaterialsItem(item);
-            setMaterialsDialogOpen(true);
+            navigate(`/materials?search=${encodeURIComponent(item.name)}`);
           }}
           sort={sort}
           onSortChange={setSort}
@@ -169,12 +167,6 @@ export function ItemsPage() {
         item={selectedItem}
         onSubmit={handleSubmit}
         loading={saveMutation.isPending}
-      />
-
-      <MaterialsDialog
-        open={materialsDialogOpen}
-        onOpenChange={setMaterialsDialogOpen}
-        item={materialsItem}
       />
     </div>
   );

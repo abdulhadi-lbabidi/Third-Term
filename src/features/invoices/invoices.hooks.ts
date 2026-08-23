@@ -36,6 +36,11 @@ export const useCreateInvoice = () => {
         queryKey: INVOICES_KEYS.lists(),
         refetchType: 'all',
       });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['fund-transactions'] });
     },
   });
 };
@@ -55,6 +60,11 @@ export const useUpdateInvoice = () => {
           queryKey: INVOICES_KEYS.detail(variables.id),
           refetchType: 'all',
         }),
+        queryClient.invalidateQueries({ queryKey: ['expenses'] }),
+        queryClient.invalidateQueries({ queryKey: ['funds'] }),
+        queryClient.invalidateQueries({ queryKey: ['project-funds'] }),
+        queryClient.invalidateQueries({ queryKey: ['company-funds'] }),
+        queryClient.invalidateQueries({ queryKey: ['fund-transactions'] }),
       ]);
     },
   });
@@ -70,6 +80,11 @@ export const useDeleteInvoice = () => {
         queryKey: INVOICES_KEYS.lists(),
         refetchType: 'all',
       });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
+      await queryClient.invalidateQueries({ queryKey: ['fund-transactions'] });
       await queryClient.invalidateQueries({ queryKey: ['public-invoices'] });
       await queryClient.invalidateQueries({ queryKey: ['public-project-details'] });
       await queryClient.invalidateQueries({

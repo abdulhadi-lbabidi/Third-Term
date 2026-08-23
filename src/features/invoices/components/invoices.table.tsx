@@ -20,6 +20,7 @@ type InvoicesTableProps = {
   showSelection?: boolean;
   selectedIds?: number[];
   onSelectionChange?: (ids: number[]) => void;
+  disableScroll?: boolean;
 };
 
 export function InvoicesTable({
@@ -32,6 +33,7 @@ export function InvoicesTable({
   showSelection = false,
   selectedIds = [],
   onSelectionChange,
+  disableScroll,
 }: InvoicesTableProps = {}) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(perPage);
@@ -179,6 +181,7 @@ export function InvoicesTable({
         sort={sort}
         onSortChange={onSortChange}
         onRowClick={(row) => navigate(`/invoices/${row.id}`)}
+        disableScroll={disableScroll}
         actions={{
           onEdit: (row) => {
             setInvoiceToEditId(row.id);

@@ -67,6 +67,7 @@ type DataTableProps<T> = {
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
   onRowClick?: (row: T) => void;
+  disableScroll?: boolean;
 };
 
 export function DataTable<T>({
@@ -83,6 +84,7 @@ export function DataTable<T>({
   sort,
   onSortChange,
   onRowClick,
+  disableScroll,
 }: DataTableProps<T>) {
   const [pendingDelete, setPendingDelete] = useState<T | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -120,8 +122,13 @@ export function DataTable<T>({
   }, [sort]);
 
   return (
-    <div className="flex min-h-0 max-h-[calc(100dvh-13rem)] flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-finance)]">
-      <div className="min-h-0 flex-1 overflow-auto">
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-card shadow-[var(--shadow-finance)]",
+        disableScroll ? "max-h-none overflow-visible" : "max-h-[calc(100dvh-13rem)] overflow-hidden"
+      )}
+    >
+      <div className={cn("min-h-0 flex-1", disableScroll ? "overflow-x-auto" : "overflow-auto")}>
         <Table>
           <TableHeader className="sticky top-0 z-10">
             <TableRow className="hover:bg-transparent">

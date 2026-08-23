@@ -130,18 +130,26 @@ export function GenericFundCard({
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {currencies.slice(0, 3).map((currency) => (
-                  <button
-                    key={currency.id}
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-sky-100 bg-sky-50/50 px-2.5 py-1 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
-                  >
-                    <span>
-                      {currency.currency} {currency.symbol}
-                    </span>
-                    <span className="text-[11px] text-sky-700/80">({currency.balance})</span>
-                  </button>
-                ))}
+                {currencies.slice(0, 3).map((currency) => {
+                  const isPositive = Number(currency.balance) > 0;
+                  return (
+                    <button
+                      key={currency.id}
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium transition-colors",
+                        isPositive
+                          ? "border-emerald-200/80 bg-emerald-50/60 text-emerald-700 hover:bg-emerald-100/70"
+                          : "border-rose-200/80 bg-rose-50/60 text-rose-700 hover:bg-rose-100/70"
+                      )}
+                    >
+                      <span>
+                        {currency.currency} {currency.symbol}
+                      </span>
+                      <span className="text-[11px] opacity-80">({Number(currency.balance || 0).toLocaleString()})</span>
+                    </button>
+                  );
+                })}
                 {currencies.length > 3 && (
                   <button
                     type="button"
@@ -161,7 +169,7 @@ export function GenericFundCard({
 
         <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400">
           <span>الحد الأدنى للرصيد:</span>
-          <span className="font-semibold text-slate-700">{threshold ?? 0}</span>
+          <span className="font-semibold text-slate-700">{Number(threshold ?? 0).toLocaleString()}</span>
         </div>
 
         <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400">

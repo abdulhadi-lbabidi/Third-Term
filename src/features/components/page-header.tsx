@@ -108,12 +108,7 @@ export function PageHeader({
             </div>
           ) : null}
           <div className="min-w-0 space-y-1">
-            {badge
-              ? (typeof badge === 'string'
-                  ? <div className="status-badge-primary tracking-[0.12em] uppercase">{badge}</div>
-                  : badge)
-              : null}
-            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+             <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               {title}
             </h1>
             {description ? (
@@ -146,7 +141,7 @@ export function PageHeader({
       {hasTabs && activeTab ? (
         <div
           ref={tabsScrollRef}
-          className="flex max-w-full cursor-grab touch-pan-x select-none items-end gap-1 overflow-x-auto border-t border-border px-3 active:cursor-grabbing sm:px-5"
+          className="flex max-w-full  touch-pan-x select-none items-end gap-1 overflow-x-auto border-t border-border px-3 active:cursor-grabbing sm:px-5"
           onPointerDown={handleTabsPointerDown}
           onPointerMove={handleTabsPointerMove}
           onPointerUp={handleTabsPointerEnd}

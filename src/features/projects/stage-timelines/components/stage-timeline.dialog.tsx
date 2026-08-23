@@ -19,6 +19,7 @@ export function StageTimelineDialog({
   timeline,
   onSubmit,
   loading,
+  onDelete,
 }: StageTimelineDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,6 +34,7 @@ export function StageTimelineDialog({
             timeline={timeline}
             onSubmit={onSubmit}
             loading={loading}
+            onDelete={onDelete}
           />
       </DialogContent>
     </Dialog>

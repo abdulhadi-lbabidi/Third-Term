@@ -278,16 +278,16 @@ export function StageTimelineForm({
           <button type="submit" className={buttonVariants({ className: "flex-1" })} disabled={loading}>
             {loading ? 'جاري الحفظ...' : timeline ? 'حفظ التعديلات' : 'إضافة التفصيل الزمني'}
           </button>
-          {/* {timeline && onDelete && ( */}
-          <Button
-            type="button"
-            className={buttonVariants({ variant: 'destructive', className: 'shrink-0' })}
-            onClick={onDelete}
-            disabled={loading}
-          >
-            حذف
-          </Button>
-          {/* )} */}
+          {timeline && onDelete && (
+            <Button
+              type="button"
+              className={buttonVariants({ variant: 'destructive', className: 'shrink-0' })}
+              onClick={onDelete}
+              disabled={loading}
+            >
+              حذف
+            </Button>
+          )}
         </div>
       </form>
     </Form>

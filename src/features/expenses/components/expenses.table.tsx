@@ -31,6 +31,7 @@ type ExpensesTableProps = {
   hideTypeColumn?: boolean;
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
+  disableScroll?: boolean;
 };
 
 export function ExpensesTable({
@@ -47,6 +48,7 @@ export function ExpensesTable({
   hideTypeColumn,
   sort,
   onSortChange,
+  disableScroll,
 }: ExpensesTableProps) {
   const navigate = useNavigate();
 
@@ -114,6 +116,7 @@ export function ExpensesTable({
       sort={sort}
       onSortChange={onSortChange}
       onRowClick={handleRowClick}
+      disableScroll={disableScroll}
       actions={{
         onEdit,
         onDelete,

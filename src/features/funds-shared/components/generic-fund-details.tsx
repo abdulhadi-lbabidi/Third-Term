@@ -57,6 +57,7 @@ import { getCurrencyStringFromInfo } from '@/features/components/table-helpers';
 import { toast } from 'sonner';
 import { fundsApi } from '@/features/funds/funds.api';
 import { MoneyExchangeDialog } from './money-exchange.dialog';
+import { SimplePagination } from '@/components/ui/pagination';
 
 const statusLabels = {
   pending: { label: 'قيد العمل', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
@@ -184,35 +185,12 @@ export function GenericFundDetails({
   const [selectedReInvoice, setSelectedReInvoice] = useState<ReInvoice | null>(null);
   const [reInvoiceItemsId, setReInvoiceItemsId] = useState<number>();
   const [moneyExchangeOpen, setMoneyExchangeOpen] = useState(false);
-  const [currencyToDelete, setCurrencyToDelete] = useState<{ id: number; expenseableId: number; name: string } | null>(null);
 
-
-
-  const detachCurrencyMutation = useMutation({
-    mutationFn: (currencyId: number) =>
-      fundsApi.detachCurrency(fundId, { currency_id: currencyId }, sourceType),
-    onSuccess: async () => {
-      if (fundIdField === 'user_fund_id') {
-        await queryClient.invalidateQueries({ queryKey: ['funds', 'detail', fundId] });
-        await queryClient.invalidateQueries({ queryKey: ['funds'] });
-      } else if (fundIdField === 'project_fund_id') {
-        await queryClient.invalidateQueries({ queryKey: ['project-funds', 'detail', fundId] });
-        await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
-        const projectId = Number(extraFixedValues?.project_id);
-        if (Number.isFinite(projectId) && projectId > 0) {
-          await queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
-        }
-      } else if (fundIdField === 'company_fund_id') {
-        await queryClient.invalidateQueries({ queryKey: ['company-funds', fundId] });
-        await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
-      }
-      await queryClient.invalidateQueries({ queryKey: ['money-exchanges'] });
-      toast.success('تم حذف العملة بنجاح');
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف العملة');
-    },
-  });
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [revenuesPage, setRevenuesPage] = useState(1);
+  const [expensesPage, setExpensesPage] = useState(1);
+  const [returnsPage, setReturnsPage] = useState(1);
+  const [transfersPage, setTransfersPage] = useState(1);
 
   const exchangeMoneyMutation = useMutation({
     mutationFn: (payload: {
@@ -242,11 +220,11 @@ export function GenericFundDetails({
 
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
-  const reInvoicesQuery = useReInvoices({ paginate: true, per_page: 1000, page: 1, ...filters }, hasCurrencies);
+  const reInvoicesQuery = useReInvoices({ paginate: true, per_page: 12, page: returnsPage, ...filters }, hasCurrencies);
   const saveReInvoice = useSaveReInvoice();
   const deleteReInvoice = useDeleteReInvoice();
 
-  const revenuesQuery = useRevenues(1, 1000, filters, hasCurrencies);
+  const revenuesQuery = useRevenues(revenuesPage, 12, filters, hasCurrencies);
   const fundRevenues = revenuesQuery.data?.data ?? [];
   const isLoadingRevenues = revenuesQuery.isLoading;
 
@@ -271,7 +249,7 @@ export function GenericFundDetails({
     }
   };
 
-  const expensesQuery = useExpenses(1, 1000, filters, hasCurrencies);
+  const expensesQuery = useExpenses(expensesPage, 12, filters, hasCurrencies);
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
   const nextRevenueVoucherNumber = useMemo(
@@ -341,7 +319,7 @@ export function GenericFundDetails({
     };
   }, [fundIdField, fundId]);
 
-  const transfersQuery = useTransfers(1, 1000, transfersFilters, hasCurrencies);
+  const transfersQuery = useTransfers(transfersPage, 12, transfersFilters, hasCurrencies);
   const createTransferMutation = useCreateTransfer();
   const updateTransferMutation = useUpdateTransfer();
   const deleteTransferMutation = useDeleteTransfer();
@@ -472,6 +450,29 @@ export function GenericFundDetails({
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [fundRevenues, fundReInvoices, fundTransfers, fundExpenses, fundInvoices, fundId, fundIdField]);
 
+  const transactionsTotalPages = Math.ceil(allTransactions.length / 12) || 1;
+  const safeTransactionsPage = Math.min(transactionsPage, transactionsTotalPages);
+  const paginatedTransactions = useMemo(() => {
+    const start = (safeTransactionsPage - 1) * 12;
+    return allTransactions.slice(start, start + 12);
+  }, [allTransactions, safeTransactionsPage]);
+
+  const revenuesTotalPages = revenuesQuery.data?.meta?.last_page ?? (Math.ceil(fundRevenues.length / 12) || 1);
+  const safeRevenuesPage = Math.min(revenuesPage, revenuesTotalPages);
+  const paginatedRevenues = fundRevenues;
+
+  const expensesTotalPages = expensesQuery.data?.meta?.last_page ?? (Math.ceil(fundExpenses.length / 12) || 1);
+  const safeExpensesPage = Math.min(expensesPage, expensesTotalPages);
+  const paginatedExpenses = fundExpenses;
+
+  const returnsTotalPages = reInvoicesQuery.data?.meta?.last_page ?? (Math.ceil(fundReInvoices.length / 12) || 1);
+  const safeReturnsPage = Math.min(returnsPage, returnsTotalPages);
+  const paginatedReturns = fundReInvoices;
+
+  const transfersTotalPages = transfersQuery.data?.meta?.last_page ?? (Math.ceil(fundTransfers.length / 12) || 1);
+  const safeTransfersPage = Math.min(transfersPage, transfersTotalPages);
+  const paginatedTransfers = fundTransfers;
+
   const isLoadingAll =
     revenuesQuery.isLoading ||
     expensesQuery.isLoading ||
@@ -511,23 +512,8 @@ export function GenericFundDetails({
               {fundCurrencies.length > 0 ? (
                 fundCurrencies.map((currency) => (
                   <div key={currency.id} className="flex min-w-0 max-w-full items-center gap-2 rounded-md bg-slate-100 px-3.5 py-1.5 text-base font-medium">
-                    <span className={Number(currency.balance) > 0 ? 'text-lg font-bold text-success' : 'text-lg font-bold text-destructive'}>{currency.balance}</span>
+                    <span className={Number(currency.balance) > 0 ? 'text-lg font-bold text-success' : 'text-lg font-bold text-destructive'}>{Number(currency.balance || 0).toLocaleString()}</span>
                     <span className="text-sm text-slate-500">{currency.currency} {currency.symbol}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrencyToDelete({
-                          id: currency.id,
-                          expenseableId: currency.expenseable_id ?? fundId,
-                          name: currency.currency,
-                        });
-                      }}
-                      className="text-destructive hover:text-destructive/80 transition-colors p-0.5 rounded hover:bg-slate-200"
-                      disabled={detachCurrencyMutation.isPending}
-                      title="حذف العملة من الصندوق"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
                   </div>
                 ))
               ) : (
@@ -686,55 +672,62 @@ export function GenericFundDetails({
                   لا توجد أي حركات مالية مسجلة في هذا الصندوق.
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-slate-200">
-                  <table className="w-full text-right text-xs">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
-                        <th className="px-4 py-3 w-1/6">النوع</th>
-                        <th className="px-4 py-3 w-2/6">البيان</th>
-                        <th className="px-4 py-3 w-1/6">التاريخ</th>
-                        <th className="px-4 py-3 w-1/6 text-left text-emerald-700 bg-emerald-50/30"> وارد</th>
-                        <th className="w-0 p-0 border-l border-slate-200"></th>
-                        <th className="px-4 py-3 w-1/6 text-left text-rose-700 bg-rose-50/30">صادر</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {allTransactions.map((tx, index) => {
-                        const currency = getTxCurrencySymbol(tx.original, tx.type);
-                        return (
-                          <tr key={index} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="px-4 py-3.5">
-                              <span className={cn(
-                                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border",
-                                tx.isIncoming
-                                  ? (tx.type === 'إيراد' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-sky-50 text-sky-700 border-sky-100")
-                                  : (tx.type === 'مصروف' ? "bg-rose-50 text-rose-700 border-rose-100" : tx.type === 'فاتورة' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-orange-50 text-orange-700 border-orange-100")
-                              )}>
-                                {tx.type}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3.5 text-slate-600 max-w-[200px] truncate" title={tx.statement}>
-                              {tx.statement}
-                            </td>
-                            <td className="px-4 py-3.5 text-slate-400">
-                              {tx.date ? tx.date.slice(0, 10) : '-'}
-                            </td>
+                <>
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full text-center text-xs">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                          <th className="px-4 py-3 w-1/6 text-center">النوع</th>
+                          <th className="px-4 py-3 w-2/6 text-center">البيان</th>
+                          <th className="px-4 py-3 w-1/6 text-center">التاريخ</th>
+                          <th className="px-4 py-3 w-1/6 text-center text-emerald-700 bg-emerald-50/30">وارد</th>
+                          <th className="w-0 p-0 border-l border-slate-200"></th>
+                          <th className="px-4 py-3 w-1/6 text-center text-rose-700 bg-rose-50/30">صادر</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {paginatedTransactions.map((tx, index) => {
+                          const currency = getTxCurrencySymbol(tx.original, tx.type);
+                          return (
+                            <tr key={index} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="px-4 py-3.5 text-center">
+                                <span className={cn(
+                                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border",
+                                  tx.isIncoming
+                                    ? (tx.type === 'إيراد' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-sky-50 text-sky-700 border-sky-100")
+                                    : (tx.type === 'مصروف' ? "bg-rose-50 text-rose-700 border-rose-100" : tx.type === 'فاتورة' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-orange-50 text-orange-700 border-orange-100")
+                                )}>
+                                  {tx.type}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3.5 text-center text-slate-600 max-w-[200px] truncate mx-auto" title={tx.statement}>
+                                {tx.statement}
+                              </td>
+                              <td className="px-4 py-3.5 text-center text-slate-400">
+                                {tx.date ? tx.date.slice(0, 10) : '-'}
+                              </td>
 
-                            <td className="px-4 py-3.5 text-left font-semibold text-emerald-600 bg-emerald-50/10 finance-num">
-                              {tx.isIncoming ? `${tx.amount.toLocaleString()} ${currency}` : '-'}
-                            </td>
+                              <td className="px-4 py-3.5 text-center font-semibold text-emerald-600 bg-emerald-50/10 finance-num">
+                                {tx.isIncoming ? `${tx.amount.toLocaleString()} ${currency}` : '-'}
+                              </td>
 
-                            <td className="w-0 p-0 border-l border-slate-200"></td>
+                              <td className="w-0 p-0 border-l border-slate-200"></td>
 
-                            <td className="px-4 py-3.5 text-left font-semibold text-rose-600 bg-rose-50/10 finance-num">
-                              {!tx.isIncoming ? `${tx.amount.toLocaleString()} ${currency}` : '-'}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                              <td className="px-4 py-3.5 text-center font-semibold text-rose-600 bg-rose-50/10 finance-num">
+                                {!tx.isIncoming ? `${tx.amount.toLocaleString()} ${currency}` : '-'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <SimplePagination
+                    currentPage={safeTransactionsPage}
+                    totalPages={transactionsTotalPages}
+                    onPageChange={setTransactionsPage}
+                  />
+                </>
               )}
             </TabsContent>
 
@@ -756,9 +749,10 @@ export function GenericFundDetails({
           </div>
 
           <RevenuesTable
-            data={fundRevenues}
+            data={paginatedRevenues}
             loading={isLoadingRevenues}
             hideTypeColumn={true}
+            disableScroll={true}
             onEdit={canAddTransaction ? (revenue) => {
               setSelectedRevenue(revenue);
               setRevenueDialogOpen(true);
@@ -766,6 +760,11 @@ export function GenericFundDetails({
             onDelete={canAddTransaction ? async (revenue) => {
               await deleteRevenueMutation.mutateAsync(revenue.id);
             } : undefined}
+          />
+          <SimplePagination
+            currentPage={safeRevenuesPage}
+            totalPages={revenuesTotalPages}
+            onPageChange={setRevenuesPage}
           />
         </TabsContent>
           </>
@@ -789,9 +788,10 @@ export function GenericFundDetails({
           </div>
 
           <ExpensesTable
-            data={fundExpenses}
+            data={paginatedExpenses}
             loading={isLoadingExpenses}
             hideTypeColumn={true}
+            disableScroll={true}
             onView={(expense) => {
               navigate(`/expenses/${expense.id}`);
             }}
@@ -816,6 +816,11 @@ export function GenericFundDetails({
             invoiceCountsByExpenseId={invoiceCountsByExpenseId}
             invoicesLoading={fundInvoicesQuery.isLoading}
             invoicesError={fundInvoicesQuery.isError}
+          />
+          <SimplePagination
+            currentPage={safeExpensesPage}
+            totalPages={expensesTotalPages}
+            onPageChange={setExpensesPage}
           />
         </TabsContent>}
 
@@ -855,7 +860,8 @@ export function GenericFundDetails({
                 ...filters,
                 ...(expenseFilterId ? { 'filter[expense_id]': expenseFilterId } : {}),
               }}
-              perPage={5}
+              perPage={12}
+              disableScroll={true}
               enabled={currentTab === 'invoices'}
             />
           </div>
@@ -871,7 +877,8 @@ export function GenericFundDetails({
             )}
           </div>
           <ReInvoicesTable
-            data={reInvoicesQuery.data?.data ?? []} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending}
+            data={paginatedReturns} loading={reInvoicesQuery.isLoading || deleteReInvoice.isPending}
+            disableScroll={true}
             onView={(row) => {
               setSelectedReInvoice(row);
               setReInvoiceItemsId(row.id);
@@ -883,6 +890,11 @@ export function GenericFundDetails({
             onDelete={canAddTransaction ? async (row) => {
               await deleteReInvoice.mutateAsync(row.id);
             } : undefined} />
+          <SimplePagination
+            currentPage={safeReturnsPage}
+            totalPages={returnsTotalPages}
+            onPageChange={setReturnsPage}
+          />
         </TabsContent>}
 
         {hasCurrencies && <TabsContent value="transfers" className="min-w-0 space-y-4 sm:space-y-5">
@@ -919,8 +931,9 @@ export function GenericFundDetails({
           </div>
 
           <TransfersTable
-            data={fundTransfers}
+            data={paginatedTransfers}
             loading={transfersQuery.isLoading}
+            disableScroll={true}
             onEdit={canAddTransaction ? (transfer) => {
               setSelectedTransfer(transfer);
               setTransferDialogOpen(true);
@@ -934,6 +947,11 @@ export function GenericFundDetails({
               type: sourceType,
               currencies: fundCurrencies,
             }}
+          />
+          <SimplePagination
+            currentPage={safeTransfersPage}
+            totalPages={transfersTotalPages}
+            onPageChange={setTransfersPage}
           />
         </TabsContent>}
       </Tabs>
@@ -1050,31 +1068,6 @@ export function GenericFundDetails({
           }}
         />
       )}
-
-      <AlertDialog open={!!currencyToDelete} onOpenChange={(open) => { if (!open) setCurrencyToDelete(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد حذف العملة</AlertDialogTitle>
-            <AlertDialogDescription>
-              هل أنت متأكد من حذف العملة {currencyToDelete?.name} من هذا الصندوق؟ لا يمكن التراجع عن هذا الإجراء.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (currencyToDelete) {
-                  await detachCurrencyMutation.mutateAsync(currencyToDelete.id);
-                  setCurrencyToDelete(null);
-                }
-              }}
-              className="bg-destructive hover:bg-destructive/90 text-white border-none"
-            >
-              {detachCurrencyMutation.isPending ? 'جاري الحذف...' : 'حذف'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
 
     </div>

@@ -21,6 +21,7 @@ type RevenuesTableProps = {
   hideTypeColumn?: boolean;
   sort?: string;
   onSortChange?: (sort: string | undefined) => void;
+  disableScroll?: boolean;
 };
 
 export function RevenuesTable({
@@ -31,6 +32,7 @@ export function RevenuesTable({
   hideTypeColumn,
   sort,
   onSortChange,
+  disableScroll,
 }: RevenuesTableProps) {
   const navigate = useNavigate();
 
@@ -78,6 +80,7 @@ export function RevenuesTable({
       sort={sort}
       onSortChange={onSortChange}
       onRowClick={handleRowClick}
+      disableScroll={disableScroll}
       actions={{
         onEdit,
         onDelete,

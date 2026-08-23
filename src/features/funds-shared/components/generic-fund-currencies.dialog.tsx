@@ -48,7 +48,7 @@ export function GenericFundCurrenciesDialog<T = any>({
                 </div>
                 <div className="text-left">
                   <div className="text-xs text-slate-500">الرصيد</div>
-                  <div className="text-lg font-semibold text-slate-900">{currency.balance}</div>
+                  <div className="text-lg font-semibold text-slate-900">{Number(currency.balance || 0).toLocaleString()}</div>
                 </div>
               </button>
             ))

@@ -594,79 +594,95 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
                   </div>
                 </div>
 
-                {isEmployee ? (
-                  <div className="grid gap-5 lg:grid-cols-2">
-                    <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
-                      <div className="border-b border-border/70 bg-muted/30 px-5 py-4">
-                        <h4 className="text-sm font-semibold text-foreground">المعلومات الشخصية</h4>
-                      </div>
-                      <div className="flex flex-col items-center px-5 pb-5 pt-6">
-                        <div className="size-28 overflow-hidden rounded-full border-4 border-background bg-muted shadow-md ring-2 ring-primary/10">
-                          {profileImageUrl ? (
-                            <img src={profileImageUrl} alt={userName} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
-                              <User className="size-12" />
-                            </div>
-                          )}
-                        </div>
-                        <h3 className="mt-4 text-center text-lg font-semibold text-foreground">{userName}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{userRoleLabels.employee}</p>
-                      </div>
-                      <div className="space-y-0 border-t border-border/70">
-                        <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
-                          <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">البريد الإلكتروني</span>
-                          <span dir="ltr" className="min-w-0 flex-1 break-all text-left text-sm font-medium text-foreground">{userEmail || '-'}</span>
-                        </div>
-                        <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
-                          <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">رقم الهاتف</span>
-                          <span dir="ltr" className="min-w-0 flex-1 break-all text-left text-sm font-medium text-foreground">{userPhone || '-'}</span>
-                        </div>
-                        <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
-                          <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">العنوان</span>
-                          <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground">{userAddress || '-'}</span>
-                        </div>
-                        {createdAtFormatted ? (
-                          <div className="flex items-start gap-4 px-5 py-3.5">
-                            <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">تاريخ الإنشاء</span>
-                            <span dir="ltr" className="min-w-0 flex-1 text-left text-sm font-medium text-foreground">{createdAtFormatted}</span>
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+                    <div className="border-b border-border/70 bg-muted/30 px-5 py-4">
+                      <h4 className="text-sm font-semibold text-foreground">المعلومات الشخصية</h4>
+                    </div>
+                    <div className="flex flex-col items-center px-5 pb-5 pt-6">
+                      <div className="size-28 overflow-hidden rounded-full border-4 border-background bg-muted shadow-md ring-2 ring-primary/10">
+                        {profileImageUrl ? (
+                          <img src={profileImageUrl} alt={userName} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary">
+                            <User className="size-12" />
                           </div>
-                        ) : null}
+                        )}
+                      </div>
+                      <h3 className="mt-4 text-center text-lg font-semibold text-foreground">{userName}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{userRoleLabels[activeRole] || 'مستخدم'}</p>
+                    </div>
+                    <div className="space-y-0 border-t border-border/70">
+                      <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
+                        <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">البريد الإلكتروني</span>
+                        <span dir="ltr" className="min-w-0 flex-1 break-all text-left text-sm font-medium text-foreground">{userEmail || '-'}</span>
+                      </div>
+                      <div className="flex items-start gap-4 px-5 py-3.5">
+                        <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">رقم الهاتف</span>
+                        <span dir="ltr" className="min-w-0 flex-1 break-all text-left text-sm font-medium text-foreground">{userPhone || '-'}</span>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
-                      <div className="border-b border-border/70 bg-muted/30 px-5 py-4">
-                        <h4 className="text-sm font-semibold text-foreground">المعلومات الوظيفية</h4>
+                  <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+                    <div className="border-b border-border/70 bg-muted/30 px-5 py-4">
+                      <h4 className="text-sm font-semibold text-foreground">
+                        {isEmployee ? 'المعلومات الوظيفية' : 'معلومات الحساب'}
+                      </h4>
+                    </div>
+                    <div className="space-y-0">
+                      <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
+                        <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">نوع المستخدم</span>
+                        <span className="min-w-0 flex-1 text-left text-sm font-medium text-foreground">{userRoleLabels[activeRole]}</span>
                       </div>
-                      <div className="space-y-0">
+                      <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
+                        <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">العنوان</span>
+                        <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground">{userAddress || '-'}</span>
+                      </div>
+                      {createdAtFormatted ? (
+                        <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
+                          <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">تاريخ الإنشاء</span>
+                          <span dir="ltr" className="min-w-0 flex-1 text-left text-sm font-medium text-foreground">{createdAtFormatted}</span>
+                        </div>
+                      ) : null}
+                      {employeeJobTitle ? (
                         <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
                           <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">المسمى الوظيفي</span>
-                          <span className="min-w-0 flex-1 text-left text-sm font-medium text-foreground">{employeeJobTitle || '-'}</span>
+                          <span className="min-w-0 flex-1 text-left text-sm font-medium text-foreground">{employeeJobTitle}</span>
                         </div>
+                      ) : null}
+                      {employeeStatus ? (
                         <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
                           <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">حالة الموظف</span>
                           <span className="min-w-0 flex-1 text-left">
-                            {employeeStatus ? (
-                              <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${
-                                employeeStatus === 'active'
-                                  ? 'border-emerald-200/60 bg-emerald-50 text-emerald-700'
-                                  : employeeStatus === 'retired'
-                                    ? 'border-amber-200/60 bg-amber-50 text-amber-700'
-                                    : 'border-rose-200/60 bg-rose-50 text-rose-700'
-                              }`}>
-                                {employeeStatusLabel}
-                              </span>
-                            ) : '-'}
+                            <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${
+                              employeeStatus === 'active'
+                                ? 'border-emerald-200/60 bg-emerald-50 text-emerald-700'
+                                : employeeStatus === 'retired'
+                                  ? 'border-amber-200/60 bg-amber-50 text-amber-700'
+                                  : 'border-rose-200/60 bg-rose-50 text-rose-700'
+                            }`}>
+                              {employeeStatusLabel}
+                            </span>
                           </span>
                         </div>
+                      ) : null}
+                      {departmentName ? (
                         <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
                           <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">القسم</span>
-                          <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground">{departmentName || '-'}</span>
+                          <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground">{departmentName}</span>
                         </div>
-                      </div>
+                      ) : null}
+                      {extraFieldLabel ? (
+                        <div className="flex items-start gap-4 border-b border-border/50 px-5 py-3.5">
+                          <span className="w-[110px] shrink-0 text-xs font-medium text-muted-foreground">{extraFieldLabel}</span>
+                          <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground">{extraFieldValue}</span>
+                        </div>
+                      ) : null}
+                    </div>
 
-                      {lastPayment ? (
+                    {isEmployee ? (
+                      lastPayment ? (
                         <div className="border-t border-border/70 bg-muted/15 p-5">
                           <div className="mb-4 flex items-center gap-2">
                             <BadgeDollarSign className="size-4 text-primary" />
@@ -708,105 +724,10 @@ export function NewUserPage({ embedded = false, createRole, onClose, onCreated }
                         <div className="border-t border-border/70 px-5 py-4">
                           <p className="text-sm text-muted-foreground">لا يوجد راتب مسجّل بعد.</p>
                         </div>
-                      )}
-                    </div>
+                      )
+                    ) : null}
                   </div>
-                ) : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                    <Mail className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
-                      <p dir="ltr" className="mt-0.5 break-all text-start text-sm font-medium text-foreground">{userEmail || '-'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                    <Phone className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">رقم الهاتف</p>
-                      <p dir="ltr" className="mt-0.5 break-all text-start text-sm font-medium text-foreground">{userPhone || '-'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                    <MapPin className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">العنوان</p>
-                      <p className="mt-0.5 break-words text-sm font-medium text-foreground">{userAddress || '-'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                    <ShieldCheck className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">نوع المستخدم</p>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{userRoleLabels[activeRole]}</p>
-                    </div>
-                  </div>
-
-                  {extraFieldLabel ? (
-                    <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                      {extraFieldLabel.includes('المسمى') ? (
-                        <Briefcase className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                      ) : extraFieldLabel.includes('الراتب') || extraFieldLabel.includes('استثمار') ? (
-                        <DollarSign className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                      ) : (
-                        <Heart className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground">{extraFieldLabel}</p>
-                        <p className="mt-0.5 truncate text-sm font-medium text-foreground">{extraFieldValue}</p>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {createdAtFormatted ? (
-                    <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                      <Calendar className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground">تاريخ الإنشاء</p>
-                        <p className="mt-0.5 truncate text-sm font-medium text-foreground">{createdAtFormatted}</p>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {departmentName && (
-                    <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-                      <Briefcase className="mt-0.5 size-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground">القسم</p>
-                        <p className="mt-0.5 truncate text-sm font-medium text-foreground">{departmentName}</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
-                )}
-
-                {existingImages.length > 0 && !isEmployee && (
-                  <div className="mt-6 border-t border-border pt-6">
-                    <h4 className="mb-3 text-sm font-semibold text-foreground">صور المستخدم</h4>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                      {existingImages.map((imgUrl, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => {
-                            setLightboxImages(existingImages);
-                            setLightboxIndex(idx);
-                            setLightboxOpen(true);
-                          }}
-                          className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted cursor-pointer"
-                        >
-                          <img
-                            src={imgUrl}
-                            alt={`صورة ${idx + 1}`}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <Form {...form}>

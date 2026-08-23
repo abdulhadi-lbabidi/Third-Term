@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
@@ -12,13 +13,15 @@ import { SimplePagination } from '@/components/ui/pagination';
 
 export function MaterialsPage() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
   const [page, setPage] = useState(1);
   const perPage = 10;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
   const [sort, setSort] = useState<string | undefined>(undefined);
 
   const materialsQuery = useQuery<MaterialResponse>({
