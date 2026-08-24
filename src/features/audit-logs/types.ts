@@ -4,11 +4,19 @@ export type AuditLogUser = {
   email: string;
 };
 
+export type AuditLogProperties = {
+  attributes?: Record<string, any> | null;
+  old?: Record<string, any> | null;
+};
+
 export type AuditLog = {
   id: number;
-  action_type: string;
-  affected_table: string;
+  log_name?: string;
+  affected_table?: string;
+  event?: string;
+  action_type?: string;
   description: string;
+  properties?: AuditLogProperties | null;
   user?: AuditLogUser | null;
   created_at: string;
 };
