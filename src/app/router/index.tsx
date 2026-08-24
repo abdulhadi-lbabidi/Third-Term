@@ -11,6 +11,7 @@ const FundsPage             = lazy(() => import('@/features/funds/funds.page').t
 const FundsDashboardPage    = lazy(() => import('@/features/funds/funds-dashboard.page').then(m => ({ default: m.FundsDashboardPage })));
 const CurrenciesPage        = lazy(() => import('@/features/currencies/currencies.page').then(m => ({ default: m.CurrenciesPage })));
 const CompanyFundsPage      = lazy(() => import('@/features/company-funds/company-funds.page').then(m => ({ default: m.CompanyFundsPage })));
+const FavoriteFundsPage     = lazy(() => import('@/features/favorite-funds/favorite-funds.page').then(m => ({ default: m.FavoriteFundsPage })));
 const ProjectsPage          = lazy(() => import('@/features/projects/projects.page').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailsPage    = lazy(() => import('@/features/projects/project-details/project-details.page').then(m => ({ default: m.ProjectDetailsPage })));
 const ProjectFundsPage      = lazy(() => import('@/features/projects/project-funds/project-funds.page').then(m => ({ default: m.ProjectFundsPage })));
@@ -179,6 +180,10 @@ export const router = createBrowserRouter([
           {
             path: '/company-funds',
             element: <CompanyFundsPage />,
+          },
+          {
+            path: '/favorite-funds',
+            element: <FavoriteFundsPage />,
           },
           {
             path: '/projects',

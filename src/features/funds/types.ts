@@ -34,6 +34,7 @@ export type Fund = {
   description?: string;
   threshold?: number;
   type?: string;
+  is_favorite?: boolean;
 };
 
 export type CreateFundPayload = {
@@ -45,14 +46,9 @@ export type CreateFundPayload = {
   threshold?: number;
 };
 
-export type UpdateFundPayload = {
-  user_id: number;
-  name: string;
-  is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'canceled';
-  description?: string;
-  threshold?: number;
-};
+export type UpdateFundPayload = Partial<CreateFundPayload & {
+  is_favorite?: boolean;
+}>;
 
 export type FundCurrencyAttachPayload = {
   currency_id: number;

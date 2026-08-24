@@ -64,7 +64,8 @@ export const usersApi = {
     page = 1,
     perPage = 50,
     search?: string,
-    sort?: string
+    sort?: string,
+    address?: string
   ): Promise<UsersRoleResponse<any>> => {
     const endpoint = endpointByRole[role];
     if (!endpoint) {
@@ -76,6 +77,7 @@ export const usersApi = {
         page,
         per_page: perPage,
         ...(search ? { 'filter[search]': search } : {}),
+        ...(address ? { 'filter[address]': address } : {}),
         sort,
       },
     }).then(({ data }: any) => {

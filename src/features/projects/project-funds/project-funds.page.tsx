@@ -17,6 +17,14 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
@@ -66,6 +74,9 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
   const [selectedProjectFund, setSelectedProjectFund] = useState<ProjectFund | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [fundToDelete, setFundToDelete] = useState<ProjectFund | null>(null);
+  const [favoriteConfirmOpen, setFavoriteConfirmOpen] = useState(false);
+  const [fundToFavorite, setFundToFavorite] = useState<ProjectFund | null>(null);
+  const [favoriteAction, setFavoriteAction] = useState<'add' | 'remove' | null>(null);
   const [selectedProjectFundForView, setSelectedProjectFundForView] = useState<ProjectFund | null>(null);
   const [selectedProjectFundCurrency, setSelectedProjectFundCurrency] = useState<ProjectFundCurrency | null>(null);
 
@@ -179,6 +190,30 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء حذف الصندوق');
+    },
+  });
+
+  const favoriteFundMutation = useMutation({
+    mutationFn: ({ fund, is_favorite }: { fund: ProjectFund; is_favorite: boolean }) =>
+      projectFundsApi.updateProjectFund(fund.id, { is_favorite }),
+    onSuccess: async (_data, { fund }) => {
+      await queryClient.invalidateQueries({ queryKey: projectFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
+      const affectedProjectId = fund.project?.id || projectData?.id || projectId;
+      if (Number.isFinite(affectedProjectId) && affectedProjectId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: ['projects', affectedProjectId],
+          exact: true,
+          refetchType: 'all',
+        });
+      }
+      await queryClient.invalidateQueries({ queryKey: ['projects'], exact: true });
+      setFavoriteConfirmOpen(false);
+      setFundToFavorite(null);
+      setFavoriteAction(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تحديث التمييز');
     },
   });
 
@@ -334,6 +369,12 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
                   onDelete={() => {
                     setFundToDelete(fund);
                     setDeleteConfirmOpen(true);
+                  }}
+                  isFavorite={Boolean(fund.is_favorite)}
+                  onFavoriteClick={() => {
+                    setFundToFavorite(fund);
+                    setFavoriteAction(fund.is_favorite ? 'remove' : 'add');
+                    setFavoriteConfirmOpen(true);
                   }}
                 />
               ))}
@@ -512,6 +553,60 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
         title="تأكيد حذف صندوق المشروع"
         description={`هل أنت متأكد من حذف صندوق "${fundToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
+
+      <Dialog
+        open={favoriteConfirmOpen}
+        onOpenChange={(open) => {
+          setFavoriteConfirmOpen(open);
+          if (!open) {
+            setFundToFavorite(null);
+            setFavoriteAction(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{favoriteAction === 'remove' ? 'إزالة التمييز' : 'تمييز الصندوق'}</DialogTitle>
+            <DialogDescription>
+              {favoriteAction === 'remove'
+                ? 'هل تريد إزالة تمييز الصندوق بالنجمة؟'
+                : 'هل تريد تمييز الصندوق بنجمة؟'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFavoriteConfirmOpen(false);
+                setFundToFavorite(null);
+                setFavoriteAction(null);
+              }}
+              disabled={favoriteFundMutation.isPending}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                if (!fundToFavorite || !favoriteAction) return;
+                await favoriteFundMutation.mutateAsync({
+                  fund: fundToFavorite,
+                  is_favorite: favoriteAction === 'add',
+                });
+                toast.success(
+                  favoriteAction === 'add'
+                    ? 'تم تمييز الصندوق بنجمة'
+                    : 'تم إزالة تمييز الصندوق',
+                );
+              }}
+              disabled={favoriteFundMutation.isPending}
+            >
+              {favoriteFundMutation.isPending ? 'جاري الحفظ...' : 'تأكيد'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

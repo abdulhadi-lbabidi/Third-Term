@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Users,
   Banknote,
-  Wallet,
   FolderKanban,
   ListChecks,
   BadgeDollarSign,
@@ -24,6 +23,7 @@ import {
   FileX,
   Bell,
   ArrowUpCircle,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
@@ -76,7 +76,9 @@ const navGroups: NavGroup[] = [
   {
     label: 'الصناديق والعملات',
     items: [
-      { to: '/funds', label: 'إدارة الصناديق', icon: Wallet },
+      { to: '/company-funds', label: 'صناديق الشركة', icon: Building2 },
+      { to: '/favorite-funds', label: 'الصناديق المميزة', icon: Star },
+      // { to: '/funds', label: 'إدارة الصناديق', icon: Wallet },
       { to: '/money-exchanges', label: 'تصريف العملات', icon: ArrowLeftRight },
       { to: '/currencies', label: 'العملات', icon: Banknote },
     ],

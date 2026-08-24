@@ -62,4 +62,21 @@ export const companyFundsApi = {
     const response = await apiClient.post(`/company-funds/${fundId}/currencies`, payload);
     return response.data;
   },
+
+  getFavoriteCompanyFunds: async ({ page = 1, perPage = 50 }: { page?: number; perPage?: number } = {}): Promise<CompanyFundResponse> => {
+    const response = await apiClient.get('/company-funds/favorites', {
+      params: {
+        paginate: true,
+        page,
+        per_page: perPage,
+      },
+    });
+    if (Array.isArray(response.data)) {
+      return { data: response.data };
+    }
+    return {
+      data: response.data?.data ?? [],
+      meta: response.data?.meta,
+    };
+  },
 };

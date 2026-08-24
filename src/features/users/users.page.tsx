@@ -47,9 +47,21 @@ type UsersTabRecord =
   | SupplierRecord
   | TrusteeRecord;
 
+const ROLES_WITH_ADDRESS_FILTER: UserRole[] = [
+  'admin',
+  'client',
+  'trustee',
+  'employee',
+  'investor',
+  'craftsman',
+  'supplier',
+  'engineer',
+];
+
 const usersQueryKeys = {
   all: ['users'] as const,
-  byRole: (role: UserRole, page: number, perPage: number, search?: string, sort?: string) => ['users', role, page, perPage, search, sort] as const,
+  byRole: (role: UserRole, page: number, perPage: number, search?: string, sort?: string, address?: string) =>
+    ['users', role, page, perPage, search, sort, address] as const,
 };
 
 function UsersTableSkeleton() {
@@ -100,7 +112,10 @@ export function UsersPage() {
   const perPage = 50;
   const [searchQuery, setSearchQuery] = useState('');
   const [search, setSearch] = useState('');
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressFilter, setAddressFilter] = useState('');
   const [sort, setSort] = useState<string | undefined>(undefined);
+  const supportsAddressFilter = ROLES_WITH_ADDRESS_FILTER.includes(activeRole);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
@@ -108,12 +123,15 @@ export function UsersPage() {
 
   const handleSearchSubmit = () => {
     setSearch(searchQuery);
+    setAddressFilter(supportsAddressFilter ? addressQuery : '');
     setPage(1);
   };
 
   const handleReset = () => {
     setSearchQuery('');
     setSearch('');
+    setAddressQuery('');
+    setAddressFilter('');
     setSort(undefined);
     setPage(1);
   };
@@ -128,13 +146,15 @@ export function UsersPage() {
   useEffect(() => {
     setSearchQuery('');
     setSearch('');
+    setAddressQuery('');
+    setAddressFilter('');
     setSort(undefined);
     setPage(1);
   }, [activeRole]);
 
   const usersQuery = useQuery<UsersRoleResponse<UsersTabRecord>>({
-    queryKey: usersQueryKeys.byRole(activeRole, page, perPage, search, sort),
-    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage, search, sort),
+    queryKey: usersQueryKeys.byRole(activeRole, page, perPage, search, sort, addressFilter),
+    queryFn: () => usersApi.getUsersByRole(activeRole, page, perPage, search, sort, addressFilter || undefined),
     placeholderData: keepPreviousData,
   });
 
@@ -211,16 +231,36 @@ export function UsersPage() {
       },
       { header: 'البريد الإلكتروني', className: 'min-w-52', cell: (row: UsersTabRecord) => <span dir="ltr" className="block max-w-64 truncate text-center">{row.user.email}</span> },
       { header: 'الهاتف', className: 'min-w-28', cell: (row: UsersTabRecord) => <span dir="ltr">{row.user.phone_number || '-'}</span> },
-      { header: 'العنوان', className: 'min-w-36 max-w-48', cell: (row: UsersTabRecord) => <span className="mx-auto block max-w-64 truncate text-center">{row.user.address || '-'}</span> },
+      {
+        header: 'العنوان',
+        sortable: supportsAddressFilter,
+        sortKey: 'address',
+        className: 'min-w-36 max-w-48',
+        cell: (row: UsersTabRecord) => <span className="mx-auto block max-w-64 truncate text-center">{row.user.address || '-'}</span>,
+      },
       activeRole === 'investor'
-        ? { header: 'نسبة الاستثمار', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-') }
+        ? {
+            header: 'نسبة الاستثمار',
+            sortable: true,
+            sortKey: 'investment_ratio',
+            className: 'min-w-32',
+            cell: (row: UsersTabRecord) => String((row as InvestorRecord).investment_ratio ?? '-'),
+          }
         : null,
       activeRole === 'employee'
-        ? { header: 'المسمى الوظيفي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-') }
+        ? {
+            header: 'المسمى الوظيفي',
+            sortable: true,
+            sortKey: 'job_title',
+            className: 'min-w-32',
+            cell: (row: UsersTabRecord) => String((row as EmployeeRecord).job_title ?? '-'),
+          }
         : null,
       activeRole === 'employee'
         ? {
             header: 'الحالة',
+            sortable: true,
+            sortKey: 'status',
             className: 'min-w-24',
             cell: (row: UsersTabRecord) => {
               const status = (row as EmployeeRecord).status || 'active';
@@ -243,25 +283,51 @@ export function UsersPage() {
           }
         : null,
       activeRole === 'engineer'
-        ? { header: 'المسمى الوظيفي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-') }
+        ? {
+            header: 'المسمى الوظيفي',
+            sortable: true,
+            sortKey: 'job_title',
+            className: 'min-w-32',
+            cell: (row: UsersTabRecord) => String((row as EngineerRecord).job_title ?? '-'),
+          }
         : null,
       activeRole === 'engineer'
-        ? { header: 'الراتب الأساسي', className: 'min-w-32', cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-') }
+        ? {
+            header: 'الراتب الأساسي',
+            sortable: true,
+            sortKey: 'base_salary',
+            className: 'min-w-32',
+            cell: (row: UsersTabRecord) => String((row as EngineerRecord).base_salary ?? '-'),
+          }
         : null,
-      activeRole === 'employee' || activeRole === 'engineer'
+      activeRole === 'employee'
         ? {
             header: 'القسم',
+            sortable: true,
+            sortKey: 'department',
             className: 'min-w-40',
             cell: (row: UsersTabRecord) => {
-              const dept = 'department' in row ? (row as any).department : null;
+              const dept = (row as EmployeeRecord).department;
               return dept?.name || '-';
-            }
+            },
+          }
+        : null,
+      activeRole === 'engineer'
+        ? {
+            header: 'القسم',
+            sortable: true,
+            sortKey: 'department',
+            className: 'min-w-40',
+            cell: (row: UsersTabRecord) => {
+              const dept = (row as EngineerRecord).department;
+              return dept?.name || '-';
+            },
           }
         : null,
 
       { header: 'تاريخ الإنشاء', sortable: true, sortKey: 'created_at', className: 'min-w-32', cell: (row: UsersTabRecord) => dayjs(row.created_at).format('YYYY-MM-DD') },
     ],
-    [activeRole]
+    [activeRole, supportsAddressFilter]
   );
 
   const showSkeleton = usersQuery.isFetching && !usersQuery.data;
@@ -338,7 +404,16 @@ export function UsersPage() {
                 className="h-10 pe-11"
               />
             </div>
-            {(searchQuery || sort) && (
+            {supportsAddressFilter ? (
+              <Input
+                type="search"
+                value={addressQuery}
+                onChange={(e) => setAddressQuery(e.target.value)}
+                placeholder="فلترة بالعنوان..."
+                className="h-10 w-full sm:w-56 shrink-0"
+              />
+            ) : null}
+            {(searchQuery || addressQuery || sort) && (
               <Button
                 type="button"
                 variant="outline"
@@ -374,7 +449,10 @@ export function UsersPage() {
             onView={handleEdit}
             onFunds={handleFunds}
             sort={sort}
-            onSortChange={setSort}
+            onSortChange={(value) => {
+              setSort(value);
+              setPage(1);
+            }}
           />
 
           <SimplePagination

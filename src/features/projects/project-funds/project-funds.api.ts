@@ -55,4 +55,22 @@ export const projectFundsApi = {
     const response = await apiClient.post(`/project-funds/${fundId}/currencies`, payload);
     return response.data?.data ?? response.data;
   },
+
+  getFavoriteProjectFunds: async ({ page = 1, perPage = 50 }: { page?: number; perPage?: number } = {}): Promise<ProjectFundsResponse> => {
+    const response = await apiClient.get('/project-funds/favorites', {
+      params: {
+        paginate: true,
+        page,
+        per_page: perPage,
+      },
+    });
+    const payload = response.data;
+
+    if (Array.isArray(payload)) return { data: payload };
+    const data = payload?.data ?? payload;
+
+    if (Array.isArray(data)) return { data, meta: payload?.meta };
+    if (data && typeof data === 'object') return { data: Object.values(data), meta: payload?.meta };
+    return { data: [], meta: payload?.meta };
+  },
 };

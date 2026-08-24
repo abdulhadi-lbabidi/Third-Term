@@ -26,6 +26,7 @@ export type ProjectFund = {
   description?: string;
   threshold?: number;
   type?: string;
+  is_favorite?: boolean;
 };
 
 export type CreateProjectFundPayload = {
@@ -38,14 +39,9 @@ export type CreateProjectFundPayload = {
   type?: string;
 };
 
-export type UpdateProjectFundPayload = {
-  name: string;
-  is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'canceled';
-  description?: string;
-  threshold?: number;
-  type?: string;
-};
+export type UpdateProjectFundPayload = Partial<CreateProjectFundPayload & {
+  is_favorite?: boolean;
+}>;
 
 export type ProjectFundCurrencyAttachPayload = {
   currency_id: number;

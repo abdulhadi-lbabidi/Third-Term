@@ -94,4 +94,17 @@ export const fundsApi = {
     const response = await apiClient.post(url, payload);
     return response.data;
   },
+
+  getFavoriteFunds: async ({ page = 1, perPage = 50 }: { page?: number; perPage?: number } = {}): Promise<FundsResponse> => {
+    const response = await apiClient.get('/funds/favorites', {
+      params: {
+        paginate: true,
+        page,
+        per_page: perPage,
+      },
+    });
+    return Array.isArray(response.data)
+      ? { data: response.data }
+      : { data: response.data?.data ?? [], meta: response.data?.meta };
+  },
 };

@@ -1,4 +1,4 @@
-import { Wallet, Banknote, Edit2, Trash2 } from 'lucide-react';
+import { Wallet, Banknote, Edit2, Trash2, Star } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Button } from '@/shared/components/ui/button';
@@ -25,6 +25,8 @@ type GenericFundCardProps = {
   onMoreCurrenciesClick?: (fundId: number) => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  isFavorite?: boolean;
+  onFavoriteClick?: () => void;
 };
 
 export function GenericFundCardSkeleton() {
@@ -72,6 +74,8 @@ export function GenericFundCard({
   onMoreCurrenciesClick,
   onEdit,
   onDelete,
+  isFavorite = false,
+  onFavoriteClick,
 }: GenericFundCardProps) {
   return (
     <Card
@@ -178,7 +182,7 @@ export function GenericFundCard({
             <span className="font-semibold text-slate-700">{created_at ? formatArabicDate(created_at) : '-'}</span>
           </div>
           <div>
-            {(onEdit || (onDelete && status !== 'canceled')) && (
+            {(onFavoriteClick || onEdit || (onDelete && status !== 'canceled')) && (
               <div className="flex items-center gap-1 border border-slate-200/60 rounded-lg p-0.5 bg-slate-50/50">
                 {onEdit && (
                   <Button
@@ -206,6 +210,26 @@ export function GenericFundCard({
                     }}
                   >
                     <Trash2 className="size-3.5" />
+                  </Button>
+                )}
+                {onFavoriteClick && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={isFavorite ? 'إزالة التمييز' : 'تمييز الصندوق'}
+                    className={cn(
+                      'size-7 rounded-md',
+                      isFavorite
+                        ? 'text-amber-500 hover:bg-amber-50 hover:text-amber-600'
+                        : 'text-slate-400 hover:bg-amber-50 hover:text-amber-500',
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFavoriteClick();
+                    }}
+                  >
+                    <Star className={cn('size-3.5', isFavorite && 'fill-current')} />
                   </Button>
                 )}
               </div>

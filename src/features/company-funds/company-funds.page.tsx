@@ -11,12 +11,19 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard, GenericFundCardSkeleton } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { GenericFundCurrencyDialog } from '@/features/funds-shared/components/generic-fund-currency.dialog';
 import type { CompanyFund, CompanyFundCurrency, CreateCompanyFundPayload } from './types';
 import { PageHeader } from '../components/page-header';
-import { cn } from '@/shared/lib/utils';
 import { SimplePagination } from '@/components/ui/pagination';
 import { FundsListToolbar, type FundSortOption } from '@/features/funds-shared/components/funds-list-toolbar';
 import { useDebouncedValue } from '@/features/funds-shared/use-debounced-value';
@@ -33,7 +40,7 @@ const COMPANY_SORT_OPTIONS: FundSortOption[] = [
   { value: '-name', label: 'الاسم ي–أ' },
 ];
 
-export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
+export function CompanyFundsPage() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -52,6 +59,9 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   const [selectedCompanyFund, setSelectedCompanyFund] = useState<CompanyFund | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [fundToDelete, setFundToDelete] = useState<CompanyFund | null>(null);
+  const [favoriteConfirmOpen, setFavoriteConfirmOpen] = useState(false);
+  const [fundToFavorite, setFundToFavorite] = useState<CompanyFund | null>(null);
+  const [favoriteAction, setFavoriteAction] = useState<'add' | 'remove' | null>(null);
   const [selectedCompanyFundForCurrency, setSelectedCompanyFundForCurrency] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundForView, setSelectedCompanyFundForView] = useState<CompanyFund | null>(null);
   const [selectedCompanyFundCurrency, setSelectedCompanyFundCurrency] = useState<CompanyFundCurrency | null>(null);
@@ -107,6 +117,21 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
     mutationFn: (fund: CompanyFund) => companyFundsApi.deleteCompanyFund(fund.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+    },
+  });
+
+  const favoriteFundMutation = useMutation({
+    mutationFn: ({ fund, is_favorite }: { fund: CompanyFund; is_favorite: boolean }) =>
+      companyFundsApi.updateCompanyFund(fund.id, { is_favorite }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: companyFundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
+      setFavoriteConfirmOpen(false);
+      setFundToFavorite(null);
+      setFavoriteAction(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'حدث خطأ أثناء تحديث التمييز');
     },
   });
 
@@ -169,41 +194,16 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
   };
 
   return (
-    <div className={cn("space-y-5", isTab && "space-y-0")}>
+    <div className="space-y-5">
       {!selectedFundId ? (
         <>
-          {!isTab && (
-            <PageHeader
-              badge="المالية"
-              title="صندوق الشركة"
-              icon={Wallet}
-              action={
-                <Button
-                  onClick={() => {
-                    setSelectedCompanyFund(null);
-                    setDialogOpen(true);
-                  }}
-                >
-                  إضافة صندوق الشركة
-                </Button>
-              }
-            />
-          )}
-          {isTab && (
-            <div className="hidden">
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => {
-                  setSelectedCompanyFund(null);
-                  setDialogOpen(true);
-                }}
-              >
-                إضافة صندوق شركة
-              </Button>
-            </div>
-          )}
-          {isTab ? (
+          <PageHeader
+            badge="الصناديق والعملات"
+            title="صناديق الشركة"
+            icon={Wallet}
+          />
+
+          <div className="surface-panel p-4 sm:p-5 space-y-4">
             <FundsListToolbar
               title="صناديق الشركة"
               icon={<Building2 className="size-5" />}
@@ -218,8 +218,7 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
               createLabel="إضافة صندوق"
               total={companyFundsMeta?.total}
             />
-          ) : null}
-          <div className='flex bg-white '>
+
             {companyFundsQuery.isLoading ? (
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {[...Array(3)].map((_, i) => (
@@ -233,6 +232,14 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                 <p className="mt-1 mb-4 max-w-sm text-sm text-muted-foreground">
                   لم يتم إضافة أي صناديق شركة بعد.
                 </p>
+                <Button
+                  onClick={() => {
+                    setSelectedCompanyFund(null);
+                    setDialogOpen(true);
+                  }}
+                >
+                  إضافة صندوق
+                </Button>
               </div>
             ) : (
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -271,22 +278,29 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
                       setFundToDelete(fund);
                       setDeleteConfirmOpen(true);
                     }}
+                    isFavorite={Boolean(fund.is_favorite)}
+                    onFavoriteClick={() => {
+                      setFundToFavorite(fund);
+                      setFavoriteAction(fund.is_favorite ? 'remove' : 'add');
+                      setFavoriteConfirmOpen(true);
+                    }}
                   />
                 ))}
               </div>
             )}
+
+            {companyFundsMeta ? (
+              <SimplePagination
+                currentPage={companyFundsMeta.current_page ?? page}
+                totalPages={companyFundsMeta.last_page ?? 1}
+                onPageChange={(value) => setSearchParams((previous) => { previous.set('page', String(value)); return previous; })}
+                meta={companyFundsMeta}
+                limit={perPage}
+                limitOptions={[5, 10, 20, 50]}
+                onLimitChange={(value) => setSearchParams((previous) => { previous.set('perPage', String(value)); previous.set('page', '1'); return previous; })}
+              />
+            ) : null}
           </div>
-          {isTab && companyFundsMeta ? (
-            <SimplePagination
-              currentPage={companyFundsMeta.current_page ?? page}
-              totalPages={companyFundsMeta.last_page ?? 1}
-              onPageChange={(value) => setSearchParams((previous) => { previous.set('page', String(value)); return previous; })}
-              meta={companyFundsMeta}
-              limit={perPage}
-              limitOptions={[5, 10, 20, 50]}
-              onLimitChange={(value) => setSearchParams((previous) => { previous.set('perPage', String(value)); previous.set('page', '1'); return previous; })}
-            />
-          ) : null}
         </>
       ) : (
         currentFund && (
@@ -397,6 +411,60 @@ export function CompanyFundsPage({ isTab = false }: { isTab?: boolean }) {
         title="تأكيد حذف صندوق الشركة"
         description={`هل أنت متأكد من حذف صندوق "${fundToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
+
+      <Dialog
+        open={favoriteConfirmOpen}
+        onOpenChange={(open) => {
+          setFavoriteConfirmOpen(open);
+          if (!open) {
+            setFundToFavorite(null);
+            setFavoriteAction(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{favoriteAction === 'remove' ? 'إزالة التمييز' : 'تمييز الصندوق'}</DialogTitle>
+            <DialogDescription>
+              {favoriteAction === 'remove'
+                ? 'هل تريد إزالة تمييز الصندوق بالنجمة؟'
+                : 'هل تريد تمييز الصندوق بنجمة؟'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFavoriteConfirmOpen(false);
+                setFundToFavorite(null);
+                setFavoriteAction(null);
+              }}
+              disabled={favoriteFundMutation.isPending}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                if (!fundToFavorite || !favoriteAction) return;
+                await favoriteFundMutation.mutateAsync({
+                  fund: fundToFavorite,
+                  is_favorite: favoriteAction === 'add',
+                });
+                toast.success(
+                  favoriteAction === 'add'
+                    ? 'تم تمييز الصندوق بنجمة'
+                    : 'تم إزالة تمييز الصندوق',
+                );
+              }}
+              disabled={favoriteFundMutation.isPending}
+            >
+              {favoriteFundMutation.isPending ? 'جاري الحفظ...' : 'تأكيد'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

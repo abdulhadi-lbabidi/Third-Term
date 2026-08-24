@@ -17,6 +17,14 @@ import { GenericFundDetails } from '@/features/funds-shared/components/generic-f
 import { GenericFundCard } from '@/features/funds-shared/components/generic-fund.card';
 import { GenericFundDialog } from '@/features/funds-shared/components/generic-fund.dialog';
 import { DeleteConfirmDialog } from '@/shared/components/ui/delete-confirm-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
 import { AttachCurrencyDialog } from '@/features/funds-shared/components/attach-currency.dialog';
 import { GenericFundCurrenciesDialog } from '@/features/funds-shared/components/generic-fund-currencies.dialog';
 import { SimplePagination } from '@/components/ui/pagination';
@@ -63,6 +71,9 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
   const [selectedFund, setSelectedFund] = useState<Fund | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [fundToDelete, setFundToDelete] = useState<Fund | null>(null);
+  const [favoriteConfirmOpen, setFavoriteConfirmOpen] = useState(false);
+  const [fundToFavorite, setFundToFavorite] = useState<Fund | null>(null);
+  const [favoriteAction, setFavoriteAction] = useState<'add' | 'remove' | null>(null);
   const [selectedFundForView, setSelectedFundForView] = useState<Fund | null>(null);
 
   const userRecordQuery = useQuery<UserRecord | null>({
@@ -151,6 +162,21 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
       if (hasUserContext && userRole) {
         await queryClient.invalidateQueries({ queryKey: ['funds', 'user-record', userRole, userId] });
       }
+    },
+  });
+
+  const favoriteFundMutation = useMutation({
+    mutationFn: ({ fund, is_favorite }: { fund: Fund; is_favorite: boolean }) =>
+      fundsApi.updateFund(fund.id, { is_favorite }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: fundsQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['fund-details'] });
+      if (hasUserContext && userRole) {
+        await queryClient.invalidateQueries({ queryKey: ['funds', 'user-record', userRole, userId] });
+      }
+      setFavoriteConfirmOpen(false);
+      setFundToFavorite(null);
+      setFavoriteAction(null);
     },
   });
 
@@ -285,6 +311,16 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
                     setFundToDelete(fund);
                     setDeleteConfirmOpen(true);
                   }}
+                  isFavorite={Boolean(fund.is_favorite)}
+                  onFavoriteClick={
+                    hasUserContext
+                      ? () => {
+                          setFundToFavorite(fund);
+                          setFavoriteAction(fund.is_favorite ? 'remove' : 'add');
+                          setFavoriteConfirmOpen(true);
+                        }
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -415,6 +451,60 @@ export function FundsPage({ isTab = false }: { isTab?: boolean }) {
         title="تأكيد حذف صندوق المستخدم"
         description={`هل أنت متأكد من حذف صندوق "${fundToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
       />
+
+      <Dialog
+        open={favoriteConfirmOpen}
+        onOpenChange={(open) => {
+          setFavoriteConfirmOpen(open);
+          if (!open) {
+            setFundToFavorite(null);
+            setFavoriteAction(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{favoriteAction === 'remove' ? 'إزالة التمييز' : 'تمييز الصندوق'}</DialogTitle>
+            <DialogDescription>
+              {favoriteAction === 'remove'
+                ? 'هل تريد إزالة تمييز الصندوق بالنجمة؟'
+                : 'هل تريد تمييز الصندوق بنجمة؟'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFavoriteConfirmOpen(false);
+                setFundToFavorite(null);
+                setFavoriteAction(null);
+              }}
+              disabled={favoriteFundMutation.isPending}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                if (!fundToFavorite || !favoriteAction) return;
+                await favoriteFundMutation.mutateAsync({
+                  fund: fundToFavorite,
+                  is_favorite: favoriteAction === 'add',
+                });
+                toast.success(
+                  favoriteAction === 'add'
+                    ? 'تم تمييز الصندوق بنجمة'
+                    : 'تم إزالة تمييز الصندوق',
+                );
+              }}
+              disabled={favoriteFundMutation.isPending}
+            >
+              {favoriteFundMutation.isPending ? 'جاري الحفظ...' : 'تأكيد'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

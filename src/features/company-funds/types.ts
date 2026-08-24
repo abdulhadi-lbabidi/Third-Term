@@ -20,6 +20,7 @@ export type CompanyFund = {
   description?: string;
   threshold?: number;
   type?: string;
+  is_favorite?: boolean;
 };
 
 export type CreateCompanyFundPayload = {
@@ -30,13 +31,9 @@ export type CreateCompanyFundPayload = {
   threshold?: number;
 };
 
-export type UpdateCompanyFundPayload = {
-  name: string;
-  is_locked?: boolean | number;
-  status?: 'pending' | 'complete' | 'canceled';
-  description?: string;
-  threshold?: number;
-};
+export type UpdateCompanyFundPayload = Partial<CreateCompanyFundPayload & {
+  is_favorite?: boolean;
+}>;
 
 export type CompanyFundCurrencyAttachPayload = {
   currency_id: number;

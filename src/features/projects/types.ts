@@ -24,6 +24,7 @@ export type ProjectFund = {
   description?: string;
   threshold?: number;
   type?: string;
+  is_favorite?: boolean;
 };
 
 export type Project = {

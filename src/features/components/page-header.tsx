@@ -108,6 +108,9 @@ export function PageHeader({
             </div>
           ) : null}
           <div className="min-w-0 space-y-1">
+            {badge ? (
+              <div className="text-xs font-medium text-muted-foreground">{badge}</div>
+            ) : null}
              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               {title}
             </h1>

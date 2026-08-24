@@ -4,7 +4,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { User, Wallet, BadgeDollarSign, Pencil, Mail, Phone, MapPin, Briefcase, DollarSign, Heart, Calendar, ShieldCheck, Cloud, UploadCloud, X, KeyRound } from 'lucide-react';
+import { User, Wallet, BadgeDollarSign, Pencil, Cloud, UploadCloud, X, KeyRound } from 'lucide-react';
 import dayjs from 'dayjs';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
