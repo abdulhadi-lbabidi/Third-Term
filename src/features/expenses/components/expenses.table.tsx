@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Eye, FilePlus2, Loader2, ReceiptText } from 'lucide-react';
+import { AlertCircle, CreditCard, Eye, FilePlus2, HandCoins, Loader2, ReceiptText } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import { DataTable, type DataTableColumn } from '@/features/components/data-table';
 import {
@@ -25,6 +25,8 @@ type ExpensesTableProps = {
   onDelete?: (expense: Expense) => void;
   onInvoices?: (expense: Expense) => void;
   onAddInvoice?: (expense: Expense) => void;
+  onPayments?: (expense: Expense) => void;
+  onSettlePayment?: (expense: Expense) => void;
   invoiceCountsByExpenseId?: Map<number, number>;
   invoicesLoading?: boolean;
   invoicesError?: boolean;
@@ -42,6 +44,8 @@ export function ExpensesTable({
   onDelete,
   onInvoices,
   onAddInvoice,
+  onPayments,
+  onSettlePayment,
   invoiceCountsByExpenseId,
   invoicesLoading,
   invoicesError,
@@ -131,6 +135,24 @@ export function ExpensesTable({
               },
             ]
             : []),
+          ...(onPayments
+            ? [
+              {
+                label: 'الدفعات',
+                icon: <CreditCard className="size-4" />,
+                onClick: onPayments,
+              },
+            ]
+            : []),
+          ...(onSettlePayment
+            ? [
+              {
+                label: 'تسديد الدفعة',
+                icon: <HandCoins className="size-4" />,
+                onClick: onSettlePayment,
+              },
+            ]
+            : []),
           ...(onInvoices
             ? [{
               label: (row: Expense) => {
@@ -161,6 +183,24 @@ export function ExpensesTable({
                 label: 'تفاصيل المصروف',
                 icon: <Eye className="size-4" />,
                 onClick: onView,
+              },
+            ]
+            : []),
+          ...(onPayments
+            ? [
+              {
+                label: 'الدفعات',
+                icon: <CreditCard className="size-4" />,
+                onClick: onPayments,
+              },
+            ]
+            : []),
+          ...(onSettlePayment
+            ? [
+              {
+                label: 'تسديد الدفعة',
+                icon: <HandCoins className="size-4" />,
+                onClick: onSettlePayment,
               },
             ]
             : []),

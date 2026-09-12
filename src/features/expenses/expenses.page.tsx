@@ -8,6 +8,8 @@ import { expensesApi } from './expenses.api';
 import { useCreateExpense, useExpenses, useUpdateExpense } from './expenses.hooks';
 import { ExpensesTable } from './components/expenses.table';
 import { ExpensesDialog } from './components/expenses.dialog';
+import { ExpensePaymentsDialog } from './components/expense-payments.dialog';
+import { SettleExpensePaymentDialog } from './components/settle-expense-payment.dialog';
 import { InvoicesDialog } from '@/features/invoices/components/invoices.dialog';
 import type { Expense } from './types';
 import { ReceiptText, SlidersHorizontal, RotateCcw } from 'lucide-react';
@@ -30,6 +32,10 @@ export function ExpensesPage() {
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [invoiceExpenseId, setInvoiceExpenseId] = useState<number | null>(null);
+  const [paymentsDialogOpen, setPaymentsDialogOpen] = useState(false);
+  const [selectedExpenseForPayments, setSelectedExpenseForPayments] = useState<Expense | null>(null);
+  const [settlePaymentDialogOpen, setSettlePaymentDialogOpen] = useState(false);
+  const [selectedExpenseForSettle, setSelectedExpenseForSettle] = useState<Expense | null>(null);
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
 
@@ -190,6 +196,14 @@ export function ExpensesPage() {
         onEdit={(expense) => { setExpenseToEdit(expense); setExpenseDialogOpen(true); }}
         onDelete={handleDelete}
         onAddInvoice={(expense) => setInvoiceExpenseId(expense.id)}
+        onPayments={(expense) => {
+          setSelectedExpenseForPayments(expense);
+          setPaymentsDialogOpen(true);
+        }}
+        onSettlePayment={(expense) => {
+          setSelectedExpenseForSettle(expense);
+          setSettlePaymentDialogOpen(true);
+        }}
         sort={sort}
         onSortChange={setSort}
       />
@@ -221,6 +235,18 @@ export function ExpensesPage() {
         isOpen={invoiceExpenseId !== null}
         onClose={() => setInvoiceExpenseId(null)}
         fixedValues={invoiceExpenseId ? { expense_id: invoiceExpenseId } : undefined}
+      />
+
+      <ExpensePaymentsDialog
+        open={paymentsDialogOpen}
+        onOpenChange={setPaymentsDialogOpen}
+        expense={selectedExpenseForPayments}
+      />
+
+      <SettleExpensePaymentDialog
+        open={settlePaymentDialogOpen}
+        onOpenChange={setSettlePaymentDialogOpen}
+        expense={selectedExpenseForSettle}
       />
 
     </div>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -12,11 +12,24 @@ import {
   CheckCircle2,
   XCircle,
   TrendingDown,
+  CreditCard,
+  ChevronDown,
+  HandCoins,
 } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { PageHeader } from '../components/page-header';
 import { expensesApi } from './expenses.api';
-import { formatArabicDate } from '@/shared/lib/utils';
+import { cn, formatArabicDate } from '@/shared/lib/utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/shared/components/ui/table';
+import { Badge } from '@/shared/components/ui/badge';
 import type {
   Expense,
   ExpenseCompanyFundCurrencyDetails,
@@ -314,10 +327,54 @@ function ExpenseDetailsContent({ expense }: { expense: Expense }) {
   );
 }
 
+type InvoicePaymentMock = {
+  id: number;
+  paid_amount: number;
+  delivered_to: string;
+  payment_date: string;
+};
+
+function getInvoicePaymentsMock(invoiceId: number, total: number | string): InvoicePaymentMock[] {
+  const numericTotal = Number(total) || 300;
+  const first = Math.round(numericTotal * 0.6);
+  const second = numericTotal - first;
+
+  return [
+    {
+      id: Number(`${invoiceId}01`),
+      paid_amount: first,
+      delivered_to: 'حاتم الصالح',
+      payment_date: '2026-09-02',
+    },
+    {
+      id: Number(`${invoiceId}02`),
+      paid_amount: second,
+      delivered_to: 'أحمد العلي',
+      payment_date: '2026-09-08',
+    },
+  ];
+}
+
 import { useInvoices } from '@/features/invoices/invoices.hooks';
+import { SettleInvoicePaymentDialog } from './components/settle-invoice-payment.dialog';
 
 export function ExpenseDetailsPage() {
   const { expenseId } = useParams<{ expenseId: string }>();
+  const [closedInvoiceDrawerIds, setClosedInvoiceDrawerIds] = useState<Set<number>>(new Set());
+  const [settleInvoiceDialogOpen, setSettleInvoiceDialogOpen] = useState(false);
+  const [selectedInvoiceForSettle, setSelectedInvoiceForSettle] = useState<any | null>(null);
+
+  const toggleInvoiceDrawer = (invoiceId: number) => {
+    setClosedInvoiceDrawerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(invoiceId)) {
+        next.delete(invoiceId);
+      } else {
+        next.add(invoiceId);
+      }
+      return next;
+    });
+  };
 
   const expenseQuery = useQuery<Expense>({
     queryKey: ['expenses', 'details', Number(expenseId)] as const,
@@ -373,25 +430,101 @@ export function ExpenseDetailsPage() {
                 ) : invoices.length === 0 ? (
                   <p className="text-center text-xs text-muted-foreground py-4">لا توجد فواتير مرتبطة بهذا المصروف</p>
                 ) : (
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-1">
                     {invoices.map((invoice: any) => {
                       const supplierName = typeof invoice.supplier === 'string' ? invoice.supplier : invoice.supplier?.name;
                       const itemName = typeof invoice.item === 'string' ? invoice.item : invoice.item?.name;
+                      const isDrawerOpen = !closedInvoiceDrawerIds.has(invoice.id);
+                      const mockPayments = getInvoicePaymentsMock(invoice.id, invoice.final_total);
+
                       return (
-                        <div key={invoice.id} className="bg-card border border-border rounded-lg p-3 flex justify-between items-center shadow-sm">
-                          <div className="space-y-1.5 min-w-0">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="text-xs font-semibold text-foreground truncate">فاتورة #{invoice.invoice_number}</span>
+                        <div key={invoice.id} className="flex flex-col rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+                          <div className="flex items-center justify-between p-3">
+                            <div className="space-y-1.5 min-w-0">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-xs font-semibold text-foreground truncate">فاتورة #{invoice.invoice_number}</span>
+                              </div>
+                              <div className="text-[10px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+                                <span>المورد: <span className="font-semibold text-foreground">{supplierName || '-'}</span></span>
+                                <span>البند: <span className="font-semibold text-foreground">{itemName || '-'}</span></span>
+                                <span>التاريخ: <span className="font-semibold">{invoice.date}</span></span>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
-                              <span>المورد: <span className="font-semibold text-foreground">{supplierName || '-'}</span></span>
-                              <span>البند: <span className="font-semibold text-foreground">{itemName || '-'}</span></span>
-                              <span>التاريخ: <span className="font-semibold">{invoice.date}</span></span>
+                            <div className="flex items-center gap-2 shrink-0 mr-2">
+                              <span className="text-xs font-bold text-primary font-mono">
+                                {new Intl.NumberFormat('en-US').format(Number(invoice.final_total) || 0)}
+                              </span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedInvoiceForSettle(invoice);
+                                  setSettleInvoiceDialogOpen(true);
+                                }}
+                                className="h-7 gap-1 px-2 text-xs font-medium text-primary border-primary/30 hover:bg-primary/10 hover:text-primary"
+                              >
+                                <HandCoins className="size-3.5" />
+                                <span>تسديد</span>
+                              </Button>
                             </div>
                           </div>
-                          <span className="text-xs font-bold text-primary font-mono shrink-0 mr-2">
-                            {new Intl.NumberFormat('en-US').format(Number(invoice.final_total) || 0)}
-                          </span>
+
+                          <div className="border-t border-border/80 bg-muted/20">
+                            <button
+                              type="button"
+                              onClick={() => toggleInvoiceDrawer(invoice.id)}
+                              className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="size-3.5 text-primary" />
+                                <span className="font-semibold">الدفعات</span>
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                  {mockPayments.length}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-1 text-[11px]">
+                                <span>{isDrawerOpen ? 'إغلاق' : 'عرض'}</span>
+                                <ChevronDown className={cn("size-3.5 transition-transform duration-200", isDrawerOpen && "rotate-180")} />
+                              </div>
+                            </button>
+
+                            {isDrawerOpen ? (
+                              <div className="border-t border-border/60 bg-card p-2.5">
+                                <div className="overflow-hidden rounded-md border border-border/70">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="bg-muted/50 text-[11px]">
+                                        <TableHead className="text-center font-semibold h-8 py-1">المبلغ المدفوع</TableHead>
+                                        <TableHead className="text-center font-semibold h-8 py-1">المسلَّم بيد</TableHead>
+                                        <TableHead className="text-center font-semibold h-8 py-1">تاريخ الدفع</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {mockPayments.map((payment) => (
+                                        <TableRow key={payment.id} className="text-center text-xs">
+                                          <TableCell className="text-center py-2">
+                                            <span className="finance-num font-semibold text-emerald-600 dark:text-emerald-400">
+                                              {payment.paid_amount.toLocaleString()}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell className="text-center py-2 font-medium text-foreground">
+                                            {payment.delivered_to}
+                                          </TableCell>
+                                          <TableCell className="text-center py-2 text-muted-foreground">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                              <Calendar className="size-3 text-muted-foreground/70" />
+                                              <span>{formatArabicDate(payment.payment_date)}</span>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
                       );
                     })}
@@ -402,6 +535,13 @@ export function ExpenseDetailsPage() {
           </>
         ) : null}
       </div>
+
+      <SettleInvoicePaymentDialog
+        open={settleInvoiceDialogOpen}
+        onOpenChange={setSettleInvoiceDialogOpen}
+        invoice={selectedInvoiceForSettle}
+        currency={(expenseQuery.data?.expenseable_info as any)?.details?.currency?.symbol ?? (expenseQuery.data?.expenseable_info as any)?.details?.currency?.currency ?? ''}
+      />
     </div>
   );
 }
