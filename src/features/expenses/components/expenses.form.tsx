@@ -142,7 +142,7 @@ function renderCurrencyValue(currency: { currency: string; balance: string }) {
     <span className="flex items-center gap-1.5 font-sans">
       <span>{currency.currency} -</span>
       <span className={isPositive ? 'text-success font-bold font-mono' : 'text-destructive font-bold font-mono'}>
-        {currency.balance}
+        {bal.toLocaleString()}
       </span>
     </span>
   );

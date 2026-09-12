@@ -82,7 +82,7 @@ export function AuditLogsPage() {
               variant="outline"
               onClick={() => setFilterDrawerOpen(!filterDrawerOpen)}
               className={cn(Object.keys(appliedFilters).length > 0 && "border-primary text-primary")}
-            >
+          >
               <SlidersHorizontal className="size-4" />
               فلترة متقدمة
             </Button>

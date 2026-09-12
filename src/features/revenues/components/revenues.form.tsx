@@ -140,7 +140,7 @@ function currencyMatchesRevenueableId(
 }
 
 function getCurrencyLabel(currency: { currency: string; balance: string }) {
-  return `${currency.currency} - ${currency.balance}`;
+  return `${currency.currency} - ${Number(currency.balance || 0).toLocaleString()}`;
 }
 
 function formatFundCurrencies(currencies?: { currency: string; balance: string }[]) {
@@ -158,7 +158,21 @@ function getRevenueReceivedById(revenue?: Revenue | null): number {
   }
 
   if (revenue?.received_by && typeof revenue.received_by === 'object') {
-    return revenue.received_by.id ?? revenue.received_by.user?.id ?? 1;
+    return revenue.received_by.id ?? revenue.received_by.user?.id ?? getLoggedInUserId();
+  }
+
+  return getLoggedInUserId();
+}
+
+function getLoggedInUserId(): number {
+  try {
+    const raw = localStorage.getItem('user_info');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id) return parsed.id;
+    }
+  } catch (e) {
+    console.error(e);
   }
 
   return 1;
@@ -508,7 +522,7 @@ export function RevenuesForm({ defaultValues, fixedValues, onSubmit, loading, ne
               is_posted: values.is_posted,
               user_id: values.user_id ?? 1,
               note: values.note || undefined,
-              received_by: values.received_by ?? 1,
+              received_by: values.received_by ?? getLoggedInUserId(),
             });
           },
           (errors) => {

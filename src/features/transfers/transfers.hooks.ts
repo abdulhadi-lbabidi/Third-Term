@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { transfersApi } from './transfers.api';
 import type { CreateTransferPayload } from './types';
+import { projectsApi } from '@/features/projects/projects.api';
 
 export function useTransfers(page = 1, perPage = 50, filters?: Record<string, any>, enabled = true) {
   return useQuery({
@@ -15,11 +16,18 @@ export function useCreateTransfer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateTransferPayload) => transfersApi.createTransfer(payload),
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
       queryClient.invalidateQueries({ queryKey: ['project-funds'] });
       queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       queryClient.invalidateQueries({ queryKey: ['funds'] });
+
+      const rawProjId = (variables as any)?.project_id ?? (variables as any)?.from_project_id;
+      if (rawProjId && Number.isFinite(Number(rawProjId)) && Number(rawProjId) > 0) {
+        await projectsApi.activateProjectIfPending(Number(rawProjId));
+        await queryClient.invalidateQueries({ queryKey: ['projects', Number(rawProjId)] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      }
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'حدث خطأ أثناء إجراء عملية التحويل');

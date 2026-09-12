@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { revenuesApi } from './revenues.api';
 import type { CreateRevenuePayload, UpdateRevenuePayload } from './types';
 import { toast } from 'sonner';
+import { projectsApi } from '@/features/projects/projects.api';
 
 export const revenuesQueryKeys = {
   all: ['revenues'] as const,
@@ -22,11 +23,17 @@ export function useCreateRevenue() {
 
   return useMutation({
     mutationFn: (payload: CreateRevenuePayload) => revenuesApi.createRevenue(payload),
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({ queryKey: revenuesQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['funds'] });
+      const rawProjId = (variables as any)?.project_id ?? (data as any)?.revenueable_info?.project_id;
+      if (rawProjId && Number.isFinite(Number(rawProjId)) && Number(rawProjId) > 0) {
+        await projectsApi.activateProjectIfPending(Number(rawProjId));
+        await queryClient.invalidateQueries({ queryKey: ['projects', Number(rawProjId)] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      }
       toast.success('تم إضافة الإيراد بنجاح');
     },
     onError: () => {

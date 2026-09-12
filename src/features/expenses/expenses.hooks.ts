@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { expensesApi, type ExpenseResponse } from './expenses.api';
 import type { CreateExpensePayload, UpdateExpensePayload } from './types';
+import { projectsApi } from '@/features/projects/projects.api';
 
 const expensesQueryKeys = {
   all: ['expenses'] as const,
@@ -21,11 +22,19 @@ export function useCreateExpense() {
 
   return useMutation({
     mutationFn: (payload: CreateExpensePayload) => expensesApi.createExpense(payload),
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({ queryKey: expensesQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: ['project-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['company-funds'] });
       await queryClient.invalidateQueries({ queryKey: ['funds'] });
+
+      const rawProjId = (variables as any)?.project_id ?? data?.expenseable_info?.project_id ?? (data?.expenseable_info?.details as any)?.project_fund?.project_id ?? (data?.expenseable_info?.details as any)?.project_fund?.project?.id;
+      if (rawProjId && Number.isFinite(Number(rawProjId)) && Number(rawProjId) > 0) {
+        await projectsApi.activateProjectIfPending(Number(rawProjId));
+        await queryClient.invalidateQueries({ queryKey: ['projects', Number(rawProjId)] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      }
+
       toast.success('تم إضافة المصروف بنجاح');
 
       const details = data?.expenseable_info?.details as any;

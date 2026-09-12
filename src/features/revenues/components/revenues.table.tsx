@@ -51,7 +51,7 @@ export function RevenuesTable({
         const amount = Number(row.amount || 0).toLocaleString();
         const currency = getCurrencyStringFromInfo(row.revenueable_info);
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-1">
             <span className="finance-num font-medium">{amount}</span>
             {currency ? <span className="text-xs text-muted-foreground">{currency}</span> : null}
           </div>

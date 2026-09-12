@@ -25,6 +25,30 @@ export const projectsApi = {
     apiClient
       .post(`/projects/${projectId}/departments/detach`, { department_ids: departmentIds })
       .then(({ data }: any) => data?.data ?? data),
-  updateProject: (id: number, payload: UpdateProjectPayload) => apiClient.patch<Project>(`/projects/${id}`, payload).then(({ data }: any) => data?.data ?? data),
+  updateProject: (id: number, payload: Partial<UpdateProjectPayload>) => apiClient.patch<Project>(`/projects/${id}`, payload).then(({ data }: any) => data?.data ?? data),
   deleteProject: (id: number) => apiClient.delete(`/projects/${id}`).then(({ data }: any) => data?.data ?? data),
+  activateProjectIfPending: async (projectId: number): Promise<boolean> => {
+    try {
+      const project = await projectsApi.getProjectById(projectId);
+      if (project && project.status === 'pending') {
+        const clientId = project.client?.id ?? (project as any).client_id;
+        const departmentId =
+          project.department?.id ??
+          project.departments?.[0]?.id ??
+          (project as any).department_id ??
+          1;
+        await projectsApi.updateProject(projectId, {
+          name: project.name,
+          expected_cost: project.expected_cost,
+          status: 'in_progress',
+          client_id: clientId,
+          department_id: departmentId,
+        });
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  },
 };

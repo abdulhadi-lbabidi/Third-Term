@@ -271,7 +271,7 @@ function getCurrencyLabel(currency: { currency: string; balance: string }) {
   return (
     <span className="flex items-center justify-between gap-2 w-full">
       <span>{currency.currency}</span>
-      <span className={colorClass}>({currency.balance})</span>
+      <span className={colorClass}>({balanceVal.toLocaleString()})</span>
     </span>
   );
 }
@@ -801,9 +801,13 @@ export function TransfersForm({
       }
       const pCurrencies = selectedProjectFund?.currencies ?? [];
       if (pCurrencies.length > 0 && !selectedMorphToId) {
-        const usd = pCurrencies.find(c => c.currency.toUpperCase() === 'USD');
-        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (pCurrencies[0].expenseable_id ?? pCurrencies[0].pivot?.id ?? pCurrencies[0].id);
-        form.setValue('morph_to_id', selectedId);
+        const matching = selectedSourceCurrency
+          ? pCurrencies.find(c => c.currency.trim().toUpperCase() === selectedSourceCurrency.currency.trim().toUpperCase())
+          : pCurrencies.find(c => c.currency.toUpperCase() === 'USD') || pCurrencies[0];
+        if (matching) {
+          const selectedId = matching.expenseable_id ?? matching.pivot?.id ?? matching.id;
+          form.setValue('morph_to_id', selectedId);
+        }
       }
     } else if (morphToType === 'App\\Models\\CompanyFundCurrency') {
       if (companyFunds.length > 0 && !companyFundId) {
@@ -811,9 +815,13 @@ export function TransfersForm({
       }
       const cCurrencies = selectedCompanyFund?.currencies ?? [];
       if (cCurrencies.length > 0 && !selectedMorphToId) {
-        const usd = cCurrencies.find(c => c.currency.toUpperCase() === 'USD');
-        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (cCurrencies[0].expenseable_id ?? cCurrencies[0].pivot?.id ?? cCurrencies[0].id);
-        form.setValue('morph_to_id', selectedId);
+        const matching = selectedSourceCurrency
+          ? cCurrencies.find(c => c.currency.trim().toUpperCase() === selectedSourceCurrency.currency.trim().toUpperCase())
+          : cCurrencies.find(c => c.currency.toUpperCase() === 'USD') || cCurrencies[0];
+        if (matching) {
+          const selectedId = matching.expenseable_id ?? matching.pivot?.id ?? matching.id;
+          form.setValue('morph_to_id', selectedId);
+        }
       }
     } else if (morphToType === 'App\\Models\\CurrencyFund') {
       if (fundRoleUsers.length > 0 && !fundUserId) {
@@ -825,9 +833,13 @@ export function TransfersForm({
       }
       const uCurrencies = selectedUserFund?.currencies ?? [];
       if (uCurrencies.length > 0 && !selectedMorphToId) {
-        const usd = uCurrencies.find(c => c.currency.toUpperCase() === 'USD');
-        const selectedId = usd ? (usd.expenseable_id ?? usd.pivot?.id ?? usd.id) : (uCurrencies[0].expenseable_id ?? uCurrencies[0].pivot?.id ?? uCurrencies[0].id);
-        form.setValue('morph_to_id', selectedId);
+        const matching = selectedSourceCurrency
+          ? uCurrencies.find(c => c.currency.trim().toUpperCase() === selectedSourceCurrency.currency.trim().toUpperCase())
+          : uCurrencies.find(c => c.currency.toUpperCase() === 'USD') || uCurrencies[0];
+        if (matching) {
+          const selectedId = matching.expenseable_id ?? matching.pivot?.id ?? matching.id;
+          form.setValue('morph_to_id', selectedId);
+        }
       }
     }
   }, [
@@ -927,15 +939,65 @@ export function TransfersForm({
     return currencies.find((c) => getCurrencyExpenseableId(c) === selectedMorphFromId) || null;
   }, [isGeneral, selectedMorphFromId, fixedFromCurrencies, morphFromType, selectedFromCompanyFund, selectedFromProjectFund, selectedFromUserFund]);
 
+  const destinationCurrencies = useMemo(() => {
+    if (morphToType === 'App\\Models\\CompanyFundCurrency') {
+      return selectedCompanyFund?.currencies ?? [];
+    }
+    if (morphToType === 'App\\Models\\ProjectFundCurrency') {
+      return selectedProjectFundCurrencies;
+    }
+    if (morphToType === 'App\\Models\\CurrencyFund') {
+      return selectedUserFund?.currencies ?? [];
+    }
+    return [];
+  }, [morphToType, selectedCompanyFund, selectedProjectFundCurrencies, selectedUserFund]);
+
+  const availableDestinationCurrencies = useMemo(() => {
+    if (!selectedSourceCurrency) return destinationCurrencies;
+    return destinationCurrencies.filter(
+      (c) => c.currency.trim().toUpperCase() === selectedSourceCurrency.currency.trim().toUpperCase()
+    );
+  }, [destinationCurrencies, selectedSourceCurrency]);
+
+  const selectedDestinationCurrency = useMemo(() => {
+    if (!selectedMorphToId) return null;
+    return destinationCurrencies.find((c) => currencyMatchesExpenseableId(c, selectedMorphToId)) || null;
+  }, [destinationCurrencies, selectedMorphToId]);
+
+  useEffect(() => {
+    if (!selectedSourceCurrency || !destinationCurrencies.length) return;
+    const matchingCurrency = destinationCurrencies.find(
+      (c) => c.currency.trim().toUpperCase() === selectedSourceCurrency.currency.trim().toUpperCase()
+    );
+    if (matchingCurrency) {
+      const matchId = getCurrencyExpenseableId(matchingCurrency);
+      if (selectedMorphToId !== matchId) {
+        form.setValue('morph_to_id', matchId);
+      }
+    } else if (selectedMorphToId) {
+      form.setValue('morph_to_id', undefined as any);
+    }
+  }, [selectedSourceCurrency, destinationCurrencies, selectedMorphToId, form]);
+
   useEffect(() => {
     form.clearErrors('morph_from_id');
-  }, [selectedMorphFromId, form]);
+    form.clearErrors('morph_to_id');
+  }, [selectedMorphFromId, selectedMorphToId, form]);
 
   return (
     <Form {...form}>
       <form
         className="space-y-2"
         onSubmit={form.handleSubmit(async (values) => {
+          if (selectedSourceCurrency && selectedDestinationCurrency) {
+            if (selectedSourceCurrency.currency.trim().toUpperCase() !== selectedDestinationCurrency.currency.trim().toUpperCase()) {
+              form.setError('morph_to_id', {
+                type: 'custom',
+                message: 'يجب أن تكون عملة الوجهة مطابقة لعملة المصدر',
+              });
+              return;
+            }
+          }
           const bal = selectedSourceCurrency ? Number(selectedSourceCurrency.balance) || 0 : null;
           if (bal !== null && bal <= 0) {
             form.setError('morph_from_id', {
@@ -1534,14 +1596,22 @@ export function TransfersForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(selectedCompanyFund?.currencies ?? []).map((currency) => {
-                          const value = getCurrencyExpenseableId(currency);
-                          return (
-                            <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                              {getCurrencyLabel(currency)}
-                            </SelectItem>
-                          );
-                        })}
+                        {availableDestinationCurrencies.length > 0 ? (
+                          availableDestinationCurrencies.map((currency) => {
+                            const value = getCurrencyExpenseableId(currency);
+                            return (
+                              <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                                {getCurrencyLabel(currency)}
+                              </SelectItem>
+                            );
+                          })
+                        ) : (
+                          <div className="p-2 text-center text-sm text-muted-foreground">
+                            {selectedSourceCurrency
+                              ? `لا توجد عملة ${selectedSourceCurrency.currency} في هذا الصندوق`
+                              : 'لا توجد عملات متاحة'}
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -1642,14 +1712,22 @@ export function TransfersForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {selectedProjectFundCurrencies.map((currency) => {
-                          const value = getCurrencyExpenseableId(currency);
-                          return (
-                            <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                              {getCurrencyLabel(currency)}
-                            </SelectItem>
-                          );
-                        })}
+                        {availableDestinationCurrencies.length > 0 ? (
+                          availableDestinationCurrencies.map((currency) => {
+                            const value = getCurrencyExpenseableId(currency);
+                            return (
+                              <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                                {getCurrencyLabel(currency)}
+                              </SelectItem>
+                            );
+                          })
+                        ) : (
+                          <div className="p-2 text-center text-sm text-muted-foreground">
+                            {selectedSourceCurrency
+                              ? `لا توجد عملة ${selectedSourceCurrency.currency} في هذا الصندوق`
+                              : 'لا توجد عملات متاحة'}
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -1781,14 +1859,22 @@ export function TransfersForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(selectedUserFund?.currencies ?? []).map((currency) => {
-                          const value = getCurrencyExpenseableId(currency);
-                          return (
-                            <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
-                              {getCurrencyLabel(currency)}
-                            </SelectItem>
-                          );
-                        })}
+                        {availableDestinationCurrencies.length > 0 ? (
+                          availableDestinationCurrencies.map((currency) => {
+                            const value = getCurrencyExpenseableId(currency);
+                            return (
+                              <SelectItem key={`${currency.id}-${value}`} value={String(value)}>
+                                {getCurrencyLabel(currency)}
+                              </SelectItem>
+                            );
+                          })
+                        ) : (
+                          <div className="p-2 text-center text-sm text-muted-foreground">
+                            {selectedSourceCurrency
+                              ? `لا توجد عملة ${selectedSourceCurrency.currency} في هذا الصندوق`
+                              : 'لا توجد عملات متاحة'}
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

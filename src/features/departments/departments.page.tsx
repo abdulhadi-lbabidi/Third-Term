@@ -1,25 +1,24 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button';
 import { DepartmentTable } from './components/department.table';
 import { DepartmentDialog } from './components/department.dialog';
-import { DepartmentDetails } from './components/department-details';
 import { PageHeader } from '../components/page-header';
 import type { Department, CreateDepartmentPayload } from './types';
 import { useDepartments, useMutateDepartment, useDeleteDepartment } from './departments.hooks';
 import { Building2, Search, RotateCcw } from 'lucide-react';
 import { SimplePagination } from '@/components/ui/pagination';
 import { Input } from '@/shared/components/ui/input';
-import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
 
 export function DepartmentsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const perPage = 50;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
-  const [selectedDepartmentIdForView, setSelectedDepartmentIdForView] = useState<number | null>(null);
 
   const [searchVal, setSearchVal] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
@@ -124,7 +123,7 @@ export function DepartmentsPage() {
         loading={loading}
         onEdit={openEditDialog}
         onDelete={handleDelete}
-        onView={(dept) => setSelectedDepartmentIdForView(dept.id)}
+        onView={(dept) => navigate(`/departments/${dept.id}`)}
         sort={sort}
         onSortChange={setSort}
       />
@@ -143,21 +142,6 @@ export function DepartmentsPage() {
         onSubmit={handleCreateOrUpdate}
         loading={isSaving}
       />
-
-      <Dialog
-        open={selectedDepartmentIdForView !== null}
-        onOpenChange={(open) => !open && setSelectedDepartmentIdForView(null)}
-      >
-        <DialogContent className="sm:max-w-[850px] max-h-[85vh] !overflow-y-auto">
-          <DialogTitle className="sr-only">تفاصيل القسم</DialogTitle>
-          {selectedDepartmentIdForView !== null && (
-            <DepartmentDetails
-              departmentId={selectedDepartmentIdForView}
-              onClose={() => setSelectedDepartmentIdForView(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

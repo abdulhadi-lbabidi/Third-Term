@@ -54,6 +54,15 @@ export function Header({ onLogout, onOpenMobileSidebar }: HeaderProps) {
   const isRootPath = ROOT_PATHS.includes(location.pathname);
 
   const handleBack = () => {
+    if (location.pathname.startsWith('/users/view')) {
+      const segments = location.pathname.split('/');
+      const roleFromPath = segments[3];
+      const searchParams = new URLSearchParams(location.search);
+      const returnRole = searchParams.get('returnRole') || (roleFromPath && roleFromPath !== 'user' ? roleFromPath : undefined);
+      navigate(returnRole ? `/users?tab=${returnRole}` : '/users');
+      return;
+    }
+
     if (window.history.length > 1) {
       navigate(-1);
     } else {

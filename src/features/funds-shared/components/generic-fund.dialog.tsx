@@ -30,8 +30,8 @@ const genericFundSchema = z.object({
   type: z.string().optional(),
   threshold: z.string()
     .min(1, 'الحد الأدنى لرصيد الصندوق مطلوب')
-    .refine((val) => !isNaN(Number(val)), 'يجب إدخال رقم صحيح')
-    .transform((val) => Number(val))
+    .refine((val) => !isNaN(Number(val.replace(/,/g, ''))), 'يجب إدخال رقم صحيح')
+    .transform((val) => Number(val.replace(/,/g, '')))
     .refine((val) => val >= 0, 'يجب أن يكون الحد الأدنى 0 أو أكثر'),
 }).superRefine((val, ctx) => {
   if (val.fundCategory === 'project' && !val.project_id) {
@@ -49,6 +49,14 @@ const genericFundSchema = z.object({
     });
   }
 });
+
+function formatNumberWithCommas(value: unknown): string {
+  if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
+  const str = String(value).replace(/,/g, '');
+  const parts = str.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
 
 
 
@@ -203,11 +211,19 @@ export function GenericFundDialog({
                   <FormLabel>الحد الأدنى لرصيد الصندوق</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
-                      step="any"
-                      min="0"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="0.00"
-                      {...field}
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={formatNumberWithCommas(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        if (/^\d*\.?\d*$/.test(raw)) {
+                          field.onChange(raw);
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

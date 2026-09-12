@@ -465,7 +465,7 @@ export function ProjectFundsPage({ isTab = false, projectData }: { isTab?: boole
               setAttachDialogOpen(true);
             }}
             extraFixedValues={{
-              project_id: currentFund.project?.id,
+              project_id: currentFund.project?.id ?? (hasProjectId ? projectId : undefined) ?? projectData?.id,
             }}
             threshold={currentFund.threshold}
           />

@@ -50,11 +50,17 @@ const formatPropertyValue = (key: string, val: any): string => {
   return String(val ?? '-');
 };
 
+const isHiddenPropertyKey = (key: string) => {
+  if (key === 'updated_at' || key === 'created_at') return true;
+  const lower = key.toLowerCase();
+  return lower === 'id' || lower.endsWith('_id');
+};
+
 const renderObjectProperties = (obj?: Record<string, any> | null) => {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
     return <span className="text-xs text-muted-foreground">-</span>;
   }
-  const entries = Object.entries(obj).filter(([key]) => key !== 'id' && key !== 'updated_at' && key !== 'created_at');
+  const entries = Object.entries(obj).filter(([key]) => !isHiddenPropertyKey(key));
   if (entries.length === 0) {
     return <span className="text-xs text-muted-foreground">-</span>;
   }

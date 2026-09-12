@@ -21,6 +21,72 @@ type Currency = { id: number; expenseable_id?: number; currency: string; symbol:
 type Props = { open: boolean; onClose: () => void; value?: ReInvoice | Partial<ReInvoicePayload> | null; currencies: Currency[]; modelType: string; onSubmit: (payload: ReInvoicePayload) => Promise<ReInvoice | void>; loading?: boolean; headerFields?: ReactNode; submitDisabled?: boolean; sourceInvoiceItems?: any[]; disablePrefilledFields?: boolean };
 const EMPTY_ROWS: any[] = [];
 
+function formatNumberWithCommas(value: unknown): string {
+  if (value === undefined || value === null || value === '' || Number.isNaN(value)) return '';
+  const parts = String(value).replace(/,/g, '').split('.');
+  const integer = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.length > 1 ? `${integer}.${parts[1]}` : integer;
+}
+
+function CommaNumberInput({
+  value,
+  onChange,
+  disabled,
+  min = 0,
+}: {
+  value: number | undefined;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  min?: number;
+}) {
+  const [displayValue, setDisplayValue] = useState(() => formatNumberWithCommas(value ?? min));
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setDisplayValue(formatNumberWithCommas(value ?? min));
+    }
+  }, [value, min, isFocused]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/,/g, '');
+    if (/^\d*\.?\d*$/.test(raw)) {
+      if (raw === '' || raw === '.') {
+        setDisplayValue(raw);
+        onChange(min);
+        return;
+      }
+      const [integer, decimal] = raw.split('.');
+      const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const formatted = decimal !== undefined ? `${formattedInteger}.${decimal}` : formattedInteger;
+      setDisplayValue(formatted);
+      const num = Number(raw);
+      if (!Number.isNaN(num)) {
+        onChange(Math.max(min, num));
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    setDisplayValue(formatNumberWithCommas(value ?? min));
+  };
+
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      disabled={disabled}
+      value={displayValue}
+      onFocus={(e) => {
+        setIsFocused(true);
+        e.currentTarget.select();
+      }}
+      onBlur={handleBlur}
+      onChange={handleChange}
+    />
+  );
+}
 
 export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, onSubmit, loading, headerFields, submitDisabled, sourceInvoiceItems, disablePrefilledFields }: Props) {
   const form = useForm<ReInvoicePayload>();
@@ -202,31 +268,53 @@ export function ReInvoiceDialog({ open, onClose, value, currencies, modelType, o
           </Popover>
           {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
         </label>
-        <label className="space-y-1"          >
-          <span>الخصم</span>
-          <Input type="number" min={0} max={form.watch('final_total') ?? undefined} step="any" disabled={disablePrefilledFields} {...form.register('discount', {
-            valueAsNumber: true,
+        <Controller
+          control={form.control}
+          name="discount"
+          rules={{
             validate: (discount) => {
               const discountValue = Number(discount ?? 0);
               if (!Number.isFinite(discountValue) || discountValue < 0) return 'الخصم يجب أن يكون صفرًا أو أكبر';
               return discountValue <= Number(form.getValues('final_total')) || 'الخصم لا يمكن أن يتجاوز الإجمالي';
             },
-          })} />
-          {errors.discount && <p className="text-sm text-destructive">{errors.discount.message}</p>}
-        </label>
-        <label className="space-y-1">
-          <span>الإجمالي</span>
-          <Input type="number" min={0} step="any" disabled={disablePrefilledFields} {...form.register('final_total', {
-            valueAsNumber: true,
+          }}
+          render={({ field }) => (
+            <label className="space-y-1">
+              <span>الخصم</span>
+              <CommaNumberInput
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disablePrefilledFields}
+              />
+              {errors.discount && <p className="text-sm text-destructive">{errors.discount.message}</p>}
+            </label>
+          )}
+        />
+        <Controller
+          control={form.control}
+          name="final_total"
+          rules={{
             validate: (total) => {
               const totalValue = Number(total);
               if (!Number.isFinite(totalValue) || totalValue < 0) return 'الإجمالي يجب أن يكون صفرًا أو أكبر';
               return Number(form.getValues('discount') ?? 0) <= totalValue || 'الإجمالي يجب ألا يكون أقل من الخصم';
             },
-            onChange: () => void form.trigger('discount'),
-          })} />
-          {errors.final_total && <p className="text-sm text-destructive">{errors.final_total.message}</p>}
-        </label>
+          }}
+          render={({ field }) => (
+            <label className="space-y-1">
+              <span>الإجمالي</span>
+              <CommaNumberInput
+                value={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  void form.trigger('discount');
+                }}
+                disabled={disablePrefilledFields}
+              />
+              {errors.final_total && <p className="text-sm text-destructive">{errors.final_total.message}</p>}
+            </label>
+          )}
+        />
         <div className="flex gap-5 sm:col-span-2">
           <Controller
             control={form.control}

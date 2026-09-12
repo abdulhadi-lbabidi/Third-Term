@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { useState, useEffect, useMemo, useRef, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/shared/lib/utils';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -58,12 +58,84 @@ import { toast } from 'sonner';
 import { fundsApi } from '@/features/funds/funds.api';
 import { MoneyExchangeDialog } from './money-exchange.dialog';
 import { SimplePagination } from '@/components/ui/pagination';
+import { projectsApi } from '@/features/projects/projects.api';
+import { projectFundsApi } from '@/features/projects/project-funds/project-funds.api';
 
 const statusLabels = {
   pending: { label: 'قيد العمل', className: 'bg-amber-50 text-amber-700 border-amber-200/60' },
   complete: { label: 'مكتمل', className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60' },
   canceled: { label: 'منتهي', className: 'bg-rose-50 text-rose-700 border-rose-200/60' },
 };
+
+type CurrencyTotal = {
+  currency: string;
+  total: number;
+  formatted: string;
+};
+
+function calculateCurrencyTotals<T>(
+  items: T[],
+  getAmount: (item: T) => number,
+  getCurrency: (item: T) => string,
+): CurrencyTotal[] {
+  if (!items || items.length === 0) return [];
+  const totalsByCurrency = new Map<string, number>();
+
+  for (const item of items) {
+    const amount = getAmount(item);
+    if (typeof amount !== 'number' || Number.isNaN(amount)) continue;
+    const currency = getCurrency(item)?.trim() || '';
+    totalsByCurrency.set(currency, (totalsByCurrency.get(currency) ?? 0) + amount);
+  }
+
+  const result: CurrencyTotal[] = [];
+  totalsByCurrency.forEach((sum, curr) => {
+    result.push({
+      currency: curr,
+      total: sum,
+      formatted: sum.toLocaleString(),
+    });
+  });
+
+  return result;
+}
+
+function CurrencyTotalsBadges({
+  totals,
+  variant = 'emerald',
+}: {
+  totals: CurrencyTotal[];
+  variant?: 'emerald' | 'rose' | 'amber' | 'blue' | 'orange';
+}) {
+  if (!totals || totals.length === 0) return null;
+
+  const colorStyles = {
+    emerald: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    rose: 'bg-rose-50 text-rose-800 border-rose-200',
+    amber: 'bg-amber-50 text-amber-800 border-amber-200',
+    blue: 'bg-blue-50 text-blue-800 border-blue-200',
+    orange: 'bg-orange-50 text-orange-800 border-orange-200',
+  }[variant];
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-semibold text-slate-500">الإجمالي:</span>
+      {totals.map((item, index) => (
+        <span
+          key={index}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-bold finance-num shadow-2xs',
+            colorStyles,
+          )}
+          dir="ltr"
+        >
+          <span>{item.formatted}</span>
+          {item.currency ? <span>{item.currency}</span> : null}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 type GenericFundDetailsProps = {
   fundId: number;
@@ -116,6 +188,45 @@ export function GenericFundDetails({
   const currentTab = searchParams.get('fundTab') || 'transactions';
   const expenseFilterId = Number(searchParams.get('expenseId') || 0) || null;
   const hasCurrencies = fundCurrencies.length > 0;
+
+  const [inferredProjectId, setInferredProjectId] = useState<number | undefined>(() => {
+    const fromFixed = Number(extraFixedValues?.project_id);
+    return Number.isFinite(fromFixed) && fromFixed > 0 ? fromFixed : undefined;
+  });
+
+  useEffect(() => {
+    const fromFixed = Number(extraFixedValues?.project_id);
+    if (Number.isFinite(fromFixed) && fromFixed > 0) {
+      setInferredProjectId(fromFixed);
+      return;
+    }
+    if (sourceType === 'project_fund' || fundIdField === 'project_fund_id') {
+      projectFundsApi.getProjectFundById(fundId)
+        .then((res) => {
+          if (res?.project?.id) {
+            setInferredProjectId(res.project.id);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [extraFixedValues?.project_id, fundId, fundIdField, sourceType]);
+
+  const targetProjectId = inferredProjectId ?? (Number(extraFixedValues?.project_id) || undefined);
+
+  const activateProjectStatus = async () => {
+    if (targetProjectId) {
+      await projectsApi.activateProjectIfPending(targetProjectId);
+      await queryClient.invalidateQueries({
+        queryKey: ['projects', targetProjectId],
+        exact: true,
+        refetchType: 'all',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['projects'],
+        refetchType: 'all',
+      });
+    }
+  };
   const canTransfer = fundCurrencies.some((currency) => Number(currency.balance) > 0);
   const tabsDragStartRef = useRef({ x: 0, scrollLeft: 0 });
   const tabsDraggingRef = useRef(false);
@@ -221,10 +332,12 @@ export function GenericFundDetails({
   const apiFilterField = fundIdField === 'user_fund_id' ? 'fund_id' : fundIdField;
   const filters = { [`filter[${apiFilterField}]`]: fundId };
   const reInvoicesQuery = useReInvoices({ paginate: true, per_page: 12, page: returnsPage, ...filters }, hasCurrencies);
+  const allReturnsQuery = useReInvoices({ paginate: true, per_page: 1000, page: 1, ...filters }, hasCurrencies && currentTab === 'returns');
   const saveReInvoice = useSaveReInvoice();
   const deleteReInvoice = useDeleteReInvoice();
 
   const revenuesQuery = useRevenues(revenuesPage, 12, filters, hasCurrencies);
+  const allRevenuesQuery = useRevenues(1, 1000, filters, hasCurrencies && currentTab === 'revenues');
   const fundRevenues = revenuesQuery.data?.data ?? [];
   const isLoadingRevenues = revenuesQuery.isLoading;
 
@@ -237,12 +350,12 @@ export function GenericFundDetails({
       await updateRevenueMutation.mutateAsync({ id: selectedRevenue.id, payload: data });
     } else {
       await createRevenueMutation.mutateAsync(data);
+      await activateProjectStatus();
     }
 
-    const projectId = Number(extraFixedValues?.project_id);
-    if (Number.isFinite(projectId) && projectId > 0) {
+    if (targetProjectId) {
       await queryClient.invalidateQueries({
-        queryKey: ['projects', projectId],
+        queryKey: ['projects', targetProjectId],
         exact: true,
         refetchType: 'all',
       });
@@ -250,6 +363,7 @@ export function GenericFundDetails({
   };
 
   const expensesQuery = useExpenses(expensesPage, 12, filters, hasCurrencies);
+  const allExpensesQuery = useExpenses(1, 1000, filters, hasCurrencies && currentTab === 'expenses');
   const fundExpenses = expensesQuery.data?.data ?? [];
   const isLoadingExpenses = expensesQuery.isLoading;
   const nextRevenueVoucherNumber = useMemo(
@@ -289,6 +403,7 @@ export function GenericFundDetails({
       savedExpense = await updateExpenseMutation.mutateAsync({ id: selectedExpense.id, payload: data });
     } else {
       savedExpense = await createExpenseMutation.mutateAsync(data);
+      await activateProjectStatus();
       const currency = fundCurrencies.find(c => Number(c.expenseable_id) === Number(data.expenseable_id) || Number(c.id) === Number(data.expenseable_id));
       if (currency && threshold !== undefined) {
         const newBalance = Number(currency.balance) - Number(data.amount);
@@ -300,10 +415,9 @@ export function GenericFundDetails({
       }
     }
 
-    const projectId = Number(extraFixedValues?.project_id);
-    if (Number.isFinite(projectId) && projectId > 0) {
+    if (targetProjectId) {
       await queryClient.invalidateQueries({
-        queryKey: ['projects', projectId],
+        queryKey: ['projects', targetProjectId],
         exact: true,
         refetchType: 'all',
       });
@@ -371,6 +485,82 @@ export function GenericFundDetails({
     }
     return '';
   };
+
+  const resolveCurrency = (info: any, fallback = '') => {
+    if (!info) return fallback || (fundCurrencies.length === 1 ? (fundCurrencies[0].symbol || fundCurrencies[0].currency) : '');
+    const direct =
+      getCurrencyStringFromInfo(info) ||
+      info.details?.currency?.symbol ||
+      info.details?.currency?.currency ||
+      info.currency?.symbol ||
+      info.currency?.currency;
+    if (direct) return direct;
+    const currencyId = info?.details?.currency_id || info?.currency_id;
+    if (currencyId) {
+      const found = fundCurrencies.find((c) => c.id === currencyId || c.expenseable_id === currencyId);
+      if (found) return found.symbol || found.currency;
+    }
+    const detailId = info?.details?.id;
+    if (detailId) {
+      const found = fundCurrencies.find((c) => c.id === detailId || c.expenseable_id === detailId);
+      if (found) return found.symbol || found.currency;
+    }
+    return fallback || (fundCurrencies.length === 1 ? (fundCurrencies[0].symbol || fundCurrencies[0].currency) : '');
+  };
+
+  const revenuesTotals = useMemo(() => {
+    const items = allRevenuesQuery.data?.data ?? [];
+    return calculateCurrencyTotals(
+      items,
+      (item) => Number(item.amount || 0),
+      (item) => resolveCurrency(item.revenueable_info),
+    );
+  }, [allRevenuesQuery.data?.data, fundCurrencies]);
+
+  const expensesTotals = useMemo(() => {
+    const items = allExpensesQuery.data?.data ?? [];
+    return calculateCurrencyTotals(
+      items,
+      (item) => Number(item.amount || 0),
+      (item) => resolveCurrency(item.expenseable_info),
+    );
+  }, [allExpensesQuery.data?.data, fundCurrencies]);
+
+  const invoicesTotals = useMemo(() => {
+    let items = fundInvoicesQuery.data?.data ?? [];
+    if (expenseFilterId) {
+      items = items.filter(
+        (inv) => inv.expense_id === expenseFilterId || inv.expense?.id === expenseFilterId,
+      );
+    }
+    return calculateCurrencyTotals(
+      items,
+      (item) => Number(item.final_total || 0),
+      (item) => resolveCurrency(item.expense?.expenseable_info),
+    );
+  }, [fundInvoicesQuery.data?.data, expenseFilterId, fundCurrencies]);
+
+  const returnsTotals = useMemo(() => {
+    const items = allReturnsQuery.data?.data ?? [];
+    return calculateCurrencyTotals(
+      items,
+      (item) => Number(item.final_total || 0),
+      (item) => resolveCurrency(item.reinvoiceable_info),
+    );
+  }, [allReturnsQuery.data?.data, fundCurrencies]);
+
+  const transfersTotals = useMemo(() => {
+    const items = fundTransfers;
+    return calculateCurrencyTotals(
+      items,
+      (item) => Number(item.amount || 0),
+      (item) => {
+        const outgoing = isOutgoingTransfer(item);
+        const target = outgoing ? item.morph_from_info : item.morph_to_info;
+        return resolveCurrency(target);
+      },
+    );
+  }, [fundTransfers, fundCurrencies, fundId, fundIdField]);
 
   const fundReInvoices = reInvoicesQuery.data?.data ?? [];
   const fundInvoices = fundInvoicesQuery.data?.data ?? [];
@@ -645,7 +835,10 @@ export function GenericFundDetails({
               <ReceiptText className="ml-2 size-4" />
               الفواتير
             </TabsTrigger>
-            <TabsTrigger value="returns" disabled={!hasCurrencies} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50/30 data-active:bg-blue-50 data-active:text-blue-700"><Undo2 className="ml-2 size-4" />المرتجعات</TabsTrigger>
+            <TabsTrigger value="returns" disabled={!hasCurrencies} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50/30 data-active:bg-blue-50 data-active:text-blue-700">
+              <Undo2 className="ml-2 size-4" />
+              المرتجعات
+            </TabsTrigger>
             <TabsTrigger value="transfers" disabled={!hasCurrencies} className="text-orange-600 hover:text-orange-700 hover:bg-orange-50/30 data-active:bg-orange-50 data-active:text-orange-700">
               <ArrowLeftRight className="ml-2 size-4" />
               التحويلات
@@ -733,7 +926,10 @@ export function GenericFundDetails({
 
             <TabsContent value="revenues" className="min-w-0 space-y-4 sm:space-y-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h4 className="text-sm font-medium text-foreground">جدول الإيرادات</h4>
+            <div className="flex flex-wrap items-center gap-3">
+              <h4 className="text-sm font-medium text-foreground">جدول الإيرادات</h4>
+              <CurrencyTotalsBadges totals={revenuesTotals} variant="emerald" />
+            </div>
             {canAddTransaction && (
               <Button
                 size="sm"
@@ -772,7 +968,10 @@ export function GenericFundDetails({
 
         {hasCurrencies && <TabsContent value="expenses" className="min-w-0 space-y-4 sm:space-y-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-lg font-semibold text-foreground">مصروفات الصندوق</h3>
+            <div className="flex flex-wrap items-center gap-3">
+              <h3 className="text-lg font-semibold text-foreground">مصروفات الصندوق</h3>
+              <CurrencyTotalsBadges totals={expensesTotals} variant="rose" />
+            </div>
             {canAddTransaction && (
               <Button
                 onClick={() => {
@@ -825,8 +1024,9 @@ export function GenericFundDetails({
         </TabsContent>}
 
         {hasCurrencies && <TabsContent value="invoices" className="min-w-0 space-y-4 sm:space-y-5">
-          <div>
+          <div className="flex flex-wrap items-center gap-3">
             <h3 className="text-lg font-semibold text-foreground">فواتير الصندوق</h3>
+            <CurrencyTotalsBadges totals={invoicesTotals} variant="amber" />
           </div>
           {expenseFilterId && (
             <div className="flex flex-col gap-3 rounded-lg bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -867,9 +1067,11 @@ export function GenericFundDetails({
           </div>
         </TabsContent>}
         {hasCurrencies && <TabsContent value="returns" className="min-w-0 space-y-4 sm:space-y-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div>
-            <h3 className="text-lg font-semibold">مرتجعات الصندوق</h3>
-          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <h3 className="text-lg font-semibold">مرتجعات الصندوق</h3>
+              <CurrencyTotalsBadges totals={returnsTotals} variant="blue" />
+            </div>
             {canAddTransaction && (
               <Button size="sm" className="w-full sm:w-auto" onClick={() => { setSelectedReInvoice(null); setReInvoiceDialogOpen(true); }}>
                 <Undo2 className="size-4" />إنشاء مرتجع
@@ -914,7 +1116,10 @@ export function GenericFundDetails({
             </div>
           )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
+            <div className="flex flex-wrap items-center gap-3">
+              <h3 className="text-lg font-semibold text-foreground">تحويلات الصندوق</h3>
+              <CurrencyTotalsBadges totals={transfersTotals} variant="orange" />
+            </div>
             {canAddTransaction && (
               <Button
                 disabled={!canTransfer}
@@ -958,6 +1163,9 @@ export function GenericFundDetails({
       <ReInvoiceDialog open={reInvoiceDialogOpen} onClose={() => { setReInvoiceDialogOpen(false); setSelectedReInvoice(null); }} value={selectedReInvoice} currencies={fundCurrencies} modelType={modelType} loading={saveReInvoice.isPending} onSubmit={async (payload) => {
         const editingId = selectedReInvoice?.id;
         const saved = await saveReInvoice.mutateAsync({ id: editingId, payload });
+        if (!editingId) {
+          await activateProjectStatus();
+        }
         return saved;
       }} />
       <ReInvoiceItemsDialog id={reInvoiceItemsId} onClose={() => { setReInvoiceItemsId(undefined); setSelectedReInvoice(null); }} onEdit={selectedReInvoice ? () => { setReInvoiceItemsId(undefined); setReInvoiceDialogOpen(true); } : undefined} readOnly />
@@ -1030,6 +1238,7 @@ export function GenericFundDetails({
               await updateTransferMutation.mutateAsync({ id: selectedTransfer.id, payload: data });
             } else {
               await createTransferMutation.mutateAsync(data);
+              await activateProjectStatus();
               const outgoingCurrency = fundCurrencies.find(c => Number(c.expenseable_id) === Number(data.morph_from_id) || Number(c.id) === Number(data.morph_from_id));
               const incomingCurrency = fundCurrencies.find(c => Number(c.expenseable_id) === Number(data.morph_to_id) || Number(c.id) === Number(data.morph_to_id));
 

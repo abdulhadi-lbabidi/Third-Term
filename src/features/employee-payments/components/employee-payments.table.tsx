@@ -18,10 +18,19 @@ export function EmployeePaymentsTable({ data, loading, onEdit, onDelete, sort, o
     { header: 'المسمى الوظيفي', cell: (payment) => payment.employee?.job_title ?? '-' },
     { header: 'صندوق الشركة', cell: (payment) => payment.company_fund_currency?.company_fund?.name ?? '-' },
     { header: 'العملة', cell: (payment) => payment.company_fund_currency?.currency?.currency ?? '-' },
-    { header: 'الزيادات', cell: (payment) => String(payment.bonuses), sortable: true, sortKey: 'bonuses' },
-    { header: 'الاستقطاعات', cell: (payment) => String(payment.deductions), sortable: true, sortKey: 'deductions' },
+    { header: 'الزيادات', cell: (payment) => Number(payment.bonuses || 0).toLocaleString(), sortable: true, sortKey: 'bonuses' },
+    { header: 'الاستقطاعات', cell: (payment) => Number(payment.deductions || 0).toLocaleString(), sortable: true, sortKey: 'deductions' },
     { header: 'تاريخ الدفع', cell: (payment) => payment.payment_date ? dayjs(payment.payment_date).format('YYYY-MM-DD') : '-', sortable: true, sortKey: 'payment_date' },
-    { header: 'المبلغ', cell: (payment) => String(payment.amount), sortable: true, sortKey: 'amount' },
+    { header: 'المبلغ', cell: (payment) => Number(payment.amount || 0).toLocaleString(), sortable: true, sortKey: 'amount' },
+    {
+      header: 'الإجمالي',
+      cell: (payment) => {
+        const amount = Number(payment.amount) || 0;
+        const bonuses = Number(payment.bonuses) || 0;
+        const deductions = Number(payment.deductions) || 0;
+        return (amount + bonuses - deductions).toLocaleString();
+      },
+    },
     { header: 'تاريخ الإنشاء', cell: (payment) => payment.created_at ?? '-' },
   ];
 

@@ -22,6 +22,7 @@ import type { EmployeeRecord } from '@/features/users/types';
 import type { CreateEmployeePaymentPayload, EmployeePayment } from '../types';
 import { employeePaymentFormSchema, type EmployeePaymentFormValues } from '../schemas/employee-payments.schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Label } from '@/shared/components/ui/label';
 
 type EmployeePaymentsFormProps = {
   employees: EmployeeRecord[];
@@ -80,6 +81,26 @@ export function EmployeePaymentsForm({
       amount: defaultValues?.amount ? String(defaultValues.amount) : '',
     });
   }, [defaultValues, form, lockedEmployeeId, today]);
+
+  const watchedAmount = form.watch('amount');
+  const watchedBonuses = form.watch('bonuses');
+  const watchedDeductions = form.watch('deductions');
+
+  const total = useMemo(() => {
+    const rawAmount = String(watchedAmount ?? '').replace(/,/g, '').trim();
+    const rawBonuses = String(watchedBonuses ?? '').replace(/,/g, '').trim();
+    const rawDeductions = String(watchedDeductions ?? '').replace(/,/g, '').trim();
+
+    const parsedAmount = rawAmount ? parseFloat(rawAmount) : 0;
+    const parsedBonuses = rawBonuses ? parseFloat(rawBonuses) : 0;
+    const parsedDeductions = rawDeductions ? parseFloat(rawDeductions) : 0;
+
+    const validAmount = Number.isNaN(parsedAmount) ? 0 : parsedAmount;
+    const validBonuses = Number.isNaN(parsedBonuses) ? 0 : parsedBonuses;
+    const validDeductions = Number.isNaN(parsedDeductions) ? 0 : parsedDeductions;
+
+    return validAmount + validBonuses - validDeductions;
+  }, [watchedAmount, watchedBonuses, watchedDeductions]);
 
   return (
     <Form {...form}>
@@ -161,7 +182,7 @@ export function EmployeePaymentsForm({
               for (const fund of companyFunds) {
                 for (const curr of fund.currencies ?? []) {
                   if (String(curr.id) === String(field.value)) {
-                    return `${fund.name} - ${curr.currency} (${curr.balance})`;
+                    return `${fund.name} - ${curr.currency} (${Number(curr.balance ?? 0).toLocaleString()})`;
                   }
                 }
               }
@@ -170,7 +191,7 @@ export function EmployeePaymentsForm({
                 const fundName = cfc.company_fund?.name ?? '';
                 const currName = cfc.currency?.currency ?? '';
                 const bal = cfc.balance ?? '';
-                return `${fundName} - ${currName} (${bal})`;
+                return `${fundName} - ${currName} (${Number(bal ?? 0).toLocaleString()})`;
               }
               return null;
             })();
@@ -194,7 +215,7 @@ export function EmployeePaymentsForm({
                     {companyFunds.flatMap((fund: any) =>
                       (fund.currencies ?? []).map((curr: any) => (
                         <SelectItem key={curr.id} value={String(curr.id)}>
-                          {fund.name} - {curr.currency} ({curr.balance})
+                          {fund.name} - {curr.currency} ({Number(curr.balance ?? 0).toLocaleString()})
                         </SelectItem>
                       ))
                     )}
@@ -215,10 +236,15 @@ export function EmployeePaymentsForm({
                 <FormLabel>الزيادات</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="1"
-                    value={field.value}
-                    onChange={(event) => field.onChange(event.target.value)}
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(field.value)}
+                    onChange={(event) => {
+                      const raw = event.target.value.replace(/,/g, '');
+                      if (/^\d*\.?\d*$/.test(raw)) {
+                        field.onChange(raw);
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -234,10 +260,15 @@ export function EmployeePaymentsForm({
                 <FormLabel>الاستقطاعات</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="1"
-                    value={field.value}
-                    onChange={(event) => field.onChange(event.target.value)}
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(field.value)}
+                    onChange={(event) => {
+                      const raw = event.target.value.replace(/,/g, '');
+                      if (/^\d*\.?\d*$/.test(raw)) {
+                        field.onChange(raw);
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -307,6 +338,17 @@ export function EmployeePaymentsForm({
             </FormItem>
           )}
         />
+
+        <div className="space-y-2">
+          <Label>الإجمالي</Label>
+          <Input
+            type="text"
+            readOnly
+            disabled
+            value={formatNumberWithCommas(total)}
+            className="bg-muted font-semibold text-foreground cursor-not-allowed"
+          />
+        </div>
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'جاري الحفظ...' : 'حفظ'}

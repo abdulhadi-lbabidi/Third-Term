@@ -20,6 +20,7 @@ const ItemsPage             = lazy(() => import('@/features/items/items.page').t
 const EmployeePaymentsPage  = lazy(() => import('@/features/employee-payments/employee-payments.page').then(m => ({ default: m.EmployeePaymentsPage })));
 const IncrementsPage        = lazy(() => import('@/features/increments/increments.page').then(m => ({ default: m.IncrementsPage })));
 const DepartmentsPage       = lazy(() => import('@/features/departments/departments.page').then(m => ({ default: m.DepartmentsPage })));
+const DepartmentDetailsPage = lazy(() => import('@/features/departments/department-details.page').then(m => ({ default: m.DepartmentDetailsPage })));
 const CloudStoragePage      = lazy(() => import('@/features/cloud-storage/cloud-storage.page').then(m => ({ default: m.CloudStoragePage })));
 const ExpensesPage          = lazy(() => import('@/features/expenses/expenses.page').then(m => ({ default: m.ExpensesPage })));
 const ExpenseDetailsPage    = lazy(() => import('@/features/expenses/expense-details.page').then(m => ({ default: m.ExpenseDetailsPage })));
@@ -284,6 +285,7 @@ export const router = createBrowserRouter([
           { path: '/money-exchanges', element: <MoneyExchangesPage /> },
           { path: '/currencies', element: <CurrenciesPage /> },
           { path: '/departments', element: <DepartmentsPage /> },
+          { path: '/departments/:departmentId', element: <DepartmentDetailsPage /> },
           { path: '/cloud-storage', element: <CloudStoragePage /> },
           { path: '/audit-logs', element: <AuditLogsPage /> },
           { path: '/notifications', element: <NotificationsPage /> },

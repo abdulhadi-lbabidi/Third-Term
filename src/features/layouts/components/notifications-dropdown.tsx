@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { cn } from '@/shared/lib/utils';
 import { apiClient } from '@/shared/api/axios.instance';
 
 export type NotificationItem = {
@@ -46,7 +45,7 @@ export function NotificationsDropdown() {
     queryKey: ['notifications'],
     queryFn: async () => {
       const response = await apiClient.get('/notifications', {
-        params: { paginate: true, per_page: 5, page: 1 },
+        params: { paginate: true, per_page: 50, page: 1 },
       });
       return response.data;
     },
@@ -61,12 +60,14 @@ export function NotificationsDropdown() {
     ? (notificationsData as unknown as NotificationItem[])
     : [];
 
+  const unreadNotifications = notifications.filter((item) => !item.read_at);
+
   const unreadCount =
     typeof notificationsData?.counts?.unread === 'number'
       ? notificationsData.counts.unread
       : typeof notificationsData?.unread === 'number'
       ? notificationsData.unread
-      : notifications.filter((item) => item.read_at === null).length;
+      : unreadNotifications.length;
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -126,31 +127,24 @@ export function NotificationsDropdown() {
           </div>
         </div>
         <div className="max-h-80 overflow-y-auto space-y-1">
-          {notifications.length === 0 ? (
-            <div className="py-6 text-center text-xs text-muted-foreground">لا توجد إشعارات</div>
+          {unreadNotifications.length === 0 ? (
+            <div className="py-6 text-center text-xs text-muted-foreground">لا توجد إشعارات غير مقروءة</div>
           ) : (
-            notifications.map((item) => (
+            unreadNotifications.map((item) => (
               <div
                 key={item.id}
-                className={cn(
-                  'p-2.5 rounded-lg border text-xs space-y-1 transition-colors',
-                  item.read_at ? 'bg-slate-100 border-slate-100 opacity-60' : 'bg-slate-200 border-slate-200/80 font-medium'
-                )}
+                className="p-2.5 rounded-lg border text-xs space-y-1 transition-colors bg-slate-200 border-slate-200/80 font-medium"
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-semibold text-foreground">{item.data?.title || 'تنبيه'}</span>
-                  {item.read_at ? (
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">مقروء</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => markReadMutation.mutate(item.id)}
-                      className="text-[11px] text-primary hover:underline shrink-0"
-                      disabled={markReadMutation.isPending}
-                    >
-                      تعليم كمقروء
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => markReadMutation.mutate(item.id)}
+                    className="text-[11px] text-primary hover:underline shrink-0"
+                    disabled={markReadMutation.isPending}
+                  >
+                    تعليم كمقروء
+                  </button>
                 </div>
                 {item.data?.message ? (
                   <p className="text-muted-foreground leading-relaxed">{item.data.message}</p>

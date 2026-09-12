@@ -170,11 +170,11 @@ export function UsersPage() {
   };
 
   function handleEdit(row: UsersTabRecord) {
-    navigate(`/users/view/${activeRole}/${row.id}?tab=${activeRole}`);
+    navigate(`/users/view/${activeRole}/${row.id}?tab=details&returnRole=${activeRole}`);
   }
 
   function handleFunds(row: UsersTabRecord) {
-    navigate(`/users/view/${activeRole}/${row.id}?tab=funds`);
+    navigate(`/users/view/${activeRole}/${row.id}?tab=funds&returnRole=${activeRole}`);
   }
 
   const columns = useMemo(
